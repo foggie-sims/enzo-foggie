@@ -26,7 +26,7 @@
 
 /* Currently only works for cubic geometry in 3D */
 
-int grid::SetFlaggingFieldMultiRefineRegions(int level)
+int grid::SetFlaggingFieldMultiRefinementRegions(int level)
 {
 
   /* Return if this grid is not on this processor
