@@ -70,9 +70,9 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
 
   /* Flag cells based on MultiRefineRegions */
 
-  if (CurrentGrid->SetFlaggingFieldMultiRefineRegions(level)
+  if (CurrentGrid->SetFlaggingFieldMultiRefinementRegions(level)
       == FAIL) {
-    fprintf(stderr, "Error in grid->SetFlaggingFieldMultiRefineRegions.\n");
+    fprintf(stderr, "Error in grid->SetFlaggingFieldMultiRefinementRegions.\n");
     return FAIL;
   }
 
