@@ -82,9 +82,9 @@ int grid::SetFlaggingFieldMultiRefinementRegions(int level)
         /* Loop over multirefinement regions */
         for (region = 0; region < MAX_STATIC_REGIONS; region++){
           /* Check whether cell is within a given refinement region */
-          if( (MustRefineRegionLeftEdge[region][0] <= xpos) && (xpos <= MustRefineRegionRightEdge[region][0]) &&
-              (MustRefineRegionLeftEdge[region][1] <= ypos) && (ypos <= MustRefineRegionRightEdge[region][1]) &&
-              (MustRefineRegionLeftEdge[region][2] <= zpos) && (zpos <= MustRefineRegionRightEdge[region][2]) ){
+          if( (MultiRefineRegionLeftEdge[region][0] <= xpos) && (xpos <= MultiRefineRegionRightEdge[region][0]) &&
+              (MultiRefineRegionLeftEdge[region][1] <= ypos) && (ypos <= MultiRefineRegionRightEdge[region][1]) &&
+              (MultiRefineRegionLeftEdge[region][2] <= zpos) && (zpos <= MultiRefineRegionRightEdge[region][2]) ){
             /* Of those regions the cell is within, adopt refinement constraints of refine regions with maximum allowed refinement */
             if (LocalMaximumRefinementLevel < MultiRefineRegionMaximumLevel[region]){
                 LocalMaximumRefinementLevel = MultiRefineRegionMaximumLevel[region];
