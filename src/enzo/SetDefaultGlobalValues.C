@@ -250,8 +250,6 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
     MustRefineParticlesRightEdge[dim] = 0.0;
     CoolingRefineRegionLeftEdge[dim]   = 0.0;
     CoolingRefineRegionRightEdge[dim]  = 1.0;
-    MultiRefineRegionLeftEdge[dim]   = 0.0;
-    MultiRefineRegionRightEdge[dim]  = 1.0;
     DiskGravityPosition[dim]        = 0.0;
     DiskGravityAngularMomentum[dim] = 0.0;
     GalaxySimulationRPSWindVelocity[dim] = 0.0;
@@ -330,9 +328,9 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MultiRefineRegionFile = NULL;
   MultiRefineRegionTimeType = -1; /* 0=time bins 1=redshift bins*/
   for (i = 0; i < MAX_TRACKS; i++) {
-    EvolveMultiRefineRegionMinLevel[i] = INT_UNDEFINED;
-    EvolveMultiRefineRegionMaxLevel[i] = INT_UNDEFINED;
-    EvolveMultiRefineRegionMinStarMass[i] = FLOAT_UNDEFINED;
+    EvolveMultiRefineRegionMinimumLevel[i] = INT_UNDEFINED;
+    EvolveMultiRefineRegionMaximumLevel[i] = INT_UNDEFINED;
+    EvolveMultiRefineRegionMinimumStarMass[i] = FLOAT_UNDEFINED;
     for (j = 0; j < MAX_TIME_ENTRIES; j++) {
       EvolveMultiRefineRegionLeftEdge[i][j]  = FLOAT_UNDEFINED;
       EvolveMultiRefineRegionRightEdge[i][j] = FLOAT_UNDEFINED;
