@@ -222,18 +222,18 @@ int ReadEvolveRefineFile(void)
       NumberOfMultiRefineTracks = 0;
       NumberOfMultiRefineTimeEntries = 0;
       int TrackInd, TimeInd;
-      float trackID[N_TRACKS];
+      float trackID[NumberOfMultiRefineTracks];
       
       /* Read in header and verify that values are reasonable */
-      fgets(line, MAX_LINE_LENGTH, fptr)
-      nret = sscanf(line, "%"ISYM, &NumberOfMultiRefineTracks)
+      fgets(line, MAX_LINE_LENGTH, fptr);
+      nret = sscanf(line, "%"ISYM, &NumberOfMultiRefineTracks);
       if (nret != 1){
-        fprintf(stderr, "WARNING: ReadEvolveRefineFile (MultiRefineRegion) cannot interpret the number of tracks in your track file.")
+        fprintf(stderr, "WARNING: ReadEvolveRefineFile (MultiRefineRegion) cannot interpret the number of tracks in your track file.");
       }
-      fgets(line, MAX_LINE_LENGTH, fptr)
-      nret = sscanf(line, "%"ISYM, &NumberOfMultiRefineTimeEntries)
+      fgets(line, MAX_LINE_LENGTH, fptr);
+      nret = sscanf(line, "%"ISYM, &NumberOfMultiRefineTimeEntries);
       if (nret != 1){
-        fprintf(stderr, "WARNING: ReadEvolveRefineFile (MultiRefineRegion) cannot interpret the number of time entries per track in your track file.")
+        fprintf(stderr, "WARNING: ReadEvolveRefineFile (MultiRefineRegion) cannot interpret the number of time entries per track in your track file.");
       }
       
       if(NumberOfMultiRefineTracks > MAX_TRACKS){
@@ -251,13 +251,14 @@ int ReadEvolveRefineFile(void)
       if ((fptr = fopen(MultiRefineRegionFile, "r")) == NULL) {
         fprintf(stderr, "Error opening MultiRefine region file %s.\n", MultiRefineRegionFile);
         return FAIL;
+      }
       
       fgets(line, MAX_LINE_LENGTH, fptr)  // Read in header again
       fgets(line, MAX_LINE_LENGTH, fptr)
       i = 2; // Number of lines in header
       while ((fgets(line, MAX_LINE_LENGTH, fptr) != NULL)){
         TimeInd = (i-2)%NumberOfMultiRefineTimeEntries;
-        TrackInd = int(float(i-2)/float(NumberOfMultiRefineTimeEntries))
+        TrackInd = int(float(i-2)/float(NumberOfMultiRefineTimeEntries));
         nret = sscanf(line, "%"ISYM "%"FSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM "%"ISYM "%"FSYM,
               &(trackID[TrackInd]),
               &(EvolveMultiRefineRegionTime[TimeInd]),
@@ -281,14 +282,14 @@ int ReadEvolveRefineFile(void)
               (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][2] < 0) || (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][2] > 1) ||
               (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][0] < 0) || (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][0] > 1) ||
               (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][1] < 0) || (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][1] > 1) ||
-              (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][2] < 0) || (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][2] > 1) ||){
-            fprintf(stderr, "ReadEvolveRefineFile (MultiRefineRegion) says the position of the refine region on line %i of your track file is out of bounds\n", i);
+              (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][2] < 0) || (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][2] > 1)){
+              fprintf(stderr, "ReadEvolveRefineFile (MultiRefineRegion) says the position of the refine region on line %i of your track file is out of bounds\n", i);
             return FAIL;
           }
         if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
            fprintf(stderr,"Here is the line (MultiRefineRegion): %s \n",line);
-           fprintf(stderr,". . . and here is the minimum value (MultiRefineRegion): %i \n",EvolveMultiRefineRegionMinLevel[TrackInd]);
-           fprintf(stderr,". . . and here is the maximum value (MultiRefineRegion): %i \n",EvolveMultiRefineRegionMaxLevel[TrackInd]);
+           fprintf(stderr,". . . and here is the minimum value (MultiRefineRegion): %i \n",EvolveMultiRefineRegionMinimumLevel[TrackInd]);
+           fprintf(stderr,". . . and here is the maximum value (MultiRefineRegion): %i \n",EvolveMultiRefineRegionMaximumLevel[TrackInd]);
            }
         if( nret != 11 ){
           fprintf(stderr,"WARNING: ReadEvolveRefineFile (MultiRefineRegion) cannot interpret line %s",line);
@@ -300,7 +301,7 @@ int ReadEvolveRefineFile(void)
       fclose(fptr);
 
       /* Make sure that all time values are greater than 0 and increase */
-      for (i=0, i<NumberOfMultiRefineTimeEntries, i++){
+          for (i=0; i<NumberOfMultiRefineTimeEntries; i++){
         if (EvolveMultiRefineRegionTime[i] < 0){
           fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found a negative time in your track file.\n");
           return FAIL;
@@ -308,7 +309,7 @@ int ReadEvolveRefineFile(void)
       }
       
       if (MultiRefineRegionTimeType == 0){ // If we're using code time
-        for(i=1, i<=NumberOfMultiRefineTimeEntries, i++){
+        for(i=1; i<=NumberOfMultiRefineTimeEntries; i++){
           if (EvolveMultiRefineRegionTime[i]-EvolveMultiRefineRegionTime[i-1]<0){
             fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found that the times in your track box decrease.\n Set MultiRefineRegionTimeType=1 if using redshift.\n");
             return FAIL;
@@ -316,7 +317,7 @@ int ReadEvolveRefineFile(void)
         }
       }
       if (MultiRefineRegionTimeType == 1){ // If we're using redshift
-        for(i=1, i<=NumberOfMultiRefineTimeEntries, i++){
+        for(i=1; i<=NumberOfMultiRefineTimeEntries; i++){
           if (EvolveMultiRefineRegionTime[i]-EvolveMultiRefineRegionTime[i-1]>0){
             fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found that the redshifts in your track box increase.\n Set MultiRefineRegionTimeType=0 if using code time.\n");
             return FAIL;
@@ -325,22 +326,22 @@ int ReadEvolveRefineFile(void)
       }
           
       /* Make sure that minimum and maximum refinement levels are reasonable */
-      for (i=0, i<NumberOfMultiRefineTracks, i++){
-        if( (EvolveMultiRefineRegionMinLevel[i] < 0) || (EvolveMultiRefineRegionMinLevel[i] > MaximumRefinementLevel) ||
-            (EvolveMultiRefineRegionMaxLevel[i] < 0) || (EvolveMultiRefineRegionMaxLevel[i] > MaximumRefinementLevel) ||
-            (EvolveMultiRefineRegionMaxLevel[i] < EvolveMultiRefineRegionMinLevel[i])){
+      for (i=0; i<NumberOfMultiRefineTracks; i++){
+        if( (EvolveMultiRefineRegionMinimumLevel[i] < 0) || (EvolveMultiRefineRegionMinimumLevel[i] > MaximumRefinementLevel) ||
+            (EvolveMultiRefineRegionMaximumLevel[i] < 0) || (EvolveMultiRefineRegionMaximumLevel[i] > MaximumRefinementLevel) ||
+            (EvolveMultiRefineRegionMaximumLevel[i] < EvolveMultiRefineRegionMinimumLevel[i])){
           fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found unreasonable refinement levels requested in your track file for track %i.\n",i);
           return FAIL;
         }
       }
           
       /* Make sure that minimum stellar mass for multirefine regions make sense */
-      for (i=0, i<NumberOfMultiRefineTracks, i++){
-        if(EvolveMultiRefineRegionMinStarMass[i]<0){
+      for (i=0; i<NumberOfMultiRefineTracks; i++){
+        if(EvolveMultiRefineRegionMinimumStarMass[i]<0){
           fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found a negative minimum stellar mass requested in your track file for track %i.\n",i);
           return FAIL;
         }
-        if(EvolveMultiRefineRegionMinStarMass[i]>pow(10,20)){
+        if(EvolveMultiRefineRegionMinimumStarMass[i]>pow(10,20)){
           fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found an unreasonably high minimum stellar mass requested in your track file for track %i.\n",i);
           return FAIL;
         }
@@ -354,7 +355,7 @@ int ReadEvolveRefineFile(void)
         
         printf("ReadEvolveRefineFile: And here is what I think my times, edges, and minimum levels are:\n");
 
-        for(int i=0; i<EvolveMultiRefineRegionNtimes; i++){
+        for(int i=0; i<NumberOfMultiRefineTimeEntries*NumberOfMultiRefineTracks; i++){
           TimeInd = (i-2)%NumberOfMultiRefineTimeEntries;
           TrackInd = int(float(i-2)/float(NumberOfMultiRefineTimeEntries))
           printf("ReadEvolveRefineFile (MustRefineRegion): %"FSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM "%"ISYM "%"FSYM"\n",
@@ -365,9 +366,9 @@ int ReadEvolveRefineFile(void)
                  EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][0],
                  EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][1],
                  EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][2],
-                 EvolveMultiRefineRegionMinLevel[TrackInd],
-                 EvolveMultiRefineRegionMaxLevel[TrackInd],
-                 EvolveMultiRefineRegionMinStarMass[TrackInd]);
+                 EvolveMultiRefineRegionMinimumLevel[TrackInd],
+                 EvolveMultiRefineRegionMaximumLevel[TrackInd],
+                 EvolveMultiRefineRegionMinimumStarMass[TrackInd]);
         } // for loop
 
         fflush(stdout);
