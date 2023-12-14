@@ -464,7 +464,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
        OR set CoolingRefineRegion from evolving CoolingRefineRegion */
     if ((RefineRegionTimeType == 1) || (RefineRegionTimeType == 0)
         || (MustRefineRegionTimeType == 1) || (MustRefineRegionTimeType == 0)
-        || (CoolingRefineRegionTimeType == 1) || (CoolingRefineRegionTimeType == 0)) {
+        || (CoolingRefineRegionTimeType == 1) || (CoolingRefineRegionTimeType == 0)
+        || (MultiRefineRegionTimeType == 1) || (MultiRefineRegionTimeType == 0)) {
         if (SetEvolveRefineRegion(MetaData.Time) == FAIL) 
 	  ENZO_FAIL("Error in SetEvolveRefineRegion.");
     }

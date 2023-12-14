@@ -478,6 +478,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       CoolingRefineRegionFile = dummy;
       ret++;
     }
+      
+    /* Read evolving MultiRefineRegion */
+
+    ret += sscanf(line, "MultiRefineRegionTimeType = %"ISYM, &MultiRefineRegionTimeType);
+    if (sscanf(line, "MultiRefineRegionFile = %s", dummy) == 1) {
+      MultiRefineRegionFile = dummy;
+      ret++;
+    }
 
 
     if (sscanf(line, "DatabaseLocation = %s", dummy) == 1) {
@@ -1744,13 +1752,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   /* If TimeType is 0 or 1 for RefineRegion, MustRefineRegion, or CoolingRefineRegion, read in the input file. */
   if ((RefineRegionTimeType == 0) || (RefineRegionTimeType == 1)
       || (MustRefineRegionTimeType == 0) || (MustRefineRegionTimeType == 1)
-      || (CoolingRefineRegionTimeType == 0) || (CoolingRefineRegionTimeType == 1)) {
+      || (CoolingRefineRegionTimeType == 0) || (CoolingRefineRegionTimeType == 1)
+      || (MultiRefineRegionTimeType == 0) || (MultiRefineRegionTimeType == 1)) {
       if (ReadEvolveRefineFile() == FAIL) {
         ENZO_FAIL("Error in ReadEvolveRefineFile.");
       }
   }
 
-  if( ((RefineRegionTimeType==1) || (MustRefineRegionTimeType==1) || (CoolingRefineRegionTimeType==1)) && (ComovingCoordinates==0)){
+  if( ((RefineRegionTimeType==1) || (MustRefineRegionTimeType==1) || (CoolingRefineRegionTimeType==1)) || (MultiRefineRegionTimeType==1) && (ComovingCoordinates==0)){
     ENZO_FAIL("You cannot have ComovingCoordinates turned off if your RegionTimeType is set to 1!");
   }
 

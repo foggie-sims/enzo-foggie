@@ -250,6 +250,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
     MustRefineParticlesRightEdge[dim] = 0.0;
     CoolingRefineRegionLeftEdge[dim]   = 0.0;
     CoolingRefineRegionRightEdge[dim]  = 1.0;
+    MultiRefineRegionLeftEdge[dim]   = 0.0;
+    MultiRefineRegionRightEdge[dim]  = 1.0;
     DiskGravityPosition[dim]        = 0.0;
     DiskGravityAngularMomentum[dim] = 0.0;
     GalaxySimulationRPSWindVelocity[dim] = 0.0;
@@ -260,9 +262,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   MultiRefineRegionMaximumOuterLevel = INT_UNDEFINED;
   MultiRefineRegionMinimumOuterLevel = INT_UNDEFINED;
-  for (i = 0; i < MAX_STATIC_REGIONS; i++) {
+  for (i = 0; i < MAX_STATIC_REGIONS+MAX_TRACKS; i++) {
     MultiRefineRegionMaximumLevel[i] = INT_UNDEFINED;
     MultiRefineRegionMinimumLevel[i] = 0;
+    MultiRefineRegionMinimumStarMass[i] = INT_UNDEFINED;
     MultiRefineRegionGeometry[i] = -1; 
     MultiRefineRegionRadius[i] = INT_UNDEFINED;
     MultiRefineRegionWidth[i] = 3.0;
@@ -322,6 +325,22 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
       EvolveMustRefineRegionRightEdge[i][j] = FLOAT_UNDEFINED;
     }
   }
+    
+  /* For evolving MultiRefine regions. */
+  MultiRefineRegionFile = NULL;
+  MultiRefineRegionTimeType = -1; /* 0=time bins 1=redshift bins*/
+  for (i = 0; i < MAX_TRACKS; i++) {
+    EvolveMultiRefineRegionMinLevel[i] = INT_UNDEFINED;
+    EvolveMultiRefineRegionMaxLevel[i] = INT_UNDEFINED;
+    EvolveMultiRefineRegionMinStarMass[i] = FLOAT_UNDEFINED;
+    for (j = 0; j < MAX_TIME_ENTRIES; j++) {
+      EvolveMultiRefineRegionLeftEdge[i][j]  = FLOAT_UNDEFINED;
+      EvolveMultiRefineRegionRightEdge[i][j] = FLOAT_UNDEFINED;
+    }
+  }
+  for (i = 0; i < MAX_TIME_ENTRIES; i++) {
+    EvolveMultiRefineRegionTime[i] = FLOAT_UNDEFINED;
+}
 
   /* For storing mass of density fields living domain */
   StoreDomainBoundaryMassFlux = 0;

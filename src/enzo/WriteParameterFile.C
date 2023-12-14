@@ -408,6 +408,10 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "CoolingRefineRegionTimeType   = %d\n", CoolingRefineRegionTimeType);
   if (CoolingRefineRegionFile != NULL)
     fprintf(fptr, "CoolingRefineRegionFile     = %s\n", CoolingRefineRegionFile);
+  fprintf(fptr, "MultiRefineRegionTimeType   = %d\n", MultiRefineRegionTimeType);
+  if (MultiRefineRegionFile != NULL)
+     fprintf(fptr, "MultiRefineRegionFile     = %s\n", MultiRefineRegionFile);
+
 
   fprintf(fptr, "\n");
   fprintf(fptr, "\n");

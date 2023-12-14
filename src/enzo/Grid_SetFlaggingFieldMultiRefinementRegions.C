@@ -40,7 +40,7 @@ int grid::SetFlaggingFieldMultiRefinementRegions(int level)
   float CellSize, xpos, ypos, zpos, ring_width, rad, dr;
   int LocalMaximumRefinementLevel = 0;
   int LocalMinimumRefinementLevel = 0;
-  int Start[MAX_DIMENSION], End[MAX_DIMENSION];
+  int Start[MAX_DIMENSION], End[MAX_DIMENSION], NIter = 0;
   int NumberOfFlaggedCells = 0;
 
 
@@ -50,10 +50,14 @@ int grid::SetFlaggingFieldMultiRefinementRegions(int level)
   if (MultiRefineRegionMinimumOuterLevel == INT_UNDEFINED)
     MultiRefineRegionMinimumOuterLevel = 0;
 
-
   /* error check */
   if (FlaggingField == NULL) 
     ENZO_FAIL("Flagging Field is undefined");
+    
+  /* Check whether we're using evolving MultiRefine regions or not */
+  if((MultiRefineRegionTimeType == 0) || (MultiRefineRegionTimeType == 1)){
+    NIter = NumberOfMultiRefineTracks;
+  }
 
   /* loop over dimensions - I guess this is unnecessary,
    but it's handy to have shorter names */
@@ -80,7 +84,7 @@ int grid::SetFlaggingFieldMultiRefinementRegions(int level)
         zpos = GridLeftEdge[2] + (FLOAT(k-Start[2])+0.5 )*CellSize;
           
         /* Loop over multirefinement regions */
-        for (region = 0; region < MAX_STATIC_REGIONS; region++){
+        for (region = 0; region < MAX_STATIC_REGIONS + NIter; region++){
           /* Check whether cell is within a given refinement region */
           if( (MultiRefineRegionLeftEdge[region][0] <= xpos) && (xpos <= MultiRefineRegionRightEdge[region][0]) &&
               (MultiRefineRegionLeftEdge[region][1] <= ypos) && (ypos <= MultiRefineRegionRightEdge[region][1]) &&
