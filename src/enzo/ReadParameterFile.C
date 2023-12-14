@@ -391,6 +391,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
     /* Parameters for the MultiRefineRegion mechanics */
 
+      
     ret += sscanf(line, "MultiRefineRegionMaximumOuterLevel  = %"ISYM, &MultiRefineRegionMaximumOuterLevel);
     ret += sscanf(line, "MultiRefineRegionMinimumOuterLevel  = %"ISYM, &MultiRefineRegionMinimumOuterLevel);
     if (sscanf(line, "MultiRefineRegionMaximumLevel[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2)
@@ -407,6 +408,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (sscanf(line, "MultiRefineRegionMinimumLevel[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2){
       ret++;
       MultiRefineRegionMinimumLevel[dim] = int_dummy;
+    }
+    if (sscanf(line, "MultiRefineRegionMaximumLevel[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2){
+      ret++;
+      MultiRefineRegionMaximumLevel[dim] = int_dummy;
     }
     if (sscanf(line, "MultiRefineRegionRadius[%"ISYM"] = %"PSYM, &dim, &float_dummy) == 2){
       ret++;
@@ -444,6 +449,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		    &dim, MultiRefineRegionRightEdge[dim],
 		    MultiRefineRegionRightEdge[dim]+1,
 		    MultiRefineRegionRightEdge[dim]+2);
+    if (sscanf(line, "MultiRefineRegionMinimumStarMass[%"ISYM"] = %"FSYM, &dim, &float_dummy) == 2){
+        ret++;
+        MultiRefineRegionMinimumStarMass[dim] = float_dummy;
+      }
 
     /* Read evolving RefineRegion */
 

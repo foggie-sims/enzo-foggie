@@ -22,7 +22,7 @@ void my_exit(int status);
 int SetEvolveRefineRegion (FLOAT time) 
 {
 
-  int timestep, staticRegion, i;
+  int timestep, staticRegion, i, region, NStaticMultiRefineRegions;
   FLOAT a, dadt, redshift;
 
   /* Return if not used */
@@ -366,7 +366,7 @@ int SetEvolveRefineRegion (FLOAT time)
               * (EvolveMultiRefineRegionLeftEdge[region][timestep+1][i]-EvolveMultiRefineRegionLeftEdge[region][timestep][i])
               / (EvolveMultiRefineRegionTime[region][timestep+1] - EvolveMultiRefineRegionTime[region][timestep]);
 
-            MultRefineRegionRightEdge[region][i] = EvolveMultiRefineRegionRightEdge[region][timestep][i]
+            MultiRefineRegionRightEdge[region][i] = EvolveMultiRefineRegionRightEdge[region][timestep][i]
               + (time - EvolveMultiRefineRegionTime[region][timestep])
               * (EvolveMultiRefineRegionRightEdge[region][timestep+1][i]-EvolveMultiRefineRegionRightEdge[region][timestep][i])
               / (EvolveMultiRefineRegionTime[region][timestep+1] - EvolveMultiRefineRegionTime[region][timestep]);
@@ -374,15 +374,15 @@ int SetEvolveRefineRegion (FLOAT time)
           }
         } // for (i = 0; i < MAX_DIMENSION; i++)
           
-        MultiRefineRegionMinimumRefinementLevel[region] = EvolveMultiRefineRegionMinimumLevel[region];
-        MultiRefineRegionMaximumRefinementLevel[region] = EvolveMultiRefineRegionMaximumLevel[region];
+        MultiRefineRegionMinimumLevel[region] = EvolveMultiRefineRegionMinimumLevel[region];
+        MultiRefineRegionMaximumLevel[region] = EvolveMultiRefineRegionMaximumLevel[region];
         MultiRefineRegionMinimumStarMass[region] = EvolveMultiRefineRegionMinimumStarMass[region];
         if (debug1){
           fprintf(stdout, "SetEvolveRefineRegion: EvolveMultiRefineRegion: %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM" %"ISYM" %"FSYM"\n",
             MultiRefineRegionLeftEdge[region][0], MultiRefineRegionLeftEdge[region][1],
             MultiRefineRegionLeftEdge[region][2], MultiRefineRegionRightEdge[region][0],
             MultiRefineRegionRightEdge[region][1], MultiRefineRegionRightEdge[region][2],
-            MultiRefineRegionMinimumRefinementLevel[region], MultiRefineRegionMaximumRefinementLevel[region]
+            MultiRefineRegionMinimumRefinementLevel[region], MultiRefineRegionMaximumRefinementLevel[region],
             MultiRefineRegionMinimumStarMass[region]);
         }
           
