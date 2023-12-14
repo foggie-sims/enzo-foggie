@@ -253,8 +253,8 @@ int ReadEvolveRefineFile(void)
         return FAIL;
       }
       
-      fgets(line, MAX_LINE_LENGTH, fptr)  // Read in header again
-      fgets(line, MAX_LINE_LENGTH, fptr)
+      fgets(line, MAX_LINE_LENGTH, fptr);  // Read in header again
+      fgets(line, MAX_LINE_LENGTH, fptr);
       i = 2; // Number of lines in header
       while ((fgets(line, MAX_LINE_LENGTH, fptr) != NULL)){
         TimeInd = (i-2)%NumberOfMultiRefineTimeEntries;
@@ -268,9 +268,9 @@ int ReadEvolveRefineFile(void)
               &(EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][0]),
               &(EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][1]),
               &(EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][2]),
-              &(EvolveMultiRefineRegionMinLevel[TrackInd]),
-              &(EvolveMultiRefineRegionMaxLevel[TrackInd]),
-              &(EvolveMultiRefineRegionMinStarMass[TrackInd]));
+              &(EvolveMultiRefineRegionMinimumLevel[TrackInd]),
+              &(EvolveMultiRefineRegionMaximumLevel[TrackInd]),
+              &(EvolveMultiRefineRegionMinimumStarMass[TrackInd]));
           /* Make sure your arrays correspond to the tracks they should */
           if(TrackInd != trackID[TrackInd]){
             fprintf(stderr, "ReadEvolveRefineFile (MultiRefineRegion) says your track IDs do not match up!\n Calculated: %i; Actual: %i\n",TrackInd,trackID[TrackInd]);
@@ -357,7 +357,7 @@ int ReadEvolveRefineFile(void)
 
         for(int i=0; i<NumberOfMultiRefineTimeEntries*NumberOfMultiRefineTracks; i++){
           TimeInd = (i-2)%NumberOfMultiRefineTimeEntries;
-          TrackInd = int(float(i-2)/float(NumberOfMultiRefineTimeEntries))
+          TrackInd = int(float(i-2)/float(NumberOfMultiRefineTimeEntries));
           printf("ReadEvolveRefineFile (MustRefineRegion): %"FSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM "%"ISYM "%"FSYM"\n",
                  EvolveMultiRefineRegionTime[TimeInd],
                  EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][0],
