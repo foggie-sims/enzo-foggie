@@ -51,7 +51,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
  
   /* declarations */
  
-  int dim, i, j;
+  int dim, i, j, k;
  
   huge_number               = 1.0e+20;
   tiny_number               = 1.0e-20;
@@ -332,7 +332,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
     EvolveMultiRefineRegionMaximumLevel[i] = INT_UNDEFINED;
     EvolveMultiRefineRegionMinimumStarMass[i] = FLOAT_UNDEFINED;
     for (j = 0; j < MAX_TIME_ENTRIES; j++) {
-        for (k = 0; j < MAX_DIMENSION; k++) {
+        for (k = 0; k < MAX_DIMENSION; k++) {
             EvolveMultiRefineRegionLeftEdge[i][j][k]  = FLOAT_UNDEFINED;
             EvolveMultiRefineRegionRightEdge[i][j][k] = FLOAT_UNDEFINED;
         }
