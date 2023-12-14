@@ -622,8 +622,8 @@ OBJS_CONFIG_LIB = \
 	Grid_SedovBlastInitializeGrid3D.o \
 	Grid_SetExternalBoundaryValues.o \
 	Grid_SetFlaggingField.o \
-    Grid_SetFlaggingFieldMultiRefineRegions.o \
 	Grid_SetFlaggingFieldMultiRefinementRegions.o \
+	Grid_SetFlaggingFieldMultiRefineRegions.o \
 	Grid_SetFlaggingFieldStaticRegions.o \
 	Grid_SetIsolatedPotentialBoundary.o \
 	Grid_SetMinimumSupport.o \
