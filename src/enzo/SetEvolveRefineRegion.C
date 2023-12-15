@@ -39,7 +39,9 @@ int SetEvolveRefineRegion (FLOAT time)
     printf("SetEvolveRefineRegion: EvolveMustRefineRegionTime[0]:    %"FSYM"\n",EvolveMustRefineRegionTime[0]);
     printf("SetEvolveRefineRegion: EvolveCoolingRefineRegionTime[0]: %"FSYM"\n",EvolveCoolingRefineRegionTime[0]);
     for (region = 0; region < NumberOfMultiRefineTracks; region++){
-      printf("SetEvolveRefineRegion: EvolveMultiRefineRegionTime[%"ISYM"][0]: %"FSYM"\n",region,EvolveMultiRefineRegionTime[region][0]);
+      for (i = 0; i < NumberofMultiRefineTimeEntries; i++){
+        printf("SetEvolveRefineRegion: EvolveMultiRefineRegionTime[%"ISYM"][%"ISYM"][0]: %"FSYM"\n",region,i,EvolveMultiRefineRegionTime[region][0]);
+      }
     }
   }
   
@@ -362,15 +364,14 @@ int SetEvolveRefineRegion (FLOAT time)
           } else {
 
             MultiRefineRegionLeftEdge[region][i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i]
-              + (time - EvolveMultiRefineRegionTime[region][timestep])
+              + (time - EvolveMultiRefineRegionTime[timestep])
               * (EvolveMultiRefineRegionLeftEdge[region][timestep+1][i]-EvolveMultiRefineRegionLeftEdge[region][timestep][i])
-              / (EvolveMultiRefineRegionTime[region][timestep+1] - EvolveMultiRefineRegionTime[region][timestep]);
+              / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
 
             MultiRefineRegionRightEdge[region][i] = EvolveMultiRefineRegionRightEdge[region][timestep][i]
-              + (time - EvolveMultiRefineRegionTime[region][timestep])
+              + (time - EvolveMultiRefineRegionTime[timestep])
               * (EvolveMultiRefineRegionRightEdge[region][timestep+1][i]-EvolveMultiRefineRegionRightEdge[region][timestep][i])
-              / (EvolveMultiRefineRegionTime[region][timestep+1] - EvolveMultiRefineRegionTime[region][timestep]);
-
+              / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
           }
         } // for (i = 0; i < MAX_DIMENSION; i++)
           
@@ -382,7 +383,7 @@ int SetEvolveRefineRegion (FLOAT time)
             MultiRefineRegionLeftEdge[region][0], MultiRefineRegionLeftEdge[region][1],
             MultiRefineRegionLeftEdge[region][2], MultiRefineRegionRightEdge[region][0],
             MultiRefineRegionRightEdge[region][1], MultiRefineRegionRightEdge[region][2],
-            MultiRefineRegionMinimumRefinementLevel[region], MultiRefineRegionMaximumRefinementLevel[region],
+            MultiRefineRegionMinimumLevel[region], MultiRefineRegionMaximumLevel[region],
             MultiRefineRegionMinimumStarMass[region]);
         }
           

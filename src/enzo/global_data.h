@@ -273,6 +273,8 @@ EXTERN int MultiRefineRegionMinimumLevel[MAX_STATIC_REGIONS+MAX_TRACKS];
 EXTERN int MultiRefineRegionMinimumStarMass[MAX_STATIC_REGIONS+MAX_TRACKS];
 EXTERN int MultiRefineRegionMaximumOuterLevel;
 EXTERN int MultiRefineRegionMinimumOuterLevel;
+EXTERN int MultiRefineRegionSpatiallyVaryingStarMass;
+EXTERN FLOAT MultiRefineRegionSpatiallyVaryingDefaultStarMass;
 EXTERN FLOAT MultiRefineRegionStaggeredRefinement[MAX_STATIC_REGIONS+MAX_TRACKS];
 
 /* Uniform gravity: on/off flag, direction, and strength. */

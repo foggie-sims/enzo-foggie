@@ -391,7 +391,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
     /* Parameters for the MultiRefineRegion mechanics */
 
-      
+    ret += sscanf(line, "MultiRefineRegionSpatiallyVaryingStarMass = %"ISYM, &MultiRefineRegionSpatiallyVaryingStarMass);
+    ret += sscanf(line, "MultiRefineRegionSpatiallyVaryingDefaultStarMass = %"FSYM, &MultiRefineRegionSpatiallyVaryingDefaultStarMass);
     ret += sscanf(line, "MultiRefineRegionMaximumOuterLevel  = %"ISYM, &MultiRefineRegionMaximumOuterLevel);
     ret += sscanf(line, "MultiRefineRegionMinimumOuterLevel  = %"ISYM, &MultiRefineRegionMinimumOuterLevel);
     if (sscanf(line, "MultiRefineRegionMaximumLevel[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2)
@@ -400,6 +401,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 	  ENZO_VFAIL("MultiRefineRegion number %"ISYM" (MAX_STATIC_REGIONS) > MAX allowed\n", dim);
 	ret++;
 	MultiRefineRegionMaximumLevel[dim] = int_dummy;
+    MultiRefineRegionMinimumLevel[dim] = int_dummy;
       }
     if (sscanf(line, "MultiRefineRegionGeometry[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2){
       ret++;
