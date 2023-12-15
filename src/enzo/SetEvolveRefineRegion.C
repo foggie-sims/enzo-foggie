@@ -38,11 +38,7 @@ int SetEvolveRefineRegion (FLOAT time)
     printf("SetEvolveRefineRegion: EvolveRefineRegionTime[0]:        %"FSYM"\n",EvolveRefineRegionTime[0]);
     printf("SetEvolveRefineRegion: EvolveMustRefineRegionTime[0]:    %"FSYM"\n",EvolveMustRefineRegionTime[0]);
     printf("SetEvolveRefineRegion: EvolveCoolingRefineRegionTime[0]: %"FSYM"\n",EvolveCoolingRefineRegionTime[0]);
-    for (region = 0; region < NumberOfMultiRefineTracks; region++){
-      for (i = 0; i < NumberofMultiRefineTimeEntries; i++){
-        printf("SetEvolveRefineRegion: EvolveMultiRefineRegionTime[%"ISYM"][%"ISYM"][0]: %"FSYM"\n",region,i,EvolveMultiRefineRegionTime[region][0]);
-      }
-    }
+    printf("SetEvolveRefineRegion: EvolveMultiRefineRegionTime[0]:   %"FSYM"\n",EvolveMultiRefineRegionTime[0]);
   }
   
   /* If TimeType is redshift, calculate redshift */
