@@ -44,7 +44,7 @@ double ReturnWallTime(void);
 #define NO_SYNC_TIMING
  
 int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
-				  int NumberOfGrids, int MoveParticles)
+				  int NumberOfGrids, int level, int MoveParticles)
 {
  
   if (NumberOfProcessors == 1 || NumberOfGrids <= 1)
@@ -52,7 +52,7 @@ int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
  
   /* Initialize */
  
-  int i, GridMemory, NumberOfCells, CellsTotal, Particles, GridsMoved, proc;
+  int i, GridMemory, NumberOfCells, CellsTotal, Particles, GridsMoved, proc, GridLevel;
   float AxialRatio, GridVolume;
   float *ComputeTime = new float[NumberOfGrids];
   float *ProcessorComputeTime = new float[NumberOfProcessors];
@@ -74,18 +74,25 @@ int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
   for (i = 0; i < NumberOfProcessors; i++)
     ProcessorComputeTime[i] = 0;
  
+    printf("         \n"); 
+  
   /* Compute work for each grid. */
- 
   for (i = 0; i < NumberOfGrids; i++) {
     proc = GridHierarchyPointer[i]->GridData->ReturnProcessorNumber();
     GridHierarchyPointer[i]->GridData->CollectGridInformation
-      (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles);
-    //    ComputeTime[i] = GridMemory; // roughly speaking
-    ComputeTime[i] = float(NumberOfCells);
+          (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles, level);
+    ComputeTime[i] = GridMemory; // roughly speaking
+    printf("JT CLBG: Proc %d, Level %d, i %d #Cells %d CellsTot %d GridMem %d Part %d\n", MyProcessorNumber, level, i, NumberOfCells, CellsTotal, GridMemory, Particles);
+    
+    // ComputeTime[i] = float(NumberOfCells);
     ProcessorComputeTime[proc] += ComputeTime[i];
     NewProcessorNumber[i] = proc;
   }
 
+  // JT 
+  for (i = 0; i < NumberOfProcessors; i++)
+    printf("JT Proc %d ProcessorComputeTime[%d] = %f \n", MyProcessorNumber, i, ProcessorComputeTime[i]); 
+ 
  // Mode 1: Load balance over all processors.  Mode 2/3: Load balance
  // only within a node.  Assumes scheduling in blocks (2) or
  // round-robin (3).
@@ -304,6 +311,7 @@ int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
     tt1 = ReturnWallTime();
     printf("LoadBalance: Number of grids moved = %"ISYM" out of %"ISYM" "
 	   "(%lg seconds elapsed)\n", GridsMoved, NumberOfGrids, tt1-tt0);
+    printf("         "); 
   }
 #ifdef UNUSED
   CommunicationSumValues(ProcessorComputeTime, NumberOfProcessors);
