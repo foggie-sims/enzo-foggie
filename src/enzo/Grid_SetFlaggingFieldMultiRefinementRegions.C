@@ -42,6 +42,7 @@ int grid::SetFlaggingFieldMultiRefinementRegions(int level)
   int LocalMinimumRefinementLevel = 0;
   int Start[MAX_DIMENSION], End[MAX_DIMENSION], NIter = 0;
   int NumberOfFlaggedCells = 0;
+  int NRegions;
 
 
   /* Default values */
@@ -57,6 +58,10 @@ int grid::SetFlaggingFieldMultiRefinementRegions(int level)
   /* Check whether we're using evolving MultiRefine regions or not */
   if((MultiRefineRegionTimeType == 0) || (MultiRefineRegionTimeType == 1)){
     NIter = NumberOfMultiRefineTracks;
+  }
+
+  if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+    fprintf(stderr,"%i evolving MultiRefineRegions detected.\n",NIter);
   }
 
   /* loop over dimensions - I guess this is unnecessary,
@@ -85,18 +90,26 @@ int grid::SetFlaggingFieldMultiRefinementRegions(int level)
           
         /* Loop over multirefinement regions */
         for (region = 0; region < MAX_STATIC_REGIONS + NIter; region++){
+          NRegions = 0;
           /* Check whether cell is within a given refinement region */
           if( (MultiRefineRegionLeftEdge[region][0] <= xpos) && (xpos <= MultiRefineRegionRightEdge[region][0]) &&
               (MultiRefineRegionLeftEdge[region][1] <= ypos) && (ypos <= MultiRefineRegionRightEdge[region][1]) &&
               (MultiRefineRegionLeftEdge[region][2] <= zpos) && (zpos <= MultiRefineRegionRightEdge[region][2]) ){
             /* Of those regions the cell is within, adopt refinement constraints of refine regions with maximum allowed refinement */
             if (LocalMaximumRefinementLevel < MultiRefineRegionMaximumLevel[region]){
+                if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+                  fprintf(stderr,"Maximum cell refinement level updated from %i to %i\n",LocalMaximumRefinementLevel,MultiRefineRegionMaximumLevel[region]);
+                }
                 LocalMaximumRefinementLevel = MultiRefineRegionMaximumLevel[region];
             }
             if (LocalMinimumRefinementLevel < MultiRefineRegionMinimumLevel[region]){
                 LocalMinimumRefinementLevel = MultiRefineRegionMinimumLevel[region];
             }
+            NRegions ++;
           }
+        }
+        if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+          fprintf(stderr,"Cell is within %i MultiRefineRegions.\n",NRegions);
         }
         /* Flag for refinement if cell is below minimum level allowed */
         if ((LocalMaximumRefinementLevel > 0) || (LocalMinimumRefinementLevel > 0)){ // if cell is inside of at least one refine region
