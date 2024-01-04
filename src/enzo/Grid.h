@@ -887,7 +887,7 @@ gradient force to gravitational force for one-zone collapse test. */
 
 /* Set flagging field from refine regions */
 
-   int SetFlaggingFieldMultiRefinementRegions(int level);
+   int FlagCellsToBeRefinedByMultiRefineRegion(int level);
 
 /* Set flagging field from static regions */
 

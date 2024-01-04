@@ -496,6 +496,7 @@ OBJS_CONFIG_LIB = \
 	Grid_FlagCellsToBeRefinedByMass.o \
 	Grid_FlagCellsToBeRefinedByMetallicity.o \
 	Grid_FlagCellsToBeRefinedByMetalMass.o \
+        Grid_FlagCellsToBeRefinedByMultiRefineRegion.o \
 	Grid_FlagCellsToBeRefinedByMustRefineRegion.o \
 	Grid_FlagCellsToBeRefinedByResistiveLength.o \
 	Grid_FlagCellsToBeRefinedByShear.o \
@@ -622,7 +623,6 @@ OBJS_CONFIG_LIB = \
 	Grid_SedovBlastInitializeGrid3D.o \
 	Grid_SetExternalBoundaryValues.o \
 	Grid_SetFlaggingField.o \
-	Grid_SetFlaggingFieldMultiRefinementRegions.o \
 	Grid_SetFlaggingFieldMultiRefineRegions.o \
 	Grid_SetFlaggingFieldStaticRegions.o \
 	Grid_SetIsolatedPotentialBoundary.o \
