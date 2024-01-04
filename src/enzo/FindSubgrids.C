@@ -68,14 +68,6 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
     ENZO_FAIL("Error in grid->SetFlaggingField.");
   }
 
-  /* Flag cells based on MultiRefineRegions */
-
-  if (CurrentGrid->FlagCellsToBeRefinedByMultiRefineRegion(level)
-      == FAIL) {
-    fprintf(stderr, "Error in grid->FlagCellsToBeRefinedByMultiRefineRegion.\n");
-    return FAIL;
-  }
-
   /* Add a buffer region around each flagged cell. */
 
   if (NumberOfFlaggedCells != 0) {

@@ -461,7 +461,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
     /* If provided, set RefineRegion from evolving RefineRegion 
        OR set MustRefineRegion from evolving MustRefineRegion 
-       OR set CoolingRefineRegion from evolving CoolingRefineRegion */
+       OR set CoolingRefineRegion from evolving CoolingRefineRegion
+       OR set MultiRefineRegion from evolving MultiRefineRegion */
     if ((RefineRegionTimeType == 1) || (RefineRegionTimeType == 0)
         || (MustRefineRegionTimeType == 1) || (MustRefineRegionTimeType == 0)
         || (CoolingRefineRegionTimeType == 1) || (CoolingRefineRegionTimeType == 0)

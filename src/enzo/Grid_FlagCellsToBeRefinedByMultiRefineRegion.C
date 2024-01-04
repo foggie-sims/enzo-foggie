@@ -137,5 +137,5 @@ int grid::SetFlaggingFieldMultiRefinementRegions(int level)
 	   NumberOfFlaggedCells, float(NumberOfFlaggedCells)*100.0/
 	   float(size));
 
-  return SUCCESS;
+  return NumberOfFlaggedCells;
 }

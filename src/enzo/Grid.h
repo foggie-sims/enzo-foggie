@@ -885,10 +885,6 @@ gradient force to gravitational force for one-zone collapse test. */
 
    int SetFlaggingFieldMultiRefineRegions(int level);
 
-/* Set flagging field from refine regions */
-
-   int FlagCellsToBeRefinedByMultiRefineRegion(int level);
-
 /* Set flagging field from static regions */
 
    int SetFlaggingFieldStaticRegions(int level, int &NumberOfFlaggedCells);
@@ -984,6 +980,10 @@ gradient force to gravitational force for one-zone collapse test. */
 /* Flag all cells which are within a user-specified refinement region. */
 
    int FlagCellsToBeRefinedByMustRefineRegion(int level);
+
+/* Flag all cells which are within user-specified refinement regions. */
+
+   int FlagCellsToBeRefinedByMultiRefineRegion(int level);
 
 /* Flag all cells which are above a user-specified metallicity. */
 
