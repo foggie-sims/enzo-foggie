@@ -26,7 +26,7 @@
 
 /* Currently only works for cubic geometry in 3D */
 
-int grid::SetFlaggingFieldMultiRefinementRegions(int level)
+int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
 {
 
   /* Return if this grid is not on this processor
@@ -133,7 +133,7 @@ int grid::SetFlaggingFieldMultiRefinementRegions(int level)
   }
 
   if (debug)
-    printf("SetFlaggingFieldMultiRefineRegions: NumberOfFlaggedCells = %d (%.1f%%)\n",
+    printf("FlagCellsToBeRefinedByMultiRefineRegion: NumberOfFlaggedCells = %d (%.1f%%)\n",
 	   NumberOfFlaggedCells, float(NumberOfFlaggedCells)*100.0/
 	   float(size));
 
