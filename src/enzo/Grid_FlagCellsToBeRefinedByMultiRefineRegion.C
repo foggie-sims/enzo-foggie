@@ -87,10 +87,10 @@ int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
         xpos = GridLeftEdge[0] + (FLOAT(i-Start[0])+0.5 )*CellSize;
         ypos = GridLeftEdge[1] + (FLOAT(j-Start[1])+0.5 )*CellSize;
         zpos = GridLeftEdge[2] + (FLOAT(k-Start[2])+0.5 )*CellSize;
-          
+        
+        NRegions = 0;
         /* Loop over multirefinement regions */
         for (region = 0; region < MAX_STATIC_REGIONS + NIter; region++){
-          NRegions = 0;
           /* Check whether cell is within a given refinement region */
           if( (MultiRefineRegionLeftEdge[region][0] <= xpos) && (xpos <= MultiRefineRegionRightEdge[region][0]) &&
               (MultiRefineRegionLeftEdge[region][1] <= ypos) && (ypos <= MultiRefineRegionRightEdge[region][1]) &&
@@ -108,8 +108,8 @@ int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
             NRegions ++;
           }
         }
-        if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
-          fprintf(stderr,"Cell is within %i MultiRefineRegions.\n",NRegions);
+        if(debug1 && MyProcessorNumber == ROOT_PROCESSOR && NRegions>0){
+          fprintf(stderr,"Cell is within %i MultiRefineRegion(s).\n",NRegions);
         }
         /* Flag for refinement if cell is below minimum level allowed */
         if ((LocalMaximumRefinementLevel > 0) || (LocalMinimumRefinementLevel > 0)){ // if cell is inside of at least one refine region
