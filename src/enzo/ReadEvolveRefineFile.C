@@ -309,7 +309,7 @@ int ReadEvolveRefineFile(void)
       }
       
       if (MultiRefineRegionTimeType == 0){ // If we're using code time
-        for(i=1; i<=NumberOfMultiRefineTimeEntries; i++){
+        for(i=1; i<=NumberOfMultiRefineTimeEntries-1; i++){
           if (EvolveMultiRefineRegionTime[i]-EvolveMultiRefineRegionTime[i-1]<0){
             fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found that the times in your track box decrease.\n Set MultiRefineRegionTimeType=1 if using redshift.\n");
             return FAIL;
@@ -317,7 +317,7 @@ int ReadEvolveRefineFile(void)
         }
       }
       if (MultiRefineRegionTimeType == 1){ // If we're using redshift
-        for(i=1; i<=NumberOfMultiRefineTimeEntries; i++){
+        for(i=1; i<=NumberOfMultiRefineTimeEntries-1; i++){
           if (EvolveMultiRefineRegionTime[i]-EvolveMultiRefineRegionTime[i-1]>0){
             fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found that the redshifts in your track box increase.\n Set MultiRefineRegionTimeType=0 if using code time.\n");
             return FAIL;
@@ -353,12 +353,12 @@ int ReadEvolveRefineFile(void)
         printf("ReadEvolveMultiRefineFile: I have a MultiRefineRegion with TimeType %"ISYM" \n",
            MultiRefineRegionTimeType);
         
-        printf("ReadEvolveRefineFile: And here is what I think my times, edges, and minimum levels are:\n");
+        printf("ReadEvolveRefineFile: And here is what I think my times, edges, minimum and maximum levels, and minimum stellar masses are:\n");
 
-        for(int i=0; i<NumberOfMultiRefineTimeEntries*NumberOfMultiRefineTracks; i++){
+        for(int i=2; i<NumberOfMultiRefineTimeEntries*NumberOfMultiRefineTracks; i++){
           TimeInd = (i-2)%NumberOfMultiRefineTimeEntries;
           TrackInd = int(float(i-2)/float(NumberOfMultiRefineTimeEntries));
-          printf("ReadEvolveRefineFile (MustRefineRegion): %"FSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM "%"ISYM "%"FSYM"\n",
+          printf("ReadEvolveRefineFile (MustRefineRegion): %"FSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM " %"ISYM " %"FSYM"\n",
                  EvolveMultiRefineRegionTime[TimeInd],
                  EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][0],
                  EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][1],
