@@ -103,13 +103,13 @@ int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
                 LocalMaximumRefinementLevel = MultiRefineRegionMaximumLevel[region];
             }
             if (LocalMinimumRefinementLevel < MultiRefineRegionMinimumLevel[region]){
+                if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+                  fprintf(stderr,"Minimum cell refinement level updated from %i to %i\n",LocalMinimumRefinementLevel,MultiRefineRegionMinimumLevel[region]);
+                }
                 LocalMinimumRefinementLevel = MultiRefineRegionMinimumLevel[region];
             }
             NRegions ++;
           }
-        }
-        if(debug1 && MyProcessorNumber == ROOT_PROCESSOR && NRegions>0){
-          fprintf(stderr,"Cell is within %i MultiRefineRegion(s).\n",NRegions);
         }
         /* Flag for refinement if cell is below minimum level allowed */
         if ((LocalMaximumRefinementLevel > 0) || (LocalMinimumRefinementLevel > 0)){ // if cell is inside of at least one refine region
