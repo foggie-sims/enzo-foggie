@@ -356,7 +356,7 @@ int SetEvolveRefineRegion (FLOAT time)
       
       /* Check how many static MultiRefineRegions there are */
       NStaticMultiRefineRegions = 0;
-      while (MultiRefineRegionGeometry[NStaticMultiRefineRegions] != INT_UNDEFINED)
+      while (MultiRefineRegionGeometry[NStaticMultiRefineRegions] != -1)
           NStaticMultiRefineRegions ++;
       NStaticMultiRefineRegions -= 1;
 
