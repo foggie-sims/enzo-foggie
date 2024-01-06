@@ -359,6 +359,10 @@ int SetEvolveRefineRegion (FLOAT time)
       while (MultiRefineRegionGeometry[NStaticMultiRefineRegions] != INT_UNDEFINED)
           NStaticMultiRefineRegions ++;
       NStaticMultiRefineRegions -= 1;
+
+      if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+        fprintf(stderr,"SetEvolveRefineRegion sees %i static MultiRefineRegions and %i evolving ones.\n",NStaticMultiRefineRegions,NumberOfMultiRefineTracks);
+      }
       
       for (region = 0; region < NStaticMultiRefineRegions + NumberOfMultiRefineTracks; region++){
         for (i = 0; i < MAX_DIMENSION; i++){
@@ -385,11 +389,11 @@ int SetEvolveRefineRegion (FLOAT time)
         MultiRefineRegionMinimumStarMass[region+NStaticMultiRefineRegions] = EvolveMultiRefineRegionMinimumStarMass[region];
         if (debug1){
           fprintf(stdout, "SetEvolveRefineRegion: EvolveMultiRefineRegion: %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM" %"ISYM" %"FSYM"\n",
-            MultiRefineRegionLeftEdge[region][0], MultiRefineRegionLeftEdge[region][1],
-            MultiRefineRegionLeftEdge[region][2], MultiRefineRegionRightEdge[region][0],
-            MultiRefineRegionRightEdge[region][1], MultiRefineRegionRightEdge[region][2],
-            MultiRefineRegionMinimumLevel[region], MultiRefineRegionMaximumLevel[region],
-            MultiRefineRegionMinimumStarMass[region]);
+            MultiRefineRegionLeftEdge[region+NStaticMultiRefineRegions][0], MultiRefineRegionLeftEdge[region+NStaticMultiRefineRegions][1],
+            MultiRefineRegionLeftEdge[region+NStaticMultiRefineRegions][2], MultiRefineRegionRightEdge[region+NStaticMultiRefineRegions][0],
+            MultiRefineRegionRightEdge[region+NStaticMultiRefineRegions][1], MultiRefineRegionRightEdge[region+NStaticMultiRefineRegions][2],
+            MultiRefineRegionMinimumLevel[region+NStaticMultiRefineRegions], MultiRefineRegionMaximumLevel[region+NStaticMultiRefineRegions],
+            MultiRefineRegionMinimumStarMass[region+NStaticMultiRefineRegions]);
         }
           
       } // for (region = 0; region < NumberOfMultiRefineTracks; region++)
