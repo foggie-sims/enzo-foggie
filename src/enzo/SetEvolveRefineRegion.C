@@ -311,8 +311,8 @@ int SetEvolveRefineRegion (FLOAT time)
       EvolveMultiRefineRegionLeftEdge[region][0][0], EvolveMultiRefineRegionLeftEdge[region][0][1],
       EvolveMultiRefineRegionLeftEdge[region][0][2], EvolveMultiRefineRegionRightEdge[region][0][0],
       EvolveMultiRefineRegionRightEdge[region][0][1], EvolveMultiRefineRegionRightEdge[region][0][2],
-      EvolveMultiRefineRegionMinimumLevel[region][0], EvolveMultiRefineRegionMaximumLevel[region][0],
-      EvolveMultiRefineRegionMinimumStarMass[region][0]);
+      EvolveMultiRefineRegionMinimumLevel[region], EvolveMultiRefineRegionMaximumLevel[region],
+      EvolveMultiRefineRegionMinimumStarMass[region]);
     }
     
     /* Find closest time step with <time */
