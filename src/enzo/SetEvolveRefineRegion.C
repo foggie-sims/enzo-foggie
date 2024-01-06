@@ -364,7 +364,7 @@ int SetEvolveRefineRegion (FLOAT time)
         fprintf(stderr,"SetEvolveRefineRegion sees %i static MultiRefineRegions and %i evolving ones.\n",NStaticMultiRefineRegions,NumberOfMultiRefineTracks);
       }
       
-      for (region = 0; region < NStaticMultiRefineRegions + NumberOfMultiRefineTracks; region++){
+      for (region = 0; region < NumberOfMultiRefineTracks; region++){
         for (i = 0; i < MAX_DIMENSION; i++){
 
           if(timestep == NumberOfMultiRefineTimeEntries-1){
