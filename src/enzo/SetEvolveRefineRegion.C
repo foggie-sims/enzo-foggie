@@ -305,6 +305,15 @@ int SetEvolveRefineRegion (FLOAT time)
     
   /* does time evolution for MultiRefineRegion ONLY! */
   if((MultiRefineRegionTimeType == 1) || (MultiRefineRegionTimeType == 0) ){
+
+    if (debug1){
+      fprintf(stdout, "SetEvolveRefineRegion: Original MultiRefineRegion: %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM" %"ISYM" %"FSYM"\n",
+      EvolveMultiRefineRegionLeftEdge[region][0][0], EvolveMultiRefineRegionLeftEdge[region][0][1],
+      EvolveMultiRefineRegionLeftEdge[region][0][2], EvolveMultiRefineRegionRightEdge[region][0][0],
+      EvolveMultiRefineRegionRightEdge[region][0][1], EvolveMultiRefineRegionRightEdge[region][0][2],
+      EvolveMultiRefineRegionMinimumLevel[region][0], EvolveMultiRefineRegionMaximumLevel[region][0],
+      EvolveMultiRefineRegionMinimumStarMass[region][0]);
+    }
     
     /* Find closest time step with <time */
     /* Set time=redshift if that's what we're doing. */

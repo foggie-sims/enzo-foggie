@@ -355,7 +355,7 @@ int ReadEvolveRefineFile(void)
         
         printf("ReadEvolveRefineFile: And here is what I think my times, edges, minimum and maximum levels, and minimum stellar masses are:\n");
 
-        for(int i=2; i<NumberOfMultiRefineTimeEntries*NumberOfMultiRefineTracks; i++){
+        for(int i=2; i<(NumberOfMultiRefineTimeEntries*NumberOfMultiRefineTracks)+2; i++){
           TimeInd = (i-2)%NumberOfMultiRefineTimeEntries;
           TrackInd = int(float(i-2)/float(NumberOfMultiRefineTimeEntries));
           printf("ReadEvolveRefineFile (MustRefineRegion): %"FSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM " %"ISYM " %"FSYM"\n",
