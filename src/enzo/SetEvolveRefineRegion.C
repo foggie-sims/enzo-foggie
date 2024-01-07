@@ -358,7 +358,6 @@ int SetEvolveRefineRegion (FLOAT time)
       NStaticMultiRefineRegions = 0;
       while (MultiRefineRegionLeftEdge[NStaticMultiRefineRegions][0] != FLOAT_UNDEFINED)
           NStaticMultiRefineRegions ++;
-      NStaticMultiRefineRegions -= 1;
 
       if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
         fprintf(stderr,"SetEvolveRefineRegion sees %i static MultiRefineRegions and %i evolving ones.\n",NStaticMultiRefineRegions,NumberOfMultiRefineTracks);
