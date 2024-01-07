@@ -222,7 +222,6 @@ int ReadEvolveRefineFile(void)
       NumberOfMultiRefineTracks = 0;
       NumberOfMultiRefineTimeEntries = 0;
       int TrackInd, TimeInd;
-      float trackID[NumberOfMultiRefineTracks];
       
       /* Read in header and verify that values are reasonable */
       fgets(line, MAX_LINE_LENGTH, fptr);
@@ -256,6 +255,7 @@ int ReadEvolveRefineFile(void)
       fgets(line, MAX_LINE_LENGTH, fptr);  // Read in header again
       fgets(line, MAX_LINE_LENGTH, fptr);
       i = 2; // Number of lines in header
+      int trackID[NumberOfMultiRefineTracks];
       while ((fgets(line, MAX_LINE_LENGTH, fptr) != NULL)){
         TimeInd = (i-2)%NumberOfMultiRefineTimeEntries;
         TrackInd = int(float(i-2)/float(NumberOfMultiRefineTimeEntries));
@@ -271,26 +271,26 @@ int ReadEvolveRefineFile(void)
               &(EvolveMultiRefineRegionMinimumLevel[TrackInd]),
               &(EvolveMultiRefineRegionMaximumLevel[TrackInd]),
               &(EvolveMultiRefineRegionMinimumStarMass[TrackInd]));
-          /* Make sure your arrays correspond to the tracks they should */
-          if(TrackInd != trackID[TrackInd]){
-            fprintf(stderr, "ReadEvolveRefineFile (MultiRefineRegion) says your track IDs do not match up!\n Calculated: %i; Actual: %i\n",TrackInd,trackID[TrackInd]);
-            return FAIL;
-          }
-          /* Make sure your refine regions are within the simulation volume */
-          if( (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][0] < 0) || (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][0] > 1) ||
-              (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][1] < 0) || (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][1] > 1) ||
-              (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][2] < 0) || (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][2] > 1) ||
-              (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][0] < 0) || (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][0] > 1) ||
-              (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][1] < 0) || (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][1] > 1) ||
-              (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][2] < 0) || (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][2] > 1)){
-              fprintf(stderr, "ReadEvolveRefineFile (MultiRefineRegion) says the position of the refine region on line %i of your track file is out of bounds\n", i);
-            return FAIL;
-          }
+        /* Make sure your arrays correspond to the tracks they should */
+        if(TrackInd != trackID[TrackInd]){
+          fprintf(stderr, "ReadEvolveRefineFile (MultiRefineRegion) says your track IDs do not match up!\n Calculated: %i; Actual: %i\n",TrackInd,trackID[TrackInd]);
+          return FAIL;
+        }
+        /* Make sure your refine regions are within the simulation volume */
+        if( (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][0] < 0) || (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][0] > 1) ||
+            (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][1] < 0) || (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][1] > 1) ||
+            (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][2] < 0) || (EvolveMultiRefineRegionLeftEdge[TrackInd][TimeInd][2] > 1) ||
+            (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][0] < 0) || (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][0] > 1) ||
+            (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][1] < 0) || (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][1] > 1) ||
+            (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][2] < 0) || (EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][2] > 1)){
+            fprintf(stderr, "ReadEvolveRefineFile (MultiRefineRegion) says the position of the refine region on line %i of your track file is out of bounds\n", i);
+          return FAIL;
+        }
         if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
            fprintf(stderr,"Here is the line (MultiRefineRegion): %s \n",line);
            fprintf(stderr,". . . and here is the minimum value (MultiRefineRegion): %i \n",EvolveMultiRefineRegionMinimumLevel[TrackInd]);
            fprintf(stderr,". . . and here is the maximum value (MultiRefineRegion): %i \n",EvolveMultiRefineRegionMaximumLevel[TrackInd]);
-           }
+        }
         if( nret != 11 ){
           fprintf(stderr,"WARNING: ReadEvolveRefineFile (MultiRefineRegion) cannot interpret line %s",line);
           continue;
