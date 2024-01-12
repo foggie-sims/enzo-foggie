@@ -692,7 +692,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
       Grids[grid1]->GridData->CollectGridInformation
-        (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles);
+        (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles, level);
       LevelZoneCycleCount[level] += NumberOfCells;
       TIMER_ADD_CELLS(level, NumberOfCells);
       if (MyProcessorNumber == Grids[grid1]->GridData->ReturnProcessorNumber())
