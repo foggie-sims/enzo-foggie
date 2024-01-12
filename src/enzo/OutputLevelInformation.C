@@ -101,7 +101,7 @@ int OutputLevelInformation(FILE *fptr, TopGridData &MetaData,
  
       Temp->GridData->CollectGridInformation(GridMemory, GridVolume,
 					     Cells, AxialRatio,
-					     TotalCells,NumParticles);
+					     TotalCells,NumParticles, level);
       bool isLocal = Temp->GridData->isLocal();
 
       Grids[level]++;
