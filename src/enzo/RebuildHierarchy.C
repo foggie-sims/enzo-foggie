@@ -583,8 +583,7 @@ int RebuildHierarchy(TopGridData *MetaData,
  	        break;
       case 4:
 	if (i >= LoadBalancingMinLevel && i <= LoadBalancingMaxLevel)
-	  LoadBalanceHilbertCurve(SubgridHierarchyPointer, subgrids, 
-				  MoveParticles);
+	  LoadBalanceHilbertCurve(SubgridHierarchyPointer, subgrids, MoveParticles);
 	break;
       default:
 	break;
