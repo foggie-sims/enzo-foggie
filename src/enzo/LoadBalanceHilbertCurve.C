@@ -126,7 +126,7 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
   for (i = 0; i < NumberOfGrids; i++) {
     GridHierarchyPointer[HilbertData[i].grid_num]->GridData->
       CollectGridInformation(GridMemory, GridVolume, NumberOfCells, 
-			     AxialRatio, CellsTotal, NumberOfParticles);
+			     AxialRatio, CellsTotal, NumberOfParticles, -1);
     GridWork[i] = CellsTotal;
     TotalWork += CellsTotal;
   }
@@ -419,7 +419,7 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
   for (i = 0; i < NumberOfGrids; i++) {
     GridPointers[HilbertData[i].grid_num]->
       CollectGridInformation(GridMemory, GridVolume, NumberOfCells, 
-			     AxialRatio, CellsTotal, NumberOfParticles);
+			     AxialRatio, CellsTotal, NumberOfParticles, -1);
     GridWork[i] = CellsTotal;
     TotalWork += CellsTotal;
   }
