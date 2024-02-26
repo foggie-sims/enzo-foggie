@@ -274,7 +274,7 @@ EXTERN int MultiRefineRegionMinimumStarMass[MAX_STATIC_REGIONS+MAX_TRACKS];
 EXTERN int MultiRefineRegionMaximumOuterLevel;
 EXTERN int MultiRefineRegionMinimumOuterLevel;
 EXTERN int MultiRefineRegionSpatiallyVaryingStarMass;
-EXTERN FLOAT MultiRefineRegionSpatiallyVaryingDefaultStarMass;
+EXTERN FLOAT MultiRefineRegionDefaultStarMass;
 EXTERN FLOAT MultiRefineRegionStaggeredRefinement[MAX_STATIC_REGIONS+MAX_TRACKS];
 
 /* Uniform gravity: on/off flag, direction, and strength. */
@@ -582,7 +582,7 @@ EXTERN FLOAT EvolveMultiRefineRegionLeftEdge[MAX_TRACKS][MAX_TIME_ENTRIES][3]; /
 EXTERN FLOAT EvolveMultiRefineRegionRightEdge[MAX_TRACKS][MAX_TIME_ENTRIES][3]; // right corners
 EXTERN int EvolveMultiRefineRegionMinimumLevel[MAX_TRACKS]; // minimum allowable level
 EXTERN int EvolveMultiRefineRegionMaximumLevel[MAX_TRACKS]; // maximum allowable level
-EXTERN FLOAT EvolveMultiRefineRegionMinimumStarMass[MAX_TRACKS]; // minimum allowed star particle formation mass
+EXTERN FLOAT EvolveMultiRefineRegionMinimumStarMass[MAX_TRACKS][MAX_TIME_ENTRIES]; // minimum allowed star particle formation mass
 
 /* Processor identifier for this thread/processor */
 

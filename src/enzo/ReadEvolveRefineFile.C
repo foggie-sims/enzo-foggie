@@ -218,7 +218,7 @@ int ReadEvolveRefineFile(void)
       }
 
       char line[MAX_LINE_LENGTH];
-      int nret, i=0;
+      int nret, i=0, j=0;
       NumberOfMultiRefineTracks = 0;
       NumberOfMultiRefineTimeEntries = 0;
       int TrackInd, TimeInd;
@@ -270,7 +270,7 @@ int ReadEvolveRefineFile(void)
               &(EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][2]),
               &(EvolveMultiRefineRegionMinimumLevel[TrackInd]),
               &(EvolveMultiRefineRegionMaximumLevel[TrackInd]),
-              &(EvolveMultiRefineRegionMinimumStarMass[TrackInd]));
+              &(EvolveMultiRefineRegionMinimumStarMass[TrackInd][TimeInd]));
         /* Make sure your arrays correspond to the tracks they should */
         if(TrackInd != trackID[TrackInd]){
           fprintf(stderr, "ReadEvolveRefineFile (MultiRefineRegion) says your track IDs do not match up!\n Calculated: %i; Actual: %i\n",TrackInd,trackID[TrackInd]);
@@ -337,13 +337,15 @@ int ReadEvolveRefineFile(void)
           
       /* Make sure that minimum stellar mass for multirefine regions make sense */
       for (i=0; i<NumberOfMultiRefineTracks; i++){
-        if(EvolveMultiRefineRegionMinimumStarMass[i]<0){
-          fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found a negative minimum stellar mass requested in your track file for track %i.\n",i);
-          return FAIL;
-        }
-        if(EvolveMultiRefineRegionMinimumStarMass[i]>pow(10,20)){
-          fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found an unreasonably high minimum stellar mass requested in your track file for track %i.\n",i);
-          return FAIL;
+        for (j=0; j<NumberOfMultiRefineTimeEntries; j++){
+          if(EvolveMultiRefineRegionMinimumStarMass[i][j]<0){
+            fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found a negative minimum stellar mass requested in your track file for track %i.\n",i);
+            return FAIL;
+          }
+          if(EvolveMultiRefineRegionMinimumStarMass[i][j]>pow(10,20)){
+            fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found an unreasonably high minimum stellar mass requested in your track file for track %i.\n",i);
+            return FAIL;
+          }
         }
       }
 
@@ -368,7 +370,7 @@ int ReadEvolveRefineFile(void)
                  EvolveMultiRefineRegionRightEdge[TrackInd][TimeInd][2],
                  EvolveMultiRefineRegionMinimumLevel[TrackInd],
                  EvolveMultiRefineRegionMaximumLevel[TrackInd],
-                 EvolveMultiRefineRegionMinimumStarMass[TrackInd]);
+                 EvolveMultiRefineRegionMinimumStarMass[TrackInd][TimeInd]);
         } // for loop
 
         fflush(stdout);

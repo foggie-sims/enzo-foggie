@@ -261,11 +261,11 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MultiRefineRegionMaximumOuterLevel = INT_UNDEFINED;
   MultiRefineRegionMinimumOuterLevel = INT_UNDEFINED;
   MultiRefineRegionSpatiallyVaryingStarMass = INT_UNDEFINED;
-  MultiRefineRegionSpatiallyVaryingDefaultStarMass = FLOAT_UNDEFINED;
+  MultiRefineRegionDefaultStarMass = FLOAT_UNDEFINED;
   for (i = 0; i < MAX_STATIC_REGIONS+MAX_TRACKS; i++) {
     MultiRefineRegionMaximumLevel[i] = INT_UNDEFINED;
     MultiRefineRegionMinimumLevel[i] = 0;
-    MultiRefineRegionMinimumStarMass[i] = INT_UNDEFINED;
+    MultiRefineRegionMinimumStarMass[i] = FLOAT_UNDEFINED;
     MultiRefineRegionGeometry[i] = -1; 
     MultiRefineRegionRadius[i] = INT_UNDEFINED;
     MultiRefineRegionWidth[i] = 3.0;
@@ -332,8 +332,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   for (i = 0; i < MAX_TRACKS; i++) {
     EvolveMultiRefineRegionMinimumLevel[i] = INT_UNDEFINED;
     EvolveMultiRefineRegionMaximumLevel[i] = INT_UNDEFINED;
-    EvolveMultiRefineRegionMinimumStarMass[i] = FLOAT_UNDEFINED;
     for (j = 0; j < MAX_TIME_ENTRIES; j++) {
+        EvolveMultiRefineRegionMinimumStarMass[i][j] = FLOAT_UNDEFINED;
         for (k = 0; k < MAX_DIMENSION; k++) {
             EvolveMultiRefineRegionLeftEdge[i][j][k]  = FLOAT_UNDEFINED;
             EvolveMultiRefineRegionRightEdge[i][j][k] = FLOAT_UNDEFINED;

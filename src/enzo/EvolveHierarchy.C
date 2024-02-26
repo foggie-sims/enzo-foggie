@@ -477,6 +477,13 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 	  ENZO_FAIL("Error in SetStellarMassThreshold.");
     }
 
+    /* If using spatially varying star particle mass threshold, store stellar mass 
+    threshold for this root grid timestep. StarMakerMinimumMass will get reset to
+    this value in all grids that aren't in a MultiRefine region */
+    if (MultiRefineRegionSpatiallyVaryingStarMass == 1){
+      MultiRefineRegionDefaultStarMass = StarMakerMinimumMass;
+    }
+
     /* Set evolving feedback efficiency */
     if (StarFeedbackThermalEfficiencyRamp > 0) {
         if (SetStellarFeedbackEfficiency(MetaData.Time) == FAIL) 

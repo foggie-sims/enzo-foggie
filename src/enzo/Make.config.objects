@@ -626,6 +626,7 @@ OBJS_CONFIG_LIB = \
 	Grid_SetFlaggingFieldMultiRefineRegions.o \
 	Grid_SetFlaggingFieldStaticRegions.o \
 	Grid_SetIsolatedPotentialBoundary.o \
+        Grid_SetMinimumStarMass.o \
 	Grid_SetMinimumSupport.o \
 	Grid_SetNewParticleIndex.o \
 	Grid_SetParticleMassFlaggingField.o \

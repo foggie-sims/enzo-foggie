@@ -998,6 +998,9 @@ gradient force to gravitational force for one-zone collapse test. */
 
    int FlagBufferZones();
 
+/* Set minimum star particle mass for cells within multirefine regions*/
+   int SetMinimumStarMass();
+
 /* Identify new subgrids for this grid (and prove Fermat's last theorem too)
    (gg #5) */
 

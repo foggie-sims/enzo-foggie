@@ -705,8 +705,6 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
     
   fprintf(fptr, "MultiRefineRegionSpatiallyVaryingStarMass = %"ISYM"\n",
           MultiRefineRegionSpatiallyVaryingStarMass);
-  fprintf(fptr, "MultiRefineRegionSpatiallyVaryingDefaultStarMass = %"FSYM"\n",
-          MultiRefineRegionSpatiallyVaryingDefaultStarMass);
   fprintf(fptr, "MultiRefineRegionMaximumOuterLevel  = %"ISYM"\n",
           MultiRefineRegionMaximumOuterLevel);
   fprintf(fptr, "MultiRefineRegionMinimumOuterLevel  = %"ISYM"\n",

@@ -312,7 +312,7 @@ int SetEvolveRefineRegion (FLOAT time)
       EvolveMultiRefineRegionLeftEdge[region][0][2], EvolveMultiRefineRegionRightEdge[region][0][0],
       EvolveMultiRefineRegionRightEdge[region][0][1], EvolveMultiRefineRegionRightEdge[region][0][2],
       EvolveMultiRefineRegionMinimumLevel[region], EvolveMultiRefineRegionMaximumLevel[region],
-      EvolveMultiRefineRegionMinimumStarMass[region]);
+      EvolveMultiRefineRegionMinimumStarMass[region][0]);
     }
     
     /* Find closest time step with <time */
@@ -352,52 +352,56 @@ int SetEvolveRefineRegion (FLOAT time)
     timestep -= 1;
     if (timestep < 0) return SUCCESS;
 
-      /* Set MultiRefineRegion to EvolveMultiRefineRegion */
-      
-      /* Check how many static MultiRefineRegions there are */
-      NStaticMultiRefineRegions = 0;
-      while (MultiRefineRegionLeftEdge[NStaticMultiRefineRegions][0] != FLOAT_UNDEFINED)
-          NStaticMultiRefineRegions ++;
+    /* Set MultiRefineRegion to EvolveMultiRefineRegion */
+    
+    /* Check how many static MultiRefineRegions there are */
+    NStaticMultiRefineRegions = 0;
+    while (MultiRefineRegionLeftEdge[NStaticMultiRefineRegions][0] != FLOAT_UNDEFINED)
+        NStaticMultiRefineRegions ++;
 
-      if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
-        fprintf(stderr,"SetEvolveRefineRegion sees %i static MultiRefineRegions and %i evolving ones.\n",NStaticMultiRefineRegions,NumberOfMultiRefineTracks);
-      }
-      
-      for (region = 0; region < NumberOfMultiRefineTracks; region++){
+    if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+      fprintf(stderr,"SetEvolveRefineRegion sees %i static MultiRefineRegions and %i evolving ones.\n",NStaticMultiRefineRegions,NumberOfMultiRefineTracks);
+    }
+    
+    for (region = 0; region < NumberOfMultiRefineTracks; region++){
+      if(timestep == NumberOfMultiRefineTimeEntries-1){
+        MultiRefineRegionMinimumStarMass[region+NStaticMultiRefineRegions] = EvolveMultiRefineRegionMinimumStarMass[region][timestep];
         for (i = 0; i < MAX_DIMENSION; i++){
-
-          if(timestep == NumberOfMultiRefineTimeEntries-1){
-            MultiRefineRegionLeftEdge[region+NStaticMultiRefineRegions][i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i];
-            MultiRefineRegionRightEdge[region+NStaticMultiRefineRegions][i] = EvolveMultiRefineRegionRightEdge[region][timestep][i];
-          } else {
-
-            MultiRefineRegionLeftEdge[region+NStaticMultiRefineRegions][i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i]
-              + (time - EvolveMultiRefineRegionTime[timestep])
-              * (EvolveMultiRefineRegionLeftEdge[region][timestep+1][i]-EvolveMultiRefineRegionLeftEdge[region][timestep][i])
-              / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
-
-            MultiRefineRegionRightEdge[region+NStaticMultiRefineRegions][i] = EvolveMultiRefineRegionRightEdge[region][timestep][i]
-              + (time - EvolveMultiRefineRegionTime[timestep])
-              * (EvolveMultiRefineRegionRightEdge[region][timestep+1][i]-EvolveMultiRefineRegionRightEdge[region][timestep][i])
-              / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
-          }
+          MultiRefineRegionLeftEdge[region+NStaticMultiRefineRegions][i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i];
+          MultiRefineRegionRightEdge[region+NStaticMultiRefineRegions][i] = EvolveMultiRefineRegionRightEdge[region][timestep][i];
         } // for (i = 0; i < MAX_DIMENSION; i++)
-          
-        MultiRefineRegionMinimumLevel[region+NStaticMultiRefineRegions] = EvolveMultiRefineRegionMinimumLevel[region];
-        MultiRefineRegionMaximumLevel[region+NStaticMultiRefineRegions] = EvolveMultiRefineRegionMaximumLevel[region];
-        MultiRefineRegionMinimumStarMass[region+NStaticMultiRefineRegions] = EvolveMultiRefineRegionMinimumStarMass[region];
-        if (debug1){
-          fprintf(stdout, "SetEvolveRefineRegion: EvolveMultiRefineRegion: %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM" %"ISYM" %"FSYM"\n",
-            MultiRefineRegionLeftEdge[region+NStaticMultiRefineRegions][0], MultiRefineRegionLeftEdge[region+NStaticMultiRefineRegions][1],
-            MultiRefineRegionLeftEdge[region+NStaticMultiRefineRegions][2], MultiRefineRegionRightEdge[region+NStaticMultiRefineRegions][0],
-            MultiRefineRegionRightEdge[region+NStaticMultiRefineRegions][1], MultiRefineRegionRightEdge[region+NStaticMultiRefineRegions][2],
-            MultiRefineRegionMinimumLevel[region+NStaticMultiRefineRegions], MultiRefineRegionMaximumLevel[region+NStaticMultiRefineRegions],
-            MultiRefineRegionMinimumStarMass[region+NStaticMultiRefineRegions]);
-        }
-          
-      } // for (region = 0; region < NumberOfMultiRefineTracks; region++)
+      } else {
+        MultiRefineRegionMinimumStarMass[region+NStaticMultiRefineRegions] = EvolveMultiRefineRegionMinimumStarMass[region][timestep]
+          + (time - EvolveMultiRefineRegionTime[timestep])
+          * (EvolveMultiRefineRegionMinimumStarMass[region][timestep+1]-EvolveMultiRefineRegionMinimumStarMass[region][timestep])
+          / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
+        for (i = 0; i < MAX_DIMENSION; i++){
+          MultiRefineRegionLeftEdge[region+NStaticMultiRefineRegions][i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i]
+            + (time - EvolveMultiRefineRegionTime[timestep])
+            * (EvolveMultiRefineRegionLeftEdge[region][timestep+1][i]-EvolveMultiRefineRegionLeftEdge[region][timestep][i])
+            / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
 
-    } // if((MustRefineRegionTimeType == 1) || (MustRefineRegionTimeType == 0) )
+          MultiRefineRegionRightEdge[region+NStaticMultiRefineRegions][i] = EvolveMultiRefineRegionRightEdge[region][timestep][i]
+            + (time - EvolveMultiRefineRegionTime[timestep])
+            * (EvolveMultiRefineRegionRightEdge[region][timestep+1][i]-EvolveMultiRefineRegionRightEdge[region][timestep][i])
+            / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
+        } // for (i = 0; i < MAX_DIMENSION; i++)
+      }  // else
+        
+      MultiRefineRegionMinimumLevel[region+NStaticMultiRefineRegions] = EvolveMultiRefineRegionMinimumLevel[region];
+      MultiRefineRegionMaximumLevel[region+NStaticMultiRefineRegions] = EvolveMultiRefineRegionMaximumLevel[region];
+      if (debug1){
+        fprintf(stdout, "SetEvolveRefineRegion: EvolveMultiRefineRegion: %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM" %"ISYM" %"FSYM"\n",
+          MultiRefineRegionLeftEdge[region+NStaticMultiRefineRegions][0], MultiRefineRegionLeftEdge[region+NStaticMultiRefineRegions][1],
+          MultiRefineRegionLeftEdge[region+NStaticMultiRefineRegions][2], MultiRefineRegionRightEdge[region+NStaticMultiRefineRegions][0],
+          MultiRefineRegionRightEdge[region+NStaticMultiRefineRegions][1], MultiRefineRegionRightEdge[region+NStaticMultiRefineRegions][2],
+          MultiRefineRegionMinimumLevel[region+NStaticMultiRefineRegions], MultiRefineRegionMaximumLevel[region+NStaticMultiRefineRegions],
+          MultiRefineRegionMinimumStarMass[region+NStaticMultiRefineRegions]);
+      }
+        
+    } // for (region = 0; region < NumberOfMultiRefineTracks; region++)
+
+  } // if((MustRefineRegionTimeType == 1) || (MustRefineRegionTimeType == 0) )
 
   return SUCCESS;
 
