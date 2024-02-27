@@ -480,8 +480,9 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     /* If using spatially varying star particle mass threshold, store stellar mass 
     threshold for this root grid timestep. StarMakerMinimumMass will get reset to
     this value in all grids that aren't in a MultiRefine region */
-    if (MultiRefineRegionSpatiallyVaryingStarMass == 1){
+    if (MultiRefineRegionSpatiallyVaryingStarMass > 0){
       MultiRefineRegionDefaultStarMass = StarMakerMinimumMass;
+      fprintf(stderr, "EvolveHierarchy: Spatially varying stellar mass threshold enabled.");
     }
 
     /* Set evolving feedback efficiency */
