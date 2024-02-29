@@ -36,7 +36,7 @@ int grid::SetMinimumStarMass(){
 
   /* Declarations */
   int region, i, NMultiRefineRegions, NStaticMultiRefineRegions, timestep;
-  float MRRLeftEdge[MAX_DIMENSION], MRRRightEdge[MAX_DIMENSION], MRRMinimumStarMass;
+  float MRRLeftEdge[MAX_DIMENSION], MRRRightEdge[MAX_DIMENSION], MRRMinimumStarMass, tempstell;
 
   /* How many static vs evolving multirefine regions are there? */
   NMultiRefineRegions = 0;
@@ -49,12 +49,18 @@ int grid::SetMinimumStarMass(){
 
   /* Take care of any static multirefine regions first */
   for (region = 0; region < NStaticMultiRefineRegions; region++){
-    if ((GridLeftEdge[0] <= MultiRefineRegionRightEdge[region][0]) && (GridRightEdge[0] >= MultiRefineRegionLeftEdge[region][0]) &&
-        (GridLeftEdge[1] <= MultiRefineRegionRightEdge[region][1]) && (GridRightEdge[1] >= MultiRefineRegionLeftEdge[region][1]) &&
-        (GridLeftEdge[2] <= MultiRefineRegionRightEdge[region][2]) && (GridRightEdge[2] >= MultiRefineRegionLeftEdge[region][2])){
-        if (StarMakerMinimumMass>MultiRefineRegionMinimumStarMass[region]){
-          StarMakerMinimumMass = MultiRefineRegionMinimumStarMass[region];
-        }
+    if (MultiRefineRegionMinimumStarMass[region]>0){ // Does this region have a set minimum star mass?
+      if ((GridLeftEdge[0] <= MultiRefineRegionRightEdge[region][0]) && (GridRightEdge[0] >= MultiRefineRegionLeftEdge[region][0]) &&
+          (GridLeftEdge[1] <= MultiRefineRegionRightEdge[region][1]) && (GridRightEdge[1] >= MultiRefineRegionLeftEdge[region][1]) &&
+          (GridLeftEdge[2] <= MultiRefineRegionRightEdge[region][2]) && (GridRightEdge[2] >= MultiRefineRegionLeftEdge[region][2])){
+          if (StarMakerMinimumMass>MultiRefineRegionMinimumStarMass[region]){
+            tempstell = StarMakerMinimumMass;
+            StarMakerMinimumMass = MultiRefineRegionMinimumStarMass[region];
+            if (debug){
+              fprintf(stderr, "SetMinimumStarMass: Stellar mass threshold being updated from %"FSYM" to %"FSYM"\n",tempstell,StarMakerMinimumMass);
+            }
+          }
+      }
     }
   }
   
@@ -69,35 +75,37 @@ int grid::SetMinimumStarMass(){
   if (timestep < 0) return SUCCESS;
 
   for (region = 0; region < NumberOfMultiRefineTracks; region++){
-    if(timestep == NumberOfMultiRefineTimeEntries-1){
-      MRRMinimumStarMass = EvolveMultiRefineRegionMinimumStarMass[region][timestep];
-      for (i = 0; i < MAX_DIMENSION; i++){
-        MRRLeftEdge[i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i];
-        MRRRightEdge[i] = EvolveMultiRefineRegionRightEdge[region][timestep][i];
-      }
-    } else {
-        MRRMinimumStarMass = EvolveMultiRefineRegionMinimumStarMass[region][timestep]
-        + (Time - EvolveMultiRefineRegionTime[timestep])
-        * (EvolveMultiRefineRegionMinimumStarMass[region][timestep+1]-EvolveMultiRefineRegionMinimumStarMass[region][timestep])
-        / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
-      for (i = 0; i < MAX_DIMENSION; i++){
-        MRRLeftEdge[i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i]
+    if (MultiRefineRegionMinimumStarMass[region]>0){ // Does this region have a set minimum star mass?
+      if(timestep == NumberOfMultiRefineTimeEntries-1){
+        MRRMinimumStarMass = EvolveMultiRefineRegionMinimumStarMass[region][timestep];
+        for (i = 0; i < MAX_DIMENSION; i++){
+          MRRLeftEdge[i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i];
+          MRRRightEdge[i] = EvolveMultiRefineRegionRightEdge[region][timestep][i];
+        }
+      } else {
+          MRRMinimumStarMass = EvolveMultiRefineRegionMinimumStarMass[region][timestep]
           + (Time - EvolveMultiRefineRegionTime[timestep])
-          * (EvolveMultiRefineRegionLeftEdge[region][timestep+1][i]-EvolveMultiRefineRegionLeftEdge[region][timestep][i])
+          * (EvolveMultiRefineRegionMinimumStarMass[region][timestep+1]-EvolveMultiRefineRegionMinimumStarMass[region][timestep])
           / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
-        MRRRightEdge[i] = EvolveMultiRefineRegionRightEdge[region][timestep][i]
-          + (Time - EvolveMultiRefineRegionTime[timestep])
-          * (EvolveMultiRefineRegionRightEdge[region][timestep+1][i]-EvolveMultiRefineRegionRightEdge[region][timestep][i])
-          / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
-      } // for (i = 0; i < MAX_DIMENSION; i++)
-    } // if(timestep == NumberOfMultiRefineTimeEntries-1)
-    if ((GridLeftEdge[0] <= MRRRightEdge[0]) && (GridRightEdge[0] >= MRRLeftEdge[0]) &&
-        (GridLeftEdge[1] <= MRRRightEdge[1]) && (GridRightEdge[1] >= MRRLeftEdge[1]) &&
-        (GridLeftEdge[2] <= MRRRightEdge[2]) && (GridRightEdge[2] >= MRRLeftEdge[2])){
-      if (StarMakerMinimumMass>MRRMinimumStarMass){
-        StarMakerMinimumMass = MRRMinimumStarMass;
-      }
-    } // if region in MRR
+        for (i = 0; i < MAX_DIMENSION; i++){
+          MRRLeftEdge[i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i]
+            + (Time - EvolveMultiRefineRegionTime[timestep])
+            * (EvolveMultiRefineRegionLeftEdge[region][timestep+1][i]-EvolveMultiRefineRegionLeftEdge[region][timestep][i])
+            / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
+          MRRRightEdge[i] = EvolveMultiRefineRegionRightEdge[region][timestep][i]
+            + (Time - EvolveMultiRefineRegionTime[timestep])
+            * (EvolveMultiRefineRegionRightEdge[region][timestep+1][i]-EvolveMultiRefineRegionRightEdge[region][timestep][i])
+            / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
+        } // for (i = 0; i < MAX_DIMENSION; i++)
+      } // if(timestep == NumberOfMultiRefineTimeEntries-1)
+      if ((GridLeftEdge[0] <= MRRRightEdge[0]) && (GridRightEdge[0] >= MRRLeftEdge[0]) &&
+          (GridLeftEdge[1] <= MRRRightEdge[1]) && (GridRightEdge[1] >= MRRLeftEdge[1]) &&
+          (GridLeftEdge[2] <= MRRRightEdge[2]) && (GridRightEdge[2] >= MRRLeftEdge[2])){
+        if (StarMakerMinimumMass>MRRMinimumStarMass){
+          StarMakerMinimumMass = MRRMinimumStarMass;
+        }
+      } // if region in MRR
+    } // if region is using a specific minimum star mass
   } // for (region = 0; region < NumberOfMultiRefineTracks; region++)
 
   return SUCCESS;

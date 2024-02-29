@@ -762,8 +762,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     /* for this grid */
 
     if (MultiRefineRegionSpatiallyVaryingStarMass > 0){
-      fprintf(stderr, "StarParticleHandler: Spatially varying stellar mass threshold enabled.");
       StarMakerMinimumMass = MultiRefineRegionDefaultStarMass;
+      if (debug && MyProcessorNumber == ROOT_PROCESSOR){
+         fprintf(stderr, "StarParticleHandler: Spatially varying stellar mass threshold enabled. Current mass is %"FSYM" \n",StarMakerMinimumMass);
+      }
       this->SetMinimumStarMass();
     }
  
