@@ -49,16 +49,16 @@ int grid::SetMinimumStarMass(){
 
   /* Take care of any static multirefine regions first */
   for (region = 0; region < NStaticMultiRefineRegions; region++){
-    if (MultiRefineRegionMinimumStarMass[region]>0){ // Does this region have a set minimum star mass?
+    // Does this region have a set minimum star mass? Is it lower than the current minimum for this timestep?
+    if (MultiRefineRegionMinimumStarMass[region]>0 && StarMakerMinimumMass>MultiRefineRegionMinimumStarMass[region]){ 
+      // Is the current grid within this region?
       if ((GridLeftEdge[0] <= MultiRefineRegionRightEdge[region][0]) && (GridRightEdge[0] >= MultiRefineRegionLeftEdge[region][0]) &&
           (GridLeftEdge[1] <= MultiRefineRegionRightEdge[region][1]) && (GridRightEdge[1] >= MultiRefineRegionLeftEdge[region][1]) &&
           (GridLeftEdge[2] <= MultiRefineRegionRightEdge[region][2]) && (GridRightEdge[2] >= MultiRefineRegionLeftEdge[region][2])){
-          if (StarMakerMinimumMass>MultiRefineRegionMinimumStarMass[region]){
-            tempstell = StarMakerMinimumMass;
-            StarMakerMinimumMass = MultiRefineRegionMinimumStarMass[region];
-            if (debug){
-              fprintf(stderr, "SetMinimumStarMass: Stellar mass threshold being updated from %"FSYM" to %"FSYM"\n",tempstell,StarMakerMinimumMass);
-            }
+          tempstell = StarMakerMinimumMass;
+          StarMakerMinimumMass = MultiRefineRegionMinimumStarMass[region];
+          if (debug){
+            fprintf(stderr, "SetMinimumStarMass: Stellar mass threshold being updated from %"FSYM" to %"FSYM"\n",tempstell,StarMakerMinimumMass);
           }
       }
     }

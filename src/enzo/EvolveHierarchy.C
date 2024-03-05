@@ -541,7 +541,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
         return FAIL;
     }
 
-
+/* Now that we've formed stars, reset this to original value */
+StarMakerMinimumMass = MultiRefineRegionDefaultStarMass;
 
 #ifdef USE_MPI 
     CommunicationBarrier();
