@@ -763,6 +763,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
     if (MultiRefineRegionSpatiallyVaryingStarMass > 0){
       StarMakerMinimumMass = MultiRefineRegionDefaultStarMass;
+      fprintf(stderr,"Grid %"ISYM" here. My SM is %"FSYM"\n",ID,StarMakerMinimumMass);
       this->SetMinimumStarMass();
     }
  

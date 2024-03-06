@@ -32,11 +32,11 @@ int grid::SetMinimumStarMass(){
   if (MyProcessorNumber != ProcessorNumber || MultiRefineRegionSpatiallyVaryingStarMass != 1)
     return SUCCESS;
 
-  // Need to figure our what's up with time vs MetaData.Time
-
   /* Declarations */
   int region, i, NMultiRefineRegions, NStaticMultiRefineRegions, timestep;
   float MRRLeftEdge[MAX_DIMENSION], MRRRightEdge[MAX_DIMENSION], MRRMinimumStarMass, tempstell;
+
+  fprintf(stderr,"Grid %"ISYM" here. My SM is %"FSYM"\n",ID,StarMakerMinimumMass);
 
   /* How many static vs evolving multirefine regions are there? */
   NMultiRefineRegions = 0;
