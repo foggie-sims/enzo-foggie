@@ -542,7 +542,13 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     }
 
 /* Now that we've formed stars, reset this to original value */
+if (debug){
+  fprintf(stderr,"StarMakerMinimumMass before reset: %"FSYM".\n",StarMakerMinimumMass);
+}
 StarMakerMinimumMass = MultiRefineRegionDefaultStarMass;
+if (debug){
+  fprintf(stderr,"StarMakerMinimumMass after reset: %"FSYM".\n",StarMakerMinimumMass);
+}
 
 #ifdef USE_MPI 
     CommunicationBarrier();

@@ -35,9 +35,9 @@ int grid::SetMinimumStarMass(){
   /* Declarations */
   int region, i, NMultiRefineRegions, NStaticMultiRefineRegions, timestep;
   float MRRLeftEdge[MAX_DIMENSION], MRRRightEdge[MAX_DIMENSION], MRRMinimumStarMass, tempstell;
-
-  fprintf(stderr,"Grid %"ISYM" here. My SM is %"FSYM"\n",ID,StarMakerMinimumMass);
-
+  if (debug && StarMakerMinimumMass!=10000){
+    fprintf(stderr,"Grid %"ISYM" here. My SM is %"FSYM"\n",ID,StarMakerMinimumMass);
+  }
   /* How many static vs evolving multirefine regions are there? */
   NMultiRefineRegions = 0;
   while (MultiRefineRegionLeftEdge[NMultiRefineRegions][0] != FLOAT_UNDEFINED)
@@ -101,8 +101,15 @@ int grid::SetMinimumStarMass(){
       if ((GridLeftEdge[0] <= MRRRightEdge[0]) && (GridRightEdge[0] >= MRRLeftEdge[0]) &&
           (GridLeftEdge[1] <= MRRRightEdge[1]) && (GridRightEdge[1] >= MRRLeftEdge[1]) &&
           (GridLeftEdge[2] <= MRRRightEdge[2]) && (GridRightEdge[2] >= MRRLeftEdge[2])){
+        if (debug){
+            fprintf(stderr,"I am grid %"ISYM" and I overlap with MRR %"ISYM".\n",ID,region);
+        }
         if (StarMakerMinimumMass>MRRMinimumStarMass){
+          tempstell = StarMakerMinimumMass;
           StarMakerMinimumMass = MRRMinimumStarMass;
+          if (debug){
+            fprintf(stderr, "SetMinimumStarMass: Stellar mass threshold being updated from %"FSYM" to %"FSYM"\n",tempstell,StarMakerMinimumMass);
+          }
         }
       } // if region in MRR
     } // if region is using a specific minimum star mass
