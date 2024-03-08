@@ -43,6 +43,9 @@ int grid::SetMinimumStarMass(){
   while (MultiRefineRegionLeftEdge[NMultiRefineRegions][0] != FLOAT_UNDEFINED)
       NMultiRefineRegions ++;
   NStaticMultiRefineRegions = NMultiRefineRegions-NumberOfMultiRefineTracks;
+  if (debug){
+    fprintf(stderr,"%"ISYM" Static MRRs and %"ISYM" Evolving MRRs detected.\n",NStaticMultiRefineRegions,NumberOfMultiRefineTracks);
+  }
 
 /* If the current grid is inside of any multirefine regions with a stellar mass threshold lower than the default for this timestep, */
 /* set StarMakerMinimumMass to the stellar mass threshold for the multirefine region */
