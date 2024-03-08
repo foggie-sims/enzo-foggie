@@ -98,6 +98,10 @@ int grid::SetMinimumStarMass(){
             / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
         } // for (i = 0; i < MAX_DIMENSION; i++)
       } // if(timestep == NumberOfMultiRefineTimeEntries-1)
+      if (debug){
+        fprintf(stderr,"I am MRR %"ISYM" and my coordinates are %"PSYM",%"PSYM",%"PSYM" and %"PSYM",%"PSYM",%"PSYM" at %"FSYM".\n",
+        region,MRRLeftEdge[0],MRRLeftEdge[1],MRRLeftEdge[2],MRRRightEdge[0],MRRRightEdge[1],MRRRightEdge[2],Time);
+      }
       if ((GridLeftEdge[0] <= MRRRightEdge[0]) && (GridRightEdge[0] >= MRRLeftEdge[0]) &&
           (GridLeftEdge[1] <= MRRRightEdge[1]) && (GridRightEdge[1] >= MRRLeftEdge[1]) &&
           (GridLeftEdge[2] <= MRRRightEdge[2]) && (GridRightEdge[2] >= MRRLeftEdge[2])){
