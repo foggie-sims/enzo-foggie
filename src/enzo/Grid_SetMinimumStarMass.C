@@ -33,25 +33,25 @@ int grid::SetMinimumStarMass(){
     return SUCCESS;
 
   /* Declarations */
-  int region, i, NMultiRefineRegions, NStaticMultiRefineRegions, timestep;
+  int region, i, NMultiRefineRegions, timestep;
   float MRRLeftEdge[MAX_DIMENSION], MRRRightEdge[MAX_DIMENSION], MRRMinimumStarMass, tempstell;
   if (debug && StarMakerMinimumMass!=10000){
     fprintf(stderr,"Grid %"ISYM" here. My SM is %"FSYM"\n",ID,StarMakerMinimumMass);
   }
   /* How many static vs evolving multirefine regions are there? */
-  NMultiRefineRegions = 0;
-  while (MultiRefineRegionLeftEdge[NMultiRefineRegions][0] != FLOAT_UNDEFINED)
-      NMultiRefineRegions ++;
-  NStaticMultiRefineRegions = NMultiRefineRegions-NumberOfMultiRefineTracks;
+  //NMultiRefineRegions = 0;
+  //while (MultiRefineRegionLeftEdge[NMultiRefineRegions][0] != FLOAT_UNDEFINED)
+  //    NMultiRefineRegions ++;
+  //NStaticMultiRefineRegions = NMultiRefineRegions-NumberOfMultiRefineTracks;
   if (debug){
-    fprintf(stderr,"%"ISYM" Static MRRs and %"ISYM" Evolving MRRs detected.\n",NStaticMultiRefineRegions,NumberOfMultiRefineTracks);
+    fprintf(stderr,"%"ISYM" Static MRRs and %"ISYM" Evolving MRRs detected.\n",NumberOfStaticMultiRefineRegions,NumberOfMultiRefineTracks);
   }
 
 /* If the current grid is inside of any multirefine regions with a stellar mass threshold lower than the default for this timestep, */
 /* set StarMakerMinimumMass to the stellar mass threshold for the multirefine region */
 
   /* Take care of any static multirefine regions first */
-  for (region = 0; region < NStaticMultiRefineRegions; region++){
+  for (region = 0; region < NumberOfStaticMultiRefineRegions; region++){
     // Does this region have a set minimum star mass? Is it lower than the current minimum for this timestep?
     if (MultiRefineRegionMinimumStarMass[region]>0 && StarMakerMinimumMass>MultiRefineRegionMinimumStarMass[region]){ 
       // Is the current grid within this region?
