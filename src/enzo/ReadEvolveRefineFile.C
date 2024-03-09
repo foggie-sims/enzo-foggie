@@ -290,7 +290,7 @@ int ReadEvolveRefineFile(void)
            fprintf(stderr,"Here is the line (MultiRefineRegion): %s \n",line);
            fprintf(stderr,". . . and here is the minimum value (MultiRefineRegion): %i \n",EvolveMultiRefineRegionMinimumLevel[TrackInd]);
            fprintf(stderr,". . . and here is the maximum value (MultiRefineRegion): %i \n",EvolveMultiRefineRegionMaximumLevel[TrackInd]);
-           fprintf(stderr,". . . and here is my initial minimum stellar mass (MultiRefineRegion): %f \n",EvolveMultiRefineRegionMinimumStellarMass[TrackInd][0])
+           fprintf(stderr,". . . and here is my initial minimum stellar mass (MultiRefineRegion): %f \n",EvolveMultiRefineRegionMinimumStarMass[TrackInd][0])
         }
         if( nret != 11 ){
           fprintf(stderr,"WARNING: ReadEvolveRefineFile (MultiRefineRegion) cannot interpret line %s",line);
