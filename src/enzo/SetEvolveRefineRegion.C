@@ -343,6 +343,8 @@ int SetEvolveRefineRegion (FLOAT time)
         my_exit(EXIT_FAILURE);
       }
 
+
+
       for(timestep=0; timestep<NumberOfMultiRefineTimeEntries; timestep++){
         if( time < EvolveMultiRefineRegionTime[timestep] ){
           break;
@@ -363,6 +365,7 @@ int SetEvolveRefineRegion (FLOAT time)
 
     if(debug && MyProcessorNumber == ROOT_PROCESSOR){
       fprintf(stderr,"SetEvolveRefineRegion sees %i static MultiRefineRegions and %i evolving ones.\n",NumberOfStaticMultiRefineRegions,NumberOfMultiRefineTracks);
+      fprintf(stderr,"SetEvolveRefineRegion says you have %i time entries per track.\n",NumberOfMultiRefineTimeEntries);
     }
 
     for (region = 0; region < NumberOfMultiRefineTracks; region++){
