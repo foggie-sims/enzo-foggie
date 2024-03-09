@@ -80,9 +80,9 @@ int grid::SetMinimumStarMass(){
 
   for (region = 0; region < NumberOfMultiRefineTracks; region++){
     if (debug){
-      fprintf(stderr,"Evolving MRR %"ISYM" here. My SM is %"FSYM".\n",region,MultiRefineRegionMinimumStarMass[region]);
+      fprintf(stderr,"Evolving MRR %"ISYM" here. My SM is %"FSYM".\n",region,MultiRefineRegionMinimumStarMass[NumberOfStaticMultiRefineRegions+region]);
     }
-    if (MultiRefineRegionMinimumStarMass[region]>0){ // Does this region have a set minimum star mass?
+    if (MultiRefineRegionMinimumStarMass[NumberOfStaticMultiRefineRegions+region]>0){ // Does this region have a set minimum star mass?
       if(timestep == NumberOfMultiRefineTimeEntries-1){
         MRRMinimumStarMass = EvolveMultiRefineRegionMinimumStarMass[region][timestep];
         for (i = 0; i < MAX_DIMENSION; i++){
