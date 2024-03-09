@@ -364,6 +364,14 @@ int SetEvolveRefineRegion (FLOAT time)
     if(debug && MyProcessorNumber == ROOT_PROCESSOR){
       fprintf(stderr,"SetEvolveRefineRegion sees %i static MultiRefineRegions and %i evolving ones.\n",NumberOfStaticMultiRefineRegions,NumberOfMultiRefineTracks);
     }
+
+    for (region = 0; region < NumberOfMultiRefineTracks; region++){
+      for (i=0; i<NumberOfMultiRefineTimeEntries; i++){
+        if(debug && MyProcessorNumber == ROOT_PROCESSOR){
+          fprintf(stderr,"SetEvolveRefineRegion: Evolving MRR %"ISYM" has SM %"FSYM" at time entry %"ISYM".\n",region,EvolveMultiRefineRegionMinimumStarMass[region][i],i);
+        }
+      }
+    }
     
     for (region = 0; region < NumberOfMultiRefineTracks; region++){
       if(timestep == NumberOfMultiRefineTimeEntries-1){
