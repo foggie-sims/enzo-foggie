@@ -392,7 +392,7 @@ int SetEvolveRefineRegion (FLOAT time)
         
       MultiRefineRegionMinimumLevel[region+NumberOfStaticMultiRefineRegions] = EvolveMultiRefineRegionMinimumLevel[region];
       MultiRefineRegionMaximumLevel[region+NumberOfStaticMultiRefineRegions] = EvolveMultiRefineRegionMaximumLevel[region];
-      if (debug1){
+      if (debug){
         fprintf(stdout, "SetEvolveRefineRegion: EvolveMultiRefineRegion: %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM" %"ISYM" %"FSYM"\n",
           MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][0], MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][1],
           MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][2], MultiRefineRegionRightEdge[region+NumberOfStaticMultiRefineRegions][0],

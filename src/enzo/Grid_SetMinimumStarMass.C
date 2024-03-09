@@ -61,6 +61,7 @@ int grid::SetMinimumStarMass(){
           tempstell = StarMakerMinimumMass;
           StarMakerMinimumMass = MultiRefineRegionMinimumStarMass[region];
           if (debug){
+            fprintf(stderr,"SetMinimumStarMass: I am grid %"ISYM" and I share space with static MRR %"ISYM".\n",ID,region);
             fprintf(stderr, "SetMinimumStarMass: Stellar mass threshold being updated from %"FSYM" to %"FSYM"\n",tempstell,StarMakerMinimumMass);
           }
       }
@@ -78,6 +79,9 @@ int grid::SetMinimumStarMass(){
   if (timestep < 0) return SUCCESS;
 
   for (region = 0; region < NumberOfMultiRefineTracks; region++){
+    if (debug){
+      fprintf(stderr,"Evolving MRR %"ISYM" here. My SM is %"FSYM".\n",region,MultiRefineRegionMinimumStarMass[region]);
+    }
     if (MultiRefineRegionMinimumStarMass[region]>0){ // Does this region have a set minimum star mass?
       if(timestep == NumberOfMultiRefineTimeEntries-1){
         MRRMinimumStarMass = EvolveMultiRefineRegionMinimumStarMass[region][timestep];
@@ -109,7 +113,7 @@ int grid::SetMinimumStarMass(){
           (GridLeftEdge[1] <= MRRRightEdge[1]) && (GridRightEdge[1] >= MRRLeftEdge[1]) &&
           (GridLeftEdge[2] <= MRRRightEdge[2]) && (GridRightEdge[2] >= MRRLeftEdge[2])){
         if (debug){
-            fprintf(stderr,"I am grid %"ISYM" and I overlap with MRR %"ISYM".\n",ID,region);
+            fprintf(stderr,"I am grid %"ISYM" and I overlap with evolving MRR %"ISYM".\n",ID,region);
         }
         if (StarMakerMinimumMass>MRRMinimumStarMass){
           tempstell = StarMakerMinimumMass;
