@@ -286,10 +286,11 @@ int ReadEvolveRefineFile(void)
             fprintf(stderr, "ReadEvolveRefineFile (MultiRefineRegion) says the position of the refine region on line %i of your track file is out of bounds\n", i);
           return FAIL;
         }
-        if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+        if(debug && MyProcessorNumber == ROOT_PROCESSOR){
            fprintf(stderr,"Here is the line (MultiRefineRegion): %s \n",line);
            fprintf(stderr,". . . and here is the minimum value (MultiRefineRegion): %i \n",EvolveMultiRefineRegionMinimumLevel[TrackInd]);
            fprintf(stderr,". . . and here is the maximum value (MultiRefineRegion): %i \n",EvolveMultiRefineRegionMaximumLevel[TrackInd]);
+           fprintf(stderr,". . . and here is my initial minimum stellar mass (MultiRefineRegion): %f \n",EvolveMultiRefineRegionMinimumStellarMass[TrackInd][0])
         }
         if( nret != 11 ){
           fprintf(stderr,"WARNING: ReadEvolveRefineFile (MultiRefineRegion) cannot interpret line %s",line);
