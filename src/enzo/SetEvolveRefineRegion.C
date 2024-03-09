@@ -395,7 +395,7 @@ int SetEvolveRefineRegion (FLOAT time)
           * (EvolveMultiRefineRegionMinimumStarMass[region][timestep+1]-EvolveMultiRefineRegionMinimumStarMass[region][timestep])
           / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
         if (debug && MyProcessorNumber == ROOT_PROCESSOR){
-          fprintf(stderr,"SetEvolveRefineRegion: I set MultiRefineRegionMinimumStarMass[%"ISYM"] to %"FSYM" for inbtwn timestep %"ISYM".\n",region+NumberOfStaticMultiRefineRegions,MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions],timestep);
+          fprintf(stderr,"SetEvolveRefineRegion: I set MultiRefineRegionMinimumStarMass[%"ISYM"] to %"FSYM" for inbtwn timestep %d.\n",region+NumberOfStaticMultiRefineRegions,MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions],timestep);
         }
         for (i = 0; i < MAX_DIMENSION; i++){
           MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i]
