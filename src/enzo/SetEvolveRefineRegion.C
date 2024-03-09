@@ -376,6 +376,9 @@ int SetEvolveRefineRegion (FLOAT time)
     for (region = 0; region < NumberOfMultiRefineTracks; region++){
       if(timestep == NumberOfMultiRefineTimeEntries-1){
         MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions] = EvolveMultiRefineRegionMinimumStarMass[region][timestep];
+        if (debug && MyProcessorNumber == ROOT_PROCESSOR){
+          fprintf(stderr,"SetEvolveRefineRegion: I set MultiRefineRegionMinimumStarMass[%"ISYM"] to %"FSYM" for timestep %"ISYM"\n.",region+NumberOfStaticMultiRefineRegions,MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions],timestep);
+        }
         for (i = 0; i < MAX_DIMENSION; i++){
           MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i];
           MultiRefineRegionRightEdge[region+NumberOfStaticMultiRefineRegions][i] = EvolveMultiRefineRegionRightEdge[region][timestep][i];
@@ -385,6 +388,9 @@ int SetEvolveRefineRegion (FLOAT time)
           + (time - EvolveMultiRefineRegionTime[timestep])
           * (EvolveMultiRefineRegionMinimumStarMass[region][timestep+1]-EvolveMultiRefineRegionMinimumStarMass[region][timestep])
           / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
+        if (debug && MyProcessorNumber == ROOT_PROCESSOR){
+          fprintf(stderr,"SetEvolveRefineRegion: I set MultiRefineRegionMinimumStarMass[%"ISYM"] to %"FSYM" for inbtwn timestep %"ISYM"\n.",region+NumberOfStaticMultiRefineRegions,MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions],timestep);
+        }
         for (i = 0; i < MAX_DIMENSION; i++){
           MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i]
             + (time - EvolveMultiRefineRegionTime[timestep])
@@ -400,7 +406,7 @@ int SetEvolveRefineRegion (FLOAT time)
         
       MultiRefineRegionMinimumLevel[region+NumberOfStaticMultiRefineRegions] = EvolveMultiRefineRegionMinimumLevel[region];
       MultiRefineRegionMaximumLevel[region+NumberOfStaticMultiRefineRegions] = EvolveMultiRefineRegionMaximumLevel[region];
-      if (debug){
+      if (debug && MyProcessorNumber == ROOT_PROCESSOR){
         fprintf(stdout, "SetEvolveRefineRegion: EvolveMultiRefineRegion: %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM" %"ISYM" %"FSYM"\n",
           MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][0], MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][1],
           MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][2], MultiRefineRegionRightEdge[region+NumberOfStaticMultiRefineRegions][0],
