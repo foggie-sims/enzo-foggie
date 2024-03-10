@@ -33,18 +33,15 @@ int grid::SetMinimumStarMass(){
     return SUCCESS;
 
   /* Declarations */
-  int region, i, NMultiRefineRegions, timestep;
+  int region, i, timestep;
   float MRRLeftEdge[MAX_DIMENSION], MRRRightEdge[MAX_DIMENSION], MRRMinimumStarMass, tempstell;
+  
   if (debug && StarMakerMinimumMass!=10000){
     fprintf(stderr,"Grid %"ISYM" here. My SM is %"FSYM"\n",ID,StarMakerMinimumMass);
   }
-  /* How many static vs evolving multirefine regions are there? */
-  //NMultiRefineRegions = 0;
-  //while (MultiRefineRegionLeftEdge[NMultiRefineRegions][0] != FLOAT_UNDEFINED)
-  //    NMultiRefineRegions ++;
-  //NStaticMultiRefineRegions = NMultiRefineRegions-NumberOfMultiRefineTracks;
-  if (debug){
-    fprintf(stderr,"%"ISYM" Static MRRs and %"ISYM" Evolving MRRs detected.\n",NumberOfStaticMultiRefineRegions,NumberOfMultiRefineTracks);
+
+  if (debug && MyProcessorNumber == ROOT_PROCESSOR){
+    fprintf(stderr,"%"ISYM" Static MRR(s) and %"ISYM" Evolving MRR(s) detected.\n",NumberOfStaticMultiRefineRegions,NumberOfMultiRefineTracks);
   }
 
 /* If the current grid is inside of any multirefine regions with a stellar mass threshold lower than the default for this timestep, */
@@ -108,6 +105,8 @@ int grid::SetMinimumStarMass(){
       if (debug){
         fprintf(stderr,"I am MRR %"ISYM" and my coordinates are %"PSYM",%"PSYM",%"PSYM" and %"PSYM",%"PSYM",%"PSYM" at %"FSYM".\n",
         region,MRRLeftEdge[0],MRRLeftEdge[1],MRRLeftEdge[2],MRRRightEdge[0],MRRRightEdge[1],MRRRightEdge[2],Time);
+        fprintf(stderr,"I am grid %"ISYM" and my coordinates are %"PSYM",%"PSYM",%"PSYM" and %"PSYM",%"PSYM",%"PSYM" at %"FSYM".\n",
+        region,GridLeftEdge[0],GridLeftEdge[1],GridLeftEdge[2],GridRightEdge[0],GridRightEdge[1],GridRightEdge[2],Time);
       }
       if ((GridLeftEdge[0] <= MRRRightEdge[0]) && (GridRightEdge[0] >= MRRLeftEdge[0]) &&
           (GridLeftEdge[1] <= MRRRightEdge[1]) && (GridRightEdge[1] >= MRRLeftEdge[1]) &&

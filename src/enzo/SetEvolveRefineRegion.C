@@ -354,7 +354,7 @@ int SetEvolveRefineRegion (FLOAT time)
     timestep -= 1;
     if (timestep < 0) return SUCCESS;
     if(debug && MyProcessorNumber == ROOT_PROCESSOR){
-      fprintf(stderr,"It is %f, which is greater than %f, so the closest timestep entry is %i.\n",time,EvolveMultiRefineRegionTime[timestep],timestep);
+      fprintf(stderr,"It is %f, which is greater than %f, so the closest timestep entry is %d.\n",time,EvolveMultiRefineRegionTime[timestep],timestep);
     }
 
     /* Set MultiRefineRegion to EvolveMultiRefineRegion */
