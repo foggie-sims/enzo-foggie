@@ -761,7 +761,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     /* this root grid timestep then find the minimum star particle mass     */
     /* for this grid */
    if (debug){
-      fprintf(stderr,"I am grid %"ISYM" and my coordinates are %"PSYM",%"PSYM",%"PSYM" and %"PSYM",%"PSYM",%"PSYM" at %"FSYM".\n",
+      fprintf(stderr,"GSPH: I am grid %"ISYM" and my coordinates are %"PSYM",%"PSYM",%"PSYM" and %"PSYM",%"PSYM",%"PSYM" at %"FSYM".\n",
         ID,GridLeftEdge[0],GridLeftEdge[1],GridLeftEdge[2],GridRightEdge[0],GridRightEdge[1],GridRightEdge[2],Time);
       }
 
