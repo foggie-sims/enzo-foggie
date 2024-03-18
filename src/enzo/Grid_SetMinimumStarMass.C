@@ -115,7 +115,7 @@ int grid::SetMinimumStarMass(){
   } // for (region = 0; region < NumberOfMultiRefineTracks; region++)
 
   if (debug){ 
-    fprintf(MRRFile,"Final SM: %"FSYM".\n");
+    fprintf(MRRFile,"Final SM: %"FSYM".\n",StarMakerMinimumMass);
     fclose(MRRFile);
   }
 
