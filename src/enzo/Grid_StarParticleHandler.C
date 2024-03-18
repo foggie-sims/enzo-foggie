@@ -760,16 +760,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     /* star particle mass, set minimum star particle mass to default for    */
     /* this root grid timestep then find the minimum star particle mass     */
     /* for this grid */
-   if (debug){
-      fprintf(stderr,"GSPH: I am grid %"ISYM" and my coordinates are %"PSYM",%"PSYM",%"PSYM" and %"PSYM",%"PSYM",%"PSYM" at %"FSYM".\n",
-        ID,GridLeftEdge[0],GridLeftEdge[1],GridLeftEdge[2],GridRightEdge[0],GridRightEdge[1],GridRightEdge[2],Time);
-      }
 
    if (MultiRefineRegionSpatiallyVaryingStarMass > 0){
       StarMakerMinimumMass = MultiRefineRegionDefaultStarMass;
-      if (debug && StarMakerMinimumMass!=10000){
-         fprintf(stderr,"Grid %"ISYM" here. My SM is %"FSYM"\n",ID,StarMakerMinimumMass);
-      }
       this->SetMinimumStarMass();
    }
  
