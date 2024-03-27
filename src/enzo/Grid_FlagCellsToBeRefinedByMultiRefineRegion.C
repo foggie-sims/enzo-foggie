@@ -60,7 +60,7 @@ int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
     NIter = NumberOfMultiRefineTracks;
   }
 
-  if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+  if(debug && MyProcessorNumber == ROOT_PROCESSOR){
     fprintf(stderr,"%i evolving MultiRefineRegions detected.\n",NIter);
   }
 
@@ -97,13 +97,13 @@ int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
               (MultiRefineRegionLeftEdge[region][2] <= zpos) && (zpos <= MultiRefineRegionRightEdge[region][2]) ){
             /* Of those regions the cell is within, adopt refinement constraints of refine regions with maximum allowed refinement */
             if (LocalMaximumRefinementLevel < MultiRefineRegionMaximumLevel[region]){
-                if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+                if(debug && MyProcessorNumber == ROOT_PROCESSOR){
                   fprintf(stderr,"Maximum cell refinement level updated from %i to %i\n",LocalMaximumRefinementLevel,MultiRefineRegionMaximumLevel[region]);
                 }
                 LocalMaximumRefinementLevel = MultiRefineRegionMaximumLevel[region];
             }
             if (LocalMinimumRefinementLevel < MultiRefineRegionMinimumLevel[region]){
-                if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+                if(debug && MyProcessorNumber == ROOT_PROCESSOR){
                   fprintf(stderr,"Minimum cell refinement level updated from %i to %i\n",LocalMinimumRefinementLevel,MultiRefineRegionMinimumLevel[region]);
                 }
                 LocalMinimumRefinementLevel = MultiRefineRegionMinimumLevel[region];

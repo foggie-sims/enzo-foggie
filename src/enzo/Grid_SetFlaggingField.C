@@ -279,9 +279,12 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 	}
 	break;
 
-	/* ==== METHOD 20: Refine around Shockwaves ==== */
+	/* ==== METHOD 20: FORCE REFINEMENT TO SOME LEVEL IN MULTIPLE REGIONS  ==== */
       case 20:
 	NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMultiRefineRegion(level);
+	if (debug){
+		fprintf(stderr, "Now refining cells in MRRs!");
+	}
 	if (NumberOfFlaggedCells < 0) {
 	  fprintf(stderr, "Error in grid->FlagCellsToBeRefinedByMultiRefineRegion.\n");
 	  return FAIL;
