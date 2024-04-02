@@ -31,7 +31,7 @@ int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
 
   /* Return if this grid is not on this processor
      or if multi refined regions are not being used . */
-  if (MyProcessorNumber != ProcessorNumber || MultiRefineRegionGeometry[0] < 0)
+  if (MyProcessorNumber != ProcessorNumber)
     return SUCCESS;
 
 
