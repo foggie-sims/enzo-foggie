@@ -36,6 +36,23 @@ int ReadEvolveRefineFile(void)
 
   /* Read in data file for an evolving RefineRegion */
   if((RefineRegionTimeType == 0) || (RefineRegionTimeType == 1)){
+
+    /* Check that any other refine regions are using the same TimeType*/
+    if ((MustRefineRegionTimeType >= 0) && (MustRefineRegionTimeType != RefineRegionTimeType)){
+      fprintf(stderr, "ReadEvolveRefineFile: MustRefineRegionTimeType and RefineRegionTimeType have been set to different values!\n");
+      return FAIL;
+    }
+
+    if ((CoolingRefineRegionTimeType >= 0) && (CoolingRefineRegionTimeType != RefineRegionTimeType)){
+      fprintf(stderr, "ReadEvolveRefineFile: CoolingRefineRegionTimeType and RefineRegionTimeType have been set to different values!\n");
+      return FAIL;
+    }
+
+    if ((MultiRefineRegionTimeType >= 0) && (MultiRefineRegionTimeType != RefineRegionTimeType)){
+      fprintf(stderr, "ReadEvolveRefineFile: MultiRefineRegionTimeType and RefineRegionTimeType have been set to different values!\n");
+      return FAIL;
+    }
+ 
     
     if ((fptr = fopen(RefineRegionFile, "r")) == NULL) {
       fprintf(stderr, "Error opening refine region file %s.\n", RefineRegionFile);
@@ -74,6 +91,17 @@ int ReadEvolveRefineFile(void)
 
   /* Read in data file for an evolving MustRefineRegion  */
   if((MustRefineRegionTimeType == 0) || (MustRefineRegionTimeType == 1)){
+
+    /* Check that any other refine regions are using the same TimeType*/
+    if ((CoolingRefineRegionTimeType >= 0) && (CoolingRefineRegionTimeType != MustRefineRegionTimeType)){
+      fprintf(stderr, "ReadEvolveRefineFile: CoolingRefineRegionTimeType and MustRefineRegionTimeType have been set to different values!\n");
+      return FAIL;
+    }
+
+    if ((MultiRefineRegionTimeType >= 0) && (MultiRefineRegionTimeType != MustRefineRegionTimeType)){
+      fprintf(stderr, "ReadEvolveRefineFile: MultiRefineRegionTimeType and MustRefineRegionTimeType have been set to different values!\n");
+      return FAIL;
+    }
 
     if ((fptr = fopen(MustRefineRegionFile, "r")) == NULL) {
       fprintf(stderr, "Error opening MustRefine region file %s.\n", MustRefineRegionFile);
@@ -145,6 +173,12 @@ int ReadEvolveRefineFile(void)
      each row of the file.  This is NOT USED but must be there, and is done because we often use
      the same file for both criteria.  */
   if((CoolingRefineRegionTimeType == 0) || (CoolingRefineRegionTimeType == 1)){
+
+    /* Check that any other refine regions are using the same TimeType*/
+    if ((MultiRefineRegionTimeType >= 0) && (MultiRefineRegionTimeType != CoolingRefineRegionTimeType)){
+      fprintf(stderr, "ReadEvolveRefineFile: MultiRefineRegionTimeType and CoolingRefineRegionTimeType have been set to different values!\n");
+      return FAIL;
+    }
 
     if ((fptr = fopen(CoolingRefineRegionFile, "r")) == NULL) {
       fprintf(stderr, "Error opening CoolingRefine region file %s.\n", CoolingRefineRegionFile);

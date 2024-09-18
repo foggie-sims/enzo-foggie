@@ -324,7 +324,7 @@ int SetEvolveRefineRegion (FLOAT time)
        that EvolveMultiRefineRegionTime[0] is the highest redshift and the last output is the lowest (for the
        given track file).  */
       if(time > EvolveMultiRefineRegionTime[0] || time < EvolveMultiRefineRegionTime[NumberOfMultiRefineTimeEntries-1]){
-        fprintf(stderr,"SetEvolveRefineRegion ERROR for EvolveMultiRefineRegions: current simulation redshift is outside of range of track file redshifts!");
+        fprintf(stderr,"SetEvolveRefineRegion ERROR for EvolveMultiRefineRegions: current simulation redshift (%f) is outside of range of track file redshifts (minimum:%f, maximum:%f)!",time,EvolveMultiRefineRegionTime[0],EvolveMultiRefineRegionTime[NumberOfMultiRefineTimeEntries-1]);
         my_exit(EXIT_FAILURE);
       }
 
