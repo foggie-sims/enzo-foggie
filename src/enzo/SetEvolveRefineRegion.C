@@ -339,7 +339,7 @@ int SetEvolveRefineRegion (FLOAT time)
        that EvolveMultiRefineRegionTime[0] is the earliest time and the last output is the latest time (for
        the given track file). */
       if(time < EvolveMultiRefineRegionTime[0] || time > EvolveMultiRefineRegionTime[NumberOfMultiRefineTimeEntries-1]){
-        fprintf(stderr,"SetEvolveRefineRegion ERROR for EvolveMultiRefineRegion: current simulation time is outside of range of track file times!");
+        fprintf(stderr,"SetEvolveRefineRegion ERROR for EvolveMultiRefineRegion: current simulation time (%f) is outside of range of track file times (minimum:%f, maximum:%f)!",time,EvolveMultiRefineRegionTime[0],EvolveMultiRefineRegionTime[NumberOfMultiRefineTimeEntries-1]);
         my_exit(EXIT_FAILURE);
       }
 

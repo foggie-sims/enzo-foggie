@@ -302,7 +302,7 @@ int ReadEvolveRefineFile(void)
       fclose(fptr);
 
       /* Make sure that all time values are greater than 0 and increase */
-          for (i=0; i<NumberOfMultiRefineTimeEntries; i++){
+      for (i=0; i<NumberOfMultiRefineTimeEntries; i++){
         if (EvolveMultiRefineRegionTime[i] < 0){
           fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found a negative time in your track file.\n");
           return FAIL;
