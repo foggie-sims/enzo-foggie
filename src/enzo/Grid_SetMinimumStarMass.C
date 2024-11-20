@@ -69,7 +69,7 @@ int grid::SetMinimumStarMass(){
   /* Now take care of any evolving multirefine regions. We must recalculate the position and stellar mass threshold for each */
   /* evolving multirefine region in order to account for the fact that the current time will be different for different levels */
   if (MultiRefineRegionTimeType == 1) {  // redshift
-    CosmologyComputeExpansionFactor(time, &a, &dadt);
+    CosmologyComputeExpansionFactor(Time, &a, &dadt);
     redshift = (1 + InitialRedshift)/a - 1;
     ctime = redshift;
   } else{ // code time
