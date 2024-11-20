@@ -482,7 +482,6 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     this value in all grids that aren't in a MultiRefine region */
     if (MultiRefineRegionSpatiallyVaryingStarMass > 0){
       MultiRefineRegionDefaultStarMass = StarMakerMinimumMass;
-      // MultiRefineRegionDefaultStarMass = 1.0e+4;
       if (debug){
         fprintf(stderr, "EvolveHierarchy: Spatially varying stellar mass threshold enabled. Current mass is %"FSYM" \n",StarMakerMinimumMass);
       }

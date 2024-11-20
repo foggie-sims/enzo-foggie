@@ -24,6 +24,9 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
+#include "CosmologyParameters.h"
+
+int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
 int grid::SetMinimumStarMass(){
  /* Return if this grid is not on this processor or if multirefine regions with spatially 
@@ -34,7 +37,7 @@ int grid::SetMinimumStarMass(){
 
   /* Declarations */
   int region, i, timestep;
-  float MRRLeftEdge[MAX_DIMENSION], MRRRightEdge[MAX_DIMENSION], MRRMinimumStarMass;
+  float MRRLeftEdge[MAX_DIMENSION], MRRRightEdge[MAX_DIMENSION], MRRMinimumStarMass, redshift, ctime, a, dadt;
   FILE *MRRFile;
   char MRRFilename[32];
 
@@ -65,11 +68,28 @@ int grid::SetMinimumStarMass(){
   
   /* Now take care of any evolving multirefine regions. We must recalculate the position and stellar mass threshold for each */
   /* evolving multirefine region in order to account for the fact that the current time will be different for different levels */
-  for(timestep=0; timestep<NumberOfMultiRefineTimeEntries; timestep++){
-    if( Time < EvolveMultiRefineRegionTime[timestep] ){
-      break;
+  if (MultiRefineRegionTimeType == 1) {  // redshift
+    CosmologyComputeExpansionFactor(time, &a, &dadt);
+    redshift = (1 + InitialRedshift)/a - 1;
+    ctime = redshift;
+  } else{ // code time
+    ctime = Time;
+  }
+
+  if (MultiRefineRegionTimeType == 1) {  // redshift
+    for(timestep=0; timestep<NumberOfMultiRefineTimeEntries; timestep++){
+      if( ctime > EvolveMultiRefineRegionTime[timestep] ){
+        break;
+      }
+    }
+  } else{ // code time
+    for(timestep=0; timestep<EvolveRefineRegionNtimes; timestep++){
+	    if( ctime < EvolveRefineRegionTime[timestep] ){
+	      break;
+      }
     }
   }
+
   timestep -= 1;
   if (timestep < 0) return SUCCESS;
 
@@ -83,23 +103,23 @@ int grid::SetMinimumStarMass(){
         }
       } else {
           MRRMinimumStarMass = EvolveMultiRefineRegionMinimumStarMass[region][timestep]
-          + (Time - EvolveMultiRefineRegionTime[timestep])
+          + (ctime - EvolveMultiRefineRegionTime[timestep])
           * (EvolveMultiRefineRegionMinimumStarMass[region][timestep+1]-EvolveMultiRefineRegionMinimumStarMass[region][timestep])
           / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
         for (i = 0; i < MAX_DIMENSION; i++){
           MRRLeftEdge[i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i]
-            + (Time - EvolveMultiRefineRegionTime[timestep])
+            + (ctime - EvolveMultiRefineRegionTime[timestep])
             * (EvolveMultiRefineRegionLeftEdge[region][timestep+1][i]-EvolveMultiRefineRegionLeftEdge[region][timestep][i])
             / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
           MRRRightEdge[i] = EvolveMultiRefineRegionRightEdge[region][timestep][i]
-            + (Time - EvolveMultiRefineRegionTime[timestep])
+            + (ctime - EvolveMultiRefineRegionTime[timestep])
             * (EvolveMultiRefineRegionRightEdge[region][timestep+1][i]-EvolveMultiRefineRegionRightEdge[region][timestep][i])
             / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
         } // for (i = 0; i < MAX_DIMENSION; i++)
       } // if(timestep == NumberOfMultiRefineTimeEntries-1)
       if (debug){
         fprintf(MRRFile,"MRR %"ISYM": %"PSYM",%"PSYM",%"PSYM"; %"PSYM",%"PSYM",%"PSYM" at %"FSYM".\n",
-        region,MRRLeftEdge[0],MRRLeftEdge[1],MRRLeftEdge[2],MRRRightEdge[0],MRRRightEdge[1],MRRRightEdge[2],Time);
+        region,MRRLeftEdge[0],MRRLeftEdge[1],MRRLeftEdge[2],MRRRightEdge[0],MRRRightEdge[1],MRRRightEdge[2],ctime);
       }
       if ((GridLeftEdge[0] <= MRRRightEdge[0]) && (GridRightEdge[0] >= MRRLeftEdge[0]) &&
           (GridLeftEdge[1] <= MRRRightEdge[1]) && (GridRightEdge[1] >= MRRLeftEdge[1]) &&
