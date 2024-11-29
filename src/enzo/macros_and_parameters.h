@@ -80,9 +80,9 @@
 
 #define MAX_REFINE_REGIONS               8000
 
-#define MAX_TRACKS                         50
+#define MAX_TRACKS                         20
 
-#define MAX_TIME_ENTRIES                   50
+#define MAX_TIME_ENTRIES                   80
 
 #ifdef WINDS 
 #define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  7

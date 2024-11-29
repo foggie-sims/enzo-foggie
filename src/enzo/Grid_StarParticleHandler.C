@@ -763,7 +763,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
    if (MultiRefineRegionSpatiallyVaryingStarMass > 0){
       StarMakerMinimumMass = MultiRefineRegionDefaultStarMass;
-      this->SetMinimumStarMass(); // Make MinimumStarMass into an array/field?
+      this->SetMinimumStarMass();
    }
  
   /* ------------------------------------------------------------------- */
