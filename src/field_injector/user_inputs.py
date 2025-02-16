@@ -26,5 +26,20 @@ user_inputs = {
 
     # This controls the level of verbosity of the outputs.  If you set it to True
     # you will get a lot of output, but it will also tell you what the code is doing.
-    "DEBUG_OUTPUTS": True  # True of False
+    "DEBUG_OUTPUTS": True,  # True of False
+
+    # This sets the default values of the tracer fluid density. "tiny_number" is an
+    # Enzo internal value that is typically set to 1e-20.  You probably don't need
+    # to modify this.
+    "tiny_number": 1.0e-20
 }
+
+
+import yt
+import h5py
+
+def modify_grid_files(user_inputs):
+
+    print("in modify_grid_files")
+
+    return
