@@ -1860,6 +1860,13 @@ int TransferSubgridActiveParticles(grid* Subgrids[], int NumberOfSubgrids,
 				  int &HCOIINum,int &OHINum,int &H2OINum,
 				  int &O2INum);
 
+  /* Identify tracer fluid fields */
+  int IdentifyTracerFluidFields(int &TracerFluidField01Num, int &TracerFluidField02Num,
+			        int &TracerFluidField03Num, int &TracerFluidField04Num,
+			        int &TracerFluidField05Num, int &TracerFluidField06Num,
+			        int &TracerFluidField07Num, int &TracerFluidField08Num);
+
+
 /* Zeus Solver. */
 
   int ZeusSolver(float *gamma, int igamfield, int nhy, 
