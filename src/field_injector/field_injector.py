@@ -1,4 +1,3 @@
-#import yt
 '''
 This is the driver routine to inject tracer fluid fields into an existing Enzo dataset.
 
@@ -25,10 +24,10 @@ if user_inputs['DEBUG_OUTPUTS']:
 edit_param_file(user_inputs)
 
 # creates the new hierarchy file (with tracer fluid contents in it)
-#edit_hierarchy_file(user_inputs)
+edit_hierarchy_file(user_inputs)
 
 # creates the two new boundary conditions files (with tracer fluid contents in them)
-#edit_boundary_files(user_inputs)
+edit_boundary_files(user_inputs)
 
 # modifies the existing grid files to add tracer fluid fields.
-#modify_grid_files(user_inputs)
+modify_grid_files(user_inputs)

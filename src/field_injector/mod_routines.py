@@ -31,6 +31,8 @@ def edit_param_file(user_inputs):
     not have those lines at all.
     '''
 
+    print("******** Editing parameter file. ********")
+
     # create some parameter files
     orig_param_file = user_inputs['dataset_directory'] + "/" + user_inputs['filename_stem']
     new_param_file = orig_param_file + ".new"
@@ -230,7 +232,9 @@ def edit_hierarchy_file(user_inputs):
     been added.  Then, it updates the FieldType line to include the typedefs (from enzo's typedefs.h file)
     for the tracer fluids that have been added.
     '''
-    
+
+    print("******** Editing hierarchy file. ********")
+
     orig_hierarchy_file = user_inputs['dataset_directory'] + "/" + user_inputs['filename_stem'] + ".hierarchy"
 
     new_hierarchy_file = orig_hierarchy_file + ".new"
@@ -373,7 +377,9 @@ def edit_boundary_files(user_inputs):
 
 
     '''
-    
+
+    print("******** Editing boundary conditions files. ********")
+
     orig_boundary_file = user_inputs['dataset_directory'] + "/" + user_inputs['filename_stem'] + ".boundary"
     orig_HDF_boundary_file = user_inputs['dataset_directory'] + "/" + user_inputs['filename_stem'] + ".boundary.hdf"
 
