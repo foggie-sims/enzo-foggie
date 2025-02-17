@@ -57,6 +57,12 @@ def modify_grid_files(user_inputs):
               saved in the file upon closing.
          * Close the HDF5 file, which will save the datasets.
 
+    NOTES FOR USERS:
+      * The tracer fluid fields must be added to ALL grids, not just grids where you want to trace something.  This
+        is because Enzo requires that all grids have the same set of baryon fields.  Just set values in grids that 
+        you aren't interested in to some small value.
+      * This routine currently does everything in Enzo's internal coordinate system (which is 0-1 in all three spatial
+        dimensions for cosmology simulations).
     '''
 
     print("******** Modifying the grid files. ********")
@@ -64,7 +70,7 @@ def modify_grid_files(user_inputs):
     MODIFY_FILE = True  # if True, this will actually write the tracer fields.
                         # if False, it does everything BUT write the tracer fields (dataset is unmodified)
                         # It seems useful to have this feature because adding the fields is a bit tricky with
-                        # the various unit conversions.
+                        # the various unit conversions, so you might want to do a dry run first.
 
     # sphere center 
     sph_cen_x = 0.5
@@ -78,7 +84,11 @@ def modify_grid_files(user_inputs):
     enzo_param_file = user_inputs['dataset_directory'] + "/" + user_inputs['filename_stem']
     ds = yt.load(enzo_param_file)
 
-    # loop over all of the grids and do things.
+    # Loop over all of the grids and do things.
+    # Note that we have to add the tracer fluid fields to all of the grids, even if you only want to
+    # trace fluids in some subvolume of the simulations.  This is because Enzo expects that all grids
+    # will have the same baryon fields. Just set values of the tracer field to a very small value in
+    # uninteresting regions.
     for i in range(len(ds.index.grids)):
 
         if user_inputs['DEBUG_OUTPUTS']:
@@ -149,6 +159,7 @@ def modify_grid_files(user_inputs):
 
         # Add tracer fluids, up to the number the user has specified
         # TracerFluid fields in Enzo are 1-indexed, which is why the range starts with 1
+        # Remember that tracer fluids need to be added to ALL grids or else it will break Enzo!
         for tfnum in range(1,user_inputs['NumberOfTracerFluidFields']+1):
 
             # This will create a tracer fluid dataset name that is aligned with what Enzo expects
