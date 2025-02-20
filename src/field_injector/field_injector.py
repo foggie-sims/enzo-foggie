@@ -8,7 +8,7 @@ WARNING: This program will modify a dataset in-place, so you should absolutely m
 All of the user inputs, including the routine that actually edits the .cpu files, can be
 found in the file user_inputs.py.  You should not have to modify any other files.
 
-Author:  Brian O'Shea, oshea@msu.edu, Feb. 2025
+Author:  Brian O'Shea (oshea@msu.edu), Feb. 2025
 '''
 
 from user_inputs import *

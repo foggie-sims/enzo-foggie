@@ -8,11 +8,13 @@ user_inputs = {
     # this is the directory where the dataset that is going to be modified lives.
     # Do not leave a trailing backslash at the end of that directory, and do not
     # add any file names here.
-    "dataset_directory":"/Users/bwoshea/Desktop/tests/DD0000",
+    # NOTE: Python seems to have problems with directories that have spaces in their names, even if
+    #       you put backslashes in them.
+    "dataset_directory":"/Users/bwoshea/Desktop/tracer_fluid_tests/RD0010_really_little_cluster_mod",
 
     # This is the name of the restart parameter file in the dataset directory
     # The code knows how to figure out the names of other files from that.
-    "filename_stem":"DD0000",
+    "filename_stem":"RD0010",
 
     # Number of tracer fluid fields.  Must be at least 1 and at most 8
     # (the "at most 8" comes from the Enzo tracer fluid code).
@@ -22,7 +24,7 @@ user_inputs = {
     # If you don't know offhand, look in the dataset's .hierarchy file - each
     # grid entry has a line that says 'NumberOfBaryonFields', and it should be
     # the same for every grid entry.  Use that number.
-    "NumberOfOriginalBaryonFields": 6, 
+    "NumberOfOriginalBaryonFields": 10,
 
     # This controls the level of verbosity of the outputs.  If you set it to True
     # you will get a lot of output, but it will also tell you what the code is doing.
@@ -34,11 +36,9 @@ user_inputs = {
     "tiny_number": 1.0e-20
 }
 
-
 import yt
 import h5py
 import numpy as np
-
 
 def modify_grid_files(user_inputs):
     '''
@@ -57,12 +57,17 @@ def modify_grid_files(user_inputs):
               saved in the file upon closing.
          * Close the HDF5 file, which will save the datasets.
 
-    NOTES FOR USERS:
+    VERY IMPORTANT NOTES FOR USERS:
       * The tracer fluid fields must be added to ALL grids, not just grids where you want to trace something.  This
         is because Enzo requires that all grids have the same set of baryon fields.  Just set values in grids that 
         you aren't interested in to some small value.
       * This routine currently does everything in Enzo's internal coordinate system (which is 0-1 in all three spatial
         dimensions for cosmology simulations).
+      * Enzo uses column-major array ordering in memory (z-dimension goes first: k, j, i) due to its solvers being
+        in Fortran. Python (and numpy) use row-major array ordering in memory (x-dimension goes first: i, j, k).  So,
+        any Enzo array that is read from a .cpu file into a numpy array needs to be transposed so that it is in the order
+        that numpy expects. It then needs to be transposed BACK before being written to disk so that Enzo gets the arrays
+        in the ordering that it expects. The code below does all of this.
     '''
 
     print("******** Modifying the grid files. ********")
@@ -73,9 +78,9 @@ def modify_grid_files(user_inputs):
                         # the various unit conversions, so you might want to do a dry run first.
 
     # sphere center 
-    sph_cen_x = 0.5
+    sph_cen_x = 0.45
     sph_cen_y = 0.5
-    sph_cen_z = 0.5
+    sph_cen_z = 0.55
 
     # sphere radius - will be multiplied by tracer field number as a test
     sph_dr = 0.03125
@@ -114,7 +119,8 @@ def modify_grid_files(user_inputs):
         if user_inputs['DEBUG_OUTPUTS']:
             print("Grid dx (per dim):", dx_each_dim)
 
-        # we are going to use the numpy meshgrid functionality to create a 3D grid of x,y,z cell centers.  First we need
+        # we are going to use the numpy meshgrid functionality to create a 3D grid of x,y,z cell centers so that we can later
+        # modify cell values based on their spatial positions (which seems more intuitive than array indices).  First we need
         # the cell centers along each dimension so we can fill in the meshgrid.
         xcenters_1D = ds.index.grids[i].LeftEdge.d[0] + (0.5+np.arange(ds.index.grids[i].ActiveDimensions[0]))*dx_each_dim[0]
         ycenters_1D = ds.index.grids[i].LeftEdge.d[1] + (0.5+np.arange(ds.index.grids[i].ActiveDimensions[1]))*dx_each_dim[1]
@@ -126,17 +132,21 @@ def modify_grid_files(user_inputs):
             print(ycenters_1D)
             print(zcenters_1D)
 
-        # now we actually create the 3D mesh grid, which annoyingly can have two different indexing schemes
-        # and also is returned as a list.
-        mesh_3D = np.meshgrid(xcenters_1D,ycenters_1D,zcenters_1D, indexing='xy')  # indexing can be 'xy' or 'ij'
+        # Now we actually create the 3D mesh grid, which annoyingly can have two different indexing schemes
+        # and also is returned as a list.  The 'ij' indexing scheme does things in the way that is aligned
+        # with how Enzo works (after the data arrays are transposed, at least), so we use that.
+        mesh_3D = np.meshgrid(xcenters_1D,ycenters_1D,zcenters_1D, indexing='ij')
 
-        # split this out into three 3D arrays, one for each dimension
+        # split this out into three 3D arrays, one for each dimension.  Each of these arrays
+        # now has the x, y, or z cell center for the indexed cell.
         xcenters_3D = mesh_3D[0]
         ycenters_3D = mesh_3D[1]
         zcenters_3D = mesh_3D[2]
 
+
         # calculate a grid of radius arrays using the sphere center provided by the user.
         # This will have the same dimensions as the various *centers_3D arrays.
+        # This is not required in general, but is an example of something you could do!
         radius = ((xcenters_3D-sph_cen_x)**2 + (ycenters_3D-sph_cen_y)**2 + (zcenters_3D-sph_cen_z)**2 )**0.5
 
         if user_inputs['DEBUG_OUTPUTS']:
@@ -156,6 +166,11 @@ def modify_grid_files(user_inputs):
 
         # actually read the dataset here
         dens_dset = f[dens_name]
+
+        # Enzo uses column-major ordering in the internal datasets, so we have to transpose
+        # to work with them in matplotlib.  This means we have to transpose our tracer fields
+        # back to the correct ordering when we write them to the files!
+        dens_dset = np.transpose(dens_dset)
 
         # Add tracer fluids, up to the number the user has specified
         # TracerFluid fields in Enzo are 1-indexed, which is why the range starts with 1
@@ -187,6 +202,10 @@ def modify_grid_files(user_inputs):
             # the density field (this is arbitrary but convenient, you can do whatever
             # you want)
             this_tracer_field[radius<=myrad] = dens_dset[radius<=myrad]
+
+            # We now take the tracer fluid field and transpose it back into the
+            # column-major order that Enzo expects so that we can write it to disk.
+            this_tracer_field = np.transpose(this_tracer_field)
 
             # Then actually write the dataset, if the user wants you to!
             if MODIFY_FILE:

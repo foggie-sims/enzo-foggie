@@ -54,14 +54,14 @@ def edit_param_file(user_inputs):
 
     # does new parameter file exist?  It should NOT at this point.
     if(os.path.exists(new_param_file)==True):
-        print("New parameter file exists at this point and shouldn't. You may need to delete something. Exiting.")
+        print("*** New parameter file exists at this point and shouldn't. You may need to delete something. Exiting.")
         sys.exit(1)
     else:
         print("No new parameter file exists, continuing.")
 
     # Does backup parameter file exist?  It should NOT at this point.
     if(os.path.exists(backup_param_file)==True):
-        print("Backup parameter file exists at this point and shouldn't. You may need to delete something. Exiting.")
+        print("*** Backup parameter file exists at this point and shouldn't. You may need to delete something. Exiting.")
         sys.exit(1)
     else:
         print("No backup parameter file exists, continuing.")
@@ -77,14 +77,14 @@ def edit_param_file(user_inputs):
 
     # error check copying
     if errcode != 0:
-        print("system did something fishy (parameter file), quitting.")
+        print("*** System did something fishy (parameter file), quitting.")
         sys.exit(1)
 
     # Now check to make sure the backup file really exists!
     if(os.path.exists(backup_param_file)==True):
         print("Backup parameter file exists at this point and SHOULD. YAY!")
     else:
-        print("No new backup parameter file exists, and it should. Something funny is happening.  Quitting.")
+        print("*** No new backup parameter file exists, and it should. Something funny is happening.  Quitting.")
         sys.exit(1)
 
     # And now the magic happens.  We open the original parameter file and our new one,
@@ -108,12 +108,14 @@ def edit_param_file(user_inputs):
 
         if len(split_line) > 0 and split_line[0] == 'TopGridRank':
             if int(split_line[2]) != 3:
-                print("I expect this simulation to be 3D! Your simulation has dimensionality ", split_line[2])
+                print("*** I expect this simulation to be 3D! Your simulation has dimensionality ", split_line[2])
+                print("*** Exiting.")
                 sys.exit(1)
 
         if len(split_line) > 0 and split_line[0] == 'TopGridDimensions':
             if (int(split_line[2]) != int(split_line[3])) or (int(split_line[2]) != int(split_line[4])):
-                print("I expect this simulation to be a cube! Your simulation has root grid dimensions ", split_line[2], split_line[3], split_line[4])
+                print("*** I expect this simulation to be a cube! Your simulation has root grid dimensions ", split_line[2], split_line[3], split_line[4])
+                print("*** Exiting.")
                 sys.exit(1)
 
         
@@ -124,7 +126,7 @@ def edit_param_file(user_inputs):
             if(user_inputs['DEBUG_OUTPUTS']):
                 print(split_line)
             if int(split_line[2]) == 1: # do some error checking - make sure that UseTracerFluid is not turned on!
-                print("Wait, this parameter file already has tracer fluids (UseTracerFluid = 1). Quitting.")
+                print("*** Wait, this parameter file already has tracer fluids (UseTracerFluid = 1). Quitting.")
                 sys.exit(1)
             else: # assuming we pass error checking, make our modified line.
                 split_line[2] = '1'
@@ -139,7 +141,7 @@ def edit_param_file(user_inputs):
             if(user_inputs['DEBUG_OUTPUTS']):
                 print(split_line)
             if int(split_line[2]) > 0:  # do error checking - there should not be any tracer fluids in the original file.
-                print("Wait, this parameter file already has tracer fluids (NumberOfTracerFluidFields > 0). Quitting.")
+                print("*** Wait, this parameter file already has tracer fluids (NumberOfTracerFluidFields > 0). Quitting.")
                 sys.exit(1)
             else: # assuming we pass error checking, make our modified line
                 split_line[2] = str(user_inputs['NumberOfTracerFluidFields'])
@@ -211,7 +213,7 @@ def edit_param_file(user_inputs):
 
     # error check file move
     if errcode != 0:
-        print("system did something fishy (parameter file moving), quitting.")
+        print("*** system did something fishy (parameter file moving), quitting.")
         sys.exit(1)
    
     return
@@ -252,14 +254,14 @@ def edit_hierarchy_file(user_inputs):
 
     # does new hierarchy file exist?  It should NOT at this point.
     if(os.path.exists(new_hierarchy_file)==True):
-        print("New hierarchy file exists at this point and shouldn't. You may need to delete something. Exiting.")
+        print("*** New hierarchy file exists at this point and shouldn't. You may need to delete something. Exiting.")
         sys.exit(1)
     else:
         print("No new hierarchy file exists, continuing.")
 
     # Does backup hierarchy file exist?  It should NOT at this point.
     if(os.path.exists(backup_hierarchy_file)==True):
-        print("Backup hierarchy file exists at this point and shouldn't. You may need to delete something. Exiting.")
+        print("*** Backup hierarchy file exists at this point and shouldn't. You may need to delete something. Exiting.")
         sys.exit(1)
     else:
         print("No backup hierarchy file exists, continuing.")
@@ -275,14 +277,14 @@ def edit_hierarchy_file(user_inputs):
 
     # error check copying
     if errcode != 0:
-        print("system did something fishy (hierarchy file), quitting.")
+        print("*** system did something fishy (hierarchy file), quitting.")
         sys.exit(1)
 
     # Now check to make sure the backup file really exists!
     if(os.path.exists(backup_hierarchy_file)==True):
         print("Backup hierarchy file exists at this point and SHOULD. YAY!")
     else:
-        print("No new backup hierarchy file exists, and it should.  Something funny is happening.  Quitting.")
+        print("*** No new backup hierarchy file exists, and it should.  Something funny is happening.  Quitting.")
         sys.exit(1)
 
     # And now the magic happens.  We open the original hierarchy file and our new one,
@@ -311,6 +313,13 @@ def edit_hierarchy_file(user_inputs):
                 print(split_line)
 
             orig_field_num = int(split_line[2])
+
+            if orig_field_num != user_inputs['NumberOfOriginalBaryonFields']:
+                print("*** The number of baryon fields you THINK are in the original dataset are not")
+                print("*** what the .hierarchy file thinks they are.  Check NumberOfOriginalBaryonFields")
+                print("*** in user_inputs.py.  Exiting!")
+                sys.exit(1)
+
             new_field_num = orig_field_num + user_inputs['NumberOfTracerFluidFields']
             split_line[2] = str(new_field_num)
             thisline = ' '.join(split_line) + "\n"
@@ -359,7 +368,7 @@ def edit_hierarchy_file(user_inputs):
 
     # error check file move
     if errcode != 0:
-        print("system did something fishy (hierarchy file moving), quitting.")
+        print("*** system did something fishy (hierarchy file moving), quitting.")
         sys.exit(1)
 
     return
@@ -406,28 +415,28 @@ def edit_boundary_files(user_inputs):
 
     # does new boundary file exist?  It should NOT at this point.
     if(os.path.exists(new_boundary_file)==True):
-        print("New boundary file exists at this point and shouldn't. You may need to delete something. Exiting.")
+        print("*** New boundary file exists at this point and shouldn't. You may need to delete something. Exiting.")
         sys.exit(1)
     else:
         print("No new boundary file exists, continuing.")
 
     # does new HDF boundary file exist?  It should NOT at this point.
     if(os.path.exists(new_HDF_boundary_file)==True):
-        print("New HDF boundary file exists at this point and shouldn't. You may need to delete something. Exiting.")
+        print("*** New HDF boundary file exists at this point and shouldn't. You may need to delete something. Exiting.")
         sys.exit(1)
     else:
         print("No new HDF boundary file exists, continuing.")
 
     # Does backup boundary file exist?  It should NOT at this point.
     if(os.path.exists(backup_boundary_file)==True):
-        print("Backup boundary file exists at this point and shouldn't. You may need to delete something. Exiting.")
+        print("*** Backup boundary file exists at this point and shouldn't. You may need to delete something. Exiting.")
         sys.exit(1)
     else:
         print("No backup boundary file exists, continuing.")
 
     # Does backup HDF boundary file exist?  It should NOT at this point.
     if(os.path.exists(backup_HDF_boundary_file)==True):
-        print("Backup HDF boundary file exists at this point and shouldn't. You may need to delete something. Exiting.")
+        print("*** Backup HDF boundary file exists at this point and shouldn't. You may need to delete something. Exiting.")
         sys.exit(1)
     else:
         print("No backup HDF boundary file exists, continuing.")
@@ -443,14 +452,14 @@ def edit_boundary_files(user_inputs):
 
     # error check copying
     if errcode != 0:
-        print("system did something fishy (boundary file), quitting.")
+        print("*** system did something fishy (boundary file), quitting.")
         sys.exit(1)
 
     # Now check to make sure the backup file really exists!
     if(os.path.exists(backup_boundary_file)==True):
         print("Backup boundary file exists at this point and SHOULD. YAY!")
     else:
-        print("No new backup boundary file exists, and it should.  Something funny is happening.  Quitting.")
+        print("*** No new backup boundary file exists, and it should.  Something funny is happening.  Quitting.")
         sys.exit(1)
 
     # Now we copy the original HDF boundary file into a backup.
@@ -464,14 +473,14 @@ def edit_boundary_files(user_inputs):
 
     # error check copying
     if errcode != 0:
-        print("system did something fishy (HDF boundary file), quitting.")
+        print("*** system did something fishy (HDF boundary file), quitting.")
         sys.exit(1)
 
     # Now check to make sure the backup HDF file really exists!
     if(os.path.exists(backup_HDF_boundary_file)==True):
         print("Backup HDF boundary file exists at this point and SHOULD. YAY!")
     else:
-        print("No new backup HDF boundary file exists, and it should.  Something funny is happening.  Quitting.")
+        print("*** No new backup HDF boundary file exists, and it should.  Something funny is happening.  Quitting.")
         sys.exit(1)
 
     # we're going to need the size of the boundary conditions for when we create our new HDF5
@@ -572,7 +581,7 @@ def edit_boundary_files(user_inputs):
 
     # error check file move
     if errcode != 0:
-        print("system did something fishy (boundary file moving), quitting.")
+        print("*** system did something fishy (boundary file moving), quitting.")
         sys.exit(1)
 
     # Now on to the HDF5 file! There's no point in copying this in a streaming way like we did the text files.
@@ -647,7 +656,7 @@ def edit_boundary_files(user_inputs):
 
     # error check file move
     if errcode != 0:
-        print("system did something fishy (boundary HDF5 file moving), quitting.")
+        print("*** system did something fishy (boundary HDF5 file moving), quitting.")
         sys.exit(1)
     
     return
