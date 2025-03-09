@@ -30,6 +30,12 @@ user_inputs = {
     # you will get a lot of output, but it will also tell you what the code is doing.
     "DEBUG_OUTPUTS": True,  # True of False
 
+    # if True, this will actually write the tracer fields.
+    # if False, it does everything BUT write the tracer fields (dataset is unmodified)
+    # It seems useful to have this feature because adding the fields is a bit tricky with
+    # the various unit conversions, so you might want to do a dry run first.
+    "MODIFY_FILE": True,
+
     # This sets the default values of the tracer fluid density. "tiny_number" is an
     # Enzo internal value that is typically set to 1e-20.  You probably don't need
     # to modify this.
@@ -62,7 +68,7 @@ def modify_grid_files(user_inputs):
 
     VERY IMPORTANT NOTES FOR USERS:
       * The tracer fluid fields must be added to ALL grids, not just grids where you want to trace something.  This
-        is because Enzo requires that all grids have the same set of baryon fields.  Just set values in grids that 
+        is because Enzo requires that all grids have the same set of baryon fields.  Just set values in grids that
         you aren't interested in to some small value.
       * This routine currently does everything in Enzo's internal coordinate system (which is 0-1 in all three spatial
         dimensions for cosmology simulations).

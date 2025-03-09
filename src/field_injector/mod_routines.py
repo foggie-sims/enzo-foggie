@@ -26,7 +26,7 @@ def edit_param_file(user_inputs):
     that to the user-specified values. If those lines to NOT exist then they are created
     and added to the file.  Then, we add DataLabel lines for each of the new tracer fluids.
 
-    Note that we do the check for UseTracerField and NumberOfTracerFluidFields because 
+    Note that we do the check for UseTracerField and NumberOfTracerFluidFields because
     older simulation datasets (pre implementation of the tracer fluid methods in Enzo) will
     not have those lines at all.
     '''
@@ -47,7 +47,7 @@ def edit_param_file(user_inputs):
 
     did_UTF_exist = False   # we will check for "UseTracerFluid" in the parameter file.
     did_NOTFF_exist = False  # we will check for "NumberOfTracerFluidFields" in the parameter file.
-        
+
     # does original parameter file exist?  It should.
     if(os.path.exists(orig_param_file)==True):
         print("Original parameter file exists, continuing")
@@ -118,7 +118,7 @@ def edit_param_file(user_inputs):
                 print("*** Exiting.")
                 sys.exit(1)
 
-        
+
         # Look for UseTracerFluid line.  Note that some lines have
         # length of zero, so check for that too.
         if len(split_line) > 0 and split_line[0] == 'UseTracerFluid':
@@ -192,7 +192,7 @@ def edit_param_file(user_inputs):
         print(newline, end = "", file=outputfile)
 
     print("\n", file=outputfile)
-        
+
     # close the output files.
     inputfile.close()
     outputfile.close()
@@ -207,7 +207,7 @@ def edit_param_file(user_inputs):
 
     # remove our original parameter file
     os.remove(orig_param_file)
-        
+
     # do the actual moving here
     errcode = os.system(mycommand)
 
@@ -215,9 +215,9 @@ def edit_param_file(user_inputs):
     if errcode != 0:
         print("*** system did something fishy (parameter file moving), quitting.")
         sys.exit(1)
-   
+
     return
-    
+
 
 ################################################################################
 def edit_hierarchy_file(user_inputs):
@@ -229,7 +229,7 @@ def edit_hierarchy_file(user_inputs):
     parameter file editing routine, it does a lot of error-checking, but that's probably
     a good thing here.
 
-    What this actually does is modify each grid entry in two ways.  First, it updates the 
+    What this actually does is modify each grid entry in two ways.  First, it updates the
     NumberOfBaryonField lines to increment it by the number of tracer fluid fields that has
     been added.  Then, it updates the FieldType line to include the typedefs (from enzo's typedefs.h file)
     for the tracer fluids that have been added.
@@ -290,7 +290,7 @@ def edit_hierarchy_file(user_inputs):
     # And now the magic happens.  We open the original hierarchy file and our new one,
     # read through the original file and modify the TracerFluid-related lines as we
     # encounter them.
-    # 
+    #
     # The lines that we have to modify in each grid entry are the "NumberOfBaryonFields" lines,
     # which needs to be incremented by NumberOfTracerFluidFields, and then the FieldType line needs
     # to have an additional NumberOfBaryonFields with the typedefs for each of the tracer fluid fields
@@ -326,7 +326,7 @@ def edit_hierarchy_file(user_inputs):
 
             if(user_inputs['DEBUG_OUTPUTS']):
                 print("****new NumberOfBaryonFields line:", thisline)
-            
+
 
         # Look for FieldType line.  Note that some lines have
         # length of zero, so check for that too.
@@ -347,7 +347,7 @@ def edit_hierarchy_file(user_inputs):
 
 
     print("\n", file=outputfile) # add a newline
-        
+
     # close the output files.
     inputfile.close()
     outputfile.close()
@@ -362,7 +362,7 @@ def edit_hierarchy_file(user_inputs):
 
     # remove our original parameter file
     os.remove(orig_hierarchy_file)
-        
+
     # do the actual moving here
     errcode = os.system(mycommand)
 
@@ -380,7 +380,7 @@ def edit_boundary_files(user_inputs):
 
     edit_boundary_file
 
-    This file edits boht of the boundary files to add tracer fluid information.  As with 
+    This file edits boht of the boundary files to add tracer fluid information.  As with
     the other file editing routines, it does a lot of error-checking, but that's probably
     a good thing here.
 
@@ -487,16 +487,16 @@ def edit_boundary_files(user_inputs):
     # boundary files.
     bcx = bcy = bcz = -1
 
-        
+
     # And now the magic happens.  We open the original boundary file and our new one,
     # read through the original file and modify the TracerFluid-related lines as we
     # encounter them.
-    # 
+    #
     # The lines that we have to modify in each grid entry are the "NumberOfBaryonFields" lines,
     # which needs to be incremented by NumberOfTracerFluidFields, and then the FieldType line needs
     # to have an additional NumberOfBaryonFields with the typedefs for each of the tracer fluid fields
     # (as defined in Enzo's typedefs.h file).
-        
+
     # open files
     inputfile = open(orig_boundary_file,"r")
     outputfile = open(new_boundary_file,"w")
@@ -520,7 +520,7 @@ def edit_boundary_files(user_inputs):
 
             if(user_inputs['DEBUG_OUTPUTS']):
                 print("****new NumberOfBaryonFields line:", thisline)
-            
+
 
         # Look for FieldType line.  Note that some lines have
         # length of zero, so check for that too.
@@ -553,14 +553,14 @@ def edit_boundary_files(user_inputs):
 
             if(user_inputs['DEBUG_OUTPUTS']):
                 print("boundary dimensions: ", bcx, bcy, bcz)
-            
-                
+
+
         # now we write either the original line or the modified line to the output file
         print(thisline, end = "", file=outputfile)
 
 
     print("\n", file=outputfile) # add a newline
-        
+
     # close the output files.
     inputfile.close()
     outputfile.close()
@@ -575,7 +575,7 @@ def edit_boundary_files(user_inputs):
 
     # remove our original boundary file
     os.remove(orig_boundary_file)
-        
+
     # do the actual moving here
     errcode = os.system(mycommand)
 
@@ -585,7 +585,7 @@ def edit_boundary_files(user_inputs):
         sys.exit(1)
 
     # Now on to the HDF5 file! There's no point in copying this in a streaming way like we did the text files.
-    # We're just going to go ahead and create a whole new file with h5py.  
+    # We're just going to go ahead and create a whole new file with h5py.
 
     # need total number of baryon fields
     total_num_baryon_fields = user_inputs['NumberOfOriginalBaryonFields'] + user_inputs['NumberOfTracerFluidFields']
@@ -637,7 +637,7 @@ def edit_boundary_files(user_inputs):
     f.create_dataset("BoundaryDimensionValue.0",data=zeros_array.astype('>f4'))
     f.create_dataset("BoundaryDimensionValue.1",data=zeros_array.astype('>f4'))
     f.create_dataset("BoundaryDimensionValue.2",data=zeros_array.astype('>f4'))
-    
+
     f.close()
 
     # Remove the starting HDF5 boundary file (no extra extension) and move the .new one to the original name.
@@ -650,7 +650,7 @@ def edit_boundary_files(user_inputs):
 
     # remove our original HDF5 boundary condition file
     os.remove(orig_HDF_boundary_file)
-        
+
     # do the actual moving here
     errcode = os.system(mycommand)
 
@@ -658,5 +658,5 @@ def edit_boundary_files(user_inputs):
     if errcode != 0:
         print("*** system did something fishy (boundary HDF5 file moving), quitting.")
         sys.exit(1)
-    
+
     return

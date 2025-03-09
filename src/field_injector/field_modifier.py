@@ -1,8 +1,8 @@
 '''
 This code modifies pre-existing tracer fluid fields. As such, it is intended to be
-used on Enzo datasets that already have the tracer fluid fields in them. 
+used on Enzo datasets that already have the tracer fluid fields in them.
 
-WARNING: This program will modify a dataset in-place, so you should absolutely make a 
+WARNING: This program will modify a dataset in-place, so you should absolutely make a
          backup copy of your original Enzo dataset before you start and then verify
          that the tracer fluids were correctly edited before you delete said backup copy.
 
@@ -42,7 +42,7 @@ user_inputs = {
     # if False, it does everything BUT write the tracer fields (dataset is unmodified)
     # It seems useful to have this feature because adding the fields is a bit tricky with
     # the various unit conversions, so you might want to do a dry run first.
-    "MODIFY_FILE": True,  
+    "MODIFY_FILE": True,
 
     # This sets the default values of the tracer fluid density. "tiny_number" is an
     # Enzo internal value that is typically set to 1e-20.  You probably don't need
@@ -52,8 +52,8 @@ user_inputs = {
 
 def modify_tracer_fields(user_inputs):
     '''
-    This is the routine that actually modifies the tracer fluid fields in Enzo grid (.cpu) files.  This is 
-    entirely problem-dependent, so this function will need to be modified. The example given here is meant to 
+    This is the routine that actually modifies the tracer fluid fields in Enzo grid (.cpu) files.  This is
+    entirely problem-dependent, so this function will need to be modified. The example given here is meant to
     show users how to work with grids based on cell positions.
 
     The general process is:
@@ -107,8 +107,8 @@ def modify_tracer_fields(user_inputs):
 
     # do some error checking to make sure that the number of tracer fluids the user has listed
     # is NO MORE THAN the number of tracer fluids in the dataset.  This assumes that the tracer
-    # fields are being algorithmically modified in some way; if the user is doing something more 
-    # manual this check may not actually be needed (i.e., if the user_inputs['NumberOfTracerFluidFields'] 
+    # fields are being algorithmically modified in some way; if the user is doing something more
+    # manual this check may not actually be needed (i.e., if the user_inputs['NumberOfTracerFluidFields']
     # is never used, this is not relevant).
     if user_inputs['NumberOfTracerFluidFields'] > ds.parameters['NumberOfTracerFluidFields'] :
         print("The number of tracer fluid fields you specified in user_inputs is more than the number in the dataset.")
@@ -240,7 +240,7 @@ def modify_tracer_fields(user_inputs):
             # column-major order that Enzo expects so that we can write it to disk.
             this_tracer_field = np.transpose(this_tracer_field)
 
-            # we now copy the tracer fluid values from the numpy array back into the 
+            # we now copy the tracer fluid values from the numpy array back into the
             # HDF5 file's buffers (note that the h5py docs imply this isn't necessary,
             # but the modified datasets do not seem to get set correctly otherwise).
             f[tf_dset_name][...] = this_tracer_field
