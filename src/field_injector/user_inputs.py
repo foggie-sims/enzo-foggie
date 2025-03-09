@@ -10,11 +10,11 @@ user_inputs = {
     # add any file names here.
     # NOTE: Python seems to have problems with directories that have spaces in their names, even if
     #       you put backslashes in them.
-    "dataset_directory":"/Users/bwoshea/Desktop/tracer_fluid_tests/RD0010_really_little_cluster_mod",
+    "dataset_directory":"/Users/bwoshea/Desktop/tracer_fluid_tests/cosmotest/RD0006",
 
     # This is the name of the restart parameter file in the dataset directory
     # The code knows how to figure out the names of other files from that.
-    "filename_stem": "RD0010",
+    "filename_stem": "RD0006",
 
     # Number of tracer fluid fields.  Must be at least 1 and at most 8
     # (the "at most 8" comes from the Enzo tracer fluid code).
@@ -24,7 +24,7 @@ user_inputs = {
     # If you don't know offhand, look in the dataset's .hierarchy file - each
     # grid entry has a line that says 'NumberOfBaryonFields', and it should be
     # the same for every grid entry.  Use that number.
-    "NumberOfOriginalBaryonFields": 10,
+    "NumberOfOriginalBaryonFields": 6,
 
     # This controls the level of verbosity of the outputs.  If you set it to True
     # you will get a lot of output, but it will also tell you what the code is doing.
@@ -34,7 +34,7 @@ user_inputs = {
     # if False, it does everything BUT write the tracer fields (dataset is unmodified)
     # It seems useful to have this feature because adding the fields is a bit tricky with
     # the various unit conversions, so you might want to do a dry run first.
-    "MODIFY_FILE": True,
+    "MODIFY_FILES": True,
 
     # This sets the default values of the tracer fluid density. "tiny_number" is an
     # Enzo internal value that is typically set to 1e-20.  You probably don't need
@@ -81,18 +81,13 @@ def modify_grid_files(user_inputs):
 
     print("******** Modifying the grid files. ********")
 
-    MODIFY_FILES = True # if True, this will actually write the tracer fields.
-                        # if False, it does everything BUT write the tracer fields (dataset is unmodified)
-                        # It seems useful to have this feature because adding the fields is a bit tricky with
-                        # the various unit conversions, so you might want to do a dry run first.
-
     # sphere center (user sets this)
-    sph_cen_x = 0.45
-    sph_cen_y = 0.5
-    sph_cen_z = 0.55
+    sph_cen_x = 0.52587891
+    sph_cen_y = 0.51708984
+    sph_cen_z = 0.48486328
 
     # sphere radius - will be multiplied by tracer field number as a test (user sets this)
-    sph_dr = 0.03125
+    sph_dr = 0.015625
 
     # load up the Enzo dataset we're interested in (from user inputs)
     enzo_param_file = user_inputs['dataset_directory'] + "/" + user_inputs['filename_stem']

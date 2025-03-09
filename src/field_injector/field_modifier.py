@@ -42,7 +42,7 @@ user_inputs = {
     # if False, it does everything BUT write the tracer fields (dataset is unmodified)
     # It seems useful to have this feature because adding the fields is a bit tricky with
     # the various unit conversions, so you might want to do a dry run first.
-    "MODIFY_FILE": True,
+    "MODIFY_FILES": True,
 
     # This sets the default values of the tracer fluid density. "tiny_number" is an
     # Enzo internal value that is typically set to 1e-20.  You probably don't need
@@ -223,7 +223,8 @@ def modify_tracer_fields(user_inputs):
 
             # then set it to tiny_number (not necessary, but this sets all cells to a uniform
             # value to start up with)
-            this_tracer_field[...] = user_inputs['tiny_number']
+            if user_inputs['MODIFY_FILES']:
+                this_tracer_field[...] = user_inputs['tiny_number']
 
             # ***** And now we actually modify the tracer fluid in some spatially-aware way! *****
 
@@ -234,7 +235,8 @@ def modify_tracer_fields(user_inputs):
             # if the tracer fluid is within myrad, give it the same value as
             # the density field (this is arbitrary but convenient, you can do whatever
             # you want)
-            this_tracer_field[radius<=myrad] = dens_dset[radius<=myrad]
+            if user_inputs['MODIFY_FILES']:
+                this_tracer_field[radius<=myrad] = dens_dset[radius<=myrad]
 
             # We now take the tracer fluid field and transpose it back into the
             # column-major order that Enzo expects so that we can write it to disk.
@@ -243,11 +245,13 @@ def modify_tracer_fields(user_inputs):
             # we now copy the tracer fluid values from the numpy array back into the
             # HDF5 file's buffers (note that the h5py docs imply this isn't necessary,
             # but the modified datasets do not seem to get set correctly otherwise).
-            f[tf_dset_name][...] = this_tracer_field
+            if user_inputs['MODIFY_FILES']:
+                f[tf_dset_name][...] = this_tracer_field
 
             # this command forces h5py to flush dataset buffers to disk (i.e., it ensures
             # that the modified dataset actually gets written to disk)
-            f.flush()
+            if user_inputs['MODIFY_FILES']:
+                f.flush()
 
             # do a bit of housekeeping in case Python is sloppy with memory management
             # this is not always necessary, but when you have a lot of grids/arrays being created

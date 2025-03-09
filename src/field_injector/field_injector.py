@@ -21,22 +21,22 @@ if user_inputs['DEBUG_OUTPUTS']:
     print("*"*40,"\n")
 
 # Creates the new parameter file (with tracer fluid contents in it)
-if user_inputs['MODIFY_FILE'] == True:
+if user_inputs['MODIFY_FILES'] == True:
     edit_param_file(user_inputs)
 else:
-    print("Skipping edit_param_file because this is a dry run (MODIFY_FILE = False)\n")
+    print("Skipping edit_param_file because this is a dry run (MODIFY_FILES = False)\n")
 
 # Creates the new hierarchy file (with tracer fluid contents in it)
-if user_inputs['MODIFY_FILE'] == True:
+if user_inputs['MODIFY_FILES'] == True:
     edit_hierarchy_file(user_inputs)
 else:
-    print("Skipping edit_hierarchy_file because this is a dry run (MODIFY_FILE = False)\n")
+    print("Skipping edit_hierarchy_file because this is a dry run (MODIFY_FILES = False)\n")
 
 # Creates the two new boundary conditions files (with tracer fluid contents in them)
-if user_inputs['MODIFY_FILE'] == True:
+if user_inputs['MODIFY_FILES'] == True:
     edit_boundary_files(user_inputs)
 else:
-    print("Skipping edit_boundary_files because this is a dry run (MODIFY_FILE = False)\n")
+    print("Skipping edit_boundary_files because this is a dry run (MODIFY_FILES = False)\n")
 
 # Modifies the existing grid files to add tracer fluid fields. Note that we don't use the
 # same logic as the prior function calls (re: MODIFY_FILES) because we often will want to
