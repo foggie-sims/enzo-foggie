@@ -8,14 +8,26 @@ for mass, metal, and energy yields. Tabular yields computed
 from stellar population synthesis models such as the
 `SYGMA <https://nugrid.github.io/NuPyCEE/overview.html>`_
 chemical evolution code can be used instead.
-These tables make it easy to track metals from specific feedback sources 
-such as different types of supernovae or even pre-supernova feedback.
-This feature is called "process tracking."
+
+These tables offer mass and metal yields for
+massive stars and Type II supernovae, Type Ia supernovae,
+AGB stellar winds, and neutron star mergers (NSMs).
+This allows the metal contributions from specific feedback sources
+to be tracked individually with a feature called "process tracking."
+Additionally, the tables provide information on the rate of
+Type II and Ia supernova events that can be used to calculate energy yields.
+The parameters ``StarFeedbackTabularSNIIEnergy`` and ``StarFeedbackTabularSNIaEnergy``
+are available for implementing conversions 
+between tabulated event rates and energy yeilds.
+No information on event rates or energy yields 
+is available from SYGMA for AGB winds and NSMs.
+Parameters for setting their energy yields have not (yet) been implemented.
 
 A subset of methods support the use of tabulated yields. 
 See :doc:`../physics/star_particles`
 for a current list of feedback methods and problem types
 that support tabulated yields and source tracking respectively.
+Information on generating yield tables is also on that page.
 
 Feedback Table Structure
 ------------------------
@@ -114,6 +126,8 @@ The subroutines available for use in your feedback routine are as follows:
 * ``sne_energy``: total energy yield for Type II and Ia supernovae
 * ``AGB_mass``: mass yield for AGB winds
 * ``AGB_metal``: metal yield for AGB winds
+* ``NSM_mass``: mass yield for neutron star mergers
+* ``NSM_metal``: metal yield for neutron star mergers
 
 The ``mass`` and ``metal`` subroutines share the same call signature::
 
