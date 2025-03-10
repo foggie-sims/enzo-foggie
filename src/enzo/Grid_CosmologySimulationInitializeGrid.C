@@ -561,7 +561,7 @@ int grid::CosmologySimulationInitializeGrid(
   /*  If using tracer fluids, set the field to something very small (tiny_number).
       Note that this routine is a good place to set the tracer fields to something
       that isn't tiny_number, but that is going to be highly problem-dependent and
-      thus there isn't a general routine for it.AA
+      thus there isn't a general routine for it.
 
       Note: if you add more tracer fluid fields make sure to update
       MAX_NUMBER_OF_TRACER_FIELDS in macros_and_parameters.h  */
