@@ -353,8 +353,8 @@ int SetEvolveRefineRegion (FLOAT time)
     }
     timestep -= 1;
     if (timestep < 0) return SUCCESS;
-    if(debug && MyProcessorNumber == ROOT_PROCESSOR){
-      fprintf(stderr,"It is %f, which is greater than %f, so the closest timestep entry is %d.\n",time,EvolveMultiRefineRegionTime[timestep],timestep);
+    if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+      fprintf(stderr,"SetEvolveRefineRegion: It is currently %f, which is greater than %f, so the closest timestep entry is %d.\n",time,EvolveMultiRefineRegionTime[timestep],timestep);
     }
 
     /* Set MultiRefineRegion to EvolveMultiRefineRegion */
@@ -366,14 +366,14 @@ int SetEvolveRefineRegion (FLOAT time)
         NStaticMultiRefineRegions ++;
     NumberOfStaticMultiRefineRegions = NStaticMultiRefineRegions;
 
-    if(debug && MyProcessorNumber == ROOT_PROCESSOR){
+    if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
       fprintf(stderr,"SetEvolveRefineRegion sees %i static MultiRefineRegions and %i evolving ones.\n",NumberOfStaticMultiRefineRegions,NumberOfMultiRefineTracks);
       fprintf(stderr,"SetEvolveRefineRegion says you have %i time entries per track.\n",NumberOfMultiRefineTimeEntries);
     }
 
     for (region = 0; region < NumberOfMultiRefineTracks; region++){
       for (i=0; i<NumberOfMultiRefineTimeEntries; i++){
-        if(debug && MyProcessorNumber == ROOT_PROCESSOR){
+        if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
           fprintf(stderr,"SetEvolveRefineRegion: Evolving MRR %"ISYM" has SM %"FSYM" at time entry %"ISYM".\n",region,EvolveMultiRefineRegionMinimumStarMass[region][i],i);
         }
       }
@@ -382,7 +382,7 @@ int SetEvolveRefineRegion (FLOAT time)
     for (region = 0; region < NumberOfMultiRefineTracks; region++){
       if(timestep == NumberOfMultiRefineTimeEntries-1){
         MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions] = EvolveMultiRefineRegionMinimumStarMass[region][timestep];
-        if (debug && MyProcessorNumber == ROOT_PROCESSOR){
+        if (debug1 && MyProcessorNumber == ROOT_PROCESSOR){
           fprintf(stderr,"SetEvolveRefineRegion: I set MultiRefineRegionMinimumStarMass[%"ISYM"] to %"FSYM" for timestep %i\n.",region+NumberOfStaticMultiRefineRegions,MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions],timestep);
         }
         for (i = 0; i < MAX_DIMENSION; i++){
@@ -412,7 +412,7 @@ int SetEvolveRefineRegion (FLOAT time)
         
       MultiRefineRegionMinimumLevel[region+NumberOfStaticMultiRefineRegions] = EvolveMultiRefineRegionMinimumLevel[region];
       MultiRefineRegionMaximumLevel[region+NumberOfStaticMultiRefineRegions] = EvolveMultiRefineRegionMaximumLevel[region];
-      if (debug && MyProcessorNumber == ROOT_PROCESSOR){
+      if (debug1 && MyProcessorNumber == ROOT_PROCESSOR){
         fprintf(stdout, "SetEvolveRefineRegion: EvolveMultiRefineRegion: %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM" %"ISYM" %"FSYM"\n",
           MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][0], MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][1],
           MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][2], MultiRefineRegionRightEdge[region+NumberOfStaticMultiRefineRegions][0],
