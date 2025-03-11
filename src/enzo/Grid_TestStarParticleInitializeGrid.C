@@ -32,7 +32,8 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 int grid::TestStarParticleInitializeGrid(float TestStarParticleStarMass, 
 					 float *Initialdt,
 					 FLOAT TestStarParticleStarVelocity[],
-					 FLOAT TestStarParticleStarPosition[])
+					 FLOAT TestStarParticleStarPosition[],
+					 float TestStarParticleMetallicity)
 {
   /* declarations */
 
@@ -58,7 +59,7 @@ int grid::TestStarParticleInitializeGrid(float TestStarParticleStarMass,
 
   /* Set Central Mass in simulation units */
 
-  CentralMass = TestStarParticleStarMass*1.99e33* pow(LengthUnits*CellWidth[0][0],-3.0)/DensityUnits;
+  CentralMass = TestStarParticleStarMass*SolarMass* POW(LengthUnits*CellWidth[0][0],-3.0)/DensityUnits;
 
   printf("Central Mass: %f \n",CentralMass);
 
@@ -78,21 +79,22 @@ int grid::TestStarParticleInitializeGrid(float TestStarParticleStarMass,
 
   /* Set central particle. */ 
   for (dim = 0; dim < GridRank; dim++) {
-    ParticlePosition[dim][0] = TestStarParticleStarPosition[dim]*
-      (DomainLeftEdge[dim]+DomainRightEdge[dim]) + 0.5*CellWidth[0][0];
+    ParticlePosition[dim][0] = TestStarParticleStarPosition[dim];
     ParticleVelocity[dim][0] = TestStarParticleStarVelocity[dim]*1e5*TimeUnits/LengthUnits;
   }
   ParticleMass[0] = CentralMass;
+  if (StarMakerStoreInitialMass)
+    ParticleInitialMass[0] = CentralMass;
   ParticleAttribute[0][0] = Time+1e-7;
+  ParticleAttribute[1][0] = 10.0 * Myr_s/TimeUnits;
 
+  ParticleAttribute[1][0] = StarMakerMinimumDynamicalTime * yr_s/TimeUnits; // default
   if (STARFEED_METHOD(UNIGRID_STAR)) ParticleAttribute[1][0] = 10.0 * Myr_s/TimeUnits;
-  if (STARFEED_METHOD(MOM_STAR))
+  if (STARFEED_METHOD(MOM_STAR) || STARFEED_METHOD(MECH_STAR))
     if(StarMakerExplosionDelayTime >= 0.0)
       ParticleAttribute[1][0] = 1.0;
-    else
-      ParticleAttribute[1][0] = 10.0 * Myr_s/TimeUnits;
   
-  ParticleAttribute[2][0] = 0.0;  // Metal fraction
+  ParticleAttribute[2][0] = TestStarParticleMetallicity;  // Metal fraction
   ParticleAttribute[3][0] = 0.0;  // metalfSNIa
 
   return SUCCESS;

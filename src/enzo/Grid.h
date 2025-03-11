@@ -128,6 +128,7 @@ class grid
   PINT  *ParticleNumber;                   // unique identifier
   int   *ParticleType;                     // type of particle
   float *ParticleAttribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
+  float *ParticleInitialMass;              // Only allocated if StarMakerStoreInitialMass = 1
 
 //
 //  Star particle data
@@ -1483,7 +1484,8 @@ gradient force to gravitational force for one-zone collapse test. */
                             float *Mass,
                             FLOAT *Position[],
                             float *Velocity[],
-                            float *Attribute[]);
+                            float *Attribute[],
+                            float *InitialMass);
 
 
 /* Particles: same as above, but a version that is much more efficient. */
@@ -1536,9 +1538,11 @@ iveParticles;};
 
    void DeleteParticles() {
      if (ParticleMass != NULL) delete [] ParticleMass;
+     if (ParticleInitialMass != NULL) delete [] ParticleInitialMass;
      if (ParticleNumber != NULL) delete [] ParticleNumber;
      if (ParticleType != NULL) delete [] ParticleType;
      ParticleMass = NULL;
+     ParticleInitialMass = NULL;
      ParticleNumber = NULL;
      ParticleType = NULL;
      for (int dim = 0; dim < GridRank; dim++) {
@@ -1574,22 +1578,25 @@ iveParticles;};
      }
      for (int i = 0; i < NumberOfParticleAttributes; i++)
        ParticleAttribute[i] = new float[NumberOfNewParticles];
+     ParticleInitialMass = (StarMakerStoreInitialMass) ? new float[NumberOfNewParticles] : NULL;
    };
 
 /* Particles: Copy pointers passed into into grid. */
 
    void SetParticlePointers(float *Mass, PINT *Number, int *Type,
-                            FLOAT *Position[], 
-			    float *Velocity[], float *Attribute[]) {
+                            FLOAT *Position[], float *Velocity[], 
+                            float *Attribute[], float *InitialMass) {
     ParticleMass   = Mass;
+    ParticleInitialMass = InitialMass;
     ParticleNumber = Number;
     ParticleType   = Type;
     for (int dim = 0; dim < GridRank; dim++) {
       ParticlePosition[dim] = Position[dim];
       ParticleVelocity[dim] = Velocity[dim];
     }
-    for (int i = 0; i < NumberOfParticleAttributes; i++)
+    for (int i = 0; i < NumberOfParticleAttributes; i++){
       ParticleAttribute[i] = Attribute[i];
+    }
    };
 
 /* Particles: Set new star particle index. */
@@ -1833,10 +1840,9 @@ int TransferSubgridActiveParticles(grid* Subgrids[], int NumberOfSubgrids,
   int IdentifyPotentialField(int &PotenNum, int &Acce1Num, int &Acce2Num, int &Acce3Num);
 
   /* Identify colour field */
-
   int IdentifyColourFields(int &SNColourNum, int &MetalNum, 
-			   int &MetalIaNum, int &MetalIINum, int &MBHColourNum,
-		           int &Galaxy1ColourNum, int &Galaxy2ColourNum);
+			   int &MetalIaNum, int &MetalIINum, int &MetalAGBNum, int &MetalNSMNum,
+			   int &MBHColourNum, int &Galaxy1ColourNum, int &Galaxy2ColourNum);
 
   /* Identify Multi-species fields. */
 
@@ -2109,7 +2115,15 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   int TestStarParticleInitializeGrid(float TestStarParticleStarMass, 
 				     float *Initialdt,
 				     FLOAT TestStarParticleStarVelocity[],
-				     FLOAT TestStarParticleStarPosition[]);
+				     FLOAT TestStarParticleStarPosition[],
+                 float TestStarParticleMetallicity);
+
+/* Double Star Particle test: initialize particle */
+  int TestDoubleStarParticleInitializeGrid(FLOAT TestStarParticleStarMass[2], 
+				     float *Initialdt,
+				     FLOAT TestStarParticleStarVelocity[2][3],
+				     FLOAT TestStarParticleStarPosition[2][3],
+                 FLOAT TestStarParticleMetallicity[2]);
 
 /* Gravity Test: initialize grid. */
 
@@ -2350,7 +2364,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 				     double GasZeta2,
 				     double GasCoreEntropy,
 				     double GasHaloRatio,
-				     double GasMetallicity,
+                 double GasHaloMetallicity,
 				     int   UseHaloRotation,
 				     double RotationScaleVelocity,
 				     double RotationScaleRadius,
@@ -2690,10 +2704,11 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 		       long *MustRefineIDs);
 
   int CreateChildParticles(float dx, int NumberOfParticles, float *ParticleMass,
+			   float *ParticleInitialMass,
 			   int *ParticleType, FLOAT *ParticlePosition[],
 			   float *ParticleVelocity[], float *ParticleAttribute[],
 			   FLOAT *CellLeftEdge[], int *GridDimension, 
-                           int MaximumNumberOfNewParticles, int iter, 
+			   int MaximumNumberOfNewParticles, int iter, 
 			   int *NumberOfNewParticles);
 
 /* Magnetic field resetting routine. */

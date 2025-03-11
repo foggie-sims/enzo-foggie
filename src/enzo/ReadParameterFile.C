@@ -64,6 +64,8 @@ int ReadEvolveRefineFile(void);
 int CheckShearingBoundaryConsistency(TopGridData &MetaData);
 void get_uuid(char *buffer);
 
+int ReadFeedbackTable(char *filename);
+
 int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 {
 
@@ -974,6 +976,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &StarMakerTypeIISNeMetalField);
     ret += sscanf(line, "StarMakerPlanetaryNebulae = %"ISYM,
 		  &StarMakerPlanetaryNebulae);
+    ret += sscanf(line, "StarMakerStoreInitialMass = %"ISYM,
+		  &StarMakerStoreInitialMass);
     ret += sscanf(line, "StarMakerOverDensityThreshold = %"FSYM,
 		  &StarMakerOverDensityThreshold);
     ret += sscanf(line, "StarMakerUseOverDensityThreshold = %"ISYM,
@@ -1006,6 +1010,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "StarMetalYield = %"FSYM, &StarMetalYield);
     ret += sscanf(line, "StarEnergyToThermalFeedback = %"FSYM,
 		  &StarEnergyToThermalFeedback);
+    ret += sscanf(line, "StarFeedbackAdditionalThermalEnergy = %"FSYM,
+		  &StarFeedbackAdditionalThermalEnergy);
+    ret += sscanf(line, "MomentumMultiplier = %"FSYM,
+		  &MomentumMultiplier);
+    ret += sscanf(line, "MomentumCancellationToThermal = %"ISYM,
+		  &MomentumCancellationToThermal);
+    ret += sscanf(line, "WriteFeedbackLogFiles = %"ISYM,
+		  &WriteFeedbackLogFiles);
     ret += sscanf(line, "StarEnergyToStellarUV = %"FSYM, &StarEnergyToStellarUV);
     ret += sscanf(line, "StarEnergyToQuasarUV = %"FSYM, &StarEnergyToQuasarUV);
     ret += sscanf(line, "StarFeedbackKineticFraction = %"FSYM,
@@ -1014,6 +1026,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     	&StarMakerExplosionDelayTime);
     ret += sscanf(line, "StarFeedbackDistRadius = %"ISYM, &StarFeedbackDistRadius);
     ret += sscanf(line, "StarFeedbackDistCellStep = %"ISYM, &StarFeedbackDistCellStep);
+    ret += sscanf(line, "StarFeedbackUseTabularYields = %"ISYM, &StarFeedbackUseTabularYields);
+    ret += sscanf(line, "StarFeedbackTabularSNIIEnergy = %"FSYM, &StarFeedbackTabularSNIIEnergy);
+    ret += sscanf(line, "StarFeedbackTabularSNIaEnergy = %"FSYM, &StarFeedbackTabularSNIaEnergy);
+    if (sscanf(line, "StarFeedbackTabularFilename = %s", dummy) == 1)
+      StarFeedbackTabularFilename = dummy;
+    ret += sscanf(line, "StarFeedbackTrackMetalSources = %"ISYM, &StarFeedbackTrackMetalSources);
 
     ret += sscanf(line, "StarClusterUseMetalField = %"ISYM,
 		  &StarClusterUseMetalField);
@@ -1106,6 +1124,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (sscanf(line, "MBHInsertLocationFilename = %s", dummy) == 1)
       MBHInsertLocationFilename = dummy;
 
+    ret += sscanf(line, "H2StarMakerH2FractionMethod = %"ISYM,
+		  &H2StarMakerH2FractionMethod);
     ret += sscanf(line, "H2StarMakerEfficiency = %"FSYM,
 		  &H2StarMakerEfficiency);
     ret += sscanf(line, "H2StarMakerNumberDensityThreshold = %"FSYM,
@@ -1128,6 +1148,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &H2StarMakerH2FloorInColdGas);
     ret += sscanf(line, "H2StarMakerColdGasTemperature = %"FSYM,
 		  &H2StarMakerColdGasTemperature);
+    ret += sscanf(line, "H2StarMakerUseLocalDensityMax = %"ISYM,
+		  &H2StarMakerUseLocalDensityMax);
+    ret += sscanf(line, "H2StarMakerWriteStarLogFiles = %"ISYM,
+		  &H2StarMakerWriteStarLogFiles);
 
     ret += sscanf(line, "StarMakerMinimumMassRamp = %"ISYM,
 		  &StarMakerMinimumMassRamp);
@@ -1482,8 +1506,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (strstr(line, "MHDDRF")              ) ret++;
     if (strstr(line, "DrivenFlowMach")      ) ret++;
     if (strstr(line, "DrivenFlowMagField")  ) ret++;
-    if (strstr(line, "DrivenFlowDensity")      ) ret++;
-    if (strstr(line, "DrivenFlowPressure")      ) ret++;
+    if (strstr(line, "DrivenFlowDensity")   ) ret++;
+    if (strstr(line, "DrivenFlowPressure")  ) ret++;
+    if (strstr(line, "TestStarParticle")    ) ret++;
 
     if (strstr(line, "\"\"\"")              ) comment_count++;
 
@@ -2174,6 +2199,18 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       my_exit(EXIT_FAILURE);
     }
   } // if(StarFeedbackThermalEfficiencyRamp > 0)
+
+  if (StarFeedbackUseTabularYields) {
+
+    if (!StarMakerStoreInitialMass)
+      ENZO_FAIL("StarFeedbackUseTabularYields requires StarMakerStoreInitialMass to be enabled.");
+
+    if (ReadFeedbackTable(StarFeedbackTabularFilename) == FAIL) {
+      ENZO_FAIL("Error in ReadFeedbackTable.");
+    } else {
+      if (debug) fprintf(stderr, "Successfully read in feedback table %s.\n", StarFeedbackTabularFilename);
+    }
+  }
 
   return SUCCESS;
 

@@ -12,6 +12,7 @@
 #ifndef STAR_PARTICLE_DATA_DEFINED__
 #define STAR_PARTICLE_DATA_DEFINED__
 
+#include "global_data.h"
 #ifdef DEFINE_STORAGE
 # define SPEXTERN
 #else /* DEFINE_STORAGE */
@@ -29,6 +30,7 @@ struct ParticleEntry {
   float Attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
   PINT Number;
   int Type;
+  float InitialMass = 0.0;
 };
 
 
@@ -58,6 +60,10 @@ SPEXTERN float StarMakerMinimumDynamicalTime;
 SPEXTERN float StarMassEjectionFraction;
 SPEXTERN float StarMetalYield;
 SPEXTERN float StarEnergyToThermalFeedback;
+SPEXTERN float StarFeedbackAdditionalThermalEnergy;
+SPEXTERN float MomentumMultiplier;
+SPEXTERN int MomentumCancellationToThermal;
+SPEXTERN int WriteFeedbackLogFiles;
 SPEXTERN float StarEnergyFeedbackRate;
 SPEXTERN float StarEnergyToStellarUV;
 SPEXTERN float StarEnergyToQuasarUV;
@@ -65,6 +71,11 @@ SPEXTERN int StarFeedbackDistRadius;
 SPEXTERN int StarFeedbackDistCellStep;
 SPEXTERN int StarFeedbackDistTotalCells;
 SPEXTERN float StarFeedbackKineticFraction;
+SPEXTERN int   StarFeedbackUseTabularYields; 
+SPEXTERN char* StarFeedbackTabularFilename;
+SPEXTERN float StarFeedbackTabularSNIIEnergy;
+SPEXTERN float StarFeedbackTabularSNIaEnergy;
+SPEXTERN int   StarFeedbackTrackMetalSources;
 SPEXTERN float StarMakerExplosionDelayTime;
 SPEXTERN int   StarMakerUseJeansMass;
 SPEXTERN int   StarMakerVelDivCrit;
@@ -73,6 +84,7 @@ SPEXTERN int   StarMakerThermalCrit;
 SPEXTERN int   StarMakerH2Crit;
 SPEXTERN int   StarMakerStochasticStarFormation;
 SPEXTERN float StarMakerTemperatureThreshold;
+SPEXTERN int   StarMakerStoreInitialMass;
 
 SPEXTERN float PopIIIStarMass;
 SPEXTERN int   PopIIIInitialMassFunction;
@@ -130,6 +142,7 @@ SPEXTERN float  MBHFeedbackMetalYield;
 SPEXTERN float  MBHFeedbackThermalRadius;
 SPEXTERN float  MBHFeedbackJetsThresholdMass;
 
+SPEXTERN int    H2StarMakerH2FractionMethod;
 SPEXTERN float  H2StarMakerEfficiency;
 SPEXTERN float  H2StarMakerNumberDensityThreshold;
 SPEXTERN float  H2StarMakerMinimumMass;
@@ -138,9 +151,11 @@ SPEXTERN int    H2StarMakerStochastic;
 SPEXTERN int    H2StarMakerUseSobolevColumn;
 SPEXTERN float  H2StarMakerSigmaOverR;
 SPEXTERN int    H2StarMakerAssumeColdWarmPressureBalance;
+SPEXTERN int    H2StarMakerUseLocalDensityMax;
 SPEXTERN float  H2StarMakerH2DissociationFlux_MW;
 SPEXTERN float  H2StarMakerH2FloorInColdGas;
 SPEXTERN float  H2StarMakerColdGasTemperature;
+SPEXTERN int    H2StarMakerWriteStarLogFiles;
 
 SPEXTERN int AccretingParticleRadiation;
 SPEXTERN double AccretingParticleLuminosity;
