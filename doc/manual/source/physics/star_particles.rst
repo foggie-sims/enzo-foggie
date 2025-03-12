@@ -354,7 +354,7 @@ momentum it receives is limited to that which produces a velocity change
 of 1000 km/s.
 
 If the total amount of momentum injected through this method does not sum 
-to 10\ :sup:`51` ergs of kinetic energy per supernova _in the frame of the particle_, 
+to 10\ :sup:`51` ergs of kinetic energy per supernova *in the frame of the particle*, 
 thermal energy is added to the host cell such that the injected kinetic + 
 thermal energy is 10\ :sup:`51` ergs per supernova.
 
