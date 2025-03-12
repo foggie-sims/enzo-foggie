@@ -609,7 +609,6 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   StarEnergyToThermalFeedback      = 1.0e-5;
   StarFeedbackAdditionalThermalEnergy = 0.0;
   MomentumMultiplier               = 1.0;
-  MomentumCancellationToThermal    = 1;
   WriteFeedbackLogFiles            = 0;
   StarEnergyToStellarUV            = 3.0e-6;
   StarEnergyToQuasarUV             = 5.0e-6;

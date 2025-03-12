@@ -354,20 +354,25 @@ momentum it receives is limited to that which produces a velocity change
 of 1000 km/s.
 
 If the total amount of momentum injected through this method does not sum 
-to 10\ :sup:`51` ergs of kinetic energy per supernova, thermal energy is 
-added to the host cell such that the total kinetic + thermal energy is 
-10\ :sup:`51` ergs per supernova.
+to 10\ :sup:`51` ergs of kinetic energy per supernova _in the frame of the particle_, 
+thermal energy is added to the host cell such that the injected kinetic + 
+thermal energy is 10\ :sup:`51` ergs per supernova.
 
-There is an option in this method to approximate the thermalization of gas 
-flows colliding with each other when the momentum is injected. 
-If the momentum of any of the surrounding cells *decreases* when the feedback 
-momentum is injected, due to e.g. momentum deposited in the opposite direction 
-as the motion of the gas in the cell, then thermal energy is injected into 
-that cell. The amount of thermal energy injected is equal to the difference 
-between the change in the cell's momentum and the change in its momentum 
-it would have had if it was stationary, converted from momentum to kinetic 
-energy. By default this option is off, but it can be turned on with 
-``MomentumCancellationToThermal = 1``.
+If the gas surrounding the particle is moving relative to the particle, either 
+due to general gas motions or because another particle injected an explosion 
+next to the particle of consideration, there should be some thermalization 
+of the injected momentum due to colliding gas flows. This is accounted for 
+by ensuring the injected kinetic + thermal energy sums to 10\ :sup:`51` 
+ergs per supernova, because the injected kinetic energy would decrease 
+slightly due to momentum cancelation, so the thermal energy increases 
+to account for this. Thus, ensuring 10\ :sup:`51` ergs per supernova 
+accounts for both the thermal energy from the supernova itself and for 
+thermalization of colliding gas flows.
+
+Note that because the energy and momentum injection is performed in the 
+frame of the particle, a moving particle will inject slightly more or less 
+energy than exactly 10\ :sup:`51` ergs per supernova because kinetic energy 
+and momentum are not invariant to frame translations.
 
 While the amount of momentum to inject in this method is fully determined 
 by the supernova rate and ejection mass, there is an option to multiply 

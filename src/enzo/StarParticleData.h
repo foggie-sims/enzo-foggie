@@ -62,7 +62,6 @@ SPEXTERN float StarMetalYield;
 SPEXTERN float StarEnergyToThermalFeedback;
 SPEXTERN float StarFeedbackAdditionalThermalEnergy;
 SPEXTERN float MomentumMultiplier;
-SPEXTERN int MomentumCancellationToThermal;
 SPEXTERN int WriteFeedbackLogFiles;
 SPEXTERN float StarEnergyFeedbackRate;
 SPEXTERN float StarEnergyToStellarUV;
