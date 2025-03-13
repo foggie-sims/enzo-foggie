@@ -353,26 +353,22 @@ kick that would change its velocity by 1000 km/s or greater, the amount of
 momentum it receives is limited to that which produces a velocity change 
 of 1000 km/s.
 
-If the total amount of momentum injected through this method does not sum 
-to 10\ :sup:`51` ergs of kinetic energy per supernova *in the frame of the particle*, 
-thermal energy is added to the host cell such that the injected kinetic + 
-thermal energy is 10\ :sup:`51` ergs per supernova.
+In order to account for thermalization of flows colliding with each other 
+within the injection region, the momentum is first deposited on a dummy 
+grid that uses the gas density of the true grid, but is initialized with 
+zero velocities. The total kinetic energy on this dummy grid is calculated 
+as the sum of :math:`\frac{1}{2}\frac{|p|^2}{m}` in each cell, where 
+:math:`|p|` is the magnitude of the momentum and m is the mass in each cell. 
 
-If the gas surrounding the particle is moving relative to the particle, either 
-due to general gas motions or because another particle injected an explosion 
-next to the particle of consideration, there should be some thermalization 
-of the injected momentum due to colliding gas flows. This is accounted for 
-by ensuring the injected kinetic + thermal energy sums to 10\ :sup:`51` 
-ergs per supernova, because the injected kinetic energy would decrease 
-slightly due to momentum cancelation, so the thermal energy increases 
-to account for this. Thus, ensuring 10\ :sup:`51` ergs per supernova 
-accounts for both the thermal energy from the supernova itself and for 
-thermalization of colliding gas flows.
-
-Note that because the energy and momentum injection is performed in the 
-frame of the particle, a moving particle will inject slightly more or less 
-energy than exactly 10\ :sup:`51` ergs per supernova because kinetic energy 
-and momentum are not invariant to frame translations.
+The momentum is then deposited on the true grid, and the kinetic energy within 
+the injection region is again calculated. The difference between the 
+dummy grid's kinetic energy and the true grid's kinetic energy is injected 
+as thermal energy into the host cell of the star particle. This process 
+accounts for any kinetic energy that is "lost" due to the momentum that is 
+deposited canceling out with gas velocities existing already on the grid. 
+Depositing the "lost" energy as thermal accounts for the thermalization 
+of gas flows colliding with one another, as calculated by the momentum 
+cancelation.
 
 While the amount of momentum to inject in this method is fully determined 
 by the supernova rate and ejection mass, there is an option to multiply 
@@ -391,7 +387,7 @@ step, the following columns:
 * Number of supernovae in this time step
 * M\ :sub:`ej` in M\ :sub:`sun`
 * The ejected metal mass, M\ :sub:`Z,ej` in M\ :sub:`sun`
-* The total momentum injected in M\ :sub:`sun` km/s 
+* The total momentum injected (without cancelation) in M\ :sub:`sun` km/s 
 * The thermal energy injected in ergs 
 
 Each processor creates one log file, titled ``feedbacklog_XXXXXXX.txt`` 

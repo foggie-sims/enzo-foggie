@@ -145,7 +145,7 @@ c
       R_PREC xfcshift, yfcshift, zfcshift, xfc, yfc, zfc,
      &     xface, yface, zface, xpos, ypos, zpos, face_shift
       R_PREC ke_before(3,3,3), mom_per_cell(3,3,3)
-      R_PREC Z_avg, n_avg, Z_floor,
+      R_PREC Z_avg, n_avg, Z_floor, dratio,
      &	  realmass, mu_cell, fbuff, add_therm
       R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, mom_term,
      &     mass_term, therm_sum
@@ -522,7 +522,7 @@ c           Sum mass, energy, and momentum before
 #ifdef FORTRAN_DEBUG
             write(6,*) "m before:", mass_before*
      &               (dunits*(x1*dx)**3._RKIND)/SolarMass
-            write(6,*) "e before:", kin_energy_before*dunits*
+            write(6,*) "ke before:", kin_energy_before*dunits*
      &                  vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
             write(6,*) 'mom_start:',mom_start*dunits*vunits
      &                  *(dx*x1)**3._RKIND/SolarMass/1e5_RKIND
@@ -536,9 +536,9 @@ c
             do k = -1_IKIND, 1_IKIND
                do j = -1_IKIND, 1_IKIND
                   do i = -1_IKIND, 1_IKIND
-                     u1(i+2,j+2,k+2) = u(i+ic,j+jc,+kc+k)
-                     v1(i+2,j+2,k+2) = v(i+ic,j+jc,k+kc)
-                     w1(i+2,j+2,k+2) = w(i+ic,j+jc,k+kc)
+                     u1(i+2,j+2,k+2) = 0._RKIND
+                     v1(i+2,j+2,k+2) = 0._RKIND
+                     w1(i+2,j+2,k+2) = 0._RKIND
                      d1(i+2,j+2,k+2) = d(i+ic,j+jc,k+kc)
                      ge1(i+2,j+2,k+2) = 0._RKIND
                      te1(i+2,j+2,k+2) = 0._RKIND
@@ -558,7 +558,7 @@ c
      &                        mzeject, mzeject_ia, mzeject_ii,
      &                        metalSNII, metalSNIa,
      &                        mass_per_cell, mom_per_cell,
-     &                        0._RKIND, dx, x1, dunits, vunits)
+     &                        dx, x1, dunits, vunits)
 c
 c           Calculate mass and energy in dummy fields
 c
@@ -569,23 +569,11 @@ c
 #ifdef FORTRAN_DEBUG
             write(6,*) "m dummy:", mass_dummy*
      &               (dunits*(x1*dx)**3._RKIND)/SolarMass
-            write(6,*) "e dummy:", kin_energy_dummy*dunits*
+            write(6,*) "ke dummy:", kin_energy_dummy*dunits*
      &                  vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
             write(6,*) 'mom_dummy:',mom_dummy*dunits*vunits
      &                  *(dx*x1)**3._RKIND/SolarMass/1e5_RKIND
 #endif
-c
-c           If kin_energy_inj is less than expected SNe energy, add
-c           the remaining energy as thermal into the host cell.
-            kin_energy_inj = kin_energy_dummy - kin_energy_before
-            if (kin_energy_inj .lt. energy) then
-               add_therm = add_therm + (energy - kin_energy_inj)
-#ifdef FORTRAN_DEBUG
-               write(6,*) "leftover energy injected as thermal:",
-     &                  add_therm*dunits*
-     &                  vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
-#endif
-            endif
 c
 c           Now deposit the momentum and thermal energy onto the grid.
 c
@@ -597,7 +585,61 @@ c
      &                        mzeject, mzeject_ia, mzeject_ii,
      &                        metalSNII, metalSNIa,
      &                        mass_per_cell, mom_per_cell,
-     &                        add_therm, dx, x1, dunits, vunits)
+     &                        dx, x1, dunits, vunits)
+c
+c           Calculate the mass and energy in the affected region again.
+c
+            call sum_energy_mom(u, v, w, d, nx, ny, nz,
+     &                          ic, jc, kc, iface, jface, kface,
+     &                          mass_end, kin_energy_end, mom_end)
+#ifdef FORTRAN_DEBUG
+            write(6,*) "m end:", mass_end*
+     &               (dunits*(dx*x1)**3._RKIND)/SolarMass
+            write(6,*) 'kin_energy_end:',kin_energy_end*dunits*
+     &                  vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
+            write(6,*) 'mom_end:',mom_end*dunits*vunits
+     &                  *(dx*x1)**3._RKIND/SolarMass/1e5_RKIND
+#endif
+c
+c           If KE injected onto grid is less than what it was in the dummy
+c           (because of momentum cancellation due to non-static gas), add
+c           the remaining energy as thermal into the host cell.
+c
+            kin_energy_inj = kin_energy_end - kin_energy_before
+            if (kin_energy_inj .lt. kin_energy_dummy) then
+               add_therm = add_therm+(kin_energy_dummy-kin_energy_inj)
+            endif
+#ifdef FORTRAN_DEBUG
+            write(6,*) "leftover energy injected as thermal:",
+     &                  add_therm*dunits*
+     &                  vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
+#endif
+c
+c           Add thermal energy
+c     
+#ifdef FORTRAN_DEBUG
+            write(6,*) 'te_before',te(ic+i,jc+j,kc+k)*
+     &        (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
+#endif
+            dratio = d(ic, jc, kc)/
+     &                       (d(ic, jc, kc) + mass_per_cell)
+            te(ic, jc, kc) = 
+     &        te(ic, jc, kc)*dratio + 
+     &        add_therm / d(ic, jc, kc)
+#ifdef FORTRAN_DEBUG
+            write(6,*) 'te_after',te(ic,jc,kc)*
+     &        (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)                        
+            write(6,*) 'ge_before',ge(ic,jc,kc)*
+     &        (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
+#endif
+            if (idual .eq. 1_IKIND)
+     &        ge(ic, jc, kc) = 
+     &        ge(ic, jc, kc)*dratio +
+     &        add_therm / d(ic, jc, kc)
+#ifdef FORTRAN_DEBUG
+            write(6,*) 'ge_after',ge(ic,jc,kc)*
+     &        (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
+#endif
             if (feedback_log .eq. 1_IKIND) then
                mom_sum = 0._RKIND
                do k = 1_IKIND, 3_IKIND
@@ -617,22 +659,9 @@ c
      &           SolarMass,
      &           mom_sum*
      &           (dunits*(dx*x1)**3._RKIND)*vunits/SolarMass/1e5_RKIND,
-     &           add_therm*(dunits*(dx*x1)**3._RKIND)*vunits**2._RKIND
+     &           add_therm*dunits*
+     &           vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
             endif
-c
-c           Calculate the mass and energy in the affected region again.
-c
-#ifdef FORTRAN_DEBUG
-            call sum_energy_mom(u, v, w, d, nx, ny, nz,
-     &                          ic, jc, kc, iface, jface, kface,
-     &                          mass_end, kin_energy_end, mom_end)
-            write(6,*) "m end:", mass_end*
-     &               (dunits*(dx*x1)**3._RKIND)/SolarMass
-            write(6,*) 'kin_energy_end:',kin_energy_end*dunits*
-     &                  vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
-            write(6,*) 'mom_end:',mom_end*dunits*vunits
-     &                  *(dx*x1)**3._RKIND/SolarMass/1e5_RKIND
-#endif
 c
 c           Convert momenta back to velocities and transform back to lab frame
 c
@@ -985,7 +1014,7 @@ c
      &                        mzeject, mzeject_ia, mzeject_ii,
      &                        metalSNII, metalSNIa,
      &                        mass_per_cell, mom_per_cell,
-     &                        add_therm, dx, x1, dunits, vunits)
+     &                        dx, x1, dunits, vunits)
 c
       implicit none
 #include "fortran_types.def"
@@ -997,7 +1026,6 @@ c
       R_PREC    d(nx, ny, nz), metal(nx,ny,nz), ge(nx,ny,nz)
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz), te(nx,ny,nz)
       R_PREC    mass_per_cell, mom_per_cell(3_IKIND,3_IKIND,3_IKIND)
-      R_PREC    add_therm
       R_PREC    mzeject, mzeject_ia, mzeject_ii
       R_PREC    metalSNII(nx,ny,nz), metalSNIa(nx,ny,nz)
       R_PREC    dunits, x1, vunits, dx, mult
@@ -1007,8 +1035,8 @@ c
 c     Locals
 c
       INTG_PREC i, j, k, i1, j1, k1
-      R_PREC    delta_mass, delta_pu, delta_pv, delta_pw, delta_therm,
-     &          dratio, delta_p, vel_kick
+      R_PREC    delta_mass, delta_pu, delta_pv, delta_pw,
+     &          delta_p, vel_kick
       R_PREC    pu_start, pu_deposit, pv_start, pv_deposit, pw_start,
      &          pw_deposit
 c
@@ -1021,10 +1049,8 @@ c              Calculate distance of this cell from host cell
                dist = i**2_IKIND + j**2_IKIND + k**2_IKIND
 c              Multiply the momentum deposited in corners or edges of
 c              cubes by the correct geometric factor for each x,y,z component
-               delta_therm = 0._RKIND
                if (dist .eq. 0_IKIND) then
                   mult = 0._RKIND
-                  delta_therm = add_therm
                else if (dist .eq. 1_IKIND) then
                   mult = 1._RKIND
                else if (dist .eq. 2_IKIND) then
@@ -1080,8 +1106,6 @@ c
                pw_start = pw(ic+i,jc+j,kface+k)
                p_start = (pu_start**2._RKIND + pv_start**2._RKIND +
      &           pw_start**2.)**(0.5_RKIND)
-               dratio = d(ic+i, jc+j, kc+k)/
-     &                       (d(ic+i, jc+j, kc+k) + delta_mass)
                d(ic+i,jc+j,kc+k) = d(ic+i,jc+j,kc+k)
      &                       + delta_mass
                pu(iface+i,jc+j,kc+k) = 
@@ -1093,30 +1117,6 @@ c
                p_end = (pu(iface+i,jc+j,kc+k)**2._RKIND + 
      &                  pv(ic+i,jface+j,kc+k)**2._RKIND +
      &                  pw(ic+i,jc+j,kface+k)**2._RKIND)**(0.5_RKIND)
-c
-c     Add thermal energy
-c     
-#ifdef FORTRAN_DEBUG
-               write(6,*) 'te_before',te(ic+i,jc+j,kc+k)*
-     &            (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
-#endif
-               te(ic+i, jc+j, kc+k) = 
-     &                   te(ic+i, jc+j, kc+k)*dratio + 
-     &                   delta_therm / d(ic+i, jc+j, kc+k)
-#ifdef FORTRAN_DEBUG
-               write(6,*) 'te_after',te(ic+i,jc+j,kc+k)*
-     &            (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)                        
-               write(6,*) 'ge_before',ge(ic+i,jc+j,kc+k)*
-     &            (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
-#endif
-               if (idual .eq. 1_IKIND)
-     &                   ge(ic+i, jc+j, kc+k) = 
-     &                   ge(ic+i, jc+j, kc+k)*dratio +
-     &                   delta_therm / d(ic+i, jc+j, kc+k)
-#ifdef FORTRAN_DEBUG
-               write(6,*) 'ge_after',ge(ic+i,jc+j,kc+k)*
-     &            (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
-#endif
 c     
 c     Metal feedback (note that in this function gas metal is
 c     a fraction (rho_metal/rho_gas) rather than a density.
