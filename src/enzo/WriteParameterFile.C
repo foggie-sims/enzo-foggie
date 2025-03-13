@@ -409,6 +409,10 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "CoolingRefineRegionTimeType   = %d\n", CoolingRefineRegionTimeType);
   if (CoolingRefineRegionFile != NULL)
     fprintf(fptr, "CoolingRefineRegionFile     = %s\n", CoolingRefineRegionFile);
+  fprintf(fptr, "MultiRefineRegionTimeType   = %d\n", MultiRefineRegionTimeType);
+  if (MultiRefineRegionFile != NULL)
+     fprintf(fptr, "MultiRefineRegionFile     = %s\n", MultiRefineRegionFile);
+
 
   fprintf(fptr, "\n");
   fprintf(fptr, "\n");
@@ -699,8 +703,9 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
       WriteListOfFloats(fptr, MAX_DIMENSION, AvoidRefineRegionRightEdge[ireg]);
     }
   }
-
-
+    
+  fprintf(fptr, "MultiRefineRegionSpatiallyVaryingStarMass = %"ISYM"\n",
+          MultiRefineRegionSpatiallyVaryingStarMass);
   fprintf(fptr, "MultiRefineRegionMaximumOuterLevel  = %"ISYM"\n",
           MultiRefineRegionMaximumOuterLevel);
   fprintf(fptr, "MultiRefineRegionMinimumOuterLevel  = %"ISYM"\n",
@@ -713,6 +718,9 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 
       fprintf(fptr, "MultiRefineRegionMinimumLevel[%"ISYM"] = %"ISYM"\n", ireg,
               MultiRefineRegionMinimumLevel[ireg]);
+
+      fprintf(fptr, "MultiRefineRegionMinimumStarMass[%"ISYM"] = %"ISYM"\n", ireg,
+              MultiRefineRegionMinimumStarMass[ireg]);
 
       fprintf(fptr, "MultiRefineRegionGeometry[%"ISYM"] = %"ISYM"\n", ireg,
               MultiRefineRegionGeometry[ireg]);
