@@ -679,21 +679,27 @@ applied, below which no star formation occurs.
 Typically this method is used with
 ``StarFormationOncePerRootGridTimeStep``, in which case SF occurs only
 at the beginning of the root grid step and with a star particle mass that is
-proportial to the root grid time step (as opposed to the much smaller
+proportional to the root grid time step (as opposed to the much smaller
 time step of the maximally refined grid). Star particles will still only
 form on the most refined grid in a given region.
-This results in fewer and
-more massive star particles, which improves computational
-efficiency. Even so, it may be desirable to enforce a lower limit to
+This results in fewer and more massive star particles, 
+which improves computational efficiency. 
+
+Even so, it may be desirable to enforce a lower limit to
 the star particle mass in some cases. This can be done with the
 parameter ``H2StarMakerMinimumMass``, below which star particles are
 not created. However, with ``H2StarMakerStochastic``, if the
-stellar mass is less than H2StarMakerMinimumMass, then a star
-particle of mass equal to H2StarMakerMinimumMass is formed
+stellar mass is less than ``H2StarMakerMinimumMass``, then a star
+particle of mass equal to ``H2StarMakerMinimumMass`` is formed
 stochastically with a probability of (stellar
-mass)/H2StarMakerMinimumMass.
+mass) / ``H2StarMakerMinimumMass``.
 
-For some applications, it may be desireable to create stars only 
+By default, this ``H2StarMakerMinimumMass`` is 0.
+When ``MultiRefineRegionSpatiallyVaryingStarMass`` is set,
+``H2StarMakerMinimumMass`` will vary in space just like ``StarMakerMinimumMass``
+(REFERENCE ANNA'S FORTHCOMING DOCS).
+
+For some applications, it may be desirable to create stars only 
 at local density peaks. For this purpose, setting 
 ``H2StarMakerUseLocalDensityMax = 1`` will check if the cell being 
 considered for star formation has the highest density of any cell 
