@@ -275,6 +275,7 @@ EXTERN int MultiRefineRegionMaximumOuterLevel;
 EXTERN int MultiRefineRegionMinimumOuterLevel;
 EXTERN int MultiRefineRegionSpatiallyVaryingStarMass;
 EXTERN FLOAT MultiRefineRegionDefaultStarMass;
+EXTERN FLOAT MultiRefineRegionDefaultH2RegStarMass;
 EXTERN int NumberOfStaticMultiRefineRegions;
 EXTERN FLOAT MultiRefineRegionStaggeredRefinement[MAX_STATIC_REGIONS+MAX_TRACKS];
 

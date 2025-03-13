@@ -482,6 +482,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     this value in all grids that aren't in a MultiRefine region */
     if (MultiRefineRegionSpatiallyVaryingStarMass > 0){
       MultiRefineRegionDefaultStarMass = StarMakerMinimumMass;
+      MultiRefineRegionDefaultH2RegStarMass = H2StarMakerMinimumMass;
     }
 
     /* Set evolving feedback efficiency */
@@ -540,6 +541,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
 /* Now that we've formed stars, reset this to original value */
 StarMakerMinimumMass = MultiRefineRegionDefaultStarMass;
+H2StarMakerMinimumMass = MultiRefineRegionDefaultH2RegStarMass;
 
 #ifdef USE_MPI 
     CommunicationBarrier();
