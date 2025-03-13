@@ -260,6 +260,22 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
     } // if(TestProblemData.GloverChemistryModel)
 
 
+    /* Tracer fluid fields */
+    int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
+
+    if (this->IdentifyTracerFluidFields(TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num) == FAIL)
+      ENZO_FAIL("Error in grid->IdentifyTracerFluidFields.\n");
+
+    if(TF01Num != -1) colnum[NumberOfColours++] = TF01Num;
+    if(TF02Num != -1) colnum[NumberOfColours++] = TF02Num;
+    if(TF03Num != -1) colnum[NumberOfColours++] = TF03Num;
+    if(TF04Num != -1) colnum[NumberOfColours++] = TF04Num;
+    if(TF05Num != -1) colnum[NumberOfColours++] = TF05Num;
+    if(TF06Num != -1) colnum[NumberOfColours++] = TF06Num;
+    if(TF07Num != -1) colnum[NumberOfColours++] = TF07Num;
+    if(TF08Num != -1) colnum[NumberOfColours++] = TF08Num;
+
+
     /* Add Cosmic Ray Energy Density as a colour variable. */
     if(CRModel){
       int DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum, CRNum;

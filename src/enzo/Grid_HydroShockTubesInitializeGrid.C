@@ -56,7 +56,20 @@ int grid::HydroShockTubesInitializeGrid(float x0,
     }
   }    
 
-  
+  int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
+
+  if(UseTracerFluid){ /* if you add more tracer fluid fields make sure to update
+    MAX_NUMBER_OF_TRACER_FIELDS in macros_and_parameters.h */
+    if(NumberOfTracerFluidFields >= 1) FieldType[TF01Num = NumberOfBaryonFields++] = TracerFluidField01Density;
+    if(NumberOfTracerFluidFields >= 2) FieldType[TF02Num = NumberOfBaryonFields++] = TracerFluidField02Density;
+    if(NumberOfTracerFluidFields >= 3) FieldType[TF03Num = NumberOfBaryonFields++] = TracerFluidField03Density;
+    if(NumberOfTracerFluidFields >= 4) FieldType[TF04Num = NumberOfBaryonFields++] = TracerFluidField04Density;
+    if(NumberOfTracerFluidFields >= 5) FieldType[TF05Num = NumberOfBaryonFields++] = TracerFluidField05Density;
+    if(NumberOfTracerFluidFields >= 6) FieldType[TF06Num = NumberOfBaryonFields++] = TracerFluidField06Density;
+    if(NumberOfTracerFluidFields >= 7) FieldType[TF07Num = NumberOfBaryonFields++] = TracerFluidField07Density;
+    if(NumberOfTracerFluidFields == 8) FieldType[TF08Num = NumberOfBaryonFields++] = TracerFluidField08Density;
+  }
+
   if (ProcessorNumber != MyProcessorNumber) {
     return SUCCESS;
   }
@@ -115,12 +128,28 @@ int grid::HydroShockTubesInitializeGrid(float x0,
     }
 
     //Shock
-    if (ShockMethod) {
+    if (ShockMethod){
       BaryonField[MachNum][index] = tiny_number;
       if (StorePreShockFields) {
         BaryonField[PSTempNum][index] = tiny_number;
         BaryonField[PSDenNum][index] = tiny_number;
       }
+    }
+
+    /*  If using tracer fluids, set the field to some fraction of the density field,
+        scaled to the tracer fluid number.
+
+        Note: if you add more tracer fluid fields make sure to update
+        MAX_NUMBER_OF_TRACER_FIELDS in macros_and_parameters.h  */
+    if(UseTracerFluid){
+      if(NumberOfTracerFluidFields >= 1) BaryonField[TF01Num][index] = BaryonField[DensNum][index]/1.0;
+      if(NumberOfTracerFluidFields >= 2) BaryonField[TF02Num][index] = BaryonField[DensNum][index]/2.0;
+      if(NumberOfTracerFluidFields >= 3) BaryonField[TF03Num][index] = BaryonField[DensNum][index]/3.0;
+      if(NumberOfTracerFluidFields >= 4) BaryonField[TF04Num][index] = BaryonField[DensNum][index]/4.0;
+      if(NumberOfTracerFluidFields >= 5) BaryonField[TF05Num][index] = BaryonField[DensNum][index]/5.0;
+      if(NumberOfTracerFluidFields >= 6) BaryonField[TF06Num][index] = BaryonField[DensNum][index]/6.0;
+      if(NumberOfTracerFluidFields >= 7) BaryonField[TF07Num][index] = BaryonField[DensNum][index]/7.0;
+      if(NumberOfTracerFluidFields == 8) BaryonField[TF08Num][index] = BaryonField[DensNum][index]/8.0;
     }
 
   }
@@ -165,7 +194,7 @@ int grid::HydroShockTubesInitializeGrid(float x0, float x1,
     FieldType[IENum = NumberOfBaryonFields++] = InternalEnergy;
   }
 
-  if (ShockMethod) {
+  if (ShockMethod){
     FieldType[MachNum = NumberOfBaryonFields++] = Mach;
     if (StorePreShockFields) {
       FieldType[PSTempNum = NumberOfBaryonFields++] = PreShockTemperature;
@@ -173,10 +202,23 @@ int grid::HydroShockTubesInitializeGrid(float x0, float x1,
     }
   }    
   
+  int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
+
+  if(UseTracerFluid){ /* if you add more tracer fluid fields make sure to update
+    MAX_NUMBER_OF_TRACER_FIELDS in macros_and_parameters.h */
+    if(NumberOfTracerFluidFields >= 1) FieldType[TF01Num = NumberOfBaryonFields++] = TracerFluidField01Density;
+    if(NumberOfTracerFluidFields >= 2) FieldType[TF02Num = NumberOfBaryonFields++] = TracerFluidField02Density;
+    if(NumberOfTracerFluidFields >= 3) FieldType[TF03Num = NumberOfBaryonFields++] = TracerFluidField03Density;
+    if(NumberOfTracerFluidFields >= 4) FieldType[TF04Num = NumberOfBaryonFields++] = TracerFluidField04Density;
+    if(NumberOfTracerFluidFields >= 5) FieldType[TF05Num = NumberOfBaryonFields++] = TracerFluidField05Density;
+    if(NumberOfTracerFluidFields >= 6) FieldType[TF06Num = NumberOfBaryonFields++] = TracerFluidField06Density;
+    if(NumberOfTracerFluidFields >= 7) FieldType[TF07Num = NumberOfBaryonFields++] = TracerFluidField07Density;
+    if(NumberOfTracerFluidFields == 8) FieldType[TF08Num = NumberOfBaryonFields++] = TracerFluidField08Density;
+  }
+
   if (ProcessorNumber != MyProcessorNumber) {
     return SUCCESS;
   }
-
 
   int size = 1, dim, index;
   for (dim = 0; dim < GridRank; dim++)
@@ -246,13 +288,30 @@ int grid::HydroShockTubesInitializeGrid(float x0, float x1,
     }
 
   //Shock
-    if (ShockMethod) {
+    if (ShockMethod){
       BaryonField[MachNum][index] = tiny_number;
       if (StorePreShockFields) {
 	BaryonField[PSTempNum][index] = tiny_number;
 	BaryonField[PSDenNum][index] = tiny_number;
       }
     }
+
+  /*  If using tracer fluids, set the field to some fraction of the density field,
+      scaled to the tracer fluid number.
+
+      Note: if you add more tracer fluid fields make sure to update
+      MAX_NUMBER_OF_TRACER_FIELDS in macros_and_parameters.h  */
+    if(UseTracerFluid){
+      if(NumberOfTracerFluidFields >= 1) BaryonField[TF01Num][index] = BaryonField[DensNum][index]/1.0;
+      if(NumberOfTracerFluidFields >= 2) BaryonField[TF02Num][index] = BaryonField[DensNum][index]/2.0;
+      if(NumberOfTracerFluidFields >= 3) BaryonField[TF03Num][index] = BaryonField[DensNum][index]/3.0;
+      if(NumberOfTracerFluidFields >= 4) BaryonField[TF04Num][index] = BaryonField[DensNum][index]/4.0;
+      if(NumberOfTracerFluidFields >= 5) BaryonField[TF05Num][index] = BaryonField[DensNum][index]/5.0;
+      if(NumberOfTracerFluidFields >= 6) BaryonField[TF06Num][index] = BaryonField[DensNum][index]/6.0;
+      if(NumberOfTracerFluidFields >= 7) BaryonField[TF07Num][index] = BaryonField[DensNum][index]/7.0;
+      if(NumberOfTracerFluidFields == 8) BaryonField[TF08Num][index] = BaryonField[DensNum][index]/8.0;
+    }
+
   }
   }
   }

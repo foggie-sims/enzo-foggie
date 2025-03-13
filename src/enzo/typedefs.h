@@ -185,7 +185,19 @@ const field_type
   MetalAGBDensity = 104,
   MetalNSMDensity = 105,
 
-  FieldUndefined  = 106;
+
+  /* Tracer fluid fields - can't have more of these than MAX_NUMBER_OF_TRACER_FIELDS in macros_and_parameters.h */
+
+  TracerFluidField01Density = 106,
+  TracerFluidField02Density = 107,
+  TracerFluidField03Density = 108,
+  TracerFluidField04Density = 109,
+  TracerFluidField05Density = 110,
+  TracerFluidField06Density = 111,
+  TracerFluidField07Density = 112,
+  TracerFluidField08Density = 113,
+
+  FieldUndefined  = 114;
 
 /*
 enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,

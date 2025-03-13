@@ -530,6 +530,7 @@ OBJS_CONFIG_LIB = \
         New_Grid_WriteGrid.o \
         New_Grid_ReadGrid.o \
 	Grid_IdentifyColourFields.o \
+	Grid_IdentifyTracerFluidFields.o \
 	Grid_HydroShockTubesInitializeGrid.o \
 	Grid_IdentifyShockSpeciesFields.o \
 	Grid_IdentifyGloverSpeciesFields.o \

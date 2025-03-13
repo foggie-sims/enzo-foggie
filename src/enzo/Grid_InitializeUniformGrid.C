@@ -41,6 +41,7 @@ int grid::InitializeUniformGrid(float UniformDensity,
   int CINum, CIINum, OINum, OIINum, SiINum, SiIINum, SiIIINum, CHINum, CH2INum, 
     CH3IINum, C2INum, COINum, HCOIINum, OHINum, H2OINum, O2INum;
 
+  int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
 
   int ExtraField[2];
 
@@ -180,6 +181,19 @@ int grid::InitializeUniformGrid(float UniformDensity,
     }
 
   } //   if(TestProblemData.GloverChemistryModel)
+
+  if(UseTracerFluid){ /* if you add more tracer fluid fields make sure to update
+			 MAX_NUMBER_OF_TRACER_FIELDS in macros_and_parameters.h */
+    if(NumberOfTracerFluidFields >= 1) FieldType[TF01Num = NumberOfBaryonFields++] = TracerFluidField01Density;
+    if(NumberOfTracerFluidFields >= 2) FieldType[TF02Num = NumberOfBaryonFields++] = TracerFluidField02Density;
+    if(NumberOfTracerFluidFields >= 3) FieldType[TF03Num = NumberOfBaryonFields++] = TracerFluidField03Density;
+    if(NumberOfTracerFluidFields >= 4) FieldType[TF04Num = NumberOfBaryonFields++] = TracerFluidField04Density;
+    if(NumberOfTracerFluidFields >= 5) FieldType[TF05Num = NumberOfBaryonFields++] = TracerFluidField05Density;
+    if(NumberOfTracerFluidFields >= 6) FieldType[TF06Num = NumberOfBaryonFields++] = TracerFluidField06Density;
+    if(NumberOfTracerFluidFields >= 7) FieldType[TF07Num = NumberOfBaryonFields++] = TracerFluidField07Density;
+    if(NumberOfTracerFluidFields == 8) FieldType[TF08Num = NumberOfBaryonFields++] = TracerFluidField08Density;
+  }
+
 
   /* Return if this doesn't concern us. */
  
@@ -369,6 +383,17 @@ int grid::InitializeUniformGrid(float UniformDensity,
 
     } // if(TestProblemData.GloverChemistryModel)
     
+    if(UseTracerFluid){  /* if you add more tracer fluid fields make sure to update
+			    MAX_NUMBER_OF_TRACER_FIELDS in macros_and_parameters.h */
+      if(NumberOfTracerFluidFields >= 1) BaryonField[TF01Num][i] = tiny_number;
+      if(NumberOfTracerFluidFields >= 2) BaryonField[TF02Num][i] = tiny_number;
+      if(NumberOfTracerFluidFields >= 3) BaryonField[TF03Num][i] = tiny_number;
+      if(NumberOfTracerFluidFields >= 4) BaryonField[TF04Num][i] = tiny_number;
+      if(NumberOfTracerFluidFields >= 5) BaryonField[TF05Num][i] = tiny_number;
+      if(NumberOfTracerFluidFields >= 6) BaryonField[TF06Num][i] = tiny_number;
+      if(NumberOfTracerFluidFields >= 7) BaryonField[TF07Num][i] = tiny_number;
+      if(NumberOfTracerFluidFields == 8) BaryonField[TF08Num][i] = tiny_number;
+    }
 
   } // for (i = 0; i < size; i++)
 
