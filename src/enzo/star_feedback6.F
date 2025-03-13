@@ -2,7 +2,6 @@
 #include "phys_const.def"
 #include "error.def"
 
-c#define FORTRAN_DEBUG
 c
 c=======================================================================
 c/////////////////////  SUBROUTINE STAR_FEEDBACK6 \\\\\\\\\\\\\\\\\\\\\\\
@@ -100,7 +99,7 @@ c-----------------------------------------------------------------------
       implicit none
 #include "fortran_types.def"
 c-----------------------------------------------------------------------
-#define FORTRAN_DEBUG
+#define NO_FORTRAN_DEBUG
 c
 c  Arguments
 c
@@ -703,9 +702,6 @@ c      write(6,*) 'star_feedback3: end'
       if (feedback_log .eq. 1) then
          close(4)
       endif
-      open(unit=10,file='outputNow',status='unknown',
-     &        position='append')
-      close(10)
       return
       end
 c
