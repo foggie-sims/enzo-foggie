@@ -800,6 +800,17 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
   float CellWidthTemp = float(CellWidth[0][0]);
   float PopIIIMass = (PopIIIInitialMassFunction == TRUE) ? 
     PopIIILowerMassCutoff : PopIIIStarMass;
+
+    /* If we're using multirefine regions with a spatially varying minimum  */
+    /* star particle mass, set minimum star particle mass to default for    */
+    /* this root grid timestep then find the minimum star particle mass     */
+    /* for this grid */
+
+   if (MultiRefineRegionSpatiallyVaryingStarMass > 0){
+      StarMakerMinimumMass = MultiRefineRegionDefaultStarMass;
+      H2StarMakerMinimumMass = MultiRefineRegionDefaultH2RegStarMass;
+      this->SetMinimumStarMass();
+   }
  
   /* ------------------------------------------------------------------- */
   /* 1) StarParticle creation. */
