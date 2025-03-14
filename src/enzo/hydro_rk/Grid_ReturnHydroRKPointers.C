@@ -127,10 +127,10 @@ int grid::ReturnHydroRKPointers(float **Prim, bool ReturnMassFractions)
     if (StarMakerTypeIaSNe)
       Prim[nfield++] = BaryonField[MetalIaNum];
     else if (StarFeedbackTrackMetalSources) { // mutually exclusive with StarMakerTypeIaSNe
-        Prim[nfield++] = OldBaryonField[MetalIaNum];
-        Prim[nfield++] = OldBaryonField[MetalIINum];
-        Prim[nfield++] = OldBaryonField[MetalAGBNum];
-        Prim[nfield++] = OldBaryonField[MetalNSMNum];
+        Prim[nfield++] = BaryonField[MetalIaNum];
+        Prim[nfield++] = BaryonField[MetalIINum];
+        Prim[nfield++] = BaryonField[MetalAGBNum];
+        Prim[nfield++] = BaryonField[MetalNSMNum];
       }
     if (StarMakerTypeIISNeMetalField)
       Prim[nfield++] = BaryonField[MetalIINum];
@@ -146,6 +146,21 @@ int grid::ReturnHydroRKPointers(float **Prim, bool ReturnMassFractions)
   if (Galaxy1ColourNum != -1) Prim[nfield++] = BaryonField[Galaxy1ColourNum];
   if (Galaxy2ColourNum != -1) Prim[nfield++] = BaryonField[Galaxy2ColourNum];
   */
+
+  /* Tracer fluid fields */
+  int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
+
+  if (this->IdentifyTracerFluidFields(TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num) == FAIL)
+    ENZO_FAIL("Error in grid->IdentifyTracerFluidFields.\n");
+
+  if(TF01Num != -1) Prim[nfield++] = BaryonField[TF01Num];
+  if(TF02Num != -1) Prim[nfield++] = BaryonField[TF02Num];
+  if(TF03Num != -1) Prim[nfield++] = BaryonField[TF03Num];
+  if(TF04Num != -1) Prim[nfield++] = BaryonField[TF04Num];
+  if(TF05Num != -1) Prim[nfield++] = BaryonField[TF05Num];
+  if(TF06Num != -1) Prim[nfield++] = BaryonField[TF06Num];
+  if(TF07Num != -1) Prim[nfield++] = BaryonField[TF07Num];
+  if(TF08Num != -1) Prim[nfield++] = BaryonField[TF08Num];
 
   /* Convert the species and color fields into mass fractions */
 

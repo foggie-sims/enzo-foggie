@@ -121,6 +121,8 @@ int grid::NestedCosmologySimulationInitializeGrid(
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
     DINum, DIINum, HDINum, MetalNum, MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum;
  
+  int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
+
   int iTE = ietot;
   int ExtraField[2];
   int ForbidNum;
@@ -417,7 +419,18 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	FieldType[PSTempNum = NumberOfBaryonFields++] = PreShockTemperature;
 	FieldType[PSDenNum = NumberOfBaryonFields++] = PreShockDensity;
       }
-    }    
+    }
+	if(UseTracerFluid){ /* if you add more tracer fluid fields make sure to update
+		MAX_NUMBER_OF_TRACER_FIELDS in macros_and_parameters.h */
+		if(NumberOfTracerFluidFields >= 1) FieldType[TF01Num = NumberOfBaryonFields++] = TracerFluidField01Density;
+		if(NumberOfTracerFluidFields >= 2) FieldType[TF02Num = NumberOfBaryonFields++] = TracerFluidField02Density;
+		if(NumberOfTracerFluidFields >= 3) FieldType[TF03Num = NumberOfBaryonFields++] = TracerFluidField03Density;
+		if(NumberOfTracerFluidFields >= 4) FieldType[TF04Num = NumberOfBaryonFields++] = TracerFluidField04Density;
+		if(NumberOfTracerFluidFields >= 5) FieldType[TF05Num = NumberOfBaryonFields++] = TracerFluidField05Density;
+		if(NumberOfTracerFluidFields >= 6) FieldType[TF06Num = NumberOfBaryonFields++] = TracerFluidField06Density;
+		if(NumberOfTracerFluidFields >= 7) FieldType[TF07Num = NumberOfBaryonFields++] = TracerFluidField07Density;
+		if(NumberOfTracerFluidFields == 8) FieldType[TF08Num = NumberOfBaryonFields++] = TracerFluidField08Density;
+	  }
   }
 
   if(QuantumPressure == 1){
@@ -649,7 +662,27 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	    BaryonField[ForbidNum][i] = 0.0;
 	}
       } // ENDIF UseMetallicityField
- 
+
+	/*  If using tracer fluids, set the field to something very small (tiny_number).
+		Note that this routine is a good place to set the tracer fields to something
+		that isn't tiny_number, but that is going to be highly problem-dependent and
+		thus there isn't a general routine for it.AA
+
+		Note: if you add more tracer fluid fields make sure to update
+		MAX_NUMBER_OF_TRACER_FIELDS in macros_and_parameters.h  */
+	if(UseTracerFluid)
+	  for (i = 0; i < size; i++){
+		if(NumberOfTracerFluidFields >= 1) BaryonField[TF01Num][i] = tiny_number;
+		if(NumberOfTracerFluidFields >= 2) BaryonField[TF02Num][i] = tiny_number;
+		if(NumberOfTracerFluidFields >= 3) BaryonField[TF03Num][i] = tiny_number;
+		if(NumberOfTracerFluidFields >= 4) BaryonField[TF04Num][i] = tiny_number;
+		if(NumberOfTracerFluidFields >= 5) BaryonField[TF05Num][i] = tiny_number;
+		if(NumberOfTracerFluidFields >= 6) BaryonField[TF06Num][i] = tiny_number;
+		if(NumberOfTracerFluidFields >= 7) BaryonField[TF07Num][i] = tiny_number;
+		if(NumberOfTracerFluidFields == 8) BaryonField[TF08Num][i] = tiny_number;
+	  }
+
+
       // If they were not read in above, set the total & gas energy fields now
  
       if (CosmologySimulationDensityName != NULL && ReadData) {

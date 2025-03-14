@@ -51,6 +51,10 @@
 
 #define MAX_NUMBER_OF_SUBGRIDS               __max_subgrids
 
+/* used for tracer fluids - if you change this you need
+   to grep for TracerFluid everywhere and fix things! */
+#define MAX_NUMBER_OF_TRACER_FIELDS        8
+
 #define MAX_DEPTH_OF_HIERARCHY             50
 
 #define MAX_LINE_LENGTH                   512

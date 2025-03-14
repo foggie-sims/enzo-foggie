@@ -609,7 +609,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   StarEnergyToThermalFeedback      = 1.0e-5;
   StarFeedbackAdditionalThermalEnergy = 0.0;
   MomentumMultiplier               = 1.0;
-  MomentumCancellationToThermal    = 1;
+  StarFeedbackSNeTimestepLimit     = 1.0e-3;
   WriteFeedbackLogFiles            = 0;
   StarEnergyToStellarUV            = 3.0e-6;
   StarEnergyToQuasarUV             = 5.0e-6;
@@ -1086,6 +1086,12 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   /* Rotating Pop III Stars Model */
   PopIIIRotating = 0; // 0 = off; 1 = rotating; 2 = non-rotating
+
+  /* Tracer fluids */
+
+  UseTracerFluid = 0;
+  NumberOfTracerFluidFields = 0;
+  SetTracerFluidFieldsOnStart = 0;
 
   return SUCCESS;
 }

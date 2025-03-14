@@ -48,6 +48,8 @@ common convention of 0 meaning false or off and 1 for true or on.
    * `Stopping Parameters`_
    
    * `Streaming Data Format`_
+
+   * `Tracer Fluids`_
    
    * `Simulation Identifiers and UUIDs`_
 
@@ -662,6 +664,33 @@ Streaming Data Format
     up the access to the star particle data, especially for the
     visualization or for the star particle. See ``AMRH5writer.C``) Set to 0
     for no particle output. Default: 0.
+
+.. _tracer_fluid_parameters:
+
+Tracer fluids
+^^^^^^^^^^^^^
+
+Tracer fluids These parameters control "tracer fluids", which are a
+field-based alternative to tracer particles.  This creates some number
+of "color field" fluids upon the initialization of a simulation that
+allow the user to set a "dye" that advects along with the density field
+and other color fields.  A working example of this can be found in the
+routines for the Rotating Cylinder problem, and cosmology simulations
+can also be initialized with tracer fluids (though the fields themselves
+are currently set to a constant tiny value, and will need to be modified
+by users as needed).  This can be readily extended to other types of
+calculations as well.
+
+``UseTracerFluid`` (external)
+  Turns tracer fluids on if set to 1.  Default: 0
+``NumberOfTracerFluidFields`` (external)
+  Sets the number of tracer fluid fields that are initialized, if
+  ``UseTracerFluid`` is set to 1. There can be up to 8 tracer fluid
+  fields. Default: 0
+``SetTracerFluidFieldsOnStart`` (external)
+  Initializes tracer fluids upon instantiation of the simulation if
+  set to 1. This will require the user to add code in the appropriate
+  problem generator to set the fields in the way that they want.  Default: 0
 
 .. _simulation_identifiers_parameters:
 

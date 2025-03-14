@@ -59,6 +59,8 @@ int grid::RotatingCylinderInitializeGrid(FLOAT RotatingCylinderRadius,
 
   FLOAT r,x,y,z, radius, zdist;
 
+  FLOAT z_TF_min, dz_TF;
+
   float sintheta, costheta, omega;
 
   int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, MetalNum;
@@ -74,6 +76,12 @@ int grid::RotatingCylinderInitializeGrid(FLOAT RotatingCylinderRadius,
     MetallicityField = TRUE;
   else
     MetalNum = 0;
+
+  int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
+  if(UseTracerFluid && SetTracerFluidFieldsOnStart)
+    if(this->IdentifyTracerFluidFields(TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num) == FAIL){
+      ENZO_FAIL("Error in IdentifyPhysicalQuantities.\n");
+    }
 
   /* set fields in the cylinder region */
  
@@ -98,6 +106,25 @@ int grid::RotatingCylinderInitializeGrid(FLOAT RotatingCylinderRadius,
     }
 
   }  // if(HydroMethod==2)
+
+  /* set up stuff for tracer fluids.  What we're going to do is set up tracer fluids
+     so that if there are N fluids then they will be set so that segments along the z
+     direction of the cylinder (so, think coins in a stack) will have different tracer
+     fluids set.
+   */
+  if(UseTracerFluid && SetTracerFluidFieldsOnStart){
+
+    // find minimum z position
+    z_TF_min = RotatingCylinderCenterPosition[2] - RotatingCylinderRadius;
+
+    // figure out the thickness of each slice of tracer fluid
+    dz_TF = 2.0*RotatingCylinderRadius/FLOAT(NumberOfTracerFluidFields);
+
+    // BWO - TODO - REMOVE THIS
+    printf("TESTING: z_TF_min, dz_TF = %"PSYM", %"PSYM, z_TF_min, dz_TF);
+    fflush(stdout);
+    //ENZO_FAIL("booting out of Grid_RotatingCylinderInitialize\n");
+  }
 
   for (k = 0; k < GridDimension[2]; k++)
     for (j = 0; j < GridDimension[1]; j++)
@@ -128,6 +155,35 @@ int grid::RotatingCylinderInitializeGrid(FLOAT RotatingCylinderRadius,
 
 	  if(TestProblemData.UseMetallicityField>0 && MetalNum != FALSE)
 	    BaryonField[MetalNum][cellindex] = BaryonField[DensNum][cellindex]*TestProblemData.MetallicityField_Fraction;
+
+	  /* This thing rotates along the z axis */
+	  if(UseTracerFluid && SetTracerFluidFieldsOnStart){
+
+	    if(NumberOfTracerFluidFields >= 1 && (z >= z_TF_min + 0.0*dz_TF) && (z < z_TF_min + 1.0*dz_TF))
+	      BaryonField[TF01Num][cellindex] = outside_rho * RotatingCylinderOverdensity;
+
+	    if(NumberOfTracerFluidFields >= 2 && (z >= z_TF_min + 1.0*dz_TF) && (z < z_TF_min + 2.0*dz_TF))
+	      BaryonField[TF02Num][cellindex] = outside_rho * RotatingCylinderOverdensity;
+
+	    if(NumberOfTracerFluidFields >= 3 && (z >= z_TF_min + 2.0*dz_TF) && (z < z_TF_min + 3.0*dz_TF))
+	      BaryonField[TF03Num][cellindex] = outside_rho * RotatingCylinderOverdensity;
+
+	    if(NumberOfTracerFluidFields >= 4 && (z >= z_TF_min + 3.0*dz_TF) && (z < z_TF_min + 4.0*dz_TF))
+	      BaryonField[TF04Num][cellindex] = outside_rho * RotatingCylinderOverdensity;
+
+	    if(NumberOfTracerFluidFields >= 5 && (z >= z_TF_min + 4.0*dz_TF) && (z < z_TF_min + 5.0*dz_TF))
+	      BaryonField[TF05Num][cellindex] = outside_rho * RotatingCylinderOverdensity;
+
+	    if(NumberOfTracerFluidFields >= 6 && (z >= z_TF_min + 5.0*dz_TF) && (z < z_TF_min + 6.0*dz_TF))
+	      BaryonField[TF06Num][cellindex] = outside_rho * RotatingCylinderOverdensity;
+
+	    if(NumberOfTracerFluidFields >= 7 && (z >= z_TF_min + 6.0*dz_TF) && (z < z_TF_min + 7.0*dz_TF))
+	      BaryonField[TF07Num][cellindex] = outside_rho * RotatingCylinderOverdensity;
+
+	    if(NumberOfTracerFluidFields == 8 && (z >= z_TF_min + 7.0*dz_TF) && (z < z_TF_min + 8.0*dz_TF))
+	      BaryonField[TF08Num][cellindex] = outside_rho * RotatingCylinderOverdensity;
+
+	  }
 
 	  sintheta = (y-RotatingCylinderCenterPosition[1])/radius;
 	  costheta = (x-RotatingCylinderCenterPosition[0])/radius;

@@ -1001,8 +1001,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &StarFeedbackAdditionalThermalEnergy);
     ret += sscanf(line, "MomentumMultiplier = %"FSYM,
 		  &MomentumMultiplier);
-    ret += sscanf(line, "MomentumCancellationToThermal = %"ISYM,
-		  &MomentumCancellationToThermal);
+      ret += sscanf(line, "StarFeedbackSNeTimestepLimit = %"FSYM,
+        &StarFeedbackSNeTimestepLimit);
     ret += sscanf(line, "WriteFeedbackLogFiles = %"ISYM,
 		  &WriteFeedbackLogFiles);
     ret += sscanf(line, "StarEnergyToStellarUV = %"FSYM, &StarEnergyToStellarUV);
@@ -1424,6 +1424,11 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
     // Rotating Pop III Models
     ret += sscanf(line, "PopIIIRotating  = %"ISYM, &PopIIIRotating);
+
+    // Tracer fluids
+    ret += sscanf(line, "UseTracerFluid = %"ISYM, &UseTracerFluid);
+    ret += sscanf(line, "NumberOfTracerFluidFields = %"ISYM, &NumberOfTracerFluidFields);
+    ret += sscanf(line, "SetTracerFluidFieldsOnStart = %"ISYM, &SetTracerFluidFieldsOnStart);
 
     /* If the dummy char space was used, then make another. */
 
@@ -2196,6 +2201,15 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     } else {
       if (debug) fprintf(stderr, "Successfully read in feedback table %s.\n", StarFeedbackTabularFilename);
     }
+  }
+
+  // Tracer fluid tests
+  if(UseTracerFluid > 0){
+    if(NumberOfTracerFluidFields < 1)
+      ENZO_FAIL("NumberOfTracerFluidFields must be set to at least 1!\n");
+
+    if(NumberOfTracerFluidFields > MAX_NUMBER_OF_TRACER_FIELDS)
+      ENZO_FAIL("You have set NumberOfTracerFluidFields to a larger number than MAX_NUMBER_OF_TRACER_FIELDS. Reduce this number and try again!\n");
   }
 
   return SUCCESS;

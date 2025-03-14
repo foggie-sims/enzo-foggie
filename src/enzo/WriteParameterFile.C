@@ -938,8 +938,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
           StarFeedbackAdditionalThermalEnergy);
   fprintf(fptr, "MomentumMultiplier                    = %"GSYM"\n",
           MomentumMultiplier);
-  fprintf(fptr, "MomentumCancellationToThermal         = %"ISYM"\n",
-          MomentumCancellationToThermal);
+  fprintf(fptr, "StarFeedbackSNeTimestepLimit          = %"GSYM"\n",
+          StarFeedbackSNeTimestepLimit);
   fprintf(fptr, "WriteFeedbackLogFiles                 = %"ISYM"\n",
           WriteFeedbackLogFiles);
   fprintf(fptr, "StarEnergyToStellarUV                 = %"GSYM"\n",
@@ -1326,6 +1326,12 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 
   /* Rotating PopIII Stars Model */
   fprintf(fptr, "PopIIIRotating = %"ISYM"\n", PopIIIRotating);
+
+  // Tracer fluids
+  fprintf(fptr, "UseTracerFluid = %"ISYM"\n", UseTracerFluid);
+  fprintf(fptr, "NumberOfTracerFluidFields = %"ISYM"\n", NumberOfTracerFluidFields);
+  fprintf(fptr, "SetTracerFluidFieldsOnStart = %"ISYM"\n", SetTracerFluidFieldsOnStart);
+
 
   /* Output current time */
   time_t ID;
