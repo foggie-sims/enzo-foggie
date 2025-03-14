@@ -141,7 +141,16 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 
  
   char *ExtraNames[2] = {"Z_Field1", "Z_Field2"};
- 
+
+  char *TracerFluidO1Name = "TracerFluid01";
+  char *TracerFluidO2Name = "TracerFluid02";
+  char *TracerFluidO3Name = "TracerFluid03";
+  char *TracerFluidO4Name = "TracerFluid04";
+  char *TracerFluidO5Name = "TracerFluid05";
+  char *TracerFluidO6Name = "TracerFluid06";
+  char *TracerFluidO7Name = "TracerFluid07";
+  char *TracerFluidO8Name = "TracerFluid08";
+
   // Declarations
  
   char line[MAX_LINE_LENGTH];
@@ -770,8 +779,17 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
     DataLabel[i++] = (char*) ImPsiName;
     DataLabel[i++] = (char*) FDMDensityName;
   }
-
  
+  if(UseTracerFluid){
+    if(NumberOfTracerFluidFields >= 1) DataLabel[i++] = TracerFluidO1Name;
+    if(NumberOfTracerFluidFields >= 2) DataLabel[i++] = TracerFluidO2Name;
+    if(NumberOfTracerFluidFields >= 3) DataLabel[i++] = TracerFluidO3Name;
+    if(NumberOfTracerFluidFields >= 4) DataLabel[i++] = TracerFluidO4Name;
+    if(NumberOfTracerFluidFields >= 5) DataLabel[i++] = TracerFluidO5Name;
+    if(NumberOfTracerFluidFields >= 6) DataLabel[i++] = TracerFluidO6Name;
+    if(NumberOfTracerFluidFields >= 7) DataLabel[i++] = TracerFluidO7Name;
+    if(NumberOfTracerFluidFields == 8) DataLabel[i++] = TracerFluidO8Name;
+  }
 
   for (j = 0; j < i; j++)
     DataUnits[j] = NULL;

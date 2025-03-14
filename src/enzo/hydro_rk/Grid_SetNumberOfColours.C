@@ -72,6 +72,11 @@ int grid::SetNumberOfColours(void)
   if (Galaxy2ColourNum != -1) _nc++;
   */
 
+  /* The number of tracer fluid fields is variable, and is a user-defined parameter. */
+  if (UseTracerFluid) {
+    _nc += NumberOfTracerFluidFields;
+  }
+
 
   /* Treat these colour (i.e. metal) fields as species fields in the
      MUSCL solvers. */

@@ -132,4 +132,5 @@ struct TestProblemDataType
   /* fraction of free-fall time for timestep */
   float OneZoneFreefallTimestepFraction;
   float OneZoneFreefallUseEffectiveGamma;
+
 };

@@ -1327,6 +1327,12 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   /* Rotating PopIII Stars Model */
   fprintf(fptr, "PopIIIRotating = %"ISYM"\n", PopIIIRotating);
 
+  // Tracer fluids
+  fprintf(fptr, "UseTracerFluid = %"ISYM"\n", UseTracerFluid);
+  fprintf(fptr, "NumberOfTracerFluidFields = %"ISYM"\n", NumberOfTracerFluidFields);
+  fprintf(fptr, "SetTracerFluidFieldsOnStart = %"ISYM"\n", SetTracerFluidFieldsOnStart);
+
+
   /* Output current time */
   time_t ID;
   ID = time(NULL);
