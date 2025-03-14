@@ -15,7 +15,7 @@ c
      &               npart, xstart, ystart, zstart, ibuff,
      &               xp, yp, zp, up, vp, wp,
      &               mp, tdp, tcp, metalf, type,
-     &               particleID, justburn,
+     &               particleID, justburn, nsn_timestep,
      &               exptime_in, mom_mult, feedback_log,
      &               use_tabfbk, minit, ergSNII, ergSNIa,
      &               itracksrc, metalSNII, metalSNIa,
@@ -74,6 +74,9 @@ c    type     - particle type
 c    particleID - particle ID number given by ParticleNumber
 c    exptime  - delay time for discrete explosions (if set to -1,
 c               continuous energy injection used)
+c    nsn_timestep - lower limit of how many SNe per timestep below which
+c                   to skip doing feedback (to save time for very low fractions
+c                   of SNe per timestep per particle)
 c
 c    minit     - initial particle mass
 c    ergSNII   - energy in ergs per SNII event
@@ -112,7 +115,7 @@ c
       R_PREC    mu(nx,ny,nz)
       R_PREC    zfield1(nx,ny,nz), zfield2(nx,ny,nz)
       R_PREC    dt, dx, z
-      R_PREC    dunits, x1, vunits, t1, justburn
+      R_PREC    dunits, x1, vunits, t1, justburn, nsn_timestep
       P_PREC xstart, ystart, zstart, t
       P_PREC xp(npart), yp(npart), zp(npart)
       R_PREC    up(npart), vp(npart), wp(npart)
@@ -329,7 +332,7 @@ c
                realmass = mform * dunits * x1**3._RKIND*dx**3_IKIND
                realmass = realmass /SolarMass
                nsn = realmass / 100._RKIND
-               if (nsn .lt. 1e-2_RKIND) goto 10
+               if (nsn .lt. nsn_timestep) goto 10
                energy = nsn * 10._RKIND**51._RKIND / (dunits*
      &                  x1**3._RKIND*vunits**2._RKIND*dx**3._RKIND)
 c
