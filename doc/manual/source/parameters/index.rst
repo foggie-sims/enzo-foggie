@@ -741,6 +741,7 @@ Hierarchy Control Parameters
     15                 Refine by normalized second derivative
     16                 Refine by Jeans length from the inertial tensor
     19                 Refine by metal mass
+    20                 Refine by defined region "MultiRefineRegion"
     100                Avoid refinement based on ForbiddenRefinement field
     101                Avoid refinement in regions defined in "AvoidRefineRegion"
     ================== ==========================================================
@@ -764,7 +765,9 @@ Hierarchy Control Parameters
 ``RefineRegionTimeType`` (external)
     If set, this controls how the first column of a refinement region
     evolution file (see below) is interpreted, 0 for code time, 1 for
-    redshift. Default: -1, which is equivalent to 'off'.
+    redshift. Note that you must use the same time type for all
+    'on' time-evolving refine regions (e.g., MustRefine, CoolingRefine, MultiRefine).
+    Default: -1, which is equivalent to 'off'.
 ``RefineRegionFile`` (external)
     The name of a text file containing the corners of the time-evolving
     refinement region. The lines in the file change the values of
@@ -991,7 +994,10 @@ Hierarchy Control Parameters
     only doing it within the MustRefineRegion, which can take a long
     time.  Default: 1.0 1.0 1.0
 ``MustRefineRegionTimeType`` (external)
-    If set, this controls how the first column of a ``MustRefineRegionFile`` (see below) is interpreted, 0 for code time, 1 for redshift. Default: -1, which is equivalent to ‘off’.
+    If set, this controls how the first column of a ``MustRefineRegionFile`` (see below) is interpreted, 0 for code time, 1 for redshift. 
+    Note that you must use the same time type for all
+    'on' time-evolving refine regions (e.g., MustRefine, CoolingRefine, MultiRefine).
+    Default: -1, which is equivalent to ‘off’.
 ``MustRefineRegionFile`` (external)
     The name of a text file containing the corners of the time-evolving
     refinement region. The lines in the file change the values of
@@ -1039,7 +1045,10 @@ Hierarchy Control Parameters
     only doing it within the CoolingRefineRegion, which can take a long
     time.  Default: 1.0 1.0 1.0
 ``CoolingRefineRegionTimeType`` (external)
-    If set, this controls how the first column of a ``CoolingRefineRegionFile`` (see below) is interpreted, 0 for code time, 1 for redshift. Default: -1, which is equivalent to ‘off’.
+    If set, this controls how the first column of a ``CoolingRefineRegionFile`` (see below) is interpreted, 0 for code time, 1 for redshift.
+    Note that you must use the same time type for all
+    'on' time-evolving refine regions (e.g., MustRefine, CoolingRefine, MultiRefine).
+    Default: -1, which is equivalent to ‘off’.
 ``CoolingRefineRegionFile`` (external)
     The name of a text file containing the corners of the time-evolving cooling refinement region. The file format is the same as for a
     ``MustRefineRegionFile``, but though the final column (refinement level) must be included, it is currently ignored by the code and
@@ -1099,6 +1108,46 @@ Hierarchy Control Parameters
     Maximum and minimum allowed refinement inside the region. Default: ``MaximumRefinementLevel``, 0
 ``MultiRefineRegionMaximumOuterLevel``, ``MultiRefineRegionMinimumOuterLevel`` (external)
     Maximum and minimum allowed refinement outside all regions. Default: ``MaximumRefinementLevel``, 0
+``MultiRefineRegionTimeType`` (external)
+    If set, this controls how the first column of a ``MustRefineRegionFile`` (see below) 
+    is interpreted for a time-evolving multi-refine region: 0 for code time, 1 for redshift. 
+    Note that you must use the same time type for all 'on' time-evolving refine regions (e.g., 
+    MustRefine, CoolingRefine, MultiRefine). Default: -1, which is equivalent to ‘off’.
+``MultiRefineRegionFile`` (external)
+    The name of a text file containing the corners of the time-evolving
+    refinement region, the minimum and maximum levels to which it should be refined,
+    and the minimum mass with which star particles should form within it. The first
+    line of the file gives the number of regions that will be followed and the second line
+    gives the number of time entries there will be for each region. The lines in 
+    the file change the values of ``MultiRefineRegionLeft/RightEdge``, 
+    ``MultiRefineRegionMinimumStarMass``, and 
+    ``MultiRefineRegionMinimum/MaximumLevel`` for a given track over the 
+    course of the simulation. For each track, the lines are ordered from early times to late times.
+    The first column of data is the index of the track; the second is the time index (in 
+    code units or redshift, see the parameter above); the next six columns give the values 
+    of ``MultiRefineRegionLeft/RightEdge``; the next two columns give the values of
+    ``MultiRefineRegionMinimum/MaximumLevel``; and the final column gives the value
+    of ``MultiRefineRegionMinimumStarMass``. For example, this
+    might be a text file when time is indexed by redshift:
+    ::
+       
+     2
+     3
+     0   4.6092   0.49548   0.49487   0.49903   0.49568   0.49507   0.49922   9   11   500.0
+     0   4.5045   0.49547   0.49474   0.49906   0.49566   0.49493   0.49925   9   11   500.0
+     0   4.4045   0.49544   0.49459   0.49912   0.49562   0.49478   0.49931   9   11   500.0
+     1   4.6092   0.49545   0.49483   0.49897   0.49572   0.49511   0.49925   10  11   125.0
+     1   4.5045   0.49543   0.49471   0.49902   0.49570   0.49497   0.49929   10  11   150.0
+     1   4.4045   0.49540   0.49456   0.49908   0.49566   0.49482   0.49935   10  11   175.0
+
+    In this case, there are two time-evolving MultiRefineRegions. The first is refined to a minimum of 9 and a maximum 
+    of 11 levels of refinement, starting at the z=4.6092 value and moves via linear interpolation until 
+    the z=4.5045 value. During this time, star particles as small as 500 Msol are permitted to form in this region.
+    The second region is refined to a minimum of 10 and a maximum of 11 levels of refinement. Between z=4.6092 and 
+    z=4.5045, star particles within this region can form with a mass as low as 125 Msol, but this increases to 150 
+    Msol and then 175 Msol at z=4.4045. The code will crash if the simulation starts before the earliest time given 
+    or evolves until after the latest time in the file. All regions must use the same set of time entries. 
+    Default: None.
 ``MinimumEfficiency`` (external)
     When new grids are created during the rebuilding process, each grid
     is split up by a recursive bisection process that continues until a
@@ -2219,6 +2268,20 @@ General Star Formation
     These metals will all contribute to the total metallicity (which is important for cooling.)
     Mutually exclusive with ``StarMakerTypeIaSNe``.
     Default: 0 (OFF)
+
+``MultiRefineRegionSpatiallyVaryingStarMass`` (external)
+    If set to 1, this turns on the ability to use different minimum star particle masses in 
+    MultiRefine regions. 
+    Default: 0 (OFF)
+
+``MultiRefineRegionMinimumStarMass[#]`` (external)
+    If ``MultiRefineRegionSpatiallyVaryingStarMass`` is enabled, this sets the minimum mass that 
+    a star particle can form with in a given MultiRefine region. Note that any grid that overlaps 
+    with multiple MultiRefine regions will adopt the lowest minimum available to it. If the default
+    value for the simulation (``StarMakerMinimumMass``) is lower than the value of
+    ``MultiRefineRegionMinimumStarMass`` for all of the regions that a grid overlaps with, the grid will
+    use ``StarMakerMinimumMass``.
+    Default: FLOAT_UNDEFINED
 
 .. _normal_star_formation_parameters:
 
