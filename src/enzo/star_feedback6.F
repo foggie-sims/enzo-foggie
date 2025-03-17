@@ -102,7 +102,7 @@ c-----------------------------------------------------------------------
       implicit none
 #include "fortran_types.def"
 c-----------------------------------------------------------------------
-#define FORTRAN_DEBUG
+#define NO_FORTRAN_DEBUG
 c
 c  Arguments
 c
@@ -730,9 +730,6 @@ c                       te is *specific* energy (energy/mass)
      &        ge_sum*dunits*(x1*dx)**3._RKIND*vunits**2._RKIND,
      &        te_sum*dunits*(x1*dx)**3._RKIND*vunits**2._RKIND
 #endif
-            open(unit=10,file='outputNow',status='unknown',
-     &        position='append')
-            close(10)
 c
  10         continue
          endif
