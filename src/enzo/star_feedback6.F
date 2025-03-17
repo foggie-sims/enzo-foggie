@@ -102,7 +102,7 @@ c-----------------------------------------------------------------------
       implicit none
 #include "fortran_types.def"
 c-----------------------------------------------------------------------
-#define NO_FORTRAN_DEBUG
+#define FORTRAN_DEBUG
 c
 c  Arguments
 c
@@ -149,7 +149,7 @@ c
      &     xface, yface, zface, xpos, ypos, zpos, face_shift
       R_PREC ke_before(3,3,3), mom_per_cell(3,3,3)
       R_PREC Z_avg, n_avg, Z_floor, dratio,
-     &	  realmass, mu_cell, fbuff, add_therm
+     &	  realmass, mu_cell, fbuff, add_therm, delta_therm
       R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, mom_term,
      &     mass_term, therm_sum
       R_PREC mzeject, mzeject_ii, mzeject_ia
@@ -623,23 +623,31 @@ c
 #ifdef FORTRAN_DEBUG
             write(6,*) 'te_before',te(ic+i,jc+j,kc+k)*
      &        (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
-#endif
-            dratio = d(ic, jc, kc)/
-     &                       (d(ic, jc, kc) + mass_per_cell)
-            te(ic, jc, kc) = 
-     &        te(ic, jc, kc)*dratio + 
-     &        add_therm / d(ic, jc, kc)
-#ifdef FORTRAN_DEBUG
-            write(6,*) 'te_after',te(ic,jc,kc)*
-     &        (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)                        
             write(6,*) 'ge_before',ge(ic,jc,kc)*
      &        (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
 #endif
-            if (idual .eq. 1_IKIND)
-     &        ge(ic, jc, kc) = 
-     &        ge(ic, jc, kc)*dratio +
-     &        add_therm / d(ic, jc, kc)
+            do k = -1_IKIND, 1_IKIND
+               do j = -1_IKIND, 1_IKIND
+                  do i = -1_IKIND, 1_IKIND
+                     delta_therm = 0._RKIND
+                     if ((i .eq. 0_IKIND) .AND. (j .eq. 0_IKIND)
+     &                  .AND. (k .eq. 0_IKIND)) delta_therm = add_therm
+                     dratio = d(i+ic, j+jc, k+kc)/
+     &                       (d(i+ic, j+jc, k+kc) + mass_per_cell)
+                     te(i+ic, j+jc, k+kc) = 
+     &                     te(i+ic, j+jc, k+kc)*dratio + 
+     &                     add_therm / d(i+ic, j+jc, k+kc)
+                     if (idual .eq. 1_IKIND)
+     &                  ge(i+ic, j+jc, k+kc) = 
+     &                  ge(i+ic, j+jc, k+kc)*dratio +
+     &                  add_therm / d(i+ic, j+jc, k+kc)
+                  enddo
+               enddo
+            enddo
+            
 #ifdef FORTRAN_DEBUG
+            write(6,*) 'te_after',te(ic,jc,kc)*
+     &        (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
             write(6,*) 'ge_after',ge(ic,jc,kc)*
      &        (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
 #endif
@@ -722,6 +730,9 @@ c                       te is *specific* energy (energy/mass)
      &        ge_sum*dunits*(x1*dx)**3._RKIND*vunits**2._RKIND,
      &        te_sum*dunits*(x1*dx)**3._RKIND*vunits**2._RKIND
 #endif
+            open(unit=10,file='outputNow',status='unknown',
+     &        position='append')
+            close(10)
 c
  10         continue
          endif
