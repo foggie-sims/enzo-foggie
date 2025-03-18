@@ -23,8 +23,10 @@ def edit_param_file(user_inputs):
     What this routine actually DOES is go through the parameter file and look for the
     line that starts with "UseTracerFluid" and, if it exists, set it to '1' (i.e., on).
     It also looks for the line that starts with "NumberOfTracerFluidFields" and sets
-    that to the user-specified values. If those lines to NOT exist then they are created
-    and added to the file.  Then, we add DataLabel lines for each of the new tracer fluids.
+    that to the user-specified values.  It will also look for a line that starts with
+    "SetTracerFluidFieldsOnStart" and set that to 0. If those lines do NOT exist then 
+    they are created and added to the file.  Then, we add DataLabel lines for each of 
+    the new tracer fluids.
 
     Note that we do the check for UseTracerField and NumberOfTracerFluidFields because
     older simulation datasets (pre implementation of the tracer fluid methods in Enzo) will
@@ -380,7 +382,7 @@ def edit_boundary_files(user_inputs):
 
     edit_boundary_file
 
-    This file edits boht of the boundary files to add tracer fluid information.  As with
+    This file edits both of the boundary files to add tracer fluid information.  As with
     the other file editing routines, it does a lot of error-checking, but that's probably
     a good thing here.
 
