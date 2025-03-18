@@ -82,6 +82,14 @@ def modify_tracer_fields(user_inputs):
             * Modify it to whatever values the user wants based on each cell's position. This will then be saved to the file.
          * Close the HDF5 file.
 
+    This specific example creates a set of nested spheres in the tracer fluids.  Note that
+    the tracer fluids already exist, but the user may not wish to modify all of them, so the
+    user specifies the number of tracer fluids to be modified in the user_inputs dictionary and
+    then sets the sphere center (sph_cen_x/y/z below) as well as the radius of the smallest
+    sphere (for tracer fluid 1), which is sph_dr (below).  The second tracer fluid will occupy a
+    sphere that is 2x the size of sph_dr, the third will occupy a sphere of radius 3x sph_dr,
+    etc.  The tracer fluid is set to the value of the Density field.
+
     VERY IMPORTANT NOTES FOR USERS:
       * This routine currently does everything in Enzo's internal coordinate system (which is 0-1 in all three spatial
         dimensions for cosmology simulations).
@@ -185,13 +193,16 @@ def modify_tracer_fields(user_inputs):
         mesh_3D = np.meshgrid(xcenters_1D,ycenters_1D,zcenters_1D, indexing='ij')
 
         # split this out into three 3D arrays, one for each dimension.  Each of these arrays
-        # now has the x, y, or z cell center for the indexed cell.
+        # now has the x, y, or z cell center for the indexed cell. (i.e., the value given is the
+        # spatial location of that specific cell's center).  These arrays are 3D arrays and
+        # can either be looped through or their values can be looped over.
         xcenters_3D = mesh_3D[0]
         ycenters_3D = mesh_3D[1]
         zcenters_3D = mesh_3D[2]
 
         # calculate a grid of radius arrays using the sphere center provided by the user.
-        # This will have the same dimensions as the various *centers_3D arrays.
+        # This will have the same dimensions as the various *centers_3D arrays (which should
+        # be a 3-dimensional array with the same shape as the baryon fields in that grid).
         # This is not required in general, but is an example of something you could do!
         radius = ((xcenters_3D-sph_cen_x)**2 + (ycenters_3D-sph_cen_y)**2 + (zcenters_3D-sph_cen_z)**2 )**0.5
 
@@ -263,7 +274,7 @@ def modify_tracer_fields(user_inputs):
 
             # if the tracer fluid is within myrad, give it the same value as
             # the density field (this is arbitrary but convenient, you can do whatever
-            # you want)
+            # you want and don't have to be constrained to a sphere!)
             if user_inputs['MODIFY_FILES']:
                 this_tracer_field[radius<=myrad] = dens_dset[radius<=myrad]
 
