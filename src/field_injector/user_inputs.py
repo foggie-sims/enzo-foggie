@@ -48,7 +48,7 @@ user_inputs = {
     # Note that this is set to what seems like a reasonable value, but it's possible it
     # could be smaller and still be fine, or may need to be larger if the file system is
     # very laggy.
-    "PLEIADES_SLEEP_TIME_SECONDS": 3,
+    "PLEIADES_SLEEP_TIME_SECONDS": 1,
 
     # This sets the default values of the tracer fluid density. "tiny_number" is an
     # Enzo internal value that is typically set to 1e-20.  You probably don't need
