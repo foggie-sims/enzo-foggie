@@ -9,7 +9,7 @@
 #  This variation of the problem includes 8 tracer fluid fields,
 #  which are set by the UseTracerFluid and NumberOfTracerFluidFields
 #  parameters that are set at the bottom of the parameter file.
-#  Each trace fluid field is scaled downward from density by dividing
+#  Each tracer fluid field is scaled downward from density by dividing
 #  by the tracer fluid number (so they are 1, 1/2, 1/3, ... 1/8) of 
 #  the density value.
 #
