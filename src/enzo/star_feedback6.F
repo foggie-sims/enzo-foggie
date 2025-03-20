@@ -157,6 +157,7 @@ c
      &     te1(3,3,3), ge1(3,3,3), metal1(3,3,3)
 
       character*32 feedbacklog_filename
+      character*32 debug_filename
       character*8   post
 
       if (feedback_log .eq. 1_IKIND) then
