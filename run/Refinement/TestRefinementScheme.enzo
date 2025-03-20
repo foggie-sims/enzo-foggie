@@ -3,7 +3,7 @@
 #
 #  define problem
 #
-ProblemType            = 15       // TestRefinementScheme
+ProblemType            = 90
 TopGridRank            = 3
 TopGridDimensions      = 50 50 50
 SelfGravity                = 0       // gravity off
