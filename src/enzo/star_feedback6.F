@@ -175,7 +175,7 @@ c
       enddo
       debug_filename = 'feedbackdebug_' // post // '.txt'
       open(unit=7,file=debug_filename,status='unknown',
-   &        position='append')
+     &        position='append')
 #endif
 c
 c-----------------------------------------------------------------------
