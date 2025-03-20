@@ -264,14 +264,14 @@ def test_context_aware_star_formation():
 
     # Read in track box coordinates for this snapshot
     # Slight padding added to sphere radius to allow for star particles moving around
-    x1,y1,z1,x2,y2,z2,llim = np.loadtxt('AMRNestedCosmologyTestTrackFile.txt',skiprows=2,usecols=(2,3,4,5,6,7,8),unpack=True)
+    x1,y1,z1,x2,y2,z2,slim = np.loadtxt('AMRNestedCosmologyTestTrackFile.txt',skiprows=2,usecols=(2,3,4,5,6,7,10),unpack=True)
     sp = ds.sphere([(x1[-1]+x2[-1])/2.,(y1[-1]+y2[-1])/2.,(z1[-1]+z2[-1])/2.],radius=1.25*np.abs(x1[-1]-x2[-1])/2)
 
     # Check that small star particles are confined to the track box
     # Note that this will only be meaningful if the minimum star particle mass threshold in the track box
     # is less than (1-StarMassEjectionFraction)*StarMakerMinimumMass, so first we'll make sure that this is true
     SmallestDefaultStar = (1-ds.parameters['StarMassEjectionFraction'])*ds.parameters['StarMakerMinimumMass']
-    assert (np.any(llim<=SmallestDefaultStar))
+    assert (np.any(slim<=SmallestDefaultStar))
 
     # then we'll check we've formed at least one small star particle
     TotSmallStars = len(data[('nbody','particle_mass')][data[('nbody','particle_mass')].in_units('Msun')<SmallestDefaultStar])

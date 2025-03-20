@@ -1,0 +1,36 @@
+#
+# AMR PROBLEM DEFINITION FILE: TestRefinementScheme
+#
+#  define problem
+#
+ProblemType            = 15       // TestRefinementScheme
+TopGridRank            = 3
+TopGridDimensions      = 50 50 50
+SelfGravity                = 0       // gravity off
+LeftFaceBoundaryCondition  = 3 3 3    // periodic
+RightFaceBoundaryCondition = 3 3 3
+Initialdt = 0.0010017410642
+
+#
+#  Units
+#
+LengthUnits            = 4.9376e22  // 16 kpc
+TimeUnits              = 3.15e13    // 1 Myr
+DensityUnits           = 1.67e-24    // 1 part/cc
+
+#
+#  set I/O and stop/start parameters
+#
+StopTime               = 1
+dtDataDump             = 0.1
+
+#
+#  set grid refinement parameters
+#
+StaticHierarchy           = 0    // dynamic hierarchy
+MaximumRefinementLevel    = 3    // use up to 3 levels
+RefineBy                  = 2    // refinement factor
+MinimumEfficiency         = 0.3
+CellFlaggingMethod        = 20    // use MultiRefineRegion for refinement
+MultiRefineRegionTimeType = 0    // use code time
+MultiRefineRegionFile     = RefinementTestTrackFile.txt // location of MRR track file
