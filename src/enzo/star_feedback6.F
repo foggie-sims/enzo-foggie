@@ -150,6 +150,7 @@ c
       R_PREC ke_before(3,3,3), mom_per_cell(3,3,3)
       R_PREC Z_avg, n_avg, Z_floor, dratio,
      &	  realmass, mu_cell, fbuff, add_therm, delta_therm
+      R_PREC n_cell, Z_cell
       R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, mom_term,
      &     mass_term, therm_sum
       R_PREC mzeject, mzeject_ii, mzeject_ia
@@ -298,7 +299,8 @@ c     form of the Cen & Ostriker formula.
 c
                   xv1 = (t - tcp(n))/tdp(n)
 #ifdef FORTRAN_DEBUG
-                  write(7,*) t,tcp(n),tdp(n),xv1
+                  write(7,*) 't, tcp(n), tdp(n), xv1:',
+     &              t*t1/yr_s,tcp(n)*t1/yr_s,tdp(n)*t1/yr_s,xv1
 #endif
                   if (xv1 .lt. 0._RKIND) goto 10
                   if (xv1 .gt. 12._RKIND) goto 10 ! t-tcp >> tdp so ignore
@@ -464,6 +466,20 @@ c        The floor on Z_avg is required by the Kimm & Cen (2014) scheme (eq A5)
             n_avg = n_avg/27._RKIND
 #ifdef FORTRAN_DEBUG
             write(7,*) 'n_avg, Z_avg:', n_avg, Z_avg/27._RKIND
+            if (n_avg .lt. 0._RKIND) then
+               do k = -1_IKIND,1_IKIND
+                  do j = -1_IKIND,1_IKIND
+                     do i = -1_IKIND,1_IKIND
+                        mu_cell = mu(ic+i,jc+j,kc+k)
+                        Z_cell = metal(ic+i,jc+j,kc+k)/0.02_RKIND
+                        n_cell = d(ic+i,jc+j,kc+k)*dunits*
+     &                    mu_cell/mass_h
+                        write(7,*) 'mu, Z, d, mass_h, n',
+     &                    mu_cell, Z_cell, d(ic+i,jc+j,kc+k)*dunits,
+     &                    mass_h, n_cell
+                     enddo
+                  enddo
+               enddo
 #endif
 c
 c     Inject energy, mass & metals
