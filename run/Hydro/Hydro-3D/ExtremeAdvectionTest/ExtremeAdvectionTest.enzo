@@ -6,7 +6,7 @@
 ProblemType                = 27      // Collapse test
 TopGridRank                = 3
 TopGridDimensions          = 16 16 16
-SelfGravity                = 1       // gravity off
+SelfGravity                = 1       // gravity on
 TopGridGravityBoundary     = 0       // periodic
 LeftFaceBoundaryCondition  = 3 3 3   // periodic
 RightFaceBoundaryCondition = 3 3 3
@@ -68,7 +68,7 @@ Initialdt                   = 0.003
 #  set grid refinement parameters
 #
 StaticHierarchy           = 0    // dynamic hierarchy
-MaximumRefinementLevel    = 0    // use up to 2 levels
+MaximumRefinementLevel    = 0    
 RefineBy                  = 2    // refinement factor
 CellFlaggingMethod        = 2    // use baryon mass for refinement 
 MinimumEfficiency         = 0.3  // fraction efficiency
