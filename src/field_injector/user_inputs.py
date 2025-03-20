@@ -10,7 +10,7 @@ user_inputs = {
     # add any file names here.
     # NOTE: Python seems to have problems with directories that have spaces in their names, even if
     #       you put backslashes in them.
-    "dataset_directory":"/Users/bwoshea/Desktop/tracer_fluid_tests/cosmotest/RD0006",
+    "dataset_directory":"/Users/bwoshea/Desktop/tracer_fluid_tests/cosmotest/newtest/RD0006",
 
     # This is the name of the restart parameter file in the dataset directory
     # The code knows how to figure out the names of other files from that.
@@ -24,17 +24,31 @@ user_inputs = {
     # If you don't know offhand, look in the dataset's .hierarchy file - each
     # grid entry has a line that says 'NumberOfBaryonFields', and it should be
     # the same for every grid entry.  Use that number.
-    "NumberOfOriginalBaryonFields": 6,
+    "NumberOfOriginalBaryonFields": 9,
 
     # This controls the level of verbosity of the outputs.  If you set it to True
     # you will get a lot of output, but it will also tell you what the code is doing.
     "DEBUG_OUTPUTS": True,  # True of False
 
-    # if True, this will actually write the tracer fields.
-    # if False, it does everything BUT write the tracer fields (dataset is unmodified)
+    # If True, this will actually write the tracer fields.
+    # If False, it does everything BUT write the tracer fields (dataset is unmodified)
     # It seems useful to have this feature because adding the fields is a bit tricky with
     # the various unit conversions, so you might want to do a dry run first.
     "MODIFY_FILES": True,
+
+    # This has been added to fix a problem with the file system on the NASA Pleiades
+    # supercomputer's file system where, if a single file is closed and then opened too
+    # quickly, it will throw an HDF5 error.  If set to True, if two grids in a row are
+    # stored in the same file then it will wait PLEIADES_SLEEP_TIME_SECONDS seconds
+    # after it closes the file to try opening it again.
+    "PLEIADES_SLEEP": False,
+
+    # Number of seconds to wait before trying to open a file after it has been closed,
+    # if PLEAIDES_SLEEP is set to True.
+    # Note that this is set to what seems like a reasonable value, but it's possible it
+    # could be smaller and still be fine, or may need to be larger if the file system is
+    # very laggy.
+    "PLEIADES_SLEEP_TIME_SECONDS": 1,
 
     # This sets the default values of the tracer fluid density. "tiny_number" is an
     # Enzo internal value that is typically set to 1e-20.  You probably don't need
@@ -45,6 +59,7 @@ user_inputs = {
 import yt
 import h5py
 import numpy as np
+import time
 
 def modify_grid_files(user_inputs):
     '''
@@ -65,6 +80,13 @@ def modify_grid_files(user_inputs):
             * Modify it to whatever values the user wants based on each cell's position. This will automatically be
               saved in the file upon closing.
          * Close the HDF5 file, which will save the datasets.
+
+    This specific example creates a set of nested spheres in the tracer fluids.  The user
+    specifies the number of tracer fluids to be created in the user_inputs dictionary and
+    then sets the sphere center (sph_cen_x/y/z below) as well as the radius of the smallest
+    sphere (for tracer fluid 1), which is sph_dr (below).  The second tracer fluid will occupy a
+    sphere that is 2x the size of sph_dr, the third will occupy a sphere of radius 3x sph_dr,
+    etc.  The tracer fluid is set to the value of the Density field.
 
     VERY IMPORTANT NOTES FOR USERS:
       * The tracer fluid fields must be added to ALL grids, not just grids where you want to trace something.  This
@@ -92,6 +114,10 @@ def modify_grid_files(user_inputs):
     # load up the Enzo dataset we're interested in (from user inputs)
     enzo_param_file = user_inputs['dataset_directory'] + "/" + user_inputs['filename_stem']
     ds = yt.load(enzo_param_file)
+
+    # keeps track of the last file that was opened so that we can hold off
+    # on re-opening it if necessary.
+    last_file_opened = None
 
     # Loop over all of the grids and do things.
     # Note that we have to add the tracer fluid fields to all of the grids, even if you only want to
@@ -142,18 +168,31 @@ def modify_grid_files(user_inputs):
         mesh_3D = np.meshgrid(xcenters_1D,ycenters_1D,zcenters_1D, indexing='ij')
 
         # split this out into three 3D arrays, one for each dimension.  Each of these arrays
-        # now has the x, y, or z cell center for the indexed cell.
+        # now has the x, y, or z cell center for the indexed cell. (i.e., the value given is the
+        # spatial location of that specific cell's center).  These arrays are 3D arrays and
+        # can either be looped through or their values can be looped over.
         xcenters_3D = mesh_3D[0]
         ycenters_3D = mesh_3D[1]
         zcenters_3D = mesh_3D[2]
 
         # calculate a grid of radius arrays using the sphere center provided by the user.
-        # This will have the same dimensions as the various *centers_3D arrays.
+        # This will have the same dimensions as the various *centers_3D arrays (which should
+        # be a 3-dimensional array with the same shape as the baryon fields in that grid).
         # This is not required in general, but is an example of something you could do!
         radius = ((xcenters_3D-sph_cen_x)**2 + (ycenters_3D-sph_cen_y)**2 + (zcenters_3D-sph_cen_z)**2 )**0.5
 
         if user_inputs['DEBUG_OUTPUTS']:
             print("radius min, max:", radius.min(), radius.max(), "Grid, level:", i, ds.index.grids[i].Level)
+
+        # If the last grid was in the same file as the current grid we're working on (i.e., if the last
+        # file we worked on is the same as this file) then some file systems need a bit of time to
+        # realized that the file was recently closed so that HDF5/h5py doesn't throw an error.  So,
+        # if this feature is turned on and the last file is the same as this file, then wait for
+        # a user-specified number of seconds.
+        if last_file_opened == ds.index.grids[i].filename and user_inputs['PLEIADES_SLEEP'] == True:
+            if user_inputs['DEBUG_OUTPUTS']:
+                print("************  Last file is the same as this file.  Waiting for this many seconds:", user_inputs['PLEIADES_SLEEP_TIME_SECONDS'])
+            time.sleep(user_inputs['PLEIADES_SLEEP_TIME_SECONDS'])
 
         # open up HDF5 file
         # The 'r+' option allows both reading and writing to the file.
@@ -203,7 +242,7 @@ def modify_grid_files(user_inputs):
 
             # if the tracer fluid is within myrad, give it the same value as
             # the density field (this is arbitrary but convenient, you can do whatever
-            # you want)
+            # you want and don't have to be constrained to a sphere!)
             this_tracer_field[radius<=myrad] = dens_dset[radius<=myrad]
 
             # We now take the tracer fluid field and transpose it back into the
@@ -226,5 +265,7 @@ def modify_grid_files(user_inputs):
 
         # close HDF5 file, ensuring everything gets written to disk.
         f.close()
+
+        last_file_opened = ds.index.grids[i].filename
 
     return

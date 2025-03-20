@@ -1,7 +1,7 @@
 '''
 Plot to make tracer fluid plots and print out some quantities (from a Sod shock tube with tracer fluids)
 
-The tracer fluid fields should perfect track the density.  The Sod shock tube setup makes each tracer
+The tracer fluid fields should perfectly track the density.  The Sod shock tube setup makes each tracer
 fluid field equal to the density divided by the number of the tracer fluid (so tracer fluid #1 is the
 value of the density fluid, fluid #2 is 1/2 of the density value, fluid #3 is 1/3 of the density value, 
 etc.).  This script plots the density and the *scaled* fractional value of the tracer fluid (so, it is
@@ -23,7 +23,7 @@ my_ortho_ray = ds.ortho_ray('x',[0.5,0.5])
 
 # Error-check: are there actually tracer fluids?
 if(ds.parameters['UseTracerFluid']==0):
-    print("There are no trace fluids in this simulation.  Exiting.")
+    print("There are no tracer fluids in this simulation.  Exiting.")
     sys.exit(1)
 
 # Set up the color map
