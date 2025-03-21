@@ -369,8 +369,8 @@ extern "C" void FORTRAN_NAME(star_feedback6)(int *nx, int *ny, int *nz,
 		       int *ibuff,
              FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
              float *mp, float *tdp, float *tcp, float *metalf, int *type, int *particleID,
-	     float *justburn, float *exptime, float *mom_mult,
-             int *mom_canc, int *feedback_log, int *use_tabfbk, float *minit,
+	     float *justburn, float *nsn_timestep, float *exptime, float *mom_mult,
+             int *feedback_log, int *use_tabfbk, float *minit,
              float *ergSNII, float *ergSNIa, int *itracksrc, float *metalSNII,
              float *metalSNIa, int *ntabZ, int *ntabAge, float *tabZ, float *tabAge, 
          float *tabMass, float *tabMetal, float *tabEvents);
@@ -1742,7 +1742,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 	    }
 
 	    mu_field[index] = BaryonField[DeNum][index] + BaryonField[HINum][index] + BaryonField[HIINum][index] +
-	      (BaryonField[HeINum][index] + BaryonField[HeIINum][index] + BaryonField[HeIIINum][index])/4.0;
+	      (BaryonField[HeINum][index] + BaryonField[HeIINum][index] + BaryonField[HeIIINum][index])/4.0 +
+         BaryonField[MetalNum]/16.0;
 	    if (MultiSpecies > 1) {
 	      mu_field[index] += BaryonField[HMNum][index] + (BaryonField[H2INum][index] + BaryonField[H2IINum][index])/2.0;
 	    }
@@ -1775,7 +1776,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           ParticleVelocity[2],
        ParticleMass, ParticleAttribute[1], ParticleAttribute[0],
        ParticleAttribute[2], ParticleType, ParticleNumber, &RadiationData.IntegratedStarFormation,
-       &StarMakerExplosionDelayTime, &MomentumMultiplier, &MomentumCancellationToThermal,
+       &StarFeedbackSNeTimestepLimit, &StarMakerExplosionDelayTime, &MomentumMultiplier,
        &WriteFeedbackLogFiles, &StarFeedbackUseTabularYields, ParticleInitialMass,
        &StarFeedbackTabularSNIIEnergy, &StarFeedbackTabularSNIaEnergy,
        &StarFeedbackTrackMetalSources, BaryonField[MetalIINum], BaryonField[MetalIaNum],
