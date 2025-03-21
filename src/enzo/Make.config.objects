@@ -954,6 +954,7 @@ OBJS_CONFIG_LIB = \
         TestOrbitInitialize.o \
 	TestStarParticleInitialize.o \
 	TestDoubleStarParticleInitialize.o \
+        TestRefinementScheme.o \
         TracerParticleCreation.o \
 	TransposeRegionOverlap.o \
         tscint1d.o \
