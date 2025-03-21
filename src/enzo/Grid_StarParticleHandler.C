@@ -1742,7 +1742,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 	    }
 
 	    mu_field[index] = BaryonField[DeNum][index] + BaryonField[HINum][index] + BaryonField[HIINum][index] +
-	      (BaryonField[HeINum][index] + BaryonField[HeIINum][index] + BaryonField[HeIIINum][index])/4.0;
+	      (BaryonField[HeINum][index] + BaryonField[HeIINum][index] + BaryonField[HeIIINum][index])/4.0 +
+         BaryonField[MetalNum]/16.0;
 	    if (MultiSpecies > 1) {
 	      mu_field[index] += BaryonField[HMNum][index] + (BaryonField[H2INum][index] + BaryonField[H2IINum][index])/2.0;
 	    }

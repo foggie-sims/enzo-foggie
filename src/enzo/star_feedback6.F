@@ -474,12 +474,13 @@ c        The floor on Z_avg is required by the Kimm & Cen (2014) scheme (eq A5)
                         Z_cell = metal(ic+i,jc+j,kc+k)/0.02_RKIND
                         n_cell = d(ic+i,jc+j,kc+k)*dunits*
      &                    mu_cell/mass_h
-                        write(7,*) 'mu, Z, d, mass_h, n',
+                        write(7,*) 'mu, Z, d, n',
      &                    mu_cell, Z_cell, d(ic+i,jc+j,kc+k)*dunits,
-     &                    mass_h, n_cell
+     &                    n_cell
                      enddo
                   enddo
                enddo
+            endif
 #endif
 c
 c     Inject energy, mass & metals
