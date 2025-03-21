@@ -997,12 +997,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "StarMetalYield = %"FSYM, &StarMetalYield);
     ret += sscanf(line, "StarEnergyToThermalFeedback = %"FSYM,
 		  &StarEnergyToThermalFeedback);
-    ret += sscanf(line, "StarFeedbackAdditionalThermalEnergy = %"FSYM,
-		  &StarFeedbackAdditionalThermalEnergy);
-    ret += sscanf(line, "MomentumMultiplier = %"FSYM,
-		  &MomentumMultiplier);
-      ret += sscanf(line, "StarFeedbackSNeTimestepLimit = %"FSYM,
-        &StarFeedbackSNeTimestepLimit);
+    ret += sscanf(line, "StarFeedbackMomentumMultiplier = %"FSYM,
+		  &StarFeedbackMomentumMultiplier);
+    ret += sscanf(line, "StarFeedbackSNePerTimestepLimit = %"FSYM,
+        &StarFeedbackSNePerTimestepLimit);
     ret += sscanf(line, "WriteFeedbackLogFiles = %"ISYM,
 		  &WriteFeedbackLogFiles);
     ret += sscanf(line, "StarEnergyToStellarUV = %"FSYM, &StarEnergyToStellarUV);
