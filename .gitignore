@@ -68,5 +68,5 @@ performance.out
 RunFinished
 data*
 
-Make.mach.claire-linux
-
+*__test_standard.py
+run/test_output/

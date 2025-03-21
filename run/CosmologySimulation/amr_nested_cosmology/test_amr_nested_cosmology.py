@@ -257,3 +257,33 @@ def test_phase():
     assert_rel_equal(data[('data', 'temperature')], ds_comp.data[('data', 'temperature')], 8)
     assert_rel_equal(data[('data', 'cooling_time')], ds_comp.data[('data', 'cooling_time')], 8)
     assert_rel_equal(data[('data', 'cell_mass')], ds_comp.data[('data', 'cell_mass')], 8)
+
+def test_context_aware_star_formation():
+    ds = yt.load(os.path.join(_dir_name, 'DD0013/DD0013'))
+    data  = ds.all_data()
+
+    # Read in track box coordinates for this snapshot
+    # Slight padding added to sphere radius to allow for star particles moving around
+    x1,y1,z1,x2,y2,z2,slim = np.loadtxt('AMRNestedCosmologyTestTrackFile.txt',skiprows=2,usecols=(2,3,4,5,6,7,10),unpack=True)
+    sp = ds.sphere([(x1[-1]+x2[-1])/2.,(y1[-1]+y2[-1])/2.,(z1[-1]+z2[-1])/2.],radius=1.25*np.abs(x1[-1]-x2[-1])/2)
+
+    # Check that small star particles are confined to the track box
+    # Note that this will only be meaningful if the minimum star particle mass threshold in the track box
+    # is less than (1-StarMassEjectionFraction)*StarMakerMinimumMass, so first we'll make sure that this is true
+    SmallestDefaultStar = (1-ds.parameters['StarMassEjectionFraction'])*ds.parameters['StarMakerMinimumMass']
+    assert (np.any(slim<=SmallestDefaultStar))
+
+    # then we'll check we've formed at least one small star particle
+    TotSmallStars = len(data[('nbody','particle_mass')][data[('nbody','particle_mass')].in_units('Msun')<SmallestDefaultStar])
+    assert (TotSmallStars>0)
+
+    # and finally we'll check that all of the small star particles are within a reasonable distance of our 
+    # MultiRefineRegion
+    SmallStarsInSphere = len(sp[('nbody','particle_mass')][sp[('nbody','particle_mass')].in_units('Msun')<SmallestDefaultStar])
+    assert_equal(SmallStarsInSphere,TotSmallStars)
+
+
+
+
+
+
