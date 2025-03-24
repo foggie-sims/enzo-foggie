@@ -11,7 +11,7 @@ c
      &               metal,
      &               idual, imetal, imulti_metals, imethod, 
      &               dt, dx, t, z, procnum,
-     &               dunits, x1, vunits, t1, m_eject, yield,
+     &               dunits, x1, vunits, t1, m_eject_frac, yield,
      &               npart, xstart, ystart, zstart, ibuff,
      &               xp, yp, zp, up, vp, wp,
      &               mp, tdp, tcp, metalf, type,
@@ -65,7 +65,7 @@ c               explosion has occurred
 c    tcp      - creation time of particle (-1 if not a star particle)
 c    metalf   - star particle metal fraction
 c    npart    - particle array size specified by calling routine
-c    m_eject  - fraction of stellar mass ejected back to gas
+c    m_eject_frac  - fraction of stellar mass ejected back to gas
 c    yield    - fraction of stellar mass that is converted to metals
 c    type     - particle type
 c    particleID - particle ID number given by ParticleNumber
@@ -110,7 +110,7 @@ c
       R_PREC    metal(nx,ny,nz)
       R_PREC    mu(nx,ny,nz)
       R_PREC    dt, dx, z
-      R_PREC    dunits, x1, vunits, t1, nsn_timestep
+      R_PREC    dunits, x1, vunits, t1, nsn_timestep, m_eject_frac
       P_PREC xstart, ystart, zstart, t
       P_PREC xp(npart), yp(npart), zp(npart)
       R_PREC    up(npart), vp(npart), wp(npart)
@@ -133,7 +133,7 @@ c
      &     i, j, k
       R_PREC mform, energy,
      &     m_eject, yield, minitial, xv1, xv2,
-     &     distcells, mass_per_cell,
+     &     distrad,distcells, mass_per_cell,
      &     mass_before, mass_dummy,
      &     kin_energy_before, mom_dummy,
      &     delta_ke, ke_injected, ke_after, kin_energy_inj,
@@ -148,6 +148,7 @@ c
       R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, mom_term,
      &     mass_term
       R_PREC mz_eject, mzeject_ii, mzeject_ia
+      R_PREC metal_per_cell, metal_ii_per_cell, metal_ia_per_cell
       R_PREC u1(3,3,3), v1(3,3,3), w1(3,3,3), d1(3,3,3),
      &     te1(3,3,3), ge1(3,3,3), metal1(3,3,3)
       R_PREC nsn_grid(nx,ny,nz), meject_grid(nx,ny,nz),
@@ -209,6 +210,13 @@ c
             enddo
          enddo
       enddo
+c
+c     Assuming 3x3x3 cube, calculate cell distribution
+c     NOTE: This feedback scheme is not written to be used with
+c     any other cell distribution!!
+c
+      distrad = 3_IKIND
+      distcells = distrad**3_IKIND
 c
 c-----------------------------------------------------------------------
 c
@@ -273,9 +281,6 @@ c
      &                 dt, t1,
      &                 tabMetal, tabZ, tabAge, ntabZ, ntabAge)
                   mz_eject = mzeject_ii + mzeject_ia
-                  mz_eject = mz_eject / distcells
-                  mzeject_ii = mzeject_ii / distcells
-                  mzeject_ia = mzeject_ia / distcells
                endif
 c
 c     Normalize energy by 10^51 ergs to get number of SNe
@@ -349,8 +354,8 @@ c
 c     First calculate the initial mass of the star particle 
 c     in question.
                   minitial = mp(n) / 
-     &               (1._RKIND - 
-     &               m_eject*(1._RKIND - (1._RKIND + xv1)*exp(-xv1)))
+     &               (1._RKIND - m_eject_frac*
+     &               (1._RKIND - (1._RKIND + xv1)*exp(-xv1)))
 c     
 c     Then, calculate the amount of mass that would have formed in
 c     this timestep.
@@ -377,13 +382,27 @@ c
 c
 c     Subtract ejected mass from particle
 c
-               mp(n) = mp(n) - mform * m_eject
+               mp(n) = mp(n) - mform * m_eject_frac
 c
-c     Calculate the metals to eject
+c     Convert ejected mass fraction to an actual mass
 c
-               if (imetal .eq. 1) mz_eject = (mform / distcells) * 
-     &                   (yield * (1._RKIND-metalf(n)) + 
-     &                   m_eject * metalf(n))
+               m_eject = mform * m_eject_frac
+c
+c     Calculate the metals to eject as the sum of new metals formed
+c     in the star and the ejected amount of old metals
+c
+               if (imetal .eq. 1) mz_eject = mform * 
+     &                   (yield * (1._RKIND-metalf(n))) + 
+     &                   m_eject * metalf(n)
+#ifdef FORTRAN_DEBUG
+               write(7,*) 'mform,yield,metalf(n),m_eject',
+     &             mform*dunits*(x1*dx)**3_IKIND/SolarMass,yield,
+     &             metalf(n),m_eject*dunits*(x1*dx)**3_IKIND/SolarMass
+               write(7,*) 'nsn,m_eject,energy:',nsn,m_eject*
+     &              dunits*x1**3._RKIND/SolarMass*dx**3_IKIND,
+     &              energy*(dunits*x1**3._RKIND*vunits**2._RKIND*
+     &               dx**3._RKIND)
+#endif
             endif ! end Cen & Ostriker method
 c
 c	   Set center of feedback zone
@@ -607,6 +626,20 @@ c     Sum mass, energy, and momentum before
      &            ic, jc, kc,
      &            mass_before, kin_energy_before, mom_start)
 #ifdef FORTRAN_DEBUG
+               write(7,*) 'nsn,meject,mzeject,mzeject_ii,mzeject_ia',
+     &            nsn_grid(ic,jc,kc),
+     &            meject_grid(ic,jc,kc)*dunits*(dx*x1)**3_IKIND
+     &              /SolarMass,
+     &            mzeject_grid(ic,jc,kc)*dunits*(dx*x1)**3_IKIND
+     &              /SolarMass,
+     &            mzeject_ii_grid(ic,jc,kc)*dunits*(dx*x1)**3_IKIND
+     &              /SolarMass,
+     &            mzeject_ia_grid(ic,jc,kc)*dunits*(dx*x1)**3_IKIND
+     &              /SolarMass
+               write(7,*) 'up, vp, wp',
+     &            up_avg*vunits/1e5_IKIND,
+     &            vp_avg*vunits/1e5_IKIND,
+     &            wp_avg*vunits/1e5_IKIND
                write(7,*) "m before:", mass_before*
      &               (dunits*(x1*dx)**3._RKIND)/SolarMass
                write(7,*) "ke before:", kin_energy_before*dunits*
@@ -664,13 +697,16 @@ c
 c
 c     Now deposit the momentum, mass, and metals onto the actual grid.
 c
+               metal_per_cell = mzeject_grid(ic,jc,kc) / distcells
+               metal_ii_per_cell = mzeject_ii_grid(ic,jc,kc)/distcells
+               metal_ia_per_cell = mzeject_ia_grid(ic,jc,kc)/distcells
                call add_feedback_mech(u, v, w, d, ge, te, metal,
      &                         nx, ny, nz, ic, jc, kc,
      &                        imetal, imulti_metals, idual,
      &                        itracksrc,
-     &                        mzeject_grid(ic,jc,kc), 
-     &                        mzeject_ia_grid(ic,jc,kc), 
-     &                        mzeject_ii_grid(ic,jc,kc),
+     &                        metal_per_cell, 
+     &                        metal_ia_per_cell, 
+     &                        metal_ii_per_cell,
      &                        metalSNII, metalSNIa,
      &                        mass_per_cell, mom_per_cell,
      &                        dx, x1, dunits, vunits)
@@ -736,8 +772,8 @@ c
 c
 c           Convert momenta back to velocities and transform back to lab frame
 c
-               call momentum_convert(u, v, w, d, metal, up_avg, vp_avg, 
-     &               wp_avg, nx, ny, nz, ic, jc, kc, imetal, -1_IKIND)
+               call momentum_convert(u, v, w, d, up_avg, vp_avg, 
+     &               wp_avg, nx, ny, nz, ic, jc, kc, -1_IKIND)
 c
 c           Add the increase in the kinetic energy to the total energy field
 c     
@@ -857,7 +893,7 @@ c
 c
                   chi = dMswept/dMej
 #ifdef FORTRAN_DEBUG
-                  write(7,*) 'chi:',chi
+                  write(7,*) 'dMej,dMswept,chi:',dMej,dMswept,chi
 #endif
 c
 c       Compare chi to threshold and set momentum injection.
@@ -941,7 +977,7 @@ c
 c     Error check
 c
       if (idir .ne. -1_IKIND .and. idir .ne. 1_IKIND) then
-         write(7,*) 'incorrect idir value in momentum call'
+         write(6,*) 'incorrect idir value in momentum call', idir
          ERROR_MESSAGE
       endif
 c
