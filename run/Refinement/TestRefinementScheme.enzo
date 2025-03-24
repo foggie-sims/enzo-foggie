@@ -5,11 +5,11 @@
 #
 ProblemType            = 15 // test refinement scheme
 TopGridRank            = 3
-TopGridDimensions      = 50 50 50
-SelfGravity                = 0       // gravity off
+TopGridDimensions      = 30 30 30
+SelfGravity                = 1       // gravity on
 LeftFaceBoundaryCondition  = 3 3 3    // periodic
 RightFaceBoundaryCondition = 3 3 3
-Initialdt = 0.0010017410642
+Initialdt = 0.01
 
 #
 #  Units
@@ -21,8 +21,10 @@ DensityUnits           = 1.67e-24    // 1 part/cc
 #
 #  set I/O and stop/start parameters
 #
-StopTime               = 1
-dtDataDump             = 0.1
+StopTime               = 0.2
+dtDataDump             = 0.025
+DataDumpName           = DD
+DataDumpDir            = DD
 
 #
 #  set grid refinement parameters
