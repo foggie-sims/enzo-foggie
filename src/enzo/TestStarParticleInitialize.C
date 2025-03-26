@@ -54,6 +54,12 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
   char *HeIName   = "HeI_Density";
   char *HeIIName  = "HeII_Density";
   char *HeIIIName = "HeIII_Density";
+  char *HMName    = "HM_Density";
+  char *H2IName   = "H2I_Density";
+  char *H2IIName  = "H2II_Density";
+  char *DIName    = "DI_Density";
+  char *DIIName   = "DII_Density";
+  char *HDIName   = "HDI_Density";
 
 
   /* declarations */
@@ -190,6 +196,16 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
     DataLabel[count++] = HeIName;
     DataLabel[count++] = HeIIName;
     DataLabel[count++] = HeIIIName;
+    if (TestProblemData.MultiSpecies > 1) {
+      DataLabel[count++] = HMName;
+      DataLabel[count++] = H2IName;
+      DataLabel[count++] = H2IIName;
+    }
+    if (TestProblemData.MultiSpecies > 2) {
+      DataLabel[count++] = DIName;
+      DataLabel[count++] = DIIName;
+      DataLabel[count++] = HDIName;
+    }
   }
   if (TestProblemData.UseMetallicityField)
     DataLabel[count++] = MetalName;

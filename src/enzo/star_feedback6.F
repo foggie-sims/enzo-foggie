@@ -519,41 +519,42 @@ c     Compute average density and metallicity around this cell
 c     
                Z_avg = 0._RKIND
                n_avg = 0._RKIND
-c              write(7,*) 'averaging over patch'
                do k = -1_IKIND,1_IKIND
                   do j = -1_IKIND,1_IKIND
                      do i = -1_IKIND,1_IKIND
+                        Z_cell = metal(ic+i,jc+j,kc+k)
                         mu_cell = mu(ic+i,jc+j,kc+k)
-                        Z_avg = Z_avg + 
-     &                     metal(ic+i,jc+j,kc+k)/0.02_RKIND
+c
+c     The following adjustments to Z_cell and mu_cell are band-aids to
+c     handle situations when the chemistry gets weird and the metallicity
+c     is unphysically high or mu as calculated from the baryon fields in
+c     Grid_StarParticleHandler.C is somehow negative. The below calculation
+c     of mu assumes solar relative abundances between H, He, and metals.
+c
+                        if (Z_cell .gt. 1._RKIND) 
+     &                    Z_cell = 0.95_RKIND
+                        if (mu_cell .lt. 0._RKIND)
+     &                    mu_cell = 1._RKIND/
+     &                     (1.5962 - 1.0337_RKIND*Z_cell)
+                        Z_avg = Z_avg + Z_cell/0.02_RKIND
                         n_avg = n_avg + 
      &                     d(ic+i,jc+j,kc+k)*dunits*
      &                     mu_cell/mass_h
+#ifdef FORTRAN_DEBUG
+                        write(7,*) 'mu, Z, d, n',
+     &                       mu_cell, Z_cell, d(ic+i,jc+j,kc+k)*dunits,
+     &                       n_cell
+#endif
                      enddo
                   enddo
                enddo
 c               
 c     The Kimm & Cen (2014) scheme (eq A5) requires a floor on Z_avg
 c
-               Z_floor = max(Z_avg/27._RKIND, 0.01)
+               Z_floor = max(Z_avg/27._RKIND, 0.01_RKIND)
                n_avg = n_avg/27._RKIND
 #ifdef FORTRAN_DEBUG
-               write(7,*) 'n_avg, Z_avg:', n_avg, Z_avg/27._RKIND
-               if (n_avg .lt. 0._RKIND) then
-                  do k = -1_IKIND,1_IKIND
-                     do j = -1_IKIND,1_IKIND
-                        do i = -1_IKIND,1_IKIND
-                           mu_cell = mu(ic+i,jc+j,kc+k)
-                           Z_cell = metal(ic+i,jc+j,kc+k)/0.02_RKIND
-                           n_cell = d(ic+i,jc+j,kc+k)*dunits*
-     &                       mu_cell/mass_h
-                           write(7,*) 'mu, Z, d, n',
-     &                       mu_cell, Z_cell, d(ic+i,jc+j,kc+k)*dunits,
-     &                       n_cell
-                        enddo
-                     enddo
-                  enddo
-               endif
+               write(7,*) 'Z_avg, n_avg', Z_floor, n_avg
 #endif
 c
 c     Compute the mass and momentum that this cell is responsible for
