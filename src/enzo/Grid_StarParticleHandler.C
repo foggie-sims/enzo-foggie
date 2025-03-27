@@ -1752,6 +1752,29 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 	    }
 	    
 	  }
+     if (debug && mu_field[index] < 0.) {
+      printf("mu < 0 in Grid_StarParticleHandler.C ! mu = %f\n", mu_field[index]);
+      if (MultiSpecies > 0) {
+         printf("BaryonField[DeNum] = %f\n", BaryonField[DeNum][index]);
+         printf("BaryonField[HINum] = %f\n", BaryonField[HINum][index]);
+         printf("BaryonField[HIINum] = %f\n", BaryonField[HIINum][index]);
+         printf("BaryonField[HeINum] = %f\n", BaryonField[HeINum][index]);
+         printf("BaryonField[HeIINum] = %f\n", BaryonField[HeIINum][index]);
+         printf("BaryonField[HeIIINum] = %f\n", BaryonField[HeIIINum][index]);
+         printf("BaryonField[MetalNum] = %f\n", BaryonField[MetalNum][index]);
+         printf("BaryonField[DensNum] = %f\n", BaryonField[DensNum][index]);
+      }
+      if (MultiSpecies > 1) {
+         printf("BaryonField[HMNum] = %f\n", BaryonField[HMNum][index]);
+         printf("BaryonField[H2INum] = %f\n", BaryonField[H2INum][index]);
+         printf("BaryonField[H2IINum] = %f\n", BaryonField[H2IINum][index]);
+      }
+      if (MultiSpecies > 2) {
+         printf("BaryonField[DINum] = %f\n", BaryonField[DINum][index]);
+         printf("BaryonField[DIINum] = %f\n", BaryonField[DIINum][index]);
+         printf("BaryonField[HDINum] = %f\n", BaryonField[HDINum][index]);
+      }
+     }
 	}
       }
     }
