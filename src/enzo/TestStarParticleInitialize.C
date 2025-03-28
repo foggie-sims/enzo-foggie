@@ -55,6 +55,14 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
   char *HeIIName  = "HeII_Density";
   char *HeIIIName = "HeIII_Density";
 
+  char *TracerFluidO1Name = "TracerFluid01";
+  char *TracerFluidO2Name = "TracerFluid02";
+  char *TracerFluidO3Name = "TracerFluid03";
+  char *TracerFluidO4Name = "TracerFluid04";
+  char *TracerFluidO5Name = "TracerFluid05";
+  char *TracerFluidO6Name = "TracerFluid06";
+  char *TracerFluidO7Name = "TracerFluid07";
+  char *TracerFluidO8Name = "TracerFluid08";
 
   /* declarations */
 
@@ -200,6 +208,17 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
       DataLabel[count++] = MetalAGBName;
       DataLabel[count++] = MetalNSMName;
     }
+
+  if(UseTracerFluid){
+    if(NumberOfTracerFluidFields >= 1) DataLabel[count++] = TracerFluidO1Name;
+    if(NumberOfTracerFluidFields >= 2) DataLabel[count++] = TracerFluidO2Name;
+    if(NumberOfTracerFluidFields >= 3) DataLabel[count++] = TracerFluidO3Name;
+    if(NumberOfTracerFluidFields >= 4) DataLabel[count++] = TracerFluidO4Name;
+    if(NumberOfTracerFluidFields >= 5) DataLabel[count++] = TracerFluidO5Name;
+    if(NumberOfTracerFluidFields >= 6) DataLabel[count++] = TracerFluidO6Name;
+    if(NumberOfTracerFluidFields >= 7) DataLabel[count++] = TracerFluidO7Name;
+    if(NumberOfTracerFluidFields == 8) DataLabel[count++] = TracerFluidO8Name;
+  }
 
 
   int j;
