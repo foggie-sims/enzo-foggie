@@ -533,7 +533,8 @@ c     of mu assumes solar relative abundances between H, He, and metals.
 c
                         if (Z_cell .gt. 1._RKIND) 
      &                    Z_cell = 0.95_RKIND
-                        if (mu_cell .lt. 0._RKIND)
+                        if ((mu_cell .lt. 0._RKIND) .or. 
+     &                    (mu_cell .ne. mu_cell))
      &                    mu_cell = 1._RKIND/
      &                     (1.5962 - 1.0337_RKIND*Z_cell)
                         Z_avg = Z_avg + Z_cell/0.02_RKIND
