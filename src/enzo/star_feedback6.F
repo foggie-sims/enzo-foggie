@@ -253,7 +253,7 @@ c
             if (use_tabfbk .eq. 1_IKIND) then
 c
 #ifdef FORTRAN_DEBUG
-               write(7,*) 'creation time, age, dt:', tcp*t1/yr_s,
+               write(7,*) 'creation time, age, dt:', tcp(n)*t1/yr_s,
      &                        age, dt*t1/yr_s
                write(7,*) 'metalf:',metalf(n)
 #endif
@@ -1205,13 +1205,21 @@ c
                   metal(ic+i,jc+j,kc+k) = 
      &               (metal(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k) + 
      &               mzeject) /(d(ic+i, jc+j, kc+k) + delta_mass)
+c                 Ensure the metallicity doesn't get too high
+                  if (metal(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
+     &              metal(ic+i,jc+j,kc+k) = 0.95_RKIND
                   if (itracksrc .eq. 1) then
                      metalSNII(ic+i,jc+j,kc+k) =
      &                 (metalSNII(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k) + 
      &                 mzeject_ii) /(d(ic+i, jc+j, kc+k) + delta_mass)
+c                 Put same cap on other metal fields
+                     if (metalSNII(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
+     &                 metalSNII(ic+i,jc+j,kc+k) = 0.95_RKIND
                      metalSNIa(ic+i,jc+j,kc+k) =
      &                 (metalSNIa(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k) + 
      &                 mzeject_ia) /(d(ic+i, jc+j, kc+k) + delta_mass)
+                     if (metalSNIa(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
+     &                 metalSNIa(ic+i,jc+j,kc+k) = 0.95_RKIND
                   endif
                endif
 c
