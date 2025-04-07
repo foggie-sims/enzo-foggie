@@ -166,9 +166,9 @@ c
 c     Ensure we're not using ZEUS
 c
       if (imethod .eq. 2_IKIND) then
-         write(6,*) "Mechanical feedback (StarParticleFeedback = 64) "
-     &      "is not supported with the ZEUS hydro algorithm "
-     &      "(HydroMethod = 2). If you want to use this feedback, "
+         write(6,*) "Mechanical feedback (StarParticleFeedback = 64)" //
+     &      " is not supported with the ZEUS hydro algorithm " //
+     &      "(HydroMethod = 2). If you want to use this feedback, " //
      &      "use a different hydro method!"
          ERROR_MESSAGE
       endif
