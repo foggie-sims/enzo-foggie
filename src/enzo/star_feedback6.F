@@ -166,7 +166,10 @@ c
 c     Ensure we're not using ZEUS
 c
       if (imethod .eq. 2_IKIND) then
-         write(6,*) "mechanical feedback: not supported"
+         write(6,*) "Mechanical feedback (StarParticleFeedback = 64) "
+     &      "is not supported with the ZEUS hydro algorithm "
+     &      "(HydroMethod = 2). If you want to use this feedback, "
+     &      "use a different hydro method!"
          ERROR_MESSAGE
       endif
 c
@@ -529,14 +532,18 @@ c     The following adjustments to Z_cell and mu_cell are band-aids to
 c     handle situations when the chemistry gets weird and the metallicity
 c     is unphysically high or mu as calculated from the baryon fields in
 c     Grid_StarParticleHandler.C is somehow negative. The below calculation
-c     of mu assumes solar relative abundances between H, He, and metals.
+c     of mu assumes primordial relative abundance between H and He (He is
+c     1/3 of H), that the gas is completely neutral, and that all metals
+c     are oxygen atoms, for simplicity. Note that what is called "mu" here
+c     and in the mu_field passed to this function are actually the inverse
+c     mean molecular weight!!!
 c
-                        if (Z_cell .gt. 1._RKIND) 
+                        if (Z_cell .gt. 0.95_RKIND) 
      &                    Z_cell = 0.95_RKIND
                         if ((mu_cell .lt. 0._RKIND) .or. 
      &                    (mu_cell .ne. mu_cell))
-     &                    mu_cell = 1._RKIND/
-     &                     (1.5962 - 1.0337_RKIND*Z_cell)
+     &                    mu_cell = 0.8125_RKIND*(1._RKIND-Z_cell) + 
+     &                     Z_cell/16._RKIND
                         Z_avg = Z_avg + Z_cell/0.02_RKIND
                         n_avg = n_avg + 
      &                     d(ic+i,jc+j,kc+k)*dunits*
@@ -552,8 +559,8 @@ c
 c               
 c     The Kimm & Cen (2014) scheme (eq A5) requires a floor on Z_avg
 c
-               Z_floor = max(Z_avg/27._RKIND, 0.01_RKIND)
-               n_avg = n_avg/27._RKIND
+               Z_floor = max(Z_avg/distcells, 0.01_RKIND)
+               n_avg = n_avg/distcells
 #ifdef FORTRAN_DEBUG
                write(7,*) 'Z_avg, n_avg', Z_floor, n_avg
 #endif
@@ -627,6 +634,7 @@ c     Sum mass, energy, and momentum before
                call sum_energy_mom(u, v, w, d, nx, ny, nz,
      &            ic, jc, kc,
      &            mass_before, kin_energy_before, mom_start)
+c
 #ifdef FORTRAN_DEBUG
                write(7,*) 'nsn,meject,mzeject,mzeject_ii,mzeject_ia',
      &            nsn_grid(ic,jc,kc),
@@ -653,7 +661,7 @@ c           kin_energy_before has units of mass*velocity^2/volume
 c           mom_start has units of mass*velocity/volume
 c
 #endif
-c     Zero local dummy field and kinetic energy field
+c     Zero dummy velocity, energy, and metallicity fields
 c
                do k = -1_IKIND, 1_IKIND
                   do j = -1_IKIND, 1_IKIND

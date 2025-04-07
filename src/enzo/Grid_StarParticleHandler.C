@@ -1720,7 +1720,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
   if (STARFEED_METHOD(MECH_STAR)) {
 
-    //---- UNIGRID (NON-JEANS MASS) VERSION WITH MOMENTUM
+    //---- MOMENTUM FEEDBACK
 
     // Compute mu across grid
     float *mu_field = new float[size];
@@ -1742,37 +1742,41 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 	    }
 
 	    mu_field[index] = BaryonField[DeNum][index] + BaryonField[HINum][index] + BaryonField[HIINum][index] +
-	      (BaryonField[HeINum][index] + BaryonField[HeIINum][index] + BaryonField[HeIIINum][index])/4.0 +
-         BaryonField[MetalNum][index]*BaryonField[DensNum][index]*9.0/16.0;
+	      (BaryonField[HeINum][index] + BaryonField[HeIINum][index] + BaryonField[HeIIINum][index])/4.0;
 	    if (MultiSpecies > 1) {
 	      mu_field[index] += BaryonField[HMNum][index] + (BaryonField[H2INum][index] + BaryonField[H2IINum][index])/2.0;
 	    }
 	    if (MultiSpecies > 2) {
 	      mu_field[index] += (BaryonField[DINum][index] + BaryonField[DIINum][index])/2.0 + (BaryonField[HDINum][index]/3.0);
 	    }
+       if (MetalNum != -1) {
+         mu_field[index] += BaryonField[MetalNum][index]/16.0;
+       }
 	    
 	  }
      if (debug && mu_field[index] < 0.) {
-      printf("mu < 0 in Grid_StarParticleHandler.C ! mu = %f\n", mu_field[index]);
+      printf("mu < 0 in Grid_StarParticleHandler.C ! mu = %"FSYM"\n", mu_field[index]);
       if (MultiSpecies > 0) {
-         printf("BaryonField[DeNum] = %f\n", BaryonField[DeNum][index]);
-         printf("BaryonField[HINum] = %f\n", BaryonField[HINum][index]);
-         printf("BaryonField[HIINum] = %f\n", BaryonField[HIINum][index]);
-         printf("BaryonField[HeINum] = %f\n", BaryonField[HeINum][index]);
-         printf("BaryonField[HeIINum] = %f\n", BaryonField[HeIINum][index]);
-         printf("BaryonField[HeIIINum] = %f\n", BaryonField[HeIIINum][index]);
-         printf("BaryonField[MetalNum] = %f\n", BaryonField[MetalNum][index]);
-         printf("BaryonField[DensNum] = %f\n", BaryonField[DensNum][index]);
+         printf("BaryonField[DeNum] = %"FSYM"\n", BaryonField[DeNum][index]);
+         printf("BaryonField[HINum] = %"FSYM"\n", BaryonField[HINum][index]);
+         printf("BaryonField[HIINum] = %"FSYM"\n", BaryonField[HIINum][index]);
+         printf("BaryonField[HeINum] = %"FSYM"\n", BaryonField[HeINum][index]);
+         printf("BaryonField[HeIINum] = %"FSYM"\n", BaryonField[HeIINum][index]);
+         printf("BaryonField[HeIIINum] = %"FSYM"\n", BaryonField[HeIIINum][index]);
+         printf("BaryonField[DensNum] = %"FSYM"\n", BaryonField[DensNum][index]);
       }
       if (MultiSpecies > 1) {
-         printf("BaryonField[HMNum] = %f\n", BaryonField[HMNum][index]);
-         printf("BaryonField[H2INum] = %f\n", BaryonField[H2INum][index]);
-         printf("BaryonField[H2IINum] = %f\n", BaryonField[H2IINum][index]);
+         printf("BaryonField[HMNum] = %"FSYM"\n", BaryonField[HMNum][index]);
+         printf("BaryonField[H2INum] = %"FSYM"\n", BaryonField[H2INum][index]);
+         printf("BaryonField[H2IINum] = %"FSYM"\n", BaryonField[H2IINum][index]);
       }
       if (MultiSpecies > 2) {
-         printf("BaryonField[DINum] = %f\n", BaryonField[DINum][index]);
-         printf("BaryonField[DIINum] = %f\n", BaryonField[DIINum][index]);
-         printf("BaryonField[HDINum] = %f\n", BaryonField[HDINum][index]);
+         printf("BaryonField[DINum] = %"FSYM"\n", BaryonField[DINum][index]);
+         printf("BaryonField[DIINum] = %"FSYM"\n", BaryonField[DIINum][index]);
+         printf("BaryonField[HDINum] = %"FSYM"\n", BaryonField[HDINum][index]);
+      }
+      if (MetalNum != -1) {
+         printf("BaryonField[MetalNum] = %"FSYM"\n", BaryonField[MetalNum][index]);
       }
      }
 	}
