@@ -617,7 +617,7 @@ c
 c           ke_before has units of mass*velocity^2/volume
 c
 c     First convert velocities to momenta and transform
-c     into frame comoving with weighted average velocity of particles
+c     into frame comoving with explosion-weighted average velocity of particles
 c     in this cell
 c
                up_avg = up_grid(ic,jc,kc)/nsn_grid(ic,jc,kc)
@@ -628,7 +628,7 @@ c
      &                    +1_IKIND)
 c
 c           u,v,w have units of mass*velocity/volume
-c           Now u,v,w are the particle-relative *momentum* directions
+c           Now u,v,w are the explosion-relative *momentum* directions
 c
 c     Sum mass, energy, and momentum before
                call sum_energy_mom(u, v, w, d, nx, ny, nz,
@@ -754,9 +754,11 @@ c
 c
 c     Add thermal energy to host cell
 c     
-                  te(ic,jc,kc) = te(ic,jc,kc) + add_therm
+                  te(ic,jc,kc) = te(ic,jc,kc) + 
+     &              add_therm/d(ic+i,jc+j,kc+k)
                   if (idual .eq. 1_IKIND)
-     &              ge(ic,jc,kc) = ge(ic,jc,kc) + add_therm
+     &              ge(ic,jc,kc) = ge(ic,jc,kc) + 
+     &              add_therm/d(ic+i,jc+j,kc+k)
 c
 #ifdef FORTRAN_DEBUG
                   write(7,*) 'te_after',te(ic,jc,kc)*
