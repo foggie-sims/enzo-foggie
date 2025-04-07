@@ -355,11 +355,13 @@ Because this calculation is done for every cell surrounding the explosion cell,
 it is not assumed that the supernovae explode in constant-density ISM.
 
 The frame of the explosion is determined by the N\ :sub:`SN`-weighted average 
-velocity of all particles located in the explosion cell. The momentum is added 
-symmetrically outward from the explosion cell, in this frame, in order to account 
+velocity of all particles located in the explosion cell. The velocity grids are 
+translated into this frame for all the following calculations and translated
+back to the lab frame at the end. The momentum is added 
+symmetrically outward from the explosion cell in the explosion frame to account 
 for the movement of the particles that are exploding. If any cell surrounding 
 the explosion cell would receive a momentum kick that would change its velocity 
-by 1000 km/s or greater, the amount of momentum it receives is limited to 
+by 1000 km/s or greater (in the explosion frame), the amount of momentum it receives is limited to 
 that which produces a velocity change of 1000 km/s.
 
 In order to account for thermalization of flows colliding with each other 
@@ -369,15 +371,15 @@ zero velocities. The total kinetic energy on this dummy grid is calculated
 as the sum of :math:`\frac{1}{2}\frac{|p|^2}{m}` in each cell, where 
 :math:`|p|` is the magnitude of the momentum and m is the mass in each cell. 
 
-The momentum is then deposited on the true grid, and the kinetic energy within 
+The momentum is then deposited on the velocity grids (in the explosion frame), and the kinetic energy within 
 the injection region is again calculated. The difference between the 
-dummy grid's kinetic energy and the true grid's kinetic energy is injected 
+dummy grid's kinetic energy and the velocity grids' kinetic energy is injected 
 as thermal energy into the explosion cell. This process 
 accounts for any kinetic energy that is "lost" due to the momentum that is 
 deposited canceling out with gas velocities existing already on the grid. 
 Depositing the "lost" energy as thermal accounts for the thermalization 
 of gas flows colliding with one another, as calculated by the momentum 
-cancelation.
+cancelation. Finally, the velocity grids are translated back to the lab frame.
 
 While the amount of momentum to inject in this method is fully determined 
 by the supernova rate and ejection mass, there is an option to multiply 
@@ -423,7 +425,8 @@ participate in feedback, for each explosion cell. The columns in
 Because the first file has one new row per particle per time step and the 
 second file has one new row per exploding grid cell per time step, 
 these files can get very large and it is not recommended to use them except 
-for debugging short runs.
+for debugging short runs. They will likely also slow down the calculation by 
+performing many I/O operations.
 
 
 .. _method_7:
