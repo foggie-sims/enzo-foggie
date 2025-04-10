@@ -1156,6 +1156,9 @@ c              1000 km/s, limit to 1000
                if (vel_kick .gt. 1000._RKIND) then
                   delta_p = 1000._RKIND/(vunits/1e5_RKIND)*
      &                   (d(ic+i,jc+j,kc+k) + delta_mass)
+                  delta_pu = i*mult*delta_p
+                  delta_pv = j*mult*delta_p
+                  delta_pw = k*mult*delta_p
 #ifdef FORTRAN_DEBUG
                   write(7,*) 'vel_kick, delta_p, delta_v:',
      &              vel_kick,
