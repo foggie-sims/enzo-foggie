@@ -551,7 +551,7 @@ c
 #ifdef FORTRAN_DEBUG
                         write(7,*) 'mu, Z, d, n',
      &                       mu_cell, Z_cell, d(ic+i,jc+j,kc+k)*dunits,
-     &                       n_cell
+     &                       d(ic+i,jc+j,kc+k)*dunits*mu_cell/mass_h
 #endif
                      enddo
                   enddo
@@ -787,7 +787,7 @@ c
                call momentum_convert(u, v, w, d, up_avg, vp_avg, 
      &               wp_avg, nx, ny, nz, ic, jc, kc, -1_IKIND)
 c
-c           Add the increase in the kinetic energy to the total energy field
+c           Add the change in the kinetic energy to the total energy field
 c     
                ke_injected = 0._RKIND
                te_sum = 0._RKIND
@@ -1157,10 +1157,12 @@ c              1000 km/s, limit to 1000
                   delta_p = 1000._RKIND/(vunits/1e5_RKIND)*
      &                   (d(ic+i,jc+j,kc+k) + delta_mass)
 #ifdef FORTRAN_DEBUG
-                  write(7,*) 'vel_kick, delta_p:',
+                  write(7,*) 'vel_kick, delta_p, delta_v:',
      &              vel_kick,
      &              delta_p*dx**3._RKIND*
-     &              (dunits*x1**3._RKIND)*vunits/SolarMass/1e5_RKIND
+     &              (dunits*x1**3._RKIND)*vunits/SolarMass/1e5_RKIND,
+     &              delta_p/(d(ic+i,jc+j,kc+k) + delta_mass)*
+     &                    vunits/1e5_RKIND
 #endif
                endif
 c              
@@ -1199,6 +1201,13 @@ c
                p_end = (pu(ic+i,jc+j,kc+k)**2._RKIND + 
      &                  pv(ic+i,jc+j,kc+k)**2._RKIND +
      &                  pw(ic+i,jc+j,kc+k)**2._RKIND)**(0.5_RKIND)
+#ifdef FORTRAN_DEBUG
+               write(7,*) 'v_start, v_final:',
+     &            p_start/(d(ic+i,jc+j,kc+k) + delta_mass)*
+     &                    vunits/1e5_RKIND,
+     &            p_end/(d(ic+i,jc+j,kc+k) + delta_mass)*
+     &                    vunits/1e5_RKIND
+#endif
 c
 c     Adjust thermal energy to account for new mass added
 c
