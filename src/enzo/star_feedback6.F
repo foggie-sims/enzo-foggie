@@ -145,8 +145,8 @@ c
       R_PREC Z_avg, n_avg, Z_floor,
      &	  realmass, mu_cell, fbuff, add_therm, delta_therm
       R_PREC n_cell, Z_cell
-      R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, mom_term,
-     &     mass_term
+      R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, reduct_ratio,
+     &     mass_term, vel_mag, ke_before_cap, ke_lost_to_cap
       R_PREC mz_eject, mzeject_ii, mzeject_ia
       R_PREC metal_per_cell, metal_ii_per_cell, metal_ia_per_cell
       R_PREC u1(3,3,3), v1(3,3,3), w1(3,3,3), d1(3,3,3),
@@ -797,25 +797,48 @@ c
                do k = -1_IKIND, +1_IKIND
                   do j = -1_IKIND, +1_IKIND
                      do i = -1_IKIND, +1_IKIND
-                        ke_after = 0.5_RKIND *
-     &                        d(ic+i, jc+j, kc+k) *
-     &                       (u(ic+i ,jc+j ,kc+k)**2_IKIND + 
-     &                        v(ic+i ,jc+j ,kc+k)**2_IKIND + 
-     &                        w(ic+i ,jc+j ,kc+k)**2_IKIND) 
+c
+c           Limit the final velocity of any cell in the injection region to
+c           3000 km/s. Normally we wouldn't expect any velocities above
+c           2000 km/s for most normal (non-cluster) galaxies, but don't
+c           want the cap to be too strict.
+c
+                        vel_mag = (u(ic+i ,jc+j ,kc+k)**2_IKIND + 
+     &                    v(ic+i ,jc+j ,kc+k)**2_IKIND + 
+     &                    w(ic+i ,jc+j ,kc+k)**2_IKIND)**0.5_RKIND
+                        ke_before_cap = 0.5_RKIND * d(ic+i,jc+j,kc+k) *
+     &                    vel_mag**2_IKIND
+                        if (vel_mag*vunits .gt. 3.e8_RKIND) then
+                           reduct_ratio = 3.e8_RKIND/(vel_mag*vunits)
+                           u(ic+i,jc+j,kc+k) = 
+     &                       reduct_ratio*u(ic+i,jc+j,kc+k)
+                           v(ic+i,jc+j,kc+k) = 
+     &                       reduct_ratio*v(ic+i,jc+j,kc+k)
+                           w(ic+i,jc+j,kc+k) = 
+     &                       reduct_ratio*w(ic+i,jc+j,kc+k)
+                           vel_mag = (u(ic+i ,jc+j ,kc+k)**2_IKIND + 
+     &                       v(ic+i ,jc+j ,kc+k)**2_IKIND + 
+     &                       w(ic+i ,jc+j ,kc+k)**2_IKIND)**0.5_RKIND
+                        endif ! end velocity cap
+                        ke_after = 0.5_RKIND * d(ic+i, jc+j, kc+k) * 
+     &                     vel_mag**2_IKIND
+c              Inject lost KE from capping as thermal energy in the same cell
+                        ke_lost_to_cap = ke_after - ke_before_cap
+                        ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k) + 
+     &                    ke_lost_to_cap/d(ic+i,jc+j,kc+k)
+c              Adjust total energy to account for both the injected kinetic
+c              energy and the additional thermal energy from the cap
                         delta_ke = ke_after - ke_before(i+2,j+2,k+2)
-                        te(ic+i ,jc+j ,kc+k) = 
-     &                       te(ic+i ,jc+j ,kc+k) + 
-     &                       delta_ke/d(ic+i, jc+j, kc+k)
+                        te(ic+i,jc+j,kc+k) = 
+     &                       te(ic+i,jc+j,kc+k) + (delta_ke + 
+     &                       ke_lost_to_cap)/d(ic+i,jc+j,kc+k)
                         ke_injected = ke_injected + delta_ke
-                        mass_term = d(ic+i, jc+j, kc+k)
-                        mom_term = u(ic+i, jc+j, kc+k)**2._RKIND + 
-     &                    v(ic+i, jc+j, kc+k)**2._RKIND + 
-     &                    w(ic+i, jc+j, kc+k)**2._RKIND
-                        ke_sum = ke_sum+0.5_RKIND*(mom_term*mass_term)
-                        mom_sum = mom_sum+mass_term*mom_term**0.5_RKIND
+                        mass_term = d(ic+i,jc+j,kc+k)
+                        ke_sum = ke_sum + ke_after
+                        mom_sum = mom_sum + mass_term*vel_mag
                         mass_sum = mass_sum + mass_term
-                        te_sum = te_sum+te(ic+i, jc+j, kc+k)*mass_term
-                        ge_sum = ge_sum+ge(ic+i, jc+j, kc+k)*mass_term
+                        te_sum = te_sum + te(ic+i,jc+j,kc+k)*mass_term
+                        ge_sum = ge_sum + ge(ic+i,jc+j,kc+k)*mass_term
 c                       ke_after has units of mass*velocity^2/volume
 c                       te has units of mass*velocity^2/volume/mass*volume = velocity^2
 c                       te is *specific* energy (energy/mass)
