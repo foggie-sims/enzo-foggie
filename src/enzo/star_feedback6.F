@@ -755,10 +755,10 @@ c
 c     Add thermal energy to host cell
 c     
                   te(ic,jc,kc) = te(ic,jc,kc) + 
-     &              add_therm/d(ic+i,jc+j,kc+k)
+     &              add_therm/d(ic,jc,kc)
                   if (idual .eq. 1_IKIND)
      &              ge(ic,jc,kc) = ge(ic,jc,kc) + 
-     &              add_therm/d(ic+i,jc+j,kc+k)
+     &              add_therm/d(ic,jc,kc)
 c
 #ifdef FORTRAN_DEBUG
                   write(7,*) 'te_after',te(ic,jc,kc)*
@@ -822,16 +822,17 @@ c
                         endif ! end velocity cap
                         ke_after = 0.5_RKIND * d(ic+i, jc+j, kc+k) * 
      &                     vel_mag**2_IKIND
-c              Inject lost KE from capping as thermal energy in the same cell
+c              Inject lost KE from capping as thermal energy into the central cell
                         ke_lost_to_cap = ke_after - ke_before_cap
-                        ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k) + 
-     &                    ke_lost_to_cap/d(ic+i,jc+j,kc+k)
-c              Adjust total energy to account for both the injected kinetic
-c              energy and the additional thermal energy from the cap
+                        if (idual .eq. 1_IKIND)
+     &                    ge(ic,jc,kc) = ge(ic,jc,kc) + 
+     &                    ke_lost_to_cap/d(ic,jc,kc)
+                        te(ic,jc,kc) = te(ic,jc,kc) + 
+     &                    ke_lost_to_cap/d(ic,jc,kc)
+c              Adjust total energy to account for the change in KE
                         delta_ke = ke_after - ke_before(i+2,j+2,k+2)
-                        te(ic+i,jc+j,kc+k) = 
-     &                       te(ic+i,jc+j,kc+k) + (delta_ke + 
-     &                       ke_lost_to_cap)/d(ic+i,jc+j,kc+k)
+                        te(ic+i,jc+j,kc+k) = te(ic+i,jc+j,kc+k) +
+     &                     delta_ke/d(ic+i,jc+j,kc+k)
                         ke_injected = ke_injected + delta_ke
                         mass_term = d(ic+i,jc+j,kc+k)
                         ke_sum = ke_sum + ke_after
