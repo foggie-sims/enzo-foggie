@@ -819,16 +819,29 @@ c
                            vel_mag = (u(ic+i ,jc+j ,kc+k)**2_IKIND + 
      &                       v(ic+i ,jc+j ,kc+k)**2_IKIND + 
      &                       w(ic+i ,jc+j ,kc+k)**2_IKIND)**0.5_RKIND
-                        endif ! end velocity cap
-                        ke_after = 0.5_RKIND * d(ic+i, jc+j, kc+k) * 
-     &                     vel_mag**2_IKIND
+                           ke_after =  0.5_RKIND * d(ic+i,jc+j,kc+k) * 
+     &                       vel_mag**2_IKIND
 c              Inject lost KE from capping as thermal energy into the central cell
-                        ke_lost_to_cap = ke_after - ke_before_cap
-                        if (idual .eq. 1_IKIND)
-     &                    ge(ic,jc,kc) = ge(ic,jc,kc) + 
-     &                    ke_lost_to_cap/d(ic,jc,kc)
-                        te(ic,jc,kc) = te(ic,jc,kc) + 
-     &                    ke_lost_to_cap/d(ic,jc,kc)
+                           ke_lost_to_cap = ke_after - ke_before_cap
+                           if (idual .eq. 1_IKIND)
+     &                       ge(ic,jc,kc) = ge(ic,jc,kc) + 
+     &                         ke_lost_to_cap/d(ic,jc,kc)
+                           te(ic,jc,kc) = te(ic,jc,kc) + 
+     &                       ke_lost_to_cap/d(ic,jc,kc)
+#ifdef FORTRAN_DEBUG
+                           write(7,*) 'reduct_ratio, ke_before_cap',
+     &                      reduct_ratio, ke_before_cap *
+     &                      (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
+                           write(7,*) 'ke_after, ke_lost_to_cap',
+     &                      ke_after*
+     &                      (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND),
+     &                      ke_lost_to_cap*
+     &                      (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
+#endif
+                        else ! end velocity cap
+                           ke_after = 0.5_RKIND * d(ic+i, jc+j, kc+k) * 
+     &                       vel_mag**2_IKIND
+                        endif
 c              Adjust total energy to account for the change in KE
                         delta_ke = ke_after - ke_before(i+2,j+2,k+2)
                         te(ic+i,jc+j,kc+k) = te(ic+i,jc+j,kc+k) +
