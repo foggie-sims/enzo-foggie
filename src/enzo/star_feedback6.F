@@ -822,7 +822,7 @@ c
                            ke_after =  0.5_RKIND * d(ic+i,jc+j,kc+k) * 
      &                       vel_mag**2_IKIND
 c              Inject lost KE from capping as thermal energy into the central cell
-                           ke_lost_to_cap = ke_after - ke_before_cap
+                           ke_lost_to_cap = ke_before_cap - ke_after
                            if (idual .eq. 1_IKIND)
      &                       ge(ic,jc,kc) = ge(ic,jc,kc) + 
      &                         ke_lost_to_cap/d(ic,jc,kc)
