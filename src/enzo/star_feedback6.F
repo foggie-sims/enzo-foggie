@@ -146,7 +146,7 @@ c
      &	  realmass, mu_cell, fbuff, add_therm, delta_therm
       R_PREC n_cell, Z_cell
       R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, reduct_ratio,
-     &     mass_term, vel_mag, ke_before_cap, ke_lost_to_cap
+     &     mass_term, vel_mag, ke_before_cap, ke_lost_to_cap, inject_e
       R_PREC mz_eject, mzeject_ii, mzeject_ia
       R_PREC metal_per_cell, metal_ii_per_cell, metal_ia_per_cell
       R_PREC u1(3,3,3), v1(3,3,3), w1(3,3,3), d1(3,3,3),
@@ -752,14 +752,6 @@ c
      &              (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
 #endif
 c
-c     Add thermal energy to host cell
-c     
-                  te(ic,jc,kc) = te(ic,jc,kc) + 
-     &              add_therm/d(ic,jc,kc)
-                  if (idual .eq. 1_IKIND)
-     &              ge(ic,jc,kc) = ge(ic,jc,kc) + 
-     &              add_therm/d(ic,jc,kc)
-c
 #ifdef FORTRAN_DEBUG
                   write(7,*) 'te_after',te(ic,jc,kc)*
      &              (dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
@@ -770,18 +762,6 @@ c
                   add_therm = 0._RKIND
                endif ! end lost kinetic -> thermal energy injection
 c
-               if (feedback_log .eq. 1_IKIND) then
-                  write(5,*) t*t1/yr_s/1e6_RKIND, ic, jc, kc,
-     &             nsn_grid(ic,jc,kc), meject_grid(ic,jc,kc)*
-     &             (dunits*(x1*dx)**3._RKIND)/SolarMass,
-     &             mzeject_grid(ic,jc,kc)*(dunits*(x1*dx)**3._RKIND)/
-     &             SolarMass,
-     &             mom_sum*(dunits*(dx*x1)**3._RKIND)*
-     &             vunits/SolarMass/1e5_RKIND,
-     &             add_therm*dunits*
-     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
-               endif
-c
 c           Convert momenta back to velocities and transform back to lab frame
 c
                call momentum_convert(u, v, w, d, up_avg, vp_avg, 
@@ -790,6 +770,7 @@ c
 c           Add the change in the kinetic energy to the total energy field
 c     
                ke_injected = 0._RKIND
+               ke_lost_to_cap = 0._RKIND
                te_sum = 0._RKIND
                ge_sum = 0._RKIND
                mom_sum = 0._RKIND
@@ -821,13 +802,8 @@ c
      &                       w(ic+i ,jc+j ,kc+k)**2_IKIND)**0.5_RKIND
                            ke_after =  0.5_RKIND * d(ic+i,jc+j,kc+k) * 
      &                       vel_mag**2_IKIND
-c              Inject lost KE from capping as thermal energy into the central cell
-                           ke_lost_to_cap = ke_before_cap - ke_after
-                           if (idual .eq. 1_IKIND)
-     &                       ge(ic,jc,kc) = ge(ic,jc,kc) + 
-     &                         ke_lost_to_cap/d(ic,jc,kc)
-                           te(ic,jc,kc) = te(ic,jc,kc) + 
-     &                       ke_lost_to_cap/d(ic,jc,kc)
+                           ke_lost_to_cap = ke_lost_to_cap + 
+     &                       ke_before_cap - ke_after
 #ifdef FORTRAN_DEBUG
                            write(7,*) 'reduct_ratio, ke_before_cap',
      &                      reduct_ratio, ke_before_cap *
@@ -851,11 +827,31 @@ c              Adjust total energy to account for the change in KE
                         ke_sum = ke_sum + ke_after
                         mom_sum = mom_sum + mass_term*vel_mag
                         mass_sum = mass_sum + mass_term
-                        te_sum = te_sum + te(ic+i,jc+j,kc+k)*mass_term
-                        ge_sum = ge_sum + ge(ic+i,jc+j,kc+k)*mass_term
 c                       ke_after has units of mass*velocity^2/volume
 c                       te has units of mass*velocity^2/volume/mass*volume = velocity^2
 c                       te is *specific* energy (energy/mass)
+                     enddo
+                  enddo
+               enddo
+c
+c          Inject both the energy lost due to colliding flows and the
+c          energy lost due to capping the velocity as thermal energy
+c          spread through the injection region
+c
+               inject_e = (add_therm + ke_lost_to_cap)/distcells
+               do k = -1_IKIND, +1_IKIND
+                  do j = -1_IKIND, +1_IKIND
+                     do i = -1_IKIND, +1_IKIND
+                        te(ic+i,jc+j,kc+k) = te(ic+i,jc+j,kc+k) + 
+     &                    inject_e/d(ic+i,jc+j,kc+k)
+                        if (idual .eq. 1_IKIND) then
+                           ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k) + 
+     &                       inject_e/d(ic+i,jc+j,kc+k)
+                           ge_sum = ge_sum + 
+     &                       ge(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
+                        endif
+                        te_sum = te_sum + 
+     &                    te(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
                      enddo
                   enddo
                enddo
@@ -869,6 +865,22 @@ c                       te is *specific* energy (energy/mass)
      &          ge_sum*dunits*(x1*dx)**3._RKIND*vunits**2._RKIND,
      &          te_sum*dunits*(x1*dx)**3._RKIND*vunits**2._RKIND
 #endif
+c
+               if (feedback_log .eq. 1_IKIND) then
+                  write(5,*) t*t1/yr_s/1e6_RKIND, ic, jc, kc,
+     &             nsn_grid(ic,jc,kc), meject_grid(ic,jc,kc)*
+     &             (dunits*(x1*dx)**3._RKIND)/SolarMass,
+     &             mzeject_grid(ic,jc,kc)*(dunits*(x1*dx)**3._RKIND)/
+     &             SolarMass,
+     &             mom_sum*(dunits*(dx*x1)**3._RKIND)*
+     &             vunits/SolarMass/1e5_RKIND,
+     &             add_therm*dunits*
+     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
+     &             ke_lost_to_cap*dunits*
+     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
+               endif
+c
+c
 c
  100           continue
             enddo
