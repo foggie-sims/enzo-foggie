@@ -135,7 +135,7 @@ c
      &     m_eject, yield, minitial, xv1, xv2,
      &     distrad,distcells, mass_per_cell,
      &     mass_before, mass_dummy,
-     &     kin_energy_before, mom_dummy,
+     &     kin_energy_before, mom_dummy, mom_inj,
      &     delta_ke, ke_injected, ke_after, kin_energy_inj,
      &     nsn, mass_end, kin_energy_end,
      &     mom_start, mom_end, kin_energy_dummy
@@ -297,7 +297,7 @@ c
      &               dx**3._RKIND)
 #endif
 c
-c     Skip feedback if fewer than StarFeedbackSNeTimestepLimit SNe in this timestep
+c     Skip feedback if fewer than StarFeedbackPerSNeTimestepLimit SNe in this timestep
 c
                if (nsn .lt. nsn_timestep) goto 10
 c
@@ -579,15 +579,15 @@ c           mom_per_cell has units of mass*velocity/volume
 c
 c     If not injecting any momentum, skip
 c
-               mom_sum = 0._RKIND
+               mom_inj = 0._RKIND
                do k = 1_IKIND,3_IKIND
                   do j = 1_IKIND,3_IKIND
                      do i = 1_IKIND,3_IKIND
-                        mom_sum = mom_sum + mom_per_cell(i, j, k)
+                        mom_inj = mom_inj + mom_per_cell(i, j, k)
                      enddo
                   enddo
                enddo
-               if (mom_sum .eq. 0._RKIND) then
+               if (mom_inj .eq. 0._RKIND) then
 #ifdef FORTRAN_DEBUG
                   write(7,*) 'no momentum injection for cell', ic,jc,kc
 #endif
@@ -872,7 +872,7 @@ c
      &             (dunits*(x1*dx)**3._RKIND)/SolarMass,
      &             mzeject_grid(ic,jc,kc)*(dunits*(x1*dx)**3._RKIND)/
      &             SolarMass,
-     &             mom_sum*(dunits*(dx*x1)**3._RKIND)*
+     &             mom_inj*(dunits*(dx*x1)**3._RKIND)*
      &             vunits/SolarMass/1e5_RKIND,
      &             add_therm*dunits*
      &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
@@ -929,8 +929,8 @@ c
       R_PREC    den_cell, Mej, dMej, Nnbors, betaSN
 c
         ergs_51 = 1.e51_RKIND
-        Nnbors = distcells - 1._RKIND
-        betaSN = 1._RKIND/distcells
+        Nnbors = distcells - 1._RKIND ! 26
+        betaSN = 1._RKIND/distcells   ! 1/27
         Mej = mass_per_cell*distcells*dunits*(x1*dx)**3._RKIND
         chi_th = 69.58_RKIND*(nsn)**(-2._RKIND/17._RKIND) * 
      &               (n_avg)**(-4._RKIND/17._RKIND) * 
