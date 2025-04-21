@@ -925,10 +925,10 @@ c
 c     Locals
 c
       INTG_PREC i, j, k, dist
-      R_PREC    dMswept, chi, chi_th, fe, pSN, ergs_51
+      R_PREC    dMswept, chi, chi_th, fe, pSN, ergs_51_sqr
       R_PREC    den_cell, Mej, dMej, Nnbors, betaSN
 c
-        ergs_51 = 1.e51_RKIND
+        ergs_51_sqr = 10._RKIND**(51._RKIND/2._RKIND)
         Nnbors = distcells - 1._RKIND ! 26
         betaSN = 1._RKIND/distcells   ! 1/27
         Mej = mass_per_cell*distcells*dunits*(x1*dx)**3._RKIND
@@ -963,7 +963,7 @@ c
                      fe = 1._RKIND - ((chi - 1._RKIND)/
      &                        (3._RKIND*(chi_th - 1._RKIND)))
                      pSN = (2._RKIND*chi * Mej * fe *
-     &                        nsn * ergs_51)**(0.5_RKIND)
+     &                        nsn)**(0.5_RKIND) * ergs_51_sqr
 #ifdef FORTRAN_DEBUG
                      write(7,*) 'lt chi_th, pSN:',
      &                        pSN/SolarMass/1e5_RKIND
