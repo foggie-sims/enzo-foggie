@@ -144,7 +144,7 @@ c
       R_PREC ke_before(3,3,3), mom_per_cell(3,3,3)
       R_PREC Z_avg, n_avg, Z_floor,
      &	  realmass, mu_cell, fbuff, add_therm, delta_therm
-      R_PREC n_cell, Z_cell, ke, ge_units
+      R_PREC n_cell, Z_cell, ke, ge_units, ge_lost_to_cap
       R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, reduct_ratio,
      &     mass_term, vel_mag, ke_before_cap, ke_lost_to_cap, inject_e
       R_PREC mz_eject, mzeject_ii, mzeject_ia
@@ -833,6 +833,7 @@ c          E_cap = 3/2 kbT/(mu*mp) = 2e17 erg/g, where
 c          T = 10^9 K and mu = 0.6 for fully ionized gas.
 c
                inject_e = (add_therm + ke_lost_to_cap)/distcells
+               ge_lost_to_cap = 0._RKIND
                do k = -1_IKIND, +1_IKIND
                   do j = -1_IKIND, +1_IKIND
                      do i = -1_IKIND, +1_IKIND
@@ -847,18 +848,28 @@ c
      &                       inject_e/d(ic+i,jc+j,kc+k)
                            ge_units = ge(ic+i,jc+j,kc+k)
      &                       *vunits**2._RKIND
-                           if (ge_units .gt. 2.e17_RKIND)
-     &                        ge(ic+i,jc+j,kc+k) =  
+                           if (ge_units .gt. 2.e17_RKIND) then
+                              ge_lost_to_cap = ge_lost_to_cap + 
+     &                          (ge(ic+i,jc+j,kc+k) - 
+     &                          2.e17_RKIND/(vunits**2._RKIND))*
+     &                          d(ic+i,jc+j,kc+k)
+                              ge(ic+i,jc+j,kc+k) =  
      &                           2.e17_RKIND/(vunits**2._RKIND)
+                           endif
                            ge_sum = ge_sum +
      &                       ge(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
                         else
                            ge_units = (te(ic+i,jc+j,kc+k) - ke)
      &                       *vunits**2._RKIND
                         endif
-                        if (ge_units .gt. 2.e17_RKIND)
-     &                    te(ic+i,jc+j,kc+k) = ke + 
-     &                    2.e17_RKIND/(vunits**2._RKIND)
+                        if (ge_units .gt. 2.e17_RKIND) then
+                           ge_lost_to_cap = ge_lost_to_cap + 
+     &                       (te(ic+i,jc+j,kc+k) - ke -
+     &                       2.e17_RKIND/(vunits**2._RKIND))*
+     &                       d(ic+i,jc+j,kc+k)
+                           te(ic+i,jc+j,kc+k) = ke + 
+     &                       2.e17_RKIND/(vunits**2._RKIND)
+                        endif
                         te_sum = te_sum +
      &                    te(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
                      enddo
@@ -886,6 +897,8 @@ c
      &             add_therm*dunits*
      &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
      &             ke_lost_to_cap*dunits*
+     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
+     &             ge_lost_to_cap*dunits*
      &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
                endif
 c
