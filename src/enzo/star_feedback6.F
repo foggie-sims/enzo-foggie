@@ -842,7 +842,7 @@ c
                         ke = 0.5_RKIND*
      &                    (u(ic+i,jc+j,kc+k)**2_IKIND +
      &                    v(ic+i,jc+j,kc+k)**2_IKIND +
-     &                    w(ic+i,jc+j,kc+k)**2_IKIND)
+     &                    w(ic+i,jc+j,kc+k)**2_IKIND)**2._RKIND
                         if (idual .eq. 1_IKIND) then
                            ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k) +
      &                       inject_e/d(ic+i,jc+j,kc+k)
@@ -855,20 +855,22 @@ c
      &                          d(ic+i,jc+j,kc+k)
                               ge(ic+i,jc+j,kc+k) =  
      &                           2.e17_RKIND/(vunits**2._RKIND)
+                              te(ic+i,jc+j,kc+k) = ke + 
+     &                           2.e17_RKIND/(vunits**2._RKIND)
                            endif
                            ge_sum = ge_sum +
      &                       ge(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
                         else
                            ge_units = (te(ic+i,jc+j,kc+k) - ke)
      &                       *vunits**2._RKIND
-                        endif
-                        if (ge_units .gt. 2.e17_RKIND) then
-                           ge_lost_to_cap = ge_lost_to_cap + 
-     &                       (te(ic+i,jc+j,kc+k) - ke -
-     &                       2.e17_RKIND/(vunits**2._RKIND))*
-     &                       d(ic+i,jc+j,kc+k)
-                           te(ic+i,jc+j,kc+k) = ke + 
-     &                       2.e17_RKIND/(vunits**2._RKIND)
+                           if (ge_units .gt. 2.e17_RKIND) then
+                              ge_lost_to_cap = ge_lost_to_cap + 
+     &                          (te(ic+i,jc+j,kc+k) - ke -
+     &                          2.e17_RKIND/(vunits**2._RKIND))*
+     &                          d(ic+i,jc+j,kc+k)
+                              te(ic+i,jc+j,kc+k) = ke + 
+     &                          2.e17_RKIND/(vunits**2._RKIND)
+                           endif
                         endif
                         te_sum = te_sum +
      &                    te(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
