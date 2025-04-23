@@ -1244,6 +1244,7 @@ c              1000 km/s, limit to 1000
                   delta_pu = i*mult*delta_p
                   delta_pv = j*mult*delta_p
                   delta_pw = k*mult*delta_p
+               endif
 #ifdef FORTRAN_DEBUG
                   write(7,*) 'vel_kick, delta_p, delta_v:',
      &              vel_kick,
@@ -1252,7 +1253,6 @@ c              1000 km/s, limit to 1000
      &              delta_p/(d(ic+i,jc+j,kc+k) + delta_mass)*
      &                    vunits/1e5_RKIND
 #endif
-               endif
 c
 c              delta_p's have units of mass*velocity/volume
 c              delta_therm has units of mass*velocity^2/volume
@@ -1290,11 +1290,13 @@ c
      &                  pv(ic+i,jc+j,kc+k)**2._RKIND +
      &                  pw(ic+i,jc+j,kc+k)**2._RKIND)**(0.5_RKIND)
 #ifdef FORTRAN_DEBUG
-               write(7,*) 'v_start, v_final:',
+               write(7,*) 'v_start, v_final, mass:',
      &            p_start/(d(ic+i,jc+j,kc+k) + delta_mass)*
      &                    vunits/1e5_RKIND,
      &            p_end/(d(ic+i,jc+j,kc+k) + delta_mass)*
-     &                    vunits/1e5_RKIND
+     &                    vunits/1e5_RKIND,
+     &            (d(ic+i,jc+j,kc+k) + delta_mass)
+     &              *dunits*(dx*x1)**3_IKIND/SolarMass
 #endif
 c
 c     Adjust thermal energy to account for new mass added
