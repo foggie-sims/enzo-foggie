@@ -842,7 +842,7 @@ c
                         ke = 0.5_RKIND*
      &                    (u(ic+i,jc+j,kc+k)**2_IKIND +
      &                    v(ic+i,jc+j,kc+k)**2_IKIND +
-     &                    w(ic+i,jc+j,kc+k)**2_IKIND)**2._RKIND
+     &                    w(ic+i,jc+j,kc+k)**2_IKIND)
                         if (idual .eq. 1_IKIND) then
                            ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k) +
      &                       inject_e/d(ic+i,jc+j,kc+k)
