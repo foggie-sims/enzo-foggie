@@ -144,7 +144,7 @@ c
       R_PREC ke_before(3,3,3), mom_per_cell(3,3,3)
       R_PREC Z_avg, n_avg, Z_floor,
      &	  realmass, mu_cell, fbuff, add_therm, delta_therm
-      R_PREC n_cell, Z_cell, ke, ge_units, ge_lost_to_cap
+      R_PREC n_cell, Z_cell, ke, ge_cap, ge_cell, ge_lost_to_cap
       R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, reduct_ratio,
      &     mass_term, vel_mag, ke_before_cap, ke_lost_to_cap, inject_e
       R_PREC mz_eject, mzeject_ii, mzeject_ia
@@ -834,6 +834,7 @@ c          T = 10^9 K and mu = 0.6 for fully ionized gas.
 c
                inject_e = (add_therm + ke_lost_to_cap)/distcells
                ge_lost_to_cap = 0._RKIND
+               ge_cap = 2.e17_RKIND/(vunits**2_IKIND)
                do k = -1_IKIND, +1_IKIND
                   do j = -1_IKIND, +1_IKIND
                      do i = -1_IKIND, +1_IKIND
@@ -846,30 +847,40 @@ c
                         if (idual .eq. 1_IKIND) then
                            ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k) +
      &                       inject_e/d(ic+i,jc+j,kc+k)
-                           ge_units = ge(ic+i,jc+j,kc+k)
-     &                       *vunits**2._RKIND
-                           if (ge_units .gt. 2.e17_RKIND) then
+#ifdef FORTRAN_DEBUG
+                           write(7,*) 'ge, te, ke after injection:',
+     &                       ge(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)*
+     &                       dunits*vunits**2._RKIND*(x1*dx)**3._RKIND,
+     &                       te(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)*
+     &                       dunits*vunits**2._RKIND*(x1*dx)**3._RKIND,
+     &                       ke*d(ic+i,jc+j,kc+k)*
+     &                       dunits*vunits**2._RKIND*(x1*dx)**3._RKIND
+#endif
+                           if (ge(ic+i,jc+j,kc+k) .gt. ge_cap) then
                               ge_lost_to_cap = ge_lost_to_cap + 
-     &                          (ge(ic+i,jc+j,kc+k) - 
-     &                          2.e17_RKIND/(vunits**2._RKIND))*
+     &                          (ge(ic+i,jc+j,kc+k) - ge_cap)*
      &                          d(ic+i,jc+j,kc+k)
-                              ge(ic+i,jc+j,kc+k) =  
-     &                           2.e17_RKIND/(vunits**2._RKIND)
-                              te(ic+i,jc+j,kc+k) = ke + 
-     &                           2.e17_RKIND/(vunits**2._RKIND)
+                              ge(ic+i,jc+j,kc+k) = ge_cap
+                              te(ic+i,jc+j,kc+k) = ke + ge_cap
+#ifdef FORTRAN_DEBUG
+                           write(7,*) 'ge, te after cap:',
+     &                       ge(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)*
+     &                       dunits*vunits**2._RKIND*(x1*dx)**3._RKIND,
+     &                       te(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)*
+     &                       dunits*vunits**2._RKIND*(x1*dx)**3._RKIND
+                           write(7,*) 'ge_lost_to_cap:',
+     &                       ge_lost_to_cap*
+     &                       dunits*vunits**2._RKIND*(x1*dx)**3._RKIND
+#endif
                            endif
                            ge_sum = ge_sum +
      &                       ge(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
                         else
-                           ge_units = (te(ic+i,jc+j,kc+k) - ke)
-     &                       *vunits**2._RKIND
-                           if (ge_units .gt. 2.e17_RKIND) then
+                           ge_cell = te(ic+i,jc+j,kc+k) - ke
+                           if (ge_cell .gt. ge_cap) then
                               ge_lost_to_cap = ge_lost_to_cap + 
-     &                          (te(ic+i,jc+j,kc+k) - ke -
-     &                          2.e17_RKIND/(vunits**2._RKIND))*
-     &                          d(ic+i,jc+j,kc+k)
-                              te(ic+i,jc+j,kc+k) = ke + 
-     &                          2.e17_RKIND/(vunits**2._RKIND)
+     &                          (ge_cell - ge_cap)*d(ic+i,jc+j,kc+k)
+                              te(ic+i,jc+j,kc+k) = ke + ge_cap
                            endif
                         endif
                         te_sum = te_sum +
