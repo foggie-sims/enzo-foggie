@@ -194,7 +194,7 @@ int ReadFeedbackTable(char *name)
   if (MyProcessorNumber == ROOT_PROCESSOR) {
 
     /* Read initial metal fractions */
-    FBTable.ini_met = new float[FBTable.n_met];
+    FBTable.ini_met = new double[FBTable.n_met];
     dset_id = H5Dopen(file_id, "/indexer/initial_metal_fraction");
     if (dset_id == h5_error) {
       fprintf(stderr,"Can't open /indexer/initial_metal_fraction in %s.\n", name);
@@ -213,7 +213,7 @@ int ReadFeedbackTable(char *name)
     }
 
     /* Read population ages */
-    FBTable.pop_age = new float[FBTable.n_age];
+    FBTable.pop_age = new double[FBTable.n_age];
     dset_id = H5Dopen(file_id, "/indexer/population_age");
     if (dset_id == h5_error) {
       fprintf(stderr,"Can't open /indexer/population_age in %s.\n", name);
@@ -232,7 +232,7 @@ int ReadFeedbackTable(char *name)
     }
 
     /* Read mass yields */
-    FBTable.mass_yield = new float[FBTable.n_met*FBTable.n_age*4];
+    FBTable.mass_yield = new double[FBTable.n_met*FBTable.n_age*4];
     dset_id = H5Dopen(file_id, "/sygma_models/ejecta_mass");
     if (dset_id == h5_error) {
       fprintf(stderr,"Can't open /sygma_models/ejecta_mass in %s.\n", name);
@@ -251,7 +251,7 @@ int ReadFeedbackTable(char *name)
     }
 
     /* Read metal mass yields */
-    FBTable.metm_yield = new float[FBTable.n_met*FBTable.n_age*4];
+    FBTable.metm_yield = new double[FBTable.n_met*FBTable.n_age*4];
     dset_id = H5Dopen(file_id, "/sygma_models/ejecta_metal_mass");
     if (dset_id == h5_error) {
       fprintf(stderr,"Can't open /sygma_models/ejecta_metal_mass in %s.\n", name);
@@ -270,7 +270,7 @@ int ReadFeedbackTable(char *name)
     }
 
     /* Read SNe event rate */
-    FBTable.event_rate = new float[FBTable.n_met*FBTable.n_age*2];
+    FBTable.event_rate = new double[FBTable.n_met*FBTable.n_age*2];
     dset_id = H5Dopen(file_id, "/sygma_models/sne_event_rate");
     if (dset_id == h5_error) {
       fprintf(stderr,"Can't open /sygma_models/sne_event_rate in %s.\n", name);
@@ -296,21 +296,21 @@ int ReadFeedbackTable(char *name)
 
   } else { // not root processor
 
-    FBTable.ini_met = new float[FBTable.n_met];
-    FBTable.pop_age = new float[FBTable.n_age];
-    FBTable.mass_yield = new float[FBTable.n_met*FBTable.n_age*4];
-    FBTable.metm_yield = new float[FBTable.n_met*FBTable.n_age*4];
-    FBTable.event_rate = new float[FBTable.n_met*FBTable.n_age*2];
+    FBTable.ini_met = new double[FBTable.n_met];
+    FBTable.pop_age = new double[FBTable.n_age];
+    FBTable.mass_yield = new double[FBTable.n_met*FBTable.n_age*4];
+    FBTable.metm_yield = new double[FBTable.n_met*FBTable.n_age*4];
+    FBTable.event_rate = new double[FBTable.n_met*FBTable.n_age*2];
 
   } // end not root
 
   // broadcast
 #ifdef USE_MPI
-  MPI_Bcast(FBTable.ini_met, FBTable.n_met, MPI_FLOAT, ROOT_PROCESSOR, MPI_COMM_WORLD);
-  MPI_Bcast(FBTable.pop_age, FBTable.n_age, MPI_FLOAT, ROOT_PROCESSOR, MPI_COMM_WORLD);
-  MPI_Bcast(FBTable.mass_yield, FBTable.n_met*FBTable.n_age*4, MPI_FLOAT, ROOT_PROCESSOR, MPI_COMM_WORLD);
-  MPI_Bcast(FBTable.metm_yield, FBTable.n_met*FBTable.n_age*4, MPI_FLOAT, ROOT_PROCESSOR, MPI_COMM_WORLD);
-  MPI_Bcast(FBTable.event_rate, FBTable.n_met*FBTable.n_age*2, MPI_FLOAT, ROOT_PROCESSOR, MPI_COMM_WORLD);
+  MPI_Bcast(FBTable.ini_met, FBTable.n_met, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+  MPI_Bcast(FBTable.pop_age, FBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+  MPI_Bcast(FBTable.mass_yield, FBTable.n_met*FBTable.n_age*4, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+  MPI_Bcast(FBTable.metm_yield, FBTable.n_met*FBTable.n_age*4, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+  MPI_Bcast(FBTable.event_rate, FBTable.n_met*FBTable.n_age*2, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
 #endif
   
   return SUCCESS;
