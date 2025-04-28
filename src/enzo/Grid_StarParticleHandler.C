@@ -342,8 +342,8 @@ extern "C" void FORTRAN_NAME(star_feedback2_tab)(
          FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
          float *mp, float *tcp, float *metalf, float *minit, int *type,
          float *esnii, float *esnia, int *itracksrc, float *zsnii, float *zsnia,
-         int *ntabz, int *ntabage, float *tabz, float *tabage, 
-         float *tabmass, float *tabmetal, float *tabevent);
+         int *ntabz, int *ntabage, double *tabz, double *tabage, 
+         double *tabmass, double *tabmetal, double *tabevent);
  
 extern "C" void FORTRAN_NAME(star_feedback3mom)(int *nx, int *ny, int *nz,
 						float *d, float *mu, float *dm, float *te, float *ge, float *u, float *v,
@@ -372,8 +372,8 @@ extern "C" void FORTRAN_NAME(star_feedback6)(int *nx, int *ny, int *nz,
 	          float *nsn_timestep, float *exptime, float *mom_mult,
              int *feedback_log, int *use_tabfbk, float *minit,
              float *ergSNII, float *ergSNIa, int *itracksrc, float *metalSNII,
-             float *metalSNIa, int *ntabZ, int *ntabAge, float *tabZ, float *tabAge, 
-         float *tabMass, float *tabMetal, float *tabEvents);
+             float *metalSNIa, int *ntabZ, int *ntabAge, double *tabZ, double *tabAge, 
+             double *tabMass, double *tabMetal, double *tabEvents);
 
 extern "C" void FORTRAN_NAME(star_feedback3)(int *nx, int *ny, int *nz,
              float *d, float *dm, float *te, float *ge, float *u, float *v,

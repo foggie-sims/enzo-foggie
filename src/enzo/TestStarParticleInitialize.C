@@ -145,7 +145,7 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
     ENZO_FAIL("Error in TestStarParticleInitialize: please specify either TestStarParticleEnergy or TestStarParticleTemperature");
 
   if (TestStarParticleTemperature > 0){
-    double DensityUnits, LengthUnits, TemperatureUnits, TimeUnits, VelocityUnits;
+    float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits, VelocityUnits;
     if (GetUnits(&DensityUnits, &LengthUnits,&TemperatureUnits, &TimeUnits,
               &VelocityUnits, MetaData.Time) == FAIL){
       fprintf(stderr, "Error in GetUnits.\n");
@@ -157,7 +157,7 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
 
   /* add gas velocity to internal energy to find total energy */
 
-  double TotalEnergy = TestStarParticleEnergy;
+  float TotalEnergy = TestStarParticleEnergy;
   for (dim = 0; dim < MetaData.TopGridRank; dim++)
     TotalEnergy += 0.5*POW(TestStarParticleVelocity[dim], 2);
   
