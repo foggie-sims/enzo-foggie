@@ -98,7 +98,7 @@ c-----------------------------------------------------------------------
       implicit none
 #include "fortran_types.def"
 c-----------------------------------------------------------------------
-#define NO_FORTRAN_DEBUG
+#define FORTRAN_DEBUG
 c
 c  Arguments
 c
@@ -147,6 +147,11 @@ c
       R_PREC n_cell, Z_cell, ke, ge_cap, ge_cell, ge_lost_to_cap
       R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, reduct_ratio,
      &     mass_term, vel_mag, ke_before_cap, ke_lost_to_cap, inject_e
+      R_PREC v_mag, max_v, max_T, min_density, min_den_x, min_den_y,
+     &     min_den_z, max_T_x, max_T_y, max_T_z, max_v_x, max_v_y,
+     &     max_v_z
+      INTG_PREC min_den_i, min_den_j, min_den_k, max_T_i, max_T_j,
+     &     max_T_k, max_v_i, max_v_j, max_v_k
       R_PREC mz_eject, mzeject_ii, mzeject_ia
       R_PREC metal_per_cell, metal_ii_per_cell, metal_ia_per_cell
       R_PREC u1(3,3,3), v1(3,3,3), w1(3,3,3), d1(3,3,3),
@@ -160,6 +165,7 @@ c
       character*32 feedbacklog_particles
       character*32 feedbacklog_grid
       character*32 debug_filename
+      character*32 grid_filename
       character*8   post
 
 c
@@ -195,6 +201,70 @@ c
       debug_filename = 'feedbackdebug_' // post // '.txt'
       open(unit=7,file=debug_filename,status='unknown',
      &        position='append')
+      grid_filename = 'gridinfo_' // post // '.txt'
+      open(unit=8,file=grid_filename,status='unknown',
+     &        position='append')
+#endif
+c
+c     Loop over this grid and save extrema values to file
+c     GE = 3/2 kbT/(mu*mp) -> T = (mu*mp)*GE*2/3/kb
+c     GE is code_energy/code_mass -> erg/g when multiplied by vunits^2
+c     2/3*mp/kb = 8.06e-9 K g/erg
+c     
+#ifdef FORTRAN_DEBUG
+      min_density = d(1,1,1)
+      max_T = ge(1,1,1)*mu(1,1,1)
+      max_v = (u(1,1,1)**2_IKIND + v(1,1,1)**2_IKIND + 
+     &  w(1,1,1)**2_IKIND)**0.5_RKIND
+      do k=1_IKIND, nz
+         do j=1_IKIND, ny
+            do i=1_IKIND, nx
+               if (d(i,j,k) .lt. min_density) then
+                  min_density = d(i,j,k)
+                  min_den_x = xstart + i*dx
+                  min_den_y = ystart + j*dx
+                  min_den_z = zstart + k*dx
+                  min_den_i = i
+                  min_den_j = j
+                  min_den_k = k
+               endif
+               if (ge(i,j,k)*mu(i,j,k) .gt. max_T) then
+                  max_T = ge(i,j,k)*mu(i,j,k)
+                  max_T_x = xstart + i*dx
+                  max_T_y = ystart + j*dx
+                  max_T_z = zstart + k*dx
+                  max_T_i = i
+                  max_T_j = j
+                  max_T_k = k
+               endif
+               v_mag = (u(i,j,k)**2_IKIND + v(i,j,k)**2_IKIND + 
+     &            w(i,j,k)**2_IKIND)**0.5_RKIND
+               if (v_mag .gt. max_v) then 
+                  max_v = v_mag
+                  max_v_x = xstart + i*dx
+                  max_v_y = ystart + j*dx
+                  max_v_z = zstart + k*dx
+                  max_v_i = i
+                  max_v_j = j
+                  max_v_k = k
+               endif
+            enddo
+         enddo
+      enddo
+      write(8,*) 'time, nx, ny, nz, xstart, ystart, zstart',
+     &  t*t1/yr_s, nx, ny, nz, xstart*x1*3.24078e-22, 
+     &  ystart*x1*3.24078e-22, zstart*x1*3.24078e-22
+      write(8,*) 'before: min_d, x, y, z, i, j, k', min_density*dunits,
+     &  min_den_x*x1*3.24078e-22, min_den_y*x1*3.24078e-22,
+     &  min_den_z*x1*3.24078e-22, min_den_i, min_den_j, min_den_k
+      write(8,*) 'before: max_T, x, y, z, i, j, k', max_T
+     &  *(vunits**2_IKIND)*8.06e-9_RKIND, max_T_x*x1*3.24078e-22,
+     &  max_T_y*x1*3.24078e-22, max_T_z*x1*3.24078e-22, max_T_i,
+     &  max_T_j, max_T_k
+      write(8,*) 'before: max_v, x, y, z, i, j, k', max_v
+     &  *vunits/1.e5_RKIND, max_v_x*x1*3.24078e-22, 
+     &  max_v_y*x1*3.24078e-22, max_v_z*x1*3.24078e-22, max_v_i,
+     &  max_v_j, max_v_k
 #endif
 c
 c     Initialize nsn, meject, mzeject, avg particle velocity grids to zeros
@@ -922,12 +992,71 @@ c
          enddo
       enddo ! end loop over feedback grid
 c
+c
+c     Loop over this grid and save extrema values to file
+c     GE = 3/2 kbT/(mu*mp) -> T = (mu*mp)*GE*2/3/kb
+c     GE is code_energy/code_mass -> erg/g when multiplied by vunits^2
+c     2/3*mp/kb = 8.06e-9 K g/erg
+c     
+#ifdef FORTRAN_DEBUG
+      min_density = d(1,1,1)
+      max_T = ge(1,1,1)*mu(1,1,1)
+      max_v = (u(1,1,1)**2_IKIND + v(1,1,1)**2_IKIND + 
+     &  w(1,1,1)**2_IKIND)**0.5_RKIND
+      do k=1_IKIND, nz
+         do j=1_IKIND, ny
+            do i=1_IKIND, nx
+               if (d(i,j,k) .lt. min_density) then
+                  min_density = d(i,j,k)
+                  min_den_x = xstart + i*dx
+                  min_den_y = ystart + j*dx
+                  min_den_z = zstart + k*dx
+                  min_den_i = i
+                  min_den_j = j
+                  min_den_k = k
+               endif
+               if (ge(i,j,k)*mu(i,j,k) .gt. max_T) then
+                  max_T = ge(i,j,k)*mu(i,j,k)
+                  max_T_x = xstart + i*dx
+                  max_T_y = ystart + j*dx
+                  max_T_z = zstart + k*dx
+                  max_T_i = i
+                  max_T_j = j
+                  max_T_k = k
+               endif
+               v_mag = (u(i,j,k)**2_IKIND + v(i,j,k)**2_IKIND + 
+     &            w(i,j,k)**2_IKIND)**0.5_RKIND
+               if (v_mag .gt. max_v) then 
+                  max_v = v_mag
+                  max_v_x = xstart + i*dx
+                  max_v_y = ystart + j*dx
+                  max_v_z = zstart + k*dx
+                  max_v_i = i
+                  max_v_j = j
+                  max_v_k = k
+               endif
+            enddo
+         enddo
+      enddo
+      write(8,*) 'after: min_d, x, y, z, i, j, k', min_density*dunits,
+     &  min_den_x*x1*3.24078e-22, min_den_y*x1*3.24078e-22,
+     &  min_den_z*x1*3.24078e-22, min_den_i, min_den_j, min_den_k
+      write(8,*) 'after: max_T, x, y, z, i, j, k', max_T
+     &  *(vunits**2_IKIND)*8.06e-9_RKIND, max_T_x*x1*3.24078e-22,
+     &  max_T_y*x1*3.24078e-22, max_T_z*x1*3.24078e-22, max_T_i,
+     &  max_T_j, max_T_k
+      write(8,*) 'after: max_v, x, y, z, i, j, k', max_v
+     &  *vunits/1.e5_RKIND, max_v_x*x1*3.24078e-22, 
+     &  max_v_y*x1*3.24078e-22, max_v_z*x1*3.24078e-22, max_v_i,
+     &  max_v_j, max_v_k
+#endif
       if (feedback_log .eq. 1) then
          close(4)
          close(5)
       endif
 #ifdef FORTRAN_DEBUG
       close(7)
+      close(8)
 #endif
       return
       end
