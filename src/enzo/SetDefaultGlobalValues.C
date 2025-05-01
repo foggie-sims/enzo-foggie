@@ -608,6 +608,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   StarMetalYield                   = 0.02;
   StarEnergyToThermalFeedback      = 1.0e-5;
   StarFeedbackMomentumMultiplier   = 1.0;
+  StarFeedbackInjectCappedVelocity = 0;
   StarFeedbackSNePerTimestepLimit  = 1.0e-6;
   WriteFeedbackLogFiles            = 0;
   StarEnergyToStellarUV            = 3.0e-6;

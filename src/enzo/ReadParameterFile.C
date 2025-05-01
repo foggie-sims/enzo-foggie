@@ -999,6 +999,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &StarEnergyToThermalFeedback);
     ret += sscanf(line, "StarFeedbackMomentumMultiplier = %"FSYM,
 		  &StarFeedbackMomentumMultiplier);
+    ret += sscanf(line, "StarFeedbackInjectCappedVelocity = %"ISYM,
+        &StarFeedbackInjectCappedVelocity);
     ret += sscanf(line, "StarFeedbackSNePerTimestepLimit = %"FSYM,
         &StarFeedbackSNePerTimestepLimit);
     ret += sscanf(line, "WriteFeedbackLogFiles = %"ISYM,

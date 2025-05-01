@@ -16,7 +16,7 @@ c
      &               xp, yp, zp, up, vp, wp,
      &               mp, tdp, tcp, metalf, type,
      &               particleID, nsn_timestep,
-     &               exptime_in, mom_mult, feedback_log,
+     &               exptime_in, mom_mult, inject_cap, feedback_log,
      &               use_tabfbk, minit, ergSNII, ergSNIa,
      &               itracksrc, metalSNII, metalSNIa,
      &               ntabZ, ntabAge,
@@ -71,6 +71,9 @@ c    type     - particle type
 c    particleID - particle ID number given by ParticleNumber
 c    exptime  - delay time for discrete explosions (if set to -1,
 c               continuous energy injection used)
+c    mom_mult - multiplicative factor to boost or reduce momentum
+c    inject_cap - 0 or 1 flag to inject energy that would put velocity
+c                 over the cap as thermal energy instead
 c    nsn_timestep - lower limit of how many SNe per timestep below which
 c                   to skip doing feedback (to save time for very low fractions
 c                   of SNe per timestep per particle)
@@ -117,7 +120,7 @@ c
       R_PREC    mp(npart), tdp(npart), tcp(npart), metalf(npart)
       INTG_PREC type(npart), particleID(npart)
       R_PREC 	 exptime_in,exptime
-      INTG_PREC feedback_log
+      INTG_PREC feedback_log, inject_cap
       R_PREC    mom_mult
       R_PREC    minit(npart)
       R_PREC    ergSNII, ergSNIa, age
@@ -612,7 +615,8 @@ c     mean molecular weight!!!
 c
                         if (Z_cell .gt. 0.95_RKIND) 
      &                    Z_cell = 0.95_RKIND
-                        if ((mu_cell .lt. 0._RKIND) .or. 
+                        if ((mu_cell .lt. 0.4_RKIND) .or. 
+     &                    (mu_cell .gt. 16._RKIND) .or.
      &                    (mu_cell .ne. mu_cell))
      &                    mu_cell = 0.8125_RKIND*(1._RKIND-Z_cell) + 
      &                     Z_cell/16._RKIND
@@ -904,7 +908,11 @@ c          put the gas over this temperature is discarded.
 c          E_cap = 3/2 kbT/(mu*mp) = 2e17 erg/g, where
 c          T = 10^9 K and mu = 0.6 for fully ionized gas.
 c
-               inject_e = (add_therm + ke_lost_to_cap)/distcells
+               if (inject_cap .eq. 1_IKIND) then
+                  inject_e = (add_therm + ke_lost_to_cap)/distcells
+               else
+                  inject_e = add_therm/distcells
+               endif
                ge_lost_to_cap = 0._RKIND
                ge_cap = 2.e17_RKIND/(vunits**2_IKIND)
                do k = -1_IKIND, +1_IKIND

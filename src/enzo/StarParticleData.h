@@ -61,6 +61,7 @@ SPEXTERN float StarMassEjectionFraction;
 SPEXTERN float StarMetalYield;
 SPEXTERN float StarEnergyToThermalFeedback;
 SPEXTERN float StarFeedbackMomentumMultiplier;
+SPEXTERN int StarFeedbackInjectCappedVelocity;
 SPEXTERN float StarFeedbackSNePerTimestepLimit;
 SPEXTERN int WriteFeedbackLogFiles;
 SPEXTERN float StarEnergyFeedbackRate;

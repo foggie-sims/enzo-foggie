@@ -938,6 +938,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
           StarFeedbackMomentumMultiplier);
   fprintf(fptr, "StarFeedbackSNePerTimestepLimit       = %"GSYM"\n",
           StarFeedbackSNePerTimestepLimit);
+  fprintf(fptr, "StarFeedbackInjectCappedVelocity      = %"ISYM"\n",
+    StarFeedbackInjectCappedVelocity);
   fprintf(fptr, "WriteFeedbackLogFiles                 = %"ISYM"\n",
           WriteFeedbackLogFiles);
   fprintf(fptr, "StarEnergyToStellarUV                 = %"GSYM"\n",
