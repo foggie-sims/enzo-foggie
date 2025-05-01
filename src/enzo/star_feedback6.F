@@ -210,10 +210,12 @@ c     Loop over this grid and save extrema values to file
 c     GE = 3/2 kbT/(mu*mp) -> T = (mu*mp)*GE*2/3/kb
 c     GE is code_energy/code_mass -> erg/g when multiplied by vunits^2
 c     2/3*mp/kb = 8.06e-9 K g/erg
+c     mu values are wonky, let's just assume mu = 0.5 in high-temp gas
+c     mu ranges from ~0.5 to ~16 so only a factor of a few difference anyway
 c     
 #ifdef FORTRAN_DEBUG
       min_density = d(1,1,1)
-      max_T = ge(1,1,1)*mu(1,1,1)
+      max_T = ge(1,1,1)*0.5_RKIND
       max_v = (u(1,1,1)**2_IKIND + v(1,1,1)**2_IKIND + 
      &  w(1,1,1)**2_IKIND)**0.5_RKIND
       do k=1_IKIND, nz
@@ -228,8 +230,8 @@ c
                   min_den_j = j
                   min_den_k = k
                endif
-               if (ge(i,j,k)*mu(i,j,k) .gt. max_T) then
-                  max_T = ge(i,j,k)*mu(i,j,k)
+               if (ge(i,j,k)*0.5_RKIND .gt. max_T) then
+                  max_T = ge(i,j,k)*0.5_RKIND
                   max_T_x = xstart + i*dx
                   max_T_y = ystart + j*dx
                   max_T_z = zstart + k*dx
@@ -997,10 +999,12 @@ c     Loop over this grid and save extrema values to file
 c     GE = 3/2 kbT/(mu*mp) -> T = (mu*mp)*GE*2/3/kb
 c     GE is code_energy/code_mass -> erg/g when multiplied by vunits^2
 c     2/3*mp/kb = 8.06e-9 K g/erg
+c     mu values are wonky, let's just assume mu = 0.5 in high-temp gas
+c     mu ranges from ~0.5 to ~16 so only a factor of a few difference anyway
 c     
 #ifdef FORTRAN_DEBUG
       min_density = d(1,1,1)
-      max_T = ge(1,1,1)*mu(1,1,1)
+      max_T = ge(1,1,1)*0.5_RKIND
       max_v = (u(1,1,1)**2_IKIND + v(1,1,1)**2_IKIND + 
      &  w(1,1,1)**2_IKIND)**0.5_RKIND
       do k=1_IKIND, nz
@@ -1015,8 +1019,8 @@ c
                   min_den_j = j
                   min_den_k = k
                endif
-               if (ge(i,j,k)*mu(i,j,k) .gt. max_T) then
-                  max_T = ge(i,j,k)*mu(i,j,k)
+               if (ge(i,j,k)*0.5_RKIND .gt. max_T) then
+                  max_T = ge(i,j,k)*0.5_RKIND
                   max_T_x = xstart + i*dx
                   max_T_y = ystart + j*dx
                   max_T_z = zstart + k*dx
