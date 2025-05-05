@@ -586,6 +586,10 @@ c
 c
 c     Loop over the feedback grids, avoiding the edges
 c
+      min_density = d(2,2,2)
+      max_T = ge(2,2,2)*0.5_RKIND
+      max_v = (u(2,2,2)**2_IKIND + v(2,2,2)**2_IKIND + 
+     &  w(2,2,2)**2_IKIND)**0.5_RKIND
       do kc=2_IKIND, nz-1_IKIND
          do jc=2_IKIND, ny-1_IKIND
             do ic=2_IKIND, nx-1_IKIND
@@ -998,14 +1002,7 @@ c
                endif
 c
 c
-c
- 100           continue
-            enddo
-         enddo
-      enddo ! end loop over feedback grid
-c
-c
-c     Loop over this grid and cap both temperature and velocity everywhere
+c     Cap both temperature and velocity everywhere
 c     on the grid, and then save extrema values to file.
 c     GE = 3/2 kbT/(mu*mp) -> T = (mu*mp)*GE*2/3/kb
 c     GE is code_energy/code_mass -> erg/g when multiplied by vunits^2
@@ -1013,69 +1010,63 @@ c     2/3*mp/kb = 8.06e-9 K g/erg
 c     mu values are wonky, let's just assume mu = 0.5 in high-temp gas
 c     mu ranges from ~0.5 to ~16 so only a factor of a few difference anyway
 c     
-      min_density = d(1,1,1)
-      max_T = ge(1,1,1)*0.5_RKIND
-      max_v = (u(1,1,1)**2_IKIND + v(1,1,1)**2_IKIND + 
-     &  w(1,1,1)**2_IKIND)**0.5_RKIND
-      do k=1_IKIND, nz
-         do j=1_IKIND, ny
-            do i=1_IKIND, nx
-               if (d(i,j,k) .lt. min_density) then
-                  min_density = d(i,j,k)
-                  min_den_x = xstart + i*dx
-                  min_den_y = ystart + j*dx
-                  min_den_z = zstart + k*dx
-                  min_den_i = i
-                  min_den_j = j
-                  min_den_k = k
+ 100           if (d(ic,jc,kc) .lt. min_density) then
+                  min_density = d(ic,jc,kc)
+                  min_den_x = xstart + ic*dx
+                  min_den_y = ystart + jc*dx
+                  min_den_z = zstart + kc*dx
+                  min_den_i = ic
+                  min_den_j = jc
+                  min_den_k = kc
                endif
-               v_mag = (u(i,j,k)**2_IKIND + v(i,j,k)**2_IKIND + 
-     &                 w(i,j,k)**2_IKIND)**0.5_RKIND
+               v_mag = (u(ic,jc,kc)**2_IKIND + v(ic,jc,kc)**2_IKIND + 
+     &                 w(ic,jc,kc)**2_IKIND)**0.5_RKIND
                if (v_mag*vunits .gt. 3.e8_RKIND) then
                   reduct_ratio = 3.e8_RKIND/(v_mag*vunits)
-                  u(i,j,k) = reduct_ratio*u(i,j,k)
-                  v(i,j,k) = reduct_ratio*v(i,j,k)
-                  w(i,j,k) = reduct_ratio*w(i,j,k)
-                  v_mag = (u(i,j,k)**2_IKIND + v(i,j,k)**2_IKIND + 
-     &                    w(i,j,k)**2_IKIND)**0.5_RKIND
+                  u(ic,jc,kc) = reduct_ratio*u(ic,jc,kc)
+                  v(ic,jc,kc) = reduct_ratio*v(ic,jc,kc)
+                  w(ic,jc,kc) = reduct_ratio*w(ic,jc,kc)
+                  v_mag = (u(ic,jc,kc)**2_IKIND + v(ic,jc,kc)**2_IKIND + 
+     &                    w(ic,jc,kc)**2_IKIND)**0.5_RKIND
                endif
                if (v_mag .gt. max_v) then 
                   max_v = v_mag
-                  max_v_x = xstart + i*dx
-                  max_v_y = ystart + j*dx
-                  max_v_z = zstart + k*dx
-                  max_v_i = i
-                  max_v_j = j
-                  max_v_k = k
+                  max_v_x = xstart + ic*dx
+                  max_v_y = ystart + jc*dx
+                  max_v_z = zstart + kc*dx
+                  max_v_i = ic
+                  max_v_j = jc
+                  max_v_k = kc
                endif
                ke = 0.5_RKIND*v_mag**2._RKIND
                if (idual .eq. 1_IKIND) then
-                  ge_cell = ge(i,j,k)
-                  if (ge(i,j,k) .gt. ge_cap) then
-                     ge(i,j,k) = ge_cap
-                     te(i,j,k) = ke + ge_cap
+                  ge_cell = ge(ic,jc,kc)
+                  if (ge(ic,jc,kc) .gt. ge_cap) then
+                     ge(ic,jc,kc) = ge_cap
+                     te(ic,jc,kc) = ke + ge_cap
                      ge_cell = ge_cap
                   endif
                else
-                  ge_cell = te(i,j,k) - ke
+                  ge_cell = te(ic,jc,kc) - ke
                   if (ge_cell .gt. ge_cap) then
-                     te(i,j,k) = ke + ge_cap
+                     te(ic,jc,kc) = ke + ge_cap
                      ge_cell = ge_cap
                   endif
                endif
                if (ge_cell*0.5_RKIND .gt. max_T) then
                   max_T = ge_cell*0.5_RKIND
-                  max_T_x = xstart + i*dx
-                  max_T_y = ystart + j*dx
-                  max_T_z = zstart + k*dx
-                  max_T_i = i
-                  max_T_j = j
-                  max_T_k = k
+                  max_T_x = xstart + ic*dx
+                  max_T_y = ystart + jc*dx
+                  max_T_z = zstart + kc*dx
+                  max_T_i = ic
+                  max_T_j = jc
+                  max_T_k = kc
                endif
-               
             enddo
          enddo
-      enddo
+      enddo ! end loop over feedback grid
+c
+c
 #ifdef FORTRAN_DEBUG
       write(8,*) 'after: min_d, x, y, z, i, j, k', min_density*dunits,
      &  min_den_x*x1*3.24078e-22, min_den_y*x1*3.24078e-22,
