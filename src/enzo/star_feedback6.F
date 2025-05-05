@@ -1010,7 +1010,8 @@ c     2/3*mp/kb = 8.06e-9 K g/erg
 c     mu values are wonky, let's just assume mu = 0.5 in high-temp gas
 c     mu ranges from ~0.5 to ~16 so only a factor of a few difference anyway
 c     
- 100           if (d(ic,jc,kc) .lt. min_density) then
+ 100           ge_cap = 2.e17_RKIND/(vunits**2_IKIND)
+               if (d(ic,jc,kc) .lt. min_density) then
                   min_density = d(ic,jc,kc)
                   min_den_x = xstart + ic*dx
                   min_den_y = ystart + jc*dx
