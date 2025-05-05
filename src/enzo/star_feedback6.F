@@ -1021,6 +1021,8 @@ c
                endif
                v_mag = (u(ic,jc,kc)**2_IKIND + v(ic,jc,kc)**2_IKIND + 
      &                 w(ic,jc,kc)**2_IKIND)**0.5_RKIND
+               ke = 0.5_RKIND*v_mag**2._RKIND
+               ge_cell = te(ic,jc,kc) - ke
                if (v_mag*vunits .gt. 3.e8_RKIND) then
                   reduct_ratio = 3.e8_RKIND/(v_mag*vunits)
                   u(ic,jc,kc) = reduct_ratio*u(ic,jc,kc)
@@ -1028,6 +1030,8 @@ c
                   w(ic,jc,kc) = reduct_ratio*w(ic,jc,kc)
                   v_mag = (u(ic,jc,kc)**2_IKIND + v(ic,jc,kc)**2_IKIND + 
      &                    w(ic,jc,kc)**2_IKIND)**0.5_RKIND
+                  ke = 0.5_RKIND*v_mag**2._RKIND
+                  te(ic,jc,kc) = ge_cell + ke
                endif
                if (v_mag .gt. max_v) then 
                   max_v = v_mag
@@ -1038,7 +1042,6 @@ c
                   max_v_j = jc
                   max_v_k = kc
                endif
-               ke = 0.5_RKIND*v_mag**2._RKIND
                if (idual .eq. 1_IKIND) then
                   ge_cell = ge(ic,jc,kc)
                   if (ge(ic,jc,kc) .gt. ge_cap) then
