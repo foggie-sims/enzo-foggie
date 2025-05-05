@@ -900,11 +900,13 @@ c                       te is *specific* energy (energy/mass)
                   enddo
                enddo
 c
-c          Inject both the energy lost due to colliding flows and the
+c          Inject the energy lost due to colliding flows and optionally the
 c          energy lost due to capping the velocity as thermal energy
 c          spread through the injection region, but cap the temperature
 c          in this region to 10^9 K maximum. Any thermal energy that would
 c          put the gas over this temperature is discarded.
+c          If the option to inject the energy from capping the velocity is
+c          turned off, this energy is discarded as well.
 c          E_cap = 3/2 kbT/(mu*mp) = 2e17 erg/g, where
 c          T = 10^9 K and mu = 0.6 for fully ionized gas.
 c
@@ -1003,14 +1005,14 @@ c
       enddo ! end loop over feedback grid
 c
 c
-c     Loop over this grid and save extrema values to file
+c     Loop over this grid and cap both temperature and velocity everywhere
+c     on the grid, and then save extrema values to file.
 c     GE = 3/2 kbT/(mu*mp) -> T = (mu*mp)*GE*2/3/kb
 c     GE is code_energy/code_mass -> erg/g when multiplied by vunits^2
 c     2/3*mp/kb = 8.06e-9 K g/erg
 c     mu values are wonky, let's just assume mu = 0.5 in high-temp gas
 c     mu ranges from ~0.5 to ~16 so only a factor of a few difference anyway
 c     
-#ifdef FORTRAN_DEBUG
       min_density = d(1,1,1)
       max_T = ge(1,1,1)*0.5_RKIND
       max_v = (u(1,1,1)**2_IKIND + v(1,1,1)**2_IKIND + 
@@ -1027,17 +1029,16 @@ c
                   min_den_j = j
                   min_den_k = k
                endif
-               if (ge(i,j,k)*0.5_RKIND .gt. max_T) then
-                  max_T = ge(i,j,k)*0.5_RKIND
-                  max_T_x = xstart + i*dx
-                  max_T_y = ystart + j*dx
-                  max_T_z = zstart + k*dx
-                  max_T_i = i
-                  max_T_j = j
-                  max_T_k = k
-               endif
                v_mag = (u(i,j,k)**2_IKIND + v(i,j,k)**2_IKIND + 
-     &            w(i,j,k)**2_IKIND)**0.5_RKIND
+     &                 w(i,j,k)**2_IKIND)**0.5_RKIND
+               if (v_mag*vunits .gt. 3.e8_RKIND) then
+                  reduct_ratio = 3.e8_RKIND/(v_mag*vunits)
+                  u(i,j,k) = reduct_ratio*u(i,j,k)
+                  v(i,j,k) = reduct_ratio*v(i,j,k)
+                  w(i,j,k) = reduct_ratio*w(i,j,k)
+                  v_mag = (u(i,j,k)**2_IKIND + v(i,j,k)**2_IKIND + 
+     &                    w(i,j,k)**2_IKIND)**0.5_RKIND
+               endif
                if (v_mag .gt. max_v) then 
                   max_v = v_mag
                   max_v_x = xstart + i*dx
@@ -1047,9 +1048,35 @@ c
                   max_v_j = j
                   max_v_k = k
                endif
+               ke = 0.5_RKIND*v_mag**2._RKIND
+               if (idual .eq. 1_IKIND) then
+                  ge_cell = ge(i,j,k)
+                  if (ge(i,j,k) .gt. ge_cap) then
+                     ge(i,j,k) = ge_cap
+                     te(i,j,k) = ke + ge_cap
+                     ge_cell = ge_cap
+                  endif
+               else
+                  ge_cell = te(i,j,k) - ke
+                  if (ge_cell .gt. ge_cap) then
+                     te(i,j,k) = ke + ge_cap
+                     ge_cell = ge_cap
+                  endif
+               endif
+               if (ge_cell*0.5_RKIND .gt. max_T) then
+                  max_T = ge_cell*0.5_RKIND
+                  max_T_x = xstart + i*dx
+                  max_T_y = ystart + j*dx
+                  max_T_z = zstart + k*dx
+                  max_T_i = i
+                  max_T_j = j
+                  max_T_k = k
+               endif
+               
             enddo
          enddo
       enddo
+#ifdef FORTRAN_DEBUG
       write(8,*) 'after: min_d, x, y, z, i, j, k', min_density*dunits,
      &  min_den_x*x1*3.24078e-22, min_den_y*x1*3.24078e-22,
      &  min_den_z*x1*3.24078e-22, min_den_i, min_den_j, min_den_k
