@@ -965,6 +965,13 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "StarFeedbackTrackMetalSources         = %"ISYM"\n",
           StarFeedbackTrackMetalSources);
 
+  fprintf(fptr, "RestrictDensity                       = %"ISYM"\n",
+    RestrictDensity);
+  fprintf(fptr, "RestrictVelocity                      = %"ISYM"\n",
+    RestrictVelocity);
+  fprintf(fptr, "RestrictTemperature                   = %"ISYM"\n",
+    RestrictTemperature);
+
   fprintf(fptr, "StarMakerUseJeansMass                 = %"ISYM"\n",
 	  StarMakerUseJeansMass);
   fprintf(fptr, "StarMakerVelDivCrit                   = %"ISYM"\n",

@@ -46,16 +46,22 @@ int grid::ApplyBoundsToBaryonFields()
     ENZO_FAIL("Grid::ApplyBoundsToBaryonFields: does not support non-3D simulations yet!  (GridRank != 3)\n");  
   }
 
-  /* declarations */
-  float orig_ge_from_te, new_ge_from_te;
-  int i, size = 1, velocity_changed = 0;
+  /* Get units */
+  GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
+    &TimeUnits, &VelocityUnits, Time);
 
-  /* more declarations.  TODO: THESE ARE MEANT TO BE REPLACED BY MORE
-     SENSIBLE BOUNDS (AND PROBABLY INPUT PARAMETERS) AND ARE JUST
-     HERE AS AN EXAMPLE.  */
-  float rho_floor = 1.0e-5, rho_ceiling = 1.0e+15,
-    vel_min = -1.0e+5, vel_max = 1.0e+5,  
-    ge_floor = 1.0e-20, ge_ceiling = 1.0e+10;
+  /* declarations */
+  float orig_ge_from_te, new_ge_from_te, vel_mag, vel_ratio;
+  int i, size = 1;
+
+  /* more declarations.  TODO: THESE ARE MEANT TO BE REPLACED BY INPUT PARAMETERS.
+     Density cap: 1e15 g/cm^3
+     Velocity cap: 3000 km/s
+     GE cap corresponds to a temperature of 10^9 K, assuming mean molecular weight is 0.5
+     No floors set  */
+  float rho_floor = tiny_number, rho_ceiling = 1.0e+15/DensityUnits,
+    vel_min = tiny_number, vel_max = 3.0e+8/(LengthUnits/TimeUnits),  
+    ge_floor = tiny_number, ge_ceiling = 2.0e17/POW(LengthUnits/TimeUnits,2.0);
 
   /* Compute the size of the baryon fields given grid dimensions. */
   for (int dim = 0; dim < GridRank; dim++)
@@ -67,7 +73,7 @@ int grid::ApplyBoundsToBaryonFields()
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
     Vel3Num, TENum, B1Num, B2Num, B3Num) == FAIL) {     
     ENZO_FAIL("Error in IdentifyPhysicalQuantities.\n");
-    } 
+    }
  
 // Loop over the baryon fields, including ghost zones
 for (i = 0; i < size; i++) {
@@ -87,7 +93,7 @@ for (i = 0; i < size; i++) {
   // TODO: if we apply density floors/ceilings we're going to have to rescale multispecies fields too!
 
   // Check for density floor
-  if(BaryonField[DensNum][i] < rho_floor){
+  if(RestrictDensity && BaryonField[DensNum][i] < rho_floor){
     if(debug){
       printf("Grid::ApplyBoundsToBaryonFields: Density %"FSYM" replaced with lower bound %"FSYM, BaryonField[DensNum][i], rho_floor);
     }
@@ -95,7 +101,7 @@ for (i = 0; i < size; i++) {
   }
 
   // Check for density ceiling
-  if(BaryonField[DensNum][i] > rho_ceiling){
+  if(RestrictDensity && BaryonField[DensNum][i] > rho_ceiling){
     if(debug){
       printf("Grid::ApplyBoundsToBaryonFields: Density %"FSYM" replaced with upper bound %"FSYM, BaryonField[DensNum][i], rho_ceiling);
     }
@@ -105,62 +111,63 @@ for (i = 0; i < size; i++) {
   // set these to physically unreasonable values so we can check against it later.
   orig_ge_from_te = new_ge_from_te = FLOAT_UNDEFINED;
   // this will be our cue that velocity is modified
-  velocity_changed = 0;
+  vel_ratio = FLOAT_UNDEFINED;
 
   // calculate gas energy from total energy (both are specific energy numbers)
   // TODO: This is just for hydro now, will have to update for MHD
   orig_ge_from_te = BaryonField[TENum][i] - 0.5*( POW(BaryonField[Vel1Num][i],2.0) + POW(BaryonField[Vel2Num][i],2.0) + POW(BaryonField[Vel3Num][i],2.0) );
 
-  // TODO -- MAKE OUTPUT MORE VERBOSE
   // check for internal energy floor
   if(orig_ge_from_te < ge_floor){
+    if(debug){
+      printf("Grid::ApplyBoundsToBaryonFields: Internal Energy %"FSYM" replaced with lower bound %"FSYM, orig_ge_from_te, ge_floor);
+    }
     new_ge_from_te = ge_floor;
   }
 
   // check for internal energy ceiling
   if(orig_ge_from_te > ge_ceiling){
+    if(debug){
+      printf("Grid::ApplyBoundsToBaryonFields: Internal Energy %"FSYM" replaced with upper bound %"FSYM, orig_ge_from_te, ge_ceiling);
+    }
     new_ge_from_te = ge_ceiling;
   }
 
-  // TODO -- MAKE OUTPUT MORE VERBOSE
-  // x-velocity - make sure it's within bounds.
-  if(BaryonField[Vel1Num][i] < vel_min){
-    BaryonField[Vel1Num][i] = vel_min;
-    velocity_changed++;
+  // velocity magnitude - make sure it's within bounds.
+  vel_mag = POW( POW(BaryonField[Vel1Num][i],2.0) + POW(BaryonField[Vel2Num][i],2.0) + POW(BaryonField[Vel3Num][i],2.0), 0.5);
+  if(vel_mag < vel_min){
+    vel_ratio = vel_min/vel_mag;
+    if(debug){
+      printf("Grid::ApplyBoundsToBaryonFields: Velocity magnitude %"FSYM" replaced with lower bound %"FSYM, vel_mag, vel_min);
+    }
+    BaryonField[Vel1Num][i] = BaryonField[Vel1Num][i]*vel_ratio;
+    BaryonField[Vel2Num][i] = BaryonField[Vel2Num][i]*vel_ratio;
+    BaryonField[Vel3Num][i] = BaryonField[Vel3Num][i]*vel_ratio;
   }
-  if(BaryonField[Vel1Num][i] > vel_max){
-    BaryonField[Vel1Num][i] = vel_max;
-    velocity_changed++;
-  }
-
-  // y-velocity - make sure it's within bounds.
-  if(BaryonField[Vel2Num][i] < vel_min){
-    BaryonField[Vel2Num][i] = vel_min;
-    velocity_changed++;
-  }
-  if(BaryonField[Vel2Num][i] > vel_max){
-    BaryonField[Vel2Num][i] = vel_max;
-    velocity_changed++;
-  }
-
-  // z-velocity - make sure it's within bounds.
-  if(BaryonField[Vel3Num][i] < vel_min){
-    BaryonField[Vel1Num][i] = vel_min;
-    velocity_changed++;
-  }
-  if(BaryonField[Vel3Num][i] > vel_max){
-    BaryonField[Vel1Num][i] = vel_max;
-    velocity_changed++;
+  if(vel_mag > vel_max){
+    vel_ratio = vel_max/vel_mag;
+    if(debug){
+      printf("Grid::ApplyBoundsToBaryonFields: Velocity magnitude %"FSYM" replaced with upper bound %"FSYM, vel_mag, vel_max);
+    }
+    BaryonField[Vel1Num][i] = BaryonField[Vel1Num][i]*vel_ratio;
+    BaryonField[Vel2Num][i] = BaryonField[Vel2Num][i]*vel_ratio;
+    BaryonField[Vel3Num][i] = BaryonField[Vel3Num][i]*vel_ratio;
   }
 
   // if internal specific energy or a velocity component is changed, we need to update total energy field
-  if(new_ge_from_te > FLOAT_UNDEFINED || velocity_changed > 0){
-    BaryonField[TENum][i] = new_ge_from_te + 0.5*( POW(BaryonField[Vel1Num][i],2.0) + POW(BaryonField[Vel2Num][i],2.0) + POW(BaryonField[Vel3Num][i],2.0) );
+  if(new_ge_from_te > FLOAT_UNDEFINED || vel_ratio > FLOAT_UNDEFINED){
+    if(new_ge_from_te > FLOAT_UNDEFINED){
+      BaryonField[TENum][i] = new_ge_from_te + 0.5*( POW(BaryonField[Vel1Num][i],2.0) + POW(BaryonField[Vel2Num][i],2.0) + POW(BaryonField[Vel3Num][i],2.0) );
+    }
+    // If velocity changed but not internal specific energy, use original internal specific energy
+    else{
+      BaryonField[TENum][i] = orig_ge_from_te + 0.5*( POW(BaryonField[Vel1Num][i],2.0) + POW(BaryonField[Vel2Num][i],2.0) + POW(BaryonField[Vel3Num][i],2.0) );
+    }
   }
 
   // if we have a gas energy field and it has been modified, we need to reset it.
   if(DualEnergyFormalism && new_ge_from_te > FLOAT_UNDEFINED){
-    BaryonField[TENum][i] = new_ge_from_te;
+    BaryonField[GENum][i] = new_ge_from_te;
   }
 
 } // for (i = 0; i < size; i++)
