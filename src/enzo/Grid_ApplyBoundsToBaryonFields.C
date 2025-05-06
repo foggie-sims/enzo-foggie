@@ -84,6 +84,8 @@ for (i = 0; i < size; i++) {
       ENZO_FAIL("Error in grid->ApplyBoundsToBaryonFields. Internal energy is NaN or inf.\n");
     }
 
+  // TODO: if we apply density floors/ceilings we're going to have to rescale multispecies fields too!
+
   // Check for density floor
   if(BaryonField[DensNum][i] < rho_floor){
     if(debug){
