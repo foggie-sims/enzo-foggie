@@ -30,8 +30,8 @@
 /* function prototypes */
  
 int GetUnits(float *DensityUnits, float *LengthUnits,
-	     float *TemperatureUnits, float *TimeUnits,
-	     float *VelocityUnits, float *MassUnits, FLOAT Time);
+  float *TemperatureUnits, float *TimeUnits,
+  float *VelocityUnits, float *MassUnits, FLOAT Time);
  
 int grid::ApplyBoundsToBaryonFields()
 {
