@@ -630,6 +630,9 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   ReadGhostZones                   = FALSE;
   WriteGhostZones                  = FALSE;
   OutputParticleTypeGrouping       = FALSE;
+  RestrictDensity                  = FALSE;
+  RestrictVelocity                 = FALSE;
+  RestrictTemperature              = FALSE;
 
   IsotropicConduction = FALSE;
   AnisotropicConduction = FALSE;
