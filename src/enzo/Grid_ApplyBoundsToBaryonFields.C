@@ -154,7 +154,7 @@ for (i = 0; i < size; i++) {
     BaryonField[Vel3Num][i] = BaryonField[Vel3Num][i]*vel_ratio;
   }
 */
-if(RestrictVelocity && vel_mag > vel_max){
+  if(RestrictVelocity && vel_mag > vel_max){
     vel_ratio = vel_max/vel_mag;
     if(debug){
       printf("Grid::ApplyBoundsToBaryonFields: Velocity magnitude %"FSYM" km/s replaced with upper bound %"FSYM" km/s\n", vel_mag*VelocityUnits/1.0e+5, vel_max*VelocityUnits/1.0e+5);
