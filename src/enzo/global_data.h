@@ -625,6 +625,11 @@ EXTERN float HaloFinderLinkingLength;
 EXTERN float HaloFinderTimestep;
 EXTERN FLOAT HaloFinderLastTime;
 
+/* Parameters to turn on floors and ceilings on baryon fields */
+EXTERN int RestrictDensity;
+EXTERN int RestrictVelocity;
+EXTERN int RestrictTemperature;
+
 /************************************************/
 /* Global data for specific problems or methods */
 /************************************************/
