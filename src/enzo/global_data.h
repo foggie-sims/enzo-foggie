@@ -830,6 +830,11 @@ EXTERN int traceMEM;
 EXTERN char memtracename[MAX_NAME_LENGTH];
 #endif
 
+/* Flags to turn on floors and ceilings of baryon fields */
+EXTERN int RestrictDensity;
+EXTERN int RestrictVelocity;
+EXTERN int RestrictTemperature;
+
 /* New Movie Data */
 
 EXTERN int MovieDataField[MAX_MOVIE_FIELDS];

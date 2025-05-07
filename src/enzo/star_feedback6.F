@@ -1002,16 +1002,14 @@ c
                endif
 c
 c
-c     Cap both temperature and velocity everywhere
-c     on the grid, and then save extrema values to file.
+c     Save extrema values to file.
 c     GE = 3/2 kbT/(mu*mp) -> T = (mu*mp)*GE*2/3/kb
 c     GE is code_energy/code_mass -> erg/g when multiplied by vunits^2
 c     2/3*mp/kb = 8.06e-9 K g/erg
 c     mu values are wonky, let's just assume mu = 0.5 in high-temp gas
 c     mu ranges from ~0.5 to ~16 so only a factor of a few difference anyway
 c     
- 100           ge_cap = 2.e17_RKIND/(vunits**2_IKIND)
-               if (d(ic,jc,kc) .lt. min_density) then
+ 100           if (d(ic,jc,kc) .lt. min_density) then
                   min_density = d(ic,jc,kc)
                   min_den_x = xstart + ic*dx
                   min_den_y = ystart + jc*dx
@@ -1024,16 +1022,6 @@ c
      &                 w(ic,jc,kc)**2_IKIND)**0.5_RKIND
                ke = 0.5_RKIND*v_mag**2._RKIND
                ge_cell = te(ic,jc,kc) - ke
-               if (v_mag*vunits .gt. 3.e8_RKIND) then
-                  reduct_ratio = 3.e8_RKIND/(v_mag*vunits)
-                  u(ic,jc,kc) = reduct_ratio*u(ic,jc,kc)
-                  v(ic,jc,kc) = reduct_ratio*v(ic,jc,kc)
-                  w(ic,jc,kc) = reduct_ratio*w(ic,jc,kc)
-                  v_mag = (u(ic,jc,kc)**2_IKIND + v(ic,jc,kc)**2_IKIND + 
-     &                    w(ic,jc,kc)**2_IKIND)**0.5_RKIND
-                  ke = 0.5_RKIND*v_mag**2._RKIND
-                  te(ic,jc,kc) = ge_cell + ke
-               endif
                if (v_mag .gt. max_v) then 
                   max_v = v_mag
                   max_v_x = xstart + ic*dx
@@ -1042,20 +1030,6 @@ c
                   max_v_i = ic
                   max_v_j = jc
                   max_v_k = kc
-               endif
-               if (idual .eq. 1_IKIND) then
-                  ge_cell = ge(ic,jc,kc)
-                  if (ge(ic,jc,kc) .gt. ge_cap) then
-                     ge(ic,jc,kc) = ge_cap
-                     te(ic,jc,kc) = ke + ge_cap
-                     ge_cell = ge_cap
-                  endif
-               else
-                  ge_cell = te(ic,jc,kc) - ke
-                  if (ge_cell .gt. ge_cap) then
-                     te(ic,jc,kc) = ke + ge_cap
-                     ge_cell = ge_cap
-                  endif
                endif
                if (ge_cell*0.5_RKIND .gt. max_T) then
                   max_T = ge_cell*0.5_RKIND
