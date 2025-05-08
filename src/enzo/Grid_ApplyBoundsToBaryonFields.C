@@ -35,6 +35,11 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
  
 int grid::ApplyBoundsToBaryonFields()
 {
+  if (NumberOfBaryonFields == 0)
+    return SUCCESS;
+
+  if (MyProcessorNumber != ProcessorNumber)
+    return SUCCESS;
 
   // I need to fix this!
   if (HydroMethod == Zeus_Hydro){
