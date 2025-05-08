@@ -149,7 +149,7 @@ c
      &	  realmass, mu_cell, fbuff, add_therm, delta_therm
       R_PREC n_cell, Z_cell, ke, ge_cap, ge_cell, ge_lost_to_cap
       R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, reduct_ratio,
-     &     mass_term, vel_mag, ke_before_cap, ke_lost_to_cap, inject_e
+     &     mass_term, vel_mag, ke_before_cap, ke_lost_to_cap, delta_ge
       R_PREC v_mag, max_v, max_T, min_density, min_den_x, min_den_y,
      &     min_den_z, max_T_x, max_T_y, max_T_z, max_v_x, max_v_y,
      &     max_v_z
@@ -179,6 +179,25 @@ c
      &      " is not supported with the ZEUS hydro algorithm " //
      &      "(HydroMethod = 2). If you want to use this feedback, " //
      &      "use a different hydro method!"
+         ERROR_MESSAGE
+      endif
+c
+c     Ensure supernova energies are 1e51
+c
+      if (ergSNII .ne. 1e51_RKIND) then
+         write(6,*) "Mechanical feedback (StarParticleFeedback = 64)" //
+     &      " does not support supernova energies other than" //
+     &      " 1e51 ergs."
+         write(6,*) "If you want to use this feedback, set " //
+     &      "StarFeedbackTabularSNIIEnergy = 1.e51 (its default value)."
+         ERROR_MESSAGE
+      endif
+      if (ergSNIa .ne. 1e51_RKIND) then
+         write(6,*) "Mechanical feedback (StarParticleFeedback = 64)" //
+     &      " does not support supernova energies other than" //
+     &      " 1e51 ergs."
+         write(6,*) "If you want to use this feedback, set " //
+     &      "StarFeedbackTabularSNIaEnergy = 1.e51 (its default value)."
          ERROR_MESSAGE
       endif
 c
@@ -610,7 +629,8 @@ c
 c     The following adjustments to Z_cell and mu_cell are band-aids to
 c     handle situations when the chemistry gets weird and the metallicity
 c     is unphysically high or mu as calculated from the baryon fields in
-c     Grid_StarParticleHandler.C is somehow negative. The below calculation
+c     Grid_StarParticleHandler.C is somehow negative, NaN, or outside of the
+c     expected range from ~0.5 to ~16. The below calculation
 c     of mu assumes primordial relative abundance between H and He (He is
 c     1/3 of H), that the gas is completely neutral, and that all metals
 c     are oxygen atoms, for simplicity. Note that what is called "mu" here
@@ -915,9 +935,9 @@ c          E_cap = 3/2 kbT/(mu*mp) = 2e17 erg/g, where
 c          T = 10^9 K and mu = 0.6 for fully ionized gas.
 c
                if (inject_cap .eq. 1_IKIND) then
-                  inject_e = (add_therm + ke_lost_to_cap)/distcells
+                  delta_ge = (add_therm + ke_lost_to_cap)/distcells
                else
-                  inject_e = add_therm/distcells
+                  delta_ge = add_therm/distcells
                endif
                ge_lost_to_cap = 0._RKIND
                ge_cap = 2.e17_RKIND/(vunits**2_IKIND)
@@ -925,14 +945,14 @@ c
                   do j = -1_IKIND, +1_IKIND
                      do i = -1_IKIND, +1_IKIND
                         te(ic+i,jc+j,kc+k) = te(ic+i,jc+j,kc+k) + 
-     &                    inject_e/d(ic+i,jc+j,kc+k)
+     &                    delta_ge/d(ic+i,jc+j,kc+k)
                         ke = 0.5_RKIND*
      &                    (u(ic+i,jc+j,kc+k)**2_IKIND +
      &                    v(ic+i,jc+j,kc+k)**2_IKIND +
      &                    w(ic+i,jc+j,kc+k)**2_IKIND)
                         if (idual .eq. 1_IKIND) then
                            ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k) + 
-     &                       inject_e/d(ic+i,jc+j,kc+k)
+     &                       delta_ge/d(ic+i,jc+j,kc+k)
 #ifdef FORTRAN_DEBUG
                            write(7,*) 'ge, te, ke after injection:',
      &                       ge(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)*

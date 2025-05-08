@@ -12,7 +12,7 @@ struct FeedbackTableType {
     while the third is the source.
     The arrays of metal fraction and population age are used to 
     interpolate these dimensions of the table.
-    (See globa_data.h for the source indexes.)
+    (See global_data.h for the source indexes.)
 */
 int n_met;
 int n_age;
