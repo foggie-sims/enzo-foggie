@@ -1001,6 +1001,8 @@ c
      &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
                endif
 c
+ 100           continue
+c
 c
 c     Save extrema values to file.
 c     GE = 3/2 kbT/(mu*mp) -> T = (mu*mp)*GE*2/3/kb
@@ -1009,7 +1011,8 @@ c     2/3*mp/kb = 8.06e-9 K g/erg
 c     mu values are wonky, let's just assume mu = 0.5 in high-temp gas
 c     mu ranges from ~0.5 to ~16 so only a factor of a few difference anyway
 c     
- 100           if (d(ic,jc,kc) .lt. min_density) then
+#ifdef FORTRAN_DEBUG
+               if (d(ic,jc,kc) .lt. min_density) then
                   min_density = d(ic,jc,kc)
                   min_den_x = xstart + ic*dx
                   min_den_y = ystart + jc*dx
@@ -1040,6 +1043,9 @@ c
                   max_T_j = jc
                   max_T_k = kc
                endif
+#endif
+c
+c
             enddo
          enddo
       enddo ! end loop over feedback grid
