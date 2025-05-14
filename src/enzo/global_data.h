@@ -1261,4 +1261,9 @@ EXTERN float MagneticSupernovaEnergy;
 /* Rotating Pop III Stars Model */
 EXTERN int PopIIIRotating;
 
+/* Tracer fluids */
+EXTERN int UseTracerFluid;
+EXTERN int NumberOfTracerFluidFields;
+EXTERN int SetTracerFluidFieldsOnStart;
+
 #endif

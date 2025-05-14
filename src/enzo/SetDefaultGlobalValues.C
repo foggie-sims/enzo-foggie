@@ -1109,5 +1109,11 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   /* Rotating Pop III Stars Model */
   PopIIIRotating = 0; // 0 = off; 1 = rotating; 2 = non-rotating
 
+  /* Tracer fluids */
+
+  UseTracerFluid = 0;
+  NumberOfTracerFluidFields = 0;
+  SetTracerFluidFieldsOnStart = 0;
+
   return SUCCESS;
 }
