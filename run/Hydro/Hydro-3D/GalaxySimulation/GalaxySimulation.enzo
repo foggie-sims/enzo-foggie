@@ -10,8 +10,8 @@ TopGridDimensions          = 256 256 256
 SelfGravity                = 1       // gravity on
 TopGridGravityBoundary     = 1       // isolated gravity BCs
 UnigridTranspose           = 0       // currently required for isolated BCs
-LeftFaceBoundaryCondition  = 2 2 2    // periodic
-RightFaceBoundaryCondition = 1 1 1  
+LeftFaceBoundaryCondition  = 2 2 2    // inflow
+RightFaceBoundaryCondition = 1 1 1    // outflow
 ZEUSQuadraticArtificialViscosity = 2.0
 BaryonSelfGravityApproximation = 0
 
@@ -109,7 +109,7 @@ StarEnergyToThermalFeedback = 3.0e-06
 #
 #  set grid refinement parameters
 StaticHierarchy           = 0    // dynamic hierarchy
-MaximumRefinementLevel    = 3    // use up to 5 levels
+MaximumRefinementLevel    = 3    // use up to 3 levels
 RefineBy                  = 2    // refinement factor
 CellFlaggingMethod        = 2    // use baryon mass for refinement 
 MinimumEfficiency         = 0.3  // fraction efficiency
