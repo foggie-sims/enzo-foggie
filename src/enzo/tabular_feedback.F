@@ -176,6 +176,58 @@ c
 c      Return energy density in code units yielded by
 c      both Type Ia and II supernovae
 c 
+      subroutine sne_number(number_yield,
+     &                    mass_init, metal_frac, age, 
+     &                    erg_per_snIa, erg_per_snII,
+     &                    dx, dt, 
+     &                    x1, t1, d1, v1,
+     &                    energy_table, metal_array, age_array,
+     &                    metal_size, age_size)
+c 
+       implicit none
+#include "fortran_types.def"
+c 
+c      Arguments
+c 
+      R_PREC number_yield
+      R_PREC mass_init, metal_frac, age
+      R_PREC erg_per_snIa, erg_per_snII
+      R_PREC dx, dt, x1, t1, d1, v1
+      INTG_PREC metal_size, age_size
+      R_PREC energy_table(2, age_size, metal_size)
+      R_PREC metal_array(metal_size), age_array(age_size)
+c 
+c      Locals
+c 
+      R_PREC num_Ia, num_II
+      R_PREC m1, dt_yr, minit_msun
+      INTG_PREC iSNII, iSNIa
+c 
+c     I'm not clever enough to auto sync these with typedefs.h
+      iSNII = 1_IKIND
+      iSNIa = 2_IKIND
+      m1 = d1 * x1**3
+      dt_yr = dt*t1/yr_s
+c 
+c      SNe numbers are are rates (per year) per initial population mass
+c      Note that the initial mass is expressed as a mass density
+      call integrate_yields(num_II, metal_frac, age, dt_yr,
+     &            energy_table, metal_array, age_array, 
+     &            metal_size, age_size, 2_IKIND, iSNII)
+       call integrate_yields(num_Ia, metal_frac, age, dt_yr,
+     &            energy_table, metal_array, age_array,
+     &            metal_size, age_size, 2_IKIND, iSNIa)
+c 
+c            Convert erg per Msun to erg
+      minit_msun = mass_init * dx**3 * m1 / SolarMass   
+      number_yield = num_II + num_Ia
+      end subroutine
+c 
+c  ===============================================
+c  
+c      Return energy density in code units yielded by
+c      both Type Ia and II supernovae
+c 
       subroutine sne_energy(energy_yield,
      &                    mass_init, metal_frac, age, 
      &                    erg_per_snIa, erg_per_snII,

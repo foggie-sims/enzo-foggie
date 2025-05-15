@@ -3045,6 +3045,12 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   int InterpolateStarParticlesToGrid(int NumberOfSPFields);  
 
 //------------------------------------------------------------------------
+//  Apply floors and ceilings to BaryonField quantities
+//------------------------------------------------------------------------
+
+int ApplyBoundsToBaryonFields();
+
+//------------------------------------------------------------------------
 // new hydro & MHD routines
 //------------------------------------------------------------------------
 
