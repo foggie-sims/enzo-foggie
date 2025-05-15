@@ -464,6 +464,14 @@ these files can get very large and it is not recommended to use them except
 for debugging short runs. They will likely also slow down the calculation by 
 performing many I/O operations.
 
+In cosmological testing, it was found that this feedback scheme very occasionally
+leads to a runaway effect where a large amount of momentum injected in a single low-density
+cell causes the cell to evacuate, which increases the temperature, which drives an
+expansion that increase the velocity again, and so on until 1-2 cells are left 
+with relativsitic temperatures and velocities. To combat this, it is highly 
+recommended to run this feedback scheme using the floors and ceilings (link here)
+options ``RestrictTemperature = 1`` and ``RestrictVelocity = 1``.
+
 
 .. _method_7:
 

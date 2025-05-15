@@ -1580,6 +1580,12 @@ General Hydrodynamics Parameters
 ``ZEUSLinearArtificialViscosity`` (external)
     This is the linear artificial viscosity parameter C1 of Stone &
     Norman. Default: 0.0
+``RestrictTemperature`` (external)
+    This is used to turn on and off capping the temperature everywhere at
+    10\ :sup:`9` K. Values can be 1 for capping or 0 for no capping. Default: 0
+``RestrictVelocity`` (external)
+    This is used to turn on and off capping the velocity everywhere at 
+    3000 km/s. Values can be 1 for capping or 0 for no capping. Default: 0
 
 .. _minimum_pressure_support_parameters:
 
