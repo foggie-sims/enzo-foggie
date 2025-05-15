@@ -18,7 +18,9 @@ c
      &                      xp, yp, zp, up, vp, wp,
      &                      mp, tdp, tcp, metalf,
      &                      imetalSNIa, metalSNIa, metalfSNIa,
-     &                      iminit, minit)
+     &                      iminit, minit, usetracer, numtracer,
+     &                      tracer1, tracer2, tracer3, tracer4,
+     &                      tracer5, tracer6, tracer7, tracer8)
 
 c
 c  CREATES GALAXY PARTICLES
@@ -74,6 +76,9 @@ c    level - current level of refinement
 c    procnum - processor number (for output)
 c    imetalSNIa - SN Ia metallicity flag (0 - none, 1 - yes)
 c    iminit - whether to store initial mass separately
+c    usetracer - whether tracer fluids are used
+c    numtracer - number of tracer fields used (usetracer must be 1)
+c    tracer1, tracer2, tracer3, tracer4, tracer5, tracer6, tracer7, tracer8 - tracer fluid fields.
 c
 c  OUTPUTS:
 c
@@ -112,6 +117,11 @@ c
       R_PREC    mp(nmax), tdp(nmax), tcp(nmax), metalf(nmax),
      &     metalfSNIa(nmax), minit(nmax)
       R_PREC    odthresh, masseff, smthresh, mintdyn, tempthresh
+      INTG_PREC usetracer, numtracer
+      R_PREC    tracer1(nx,ny,nz), tracer2(nx,ny,nz), tracer3(nx,ny,nz),
+     &     tracer4(nx,ny,nz), tracer5(nx,ny,nz), tracer6(nx,ny,nz),
+     &     tracer7(nx,ny,nz), tracer8(nx,ny,nz)
+
 c
       R_PREC   sformsum
       save   sformsum
@@ -301,6 +311,48 @@ c
 c               write(7+procnum,1000) level,bmass*starfraction,tcp(ii),
 c     &                           tdp(ii)*t1,d(i,j,k)*d1,z,metalf(ii)
 c
+
+c
+c              Set tracer fluid field values (if relevant).  We don't have anything specific
+c              to set them to at this point, so we're just going to set them to the density
+c              since that is the only density-related field that we KNOW will exist.
+c
+               if (usetracer .eq. 1) then
+
+                  if (numtracer .ge. 1) then
+                     tracer1(i,j,k) = d(i,j,k)
+                  endif
+
+                  if (numtracer .ge. 2) then
+                     tracer2(i,j,k) = d(i,j,k)
+                  endif
+
+                  if (numtracer .ge. 3) then
+                     tracer3(i,j,k) = d(i,j,k)
+                  endif
+
+                  if (numtracer .ge. 4) then
+                     tracer4(i,j,k) = d(i,j,k)
+                  endif
+
+                  if (numtracer .ge. 5) then
+                     tracer5(i,j,k) = d(i,j,k)
+                  endif
+
+                  if (numtracer .ge. 6) then
+                     tracer6(i,j,k) = d(i,j,k)
+                  endif
+
+                  if (numtracer .ge. 7) then
+                     tracer7(i,j,k) = d(i,j,k)
+                  endif
+
+                  if (numtracer .ge. 8) then
+                     tracer8(i,j,k) = d(i,j,k)
+                  endif
+
+               endif
+
  1000          format(i5,1x,6(1pe10.3,1x))
 c
 c              Do not generate more star particles than available
@@ -339,7 +391,10 @@ c
      &                      xp, yp, zp, up, vp, wp,
      &                      mp, tdp, tcp, metalf, type, justburn,
      &                      iminit, minit, 
-     &                      crmodel, crfeedback, cr)
+     &                      crmodel, crfeedback, cr,
+     &                      usetracer, numtracer,
+     &                      tracer1, tracer2, tracer3, tracer4,
+     &                      tracer5, tracer6, tracer7, tracer8)
 
 c
 c  RELEASES "STAR" PARTICLE ENERGY, MASS AND METALS
@@ -392,6 +447,9 @@ c    distcells - total number of cells over which to distribute feedback
 c    crmodel   - boolean: 1 = include cosmic ray physics, 0 = no cosmic ray physics                                                
 c    crfeedback - fraction of thermal supernova energy to return as cosmic rays                                                    
 c    cr         - Cosmic ray BaryonField  
+c    usetracer - whether tracer fluids are used
+c    numtracer - number of tracer fields used (usetracer must be 1)
+c    tracer1, tracer2, tracer3, tracer4, tracer5, tracer6, tracer7, tracer8 - tracer fluid fields.
 c
 c  OUTPUTS:
 c    d,u,v,w,ge,e - modified field
@@ -420,6 +478,11 @@ c
       INTG_PREC crmodel
       R_PREC cr(nx,ny,nz), minit(npart)
       R_PREC crfeedback
+      INTG_PREC usetracer, numtracer
+      R_PREC    tracer1(nx,ny,nz), tracer2(nx,ny,nz), tracer3(nx,ny,nz),
+     &     tracer4(nx,ny,nz), tracer5(nx,ny,nz), tracer6(nx,ny,nz),
+     &     tracer7(nx,ny,nz), tracer8(nx,ny,nz)
+
 c
 c  Locals
 c    (msolar_e51 is one solar rest mass energy divided by 10^51 erg)
@@ -588,6 +651,59 @@ c
                         u(ic,jc,kc) = u(ic,jc,kc)/d(ic,jc,kc)
                         v(ic,jc,kc) = v(ic,jc,kc)/d(ic,jc,kc)
                         w(ic,jc,kc) = w(ic,jc,kc)/d(ic,jc,kc)
+
+
+c
+c           Tracer fluid feedback (modifying the same way we modify
+c           the density field for now)
+c
+                        if (usetracer .eq. 1) then
+
+                           if (numtracer .ge. 1) then
+                              tracer1(ic,jc,kc) =  tracer1(ic,jc,kc)
+     &                                             + distmass
+                           endif
+
+                           if (numtracer .ge. 2) then
+                              tracer2(ic,jc,kc) =  tracer2(ic,jc,kc)
+     &                                             + distmass
+                           endif
+
+                           if (numtracer .ge. 3) then
+                              tracer3(ic,jc,kc) =  tracer3(ic,jc,kc)
+     &                                             + distmass
+                           endif
+
+                           if (numtracer .ge. 4) then
+                              tracer4(ic,jc,kc) =  tracer4(ic,jc,kc)
+     &                                             + distmass
+                           endif
+
+                           if (numtracer .ge. 5) then
+                              tracer5(ic,jc,kc) =  tracer5(ic,jc,kc)
+     &                                             + distmass
+                           endif
+
+                           if (numtracer .ge. 6) then
+                              tracer6(ic,jc,kc) =  tracer6(ic,jc,kc)
+     &                                             + distmass
+                           endif
+
+                           if (numtracer .ge. 7) then
+                              tracer7(ic,jc,kc) =  tracer7(ic,jc,kc)
+     &                                             + distmass
+                           endif
+
+                           if (numtracer .ge. 8) then
+                              tracer8(ic,jc,kc) =  tracer8(ic,jc,kc)
+     &                                             + distmass
+                           endif
+
+                        endif
+
+
+
+
 c
 c           If te is really total energy (and it is unless imethod=2),
 c             then just set this value
