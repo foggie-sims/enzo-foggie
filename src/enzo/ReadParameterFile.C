@@ -394,7 +394,6 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     /* Parameters for the MultiRefineRegion mechanics */
 
     ret += sscanf(line, "MultiRefineRegionSpatiallyVaryingStarMass = %"ISYM, &MultiRefineRegionSpatiallyVaryingStarMass);
-    // ret += sscanf(line, "MultiRefineRegionSpatiallyVaryingDefaultStarMass = %"FSYM, &MultiRefineRegionSpatiallyVaryingDefaultStarMass);
     ret += sscanf(line, "MultiRefineRegionMaximumOuterLevel  = %"ISYM, &MultiRefineRegionMaximumOuterLevel);
     ret += sscanf(line, "MultiRefineRegionMinimumOuterLevel  = %"ISYM, &MultiRefineRegionMinimumOuterLevel);
     if (sscanf(line, "MultiRefineRegionMaximumLevel[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2){
@@ -403,38 +402,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 	    ret++;
 	    MultiRefineRegionMaximumLevel[dim] = int_dummy;
     }
-    if (sscanf(line, "MultiRefineRegionGeometry[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2){
-      ret++;
-      MultiRefineRegionGeometry[dim] = int_dummy;
-    }
     if (sscanf(line, "MultiRefineRegionMinimumLevel[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2){
       ret++;
       MultiRefineRegionMinimumLevel[dim] = int_dummy;
     }
-    if (sscanf(line, "MultiRefineRegionRadius[%"ISYM"] = %"PSYM, &dim, &float_dummy) == 2){
-      ret++;
-      MultiRefineRegionRadius[dim] = float_dummy;
-    }
-    if (sscanf(line, "MultiRefineRegionWidth[%"ISYM"] = %"PSYM, &dim, &float_dummy) == 2){
-      ret++;
-      MultiRefineRegionWidth[dim] = float_dummy;
-    }
-    if (sscanf(line, "MultiRefineRegionStaggeredRefinement[%"ISYM"] = %"PSYM, &dim, &float_dummy) == 2){
-      ret++;
-      MultiRefineRegionStaggeredRefinement[dim] = float_dummy;
-    }
-    if (sscanf(line, "MultiRefineRegionCenter[%"ISYM"] = ", &dim) == 1)
-      ret += sscanf(line,
-		    "MultiRefineRegionCenter[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM,
-		    &dim, MultiRefineRegionCenter[dim],
-		    MultiRefineRegionCenter[dim]+1,
-		    MultiRefineRegionCenter[dim]+2);
-    if (sscanf(line, "MultiRefineRegionOrientation[%"ISYM"] = ", &dim) == 1)
-      ret += sscanf(line,
-		    "MultiRefineRegionOrientation[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM,
-		    &dim, MultiRefineRegionOrientation[dim],
-		    MultiRefineRegionOrientation[dim]+1,
-		    MultiRefineRegionOrientation[dim]+2);
     if (sscanf(line, "MultiRefineRegionLeftEdge[%"ISYM"] = ", &dim) == 1)
       ret += sscanf(line,
 		    "MultiRefineRegionLeftEdge[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM,
@@ -1546,10 +1517,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   if ((HierarchyFileOutputFormat < 0) || (HierarchyFileOutputFormat > 2))
     ENZO_FAIL("Invalid HierarchyFileOutputFormat. Must be 0 (HDF5), 1 (ASCII), or 2 (both).")
 
-  // While we're examining the hierarchy, check that the MultiRefinedRegion doesn't demand more refinement that we've got
+  // While we're examining the hierarchy, check that the MultiRefineRegion doesn't demand more refinement that we've got
   for (int ireg = 0; ireg < MAX_STATIC_REGIONS; ireg++)
-    if (MultiRefineRegionGeometry[ireg] >= 0)
-      if (MultiRefineRegionMaximumLevel[ireg] > MaximumRefinementLevel)
+    if (MultiRefineRegionMaximumLevel[ireg] > MaximumRefinementLevel)
 	ENZO_VFAIL("MultiRefineRegionMaximumLevel[%"ISYM"] = %"ISYM"  > MaximumRefinementLevel\n", ireg, MultiRefineRegionMaximumLevel[ireg]);
 
 

@@ -37,16 +37,17 @@ int grid::SetMinimumStarMass(){
 
   /* Declarations */
   int region, i, timestep;
-  float MRRLeftEdge[MAX_DIMENSION], MRRRightEdge[MAX_DIMENSION], MRRMinimumStarMass, redshift, ctime, a, dadt;
+  FLOAT MRRLeftEdge[MAX_DIMENSION], MRRRightEdge[MAX_DIMENSION], redshift, ctime, a, dadt;
+  float MRRMinimumStarMass;
 
-/* If the current grid is inside of any multirefine regions with a stellar mass threshold lower than the default for this timestep, */
-/* set StarMakerMinimumMass to the stellar mass threshold for the multirefine region */
+/* If the current grid is inside of any multirefine regions with a stellar mass threshold lower than the default for this timestep,
+   set StarMakerMinimumMass to the stellar mass threshold for the multirefine region */
 
   /* Take care of any static multirefine regions first */
   for (region = 0; region < NumberOfStaticMultiRefineRegions; region++){
-    // Does this region have a set minimum star mass? Is it lower than the current minimum for this timestep?
+    /* Does this region have a set minimum star mass? Is it lower than the current minimum for this timestep? */
     if (MultiRefineRegionMinimumStarMass[region]>0 && StarMakerMinimumMass>MultiRefineRegionMinimumStarMass[region]){ 
-      // Is the current grid within this region?
+      /* Is the current grid within this region? */
       if ((GridLeftEdge[0] <= MultiRefineRegionRightEdge[region][0]) && (GridRightEdge[0] >= MultiRefineRegionLeftEdge[region][0]) &&
           (GridLeftEdge[1] <= MultiRefineRegionRightEdge[region][1]) && (GridRightEdge[1] >= MultiRefineRegionLeftEdge[region][1]) &&
           (GridLeftEdge[2] <= MultiRefineRegionRightEdge[region][2]) && (GridRightEdge[2] >= MultiRefineRegionLeftEdge[region][2])){
@@ -55,42 +56,45 @@ int grid::SetMinimumStarMass(){
     }
   }
   
-  /* Now take care of any evolving multirefine regions. We must recalculate the position and stellar mass threshold for each */
-  /* evolving multirefine region in order to account for the fact that the current time will be different for different levels */
+  /* Now take care of any evolving multirefine regions. We must recalculate the position and stellar mass threshold for each
+     evolving multirefine region in order to account for the fact that the current time will be different for different levels */
   if (MultiRefineRegionTimeType == 1) {  // redshift
     CosmologyComputeExpansionFactor(Time, &a, &dadt);
-    redshift = (1 + InitialRedshift)/a - 1;
+    redshift = (1.0 + InitialRedshift)/a - 1.0;
     ctime = redshift;
   } else{ // code time
     ctime = Time;
   }
 
+  /* Identify the indices of the evolving MultiRefineRegion time entries that are closest to the current time */ 
   if (MultiRefineRegionTimeType == 1) {  // redshift
+    /* Find the index of the first entry that is later than the current time */
     for(timestep=0; timestep<NumberOfMultiRefineTimeEntries; timestep++){
       if( ctime > EvolveMultiRefineRegionTime[timestep] ){
         break;
       }
     }
   } else{ // code time
-    for(timestep=0; timestep<EvolveRefineRegionNtimes; timestep++){
+    /* Find the index of the first entry that is later than the current time */
+    for(timestep=0; timestep<NumberOfMultiRefineTimeEntries; timestep++){
 	    if( ctime < EvolveRefineRegionTime[timestep] ){
 	      break;
       }
     }
   }
 
-  timestep -= 1;
-  if (timestep < 0) return SUCCESS;
+  timestep -= 1;  // Move to the previous index (i.e., the index of the last time entry that is earlier than the current time)
+  if (timestep < 0) return SUCCESS; // if we're at a time before the MultiRefineRegion time entries start, we don't need to do anything
 
-  for (region = 0; region < NumberOfMultiRefineTracks; region++){
-    if (MultiRefineRegionMinimumStarMass[NumberOfStaticMultiRefineRegions+region]>0){ // Does this region have a set minimum star mass?
-      if(timestep == NumberOfMultiRefineTimeEntries-1){
+  for (region = 0; region < NumberOfMultiRefineTracks; region++){ // for each MultiRefineRegion...
+    if (MultiRefineRegionMinimumStarMass[NumberOfStaticMultiRefineRegions+region]>0.0){ // Does this region have a set minimum star mass?
+      if(timestep == NumberOfMultiRefineTimeEntries-1){ // if we're precisely at the last time entry, adopt its values
         MRRMinimumStarMass = EvolveMultiRefineRegionMinimumStarMass[region][timestep];
         for (i = 0; i < MAX_DIMENSION; i++){
           MRRLeftEdge[i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i];
           MRRRightEdge[i] = EvolveMultiRefineRegionRightEdge[region][timestep][i];
         }
-      } else {
+      } else { // otherwise interpolate the MinimumStarMass and MRR positions based on the closest time entries
           MRRMinimumStarMass = EvolveMultiRefineRegionMinimumStarMass[region][timestep]
           + (ctime - EvolveMultiRefineRegionTime[timestep])
           * (EvolveMultiRefineRegionMinimumStarMass[region][timestep+1]-EvolveMultiRefineRegionMinimumStarMass[region][timestep])

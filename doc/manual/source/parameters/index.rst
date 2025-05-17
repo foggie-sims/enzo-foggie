@@ -1104,42 +1104,17 @@ Hierarchy Control Parameters
     These two parameters specify the two corners of a region that
     limits refinement to a certain level (see the previous
     parameter). Default: none
-``MultiRefineRegionGeometry[#]`` (external)
-    This parameter (and the ones following) describe a physical region of the simulation box for which an 
-    independent refinement maximum and minimum (separate from ``MaximumRefinementLevel``) can be specified.
-``MultiRefineRegionGeometry[#]`` controls the geometry of the refined volume. Currently implemented 
-    geometries are: (0) a rectangular region, (1) a ring of infinite height and (2) a cylinder of infinite 
-    height. Up to 20 multi-refined regions may be defined (number the same as for ``StaticRefineRegion``)
-    and each multi-refined region is labelled starting from zero. Default: -1 (no multi-regions)
 ``MultiRefineRegionLeftEdge[#]``, ``MultiRefineRegionRightEdge[#]`` (external)
-    Used when ``MultiRefineRegionGeometry[#] = 0`` and specifies the two corners in code units of a 
-    rectangular multi-region with a given maximum and minimum refinement level. Default: none.
-``MultiRefineRegionCenter[#]`` (external)
-    Used when ``MultiRefineRegionGeometry[#] = 1 or 2`` and specifies the center of the ring or cylinder 
-    in code units. Default: none
-``MultiRefineRegionRadius[#]`` (external)
-    Used when ``MultiRefineRegionGeometry[#] = 1 or 2`` and specifies the radius of the ring or cylinder 
-    in code units. In the case of the ring, this marks the distance to the middle of the ring's thickness. 
-    The thickness is specified with ``MultiRefineRegionWidth``. Default: none
-``MultiRefineRegionWidth[#]`` (external)
-    Used when ``MultiRefineRegionGeometry[#] = 1`` and specifies the width (thickness) of the ring in 
-    code units. Default: none
-``MultiRefineRegionOrientation[#]`` (external)
-    Used when ``MultiRefineRegionGeometry[#] = 1 or 2`` and is a unit vector pointing along the vertical
-    direction of the ring or cylinder. Default: none.
-``MultiRefineRegionStaggeredRefinement[#]`` (external)
-    Used when ``MultiRefineRegionGeometry[#] = 1 or 2``. To avoid a sharp change in refinement at the edge of
-    the ring or cylinder, the allowed refinement is staggered from the maximum allowed value outside the 
-    region, ``MultiRefineRegionOuterMaximumLevel``, to the maximum allowed refinement inside the region, 
-    ``MultiRefineRegionMaximumLevel``. This parameter is the length over which that staggering occurs in 
-    code units. Default: 0.0 (no staggering)
+    Used when ``MultiRefineRegionMaximumLevel[#] >= 0`` and specifies the two corners in code units of a 
+    static rectangular MultiRefineRegion with a given maximum and minimum refinement level. Default: none.
 ``MultiRefineRegionMaximumLevel[#]``, ``MultiRefineRegionMinimumLevel[#]`` (external)
-    Maximum and minimum allowed refinement inside the region. Default: ``MaximumRefinementLevel``, 0
+    Maximum and minimum allowed refinement inside the static region.
+    Default: -1 , 0
 ``MultiRefineRegionMaximumOuterLevel``, ``MultiRefineRegionMinimumOuterLevel`` (external)
     Maximum and minimum allowed refinement outside all regions. Default: ``MaximumRefinementLevel``, 0
 ``MultiRefineRegionTimeType`` (external)
-    If set, this controls how the first column of a ``MustRefineRegionFile`` (see below) 
-    is interpreted for a time-evolving multi-refine region: 0 for code time, 1 for redshift. 
+    If set, this controls how the first column of a ``MultiRefineRegionFile`` (see below) 
+    is interpreted for a time-evolving MultiRefineRegion: 0 for code time, 1 for redshift. 
     Note that you must use the same time type for all 'on' time-evolving refine regions (e.g., 
     MustRefine, CoolingRefine, MultiRefine). Default: -1, which is equivalent to ‘off’.
 ``MultiRefineRegionFile`` (external)
@@ -1156,7 +1131,7 @@ Hierarchy Control Parameters
     code units or redshift, see the parameter above); the next six columns give the values 
     of ``MultiRefineRegionLeft/RightEdge``; the next two columns give the values of
     ``MultiRefineRegionMinimum/MaximumLevel``; and the final column gives the value
-    of ``MultiRefineRegionMinimumStarMass``. For example, this
+    of ``MultiRefineRegionMinimumStarMass`` (in units of Msol). For example, this
     might be a text file when time is indexed by redshift:
     ::
        
@@ -1175,7 +1150,10 @@ Hierarchy Control Parameters
     The second region is refined to a minimum of 10 and a maximum of 11 levels of refinement. Between z=4.6092 and 
     z=4.5045, star particles within this region can form with a mass as low as 125 Msol, but this increases to 150 
     Msol and then 175 Msol at z=4.4045. The code will crash if the simulation starts before the earliest time given 
-    or evolves until after the latest time in the file. All regions must use the same set of time entries. 
+    or evolves until after the latest time in the file. All regions must use the same set of time entries. In cells where
+    multiple MultiRefineRegions overlap, the highest ``MultiRefineRegionMinimum/MaximumLevel`` for those regions will be 
+    adopted. Grids that are entirely within multiple MultiRefineRegions will adopt the minimum 
+    ``MultiRefineRegionMinimumStarMass`` for those regions or will use ``StarMakerMinimumMass`` if that is lower.
     Default: None.
 ``MinimumEfficiency`` (external)
     When new grids are created during the rebuilding process, each grid
@@ -2305,9 +2283,9 @@ General Star Formation
 
 ``MultiRefineRegionMinimumStarMass[#]`` (external)
     If ``MultiRefineRegionSpatiallyVaryingStarMass`` is enabled, this sets the minimum mass that 
-    a star particle can form with in a given MultiRefine region. Note that any grid that overlaps 
-    with multiple MultiRefine regions will adopt the lowest minimum available to it. If the default
-    value for the simulation (``StarMakerMinimumMass``) is lower than the value of
+    a star particle can form with in a given static MultiRefineRegion in units of Msol. Note that any grid 
+    that is entirely within multiple MultiRefine regions will adopt the lowest minimum available to it. 
+    If the default value for the simulation (``StarMakerMinimumMass``) is lower than the value of
     ``MultiRefineRegionMinimumStarMass`` for all of the regions that a grid overlaps with, the grid will
     use ``StarMakerMinimumMass``.
     Default: FLOAT_UNDEFINED

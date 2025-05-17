@@ -35,17 +35,17 @@ int SetEvolveRefineRegion (FLOAT time)
 
   if(debug1){
     printf("SetEvolveRefineRegion: setting region.\n");
-    printf("SetEvolveRefineRegion: EvolveRefineRegionTime[0]:        %"FSYM"\n",EvolveRefineRegionTime[0]);
-    printf("SetEvolveRefineRegion: EvolveMustRefineRegionTime[0]:    %"FSYM"\n",EvolveMustRefineRegionTime[0]);
-    printf("SetEvolveRefineRegion: EvolveCoolingRefineRegionTime[0]: %"FSYM"\n",EvolveCoolingRefineRegionTime[0]);
-    printf("SetEvolveRefineRegion: EvolveMultiRefineRegionTime[0]:   %"FSYM"\n",EvolveMultiRefineRegionTime[0]);
+    printf("SetEvolveRefineRegion: EvolveRefineRegionTime[0]:        %"PSYM"\n",EvolveRefineRegionTime[0]);
+    printf("SetEvolveRefineRegion: EvolveMustRefineRegionTime[0]:    %"PSYM"\n",EvolveMustRefineRegionTime[0]);
+    printf("SetEvolveRefineRegion: EvolveCoolingRefineRegionTime[0]: %"PSYM"\n",EvolveCoolingRefineRegionTime[0]);
+    printf("SetEvolveRefineRegion: EvolveMultiRefineRegionTime[0]:   %"PSYM"\n",EvolveMultiRefineRegionTime[0]);
   }
   
   /* If TimeType is redshift, calculate redshift */
 
   if (ComovingCoordinates) {
     CosmologyComputeExpansionFactor(time, &a, &dadt);
-    redshift = (1 + InitialRedshift)/a - 1;
+    redshift = (1.0 + InitialRedshift)/a - 1.0;
   }
 
   /* does time evolution for standard refinement regions */
@@ -324,7 +324,7 @@ int SetEvolveRefineRegion (FLOAT time)
        that EvolveMultiRefineRegionTime[0] is the highest redshift and the last output is the lowest (for the
        given track file).  */
       if(time > EvolveMultiRefineRegionTime[0] || time < EvolveMultiRefineRegionTime[NumberOfMultiRefineTimeEntries-1]){
-        fprintf(stderr,"SetEvolveRefineRegion ERROR for EvolveMultiRefineRegions: current simulation redshift (%f) is outside of range of track file redshifts (minimum:%f, maximum:%f)!",time,EvolveMultiRefineRegionTime[0],EvolveMultiRefineRegionTime[NumberOfMultiRefineTimeEntries-1]);
+        fprintf(stderr,"SetEvolveRefineRegion ERROR for EvolveMultiRefineRegions: current simulation redshift (%"PSYM") is outside of range of track file redshifts (minimum:%"PSYM", maximum:%"PSYM")!",time,EvolveMultiRefineRegionTime[0],EvolveMultiRefineRegionTime[NumberOfMultiRefineTimeEntries-1]);
         my_exit(EXIT_FAILURE);
       }
 
@@ -339,7 +339,7 @@ int SetEvolveRefineRegion (FLOAT time)
        that EvolveMultiRefineRegionTime[0] is the earliest time and the last output is the latest time (for
        the given track file). */
       if(time < EvolveMultiRefineRegionTime[0] || time > EvolveMultiRefineRegionTime[NumberOfMultiRefineTimeEntries-1]){
-        fprintf(stderr,"SetEvolveRefineRegion ERROR for EvolveMultiRefineRegion: current simulation time (%f) is outside of range of track file times (minimum:%f, maximum:%f)!",time,EvolveMultiRefineRegionTime[0],EvolveMultiRefineRegionTime[NumberOfMultiRefineTimeEntries-1]);
+        fprintf(stderr,"SetEvolveRefineRegion ERROR for EvolveMultiRefineRegion: current simulation time (%"PSYM") is outside of range of track file times (minimum:%"PSYM", maximum:%"PSYM")!",time,EvolveMultiRefineRegionTime[0],EvolveMultiRefineRegionTime[NumberOfMultiRefineTimeEntries-1]);
         my_exit(EXIT_FAILURE);
       }
 
@@ -354,21 +354,20 @@ int SetEvolveRefineRegion (FLOAT time)
     timestep -= 1;
     if (timestep < 0) return SUCCESS;
     if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
-      fprintf(stderr,"SetEvolveRefineRegion: It is currently %f, which is greater than %f, so the closest timestep entry is %d.\n",time,EvolveMultiRefineRegionTime[timestep],timestep);
+      fprintf(stderr,"SetEvolveRefineRegion: It is currently %"PSYM", which is greater than %"PSYM", so the closest timestep entry is %"ISYM".\n",time,EvolveMultiRefineRegionTime[timestep],timestep);
     }
 
     /* Set MultiRefineRegion to EvolveMultiRefineRegion */
     
     /* Check how many static MultiRefineRegions there are */
     NStaticMultiRefineRegions = 0;
-    //while (MultiRefineRegionLeftEdge[NStaticMultiRefineRegions][0] != FLOAT_UNDEFINED)
-    while (MultiRefineRegionGeometry[NStaticMultiRefineRegions]>=0)
+    while (MultiRefineRegionMaximumLevel[NStaticMultiRefineRegions]>=0)
         NStaticMultiRefineRegions ++;
     NumberOfStaticMultiRefineRegions = NStaticMultiRefineRegions;
 
     if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
-      fprintf(stderr,"SetEvolveRefineRegion sees %i static MultiRefineRegions and %i evolving ones.\n",NumberOfStaticMultiRefineRegions,NumberOfMultiRefineTracks);
-      fprintf(stderr,"SetEvolveRefineRegion says you have %i time entries per track.\n",NumberOfMultiRefineTimeEntries);
+      fprintf(stderr,"SetEvolveRefineRegion sees %"ISYM" static MultiRefineRegions and %"ISYM" evolving ones.\n",NumberOfStaticMultiRefineRegions,NumberOfMultiRefineTracks);
+      fprintf(stderr,"SetEvolveRefineRegion says you have %"ISYM" time entries per track.\n",NumberOfMultiRefineTimeEntries);
     }
 
     for (region = 0; region < NumberOfMultiRefineTracks; region++){
@@ -383,7 +382,7 @@ int SetEvolveRefineRegion (FLOAT time)
       if(timestep == NumberOfMultiRefineTimeEntries-1){
         MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions] = EvolveMultiRefineRegionMinimumStarMass[region][timestep];
         if (debug1 && MyProcessorNumber == ROOT_PROCESSOR){
-          fprintf(stderr,"SetEvolveRefineRegion: I set MultiRefineRegionMinimumStarMass[%"ISYM"] to %"FSYM" for timestep %i\n.",region+NumberOfStaticMultiRefineRegions,MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions],timestep);
+          fprintf(stderr,"SetEvolveRefineRegion: I set MultiRefineRegionMinimumStarMass[%"ISYM"] to %"FSYM" for timestep %"ISYM"\n.",region+NumberOfStaticMultiRefineRegions,MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions],timestep);
         }
         for (i = 0; i < MAX_DIMENSION; i++){
           MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i];
@@ -395,7 +394,7 @@ int SetEvolveRefineRegion (FLOAT time)
           * (EvolveMultiRefineRegionMinimumStarMass[region][timestep+1]-EvolveMultiRefineRegionMinimumStarMass[region][timestep])
           / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
         if (debug && MyProcessorNumber == ROOT_PROCESSOR){
-          fprintf(stderr,"SetEvolveRefineRegion: I set MultiRefineRegionMinimumStarMass[%"ISYM"] to %"FSYM" for inbtwn timestep %d.\n",region+NumberOfStaticMultiRefineRegions,MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions],timestep);
+          fprintf(stderr,"SetEvolveRefineRegion: I set MultiRefineRegionMinimumStarMass[%"ISYM"] to %"FSYM" for inbtwn timestep %"ISYM".\n",region+NumberOfStaticMultiRefineRegions,MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions],timestep);
         }
         for (i = 0; i < MAX_DIMENSION; i++){
           MultiRefineRegionLeftEdge[region+NumberOfStaticMultiRefineRegions][i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i]

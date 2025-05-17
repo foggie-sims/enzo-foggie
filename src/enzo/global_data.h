@@ -263,20 +263,14 @@ EXTERN int RefineRegionAutoAdjust;
 EXTERN int MultiRefineRegion;
 EXTERN FLOAT MultiRefineRegionLeftEdge[MAX_STATIC_REGIONS+MAX_TRACKS][MAX_DIMENSION];
 EXTERN FLOAT MultiRefineRegionRightEdge[MAX_STATIC_REGIONS+MAX_TRACKS][MAX_DIMENSION];
-EXTERN int MultiRefineRegionGeometry[MAX_STATIC_REGIONS+MAX_TRACKS];
-EXTERN FLOAT MultiRefineRegionCenter[MAX_STATIC_REGIONS+MAX_TRACKS][MAX_DIMENSION];
-EXTERN FLOAT MultiRefineRegionOrientation[MAX_STATIC_REGIONS+MAX_TRACKS][MAX_DIMENSION];
-EXTERN FLOAT MultiRefineRegionRadius[MAX_STATIC_REGIONS+MAX_TRACKS];
-EXTERN FLOAT MultiRefineRegionWidth[MAX_STATIC_REGIONS+MAX_TRACKS];
 EXTERN int MultiRefineRegionMaximumLevel[MAX_STATIC_REGIONS+MAX_TRACKS];
 EXTERN int MultiRefineRegionMinimumLevel[MAX_STATIC_REGIONS+MAX_TRACKS];
-EXTERN FLOAT MultiRefineRegionMinimumStarMass[MAX_STATIC_REGIONS+MAX_TRACKS];
+EXTERN float MultiRefineRegionMinimumStarMass[MAX_STATIC_REGIONS+MAX_TRACKS];
 EXTERN int MultiRefineRegionMaximumOuterLevel;
 EXTERN int MultiRefineRegionMinimumOuterLevel;
 EXTERN int MultiRefineRegionSpatiallyVaryingStarMass;
-EXTERN FLOAT MultiRefineRegionDefaultStarMass;
+EXTERN float MultiRefineRegionDefaultStarMass;
 EXTERN int NumberOfStaticMultiRefineRegions;
-EXTERN FLOAT MultiRefineRegionStaggeredRefinement[MAX_STATIC_REGIONS+MAX_TRACKS];
 
 /* Uniform gravity: on/off flag, direction, and strength. */
 
@@ -587,7 +581,7 @@ EXTERN FLOAT EvolveMultiRefineRegionLeftEdge[MAX_TRACKS][MAX_TIME_ENTRIES][3]; /
 EXTERN FLOAT EvolveMultiRefineRegionRightEdge[MAX_TRACKS][MAX_TIME_ENTRIES][3]; // right corners
 EXTERN int EvolveMultiRefineRegionMinimumLevel[MAX_TRACKS]; // minimum allowable level
 EXTERN int EvolveMultiRefineRegionMaximumLevel[MAX_TRACKS]; // maximum allowable level
-EXTERN FLOAT EvolveMultiRefineRegionMinimumStarMass[MAX_TRACKS][MAX_TIME_ENTRIES]; // minimum allowed star particle formation mass
+EXTERN float EvolveMultiRefineRegionMinimumStarMass[MAX_TRACKS][MAX_TIME_ENTRIES]; // minimum allowed star particle formation mass
 
 /* Processor identifier for this thread/processor */
 

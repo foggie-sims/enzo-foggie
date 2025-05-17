@@ -2,13 +2,15 @@
 /
 /  GRID CLASS (FLAGS CELL FOR REFINEMENT DEPENDING ON ITS REGION)
 /
-/  written by: Elizabeth Tasker
-/  date:       May, 2013
+/  written by: Anna Wright
+/  date:       Jan 3, 2024
 /  modified1:
 /
-/  PURPOSE: Allows for non-cubic geometries in refined region at different levels
+/  PURPOSE: flags cells for refinement if they're inside of any 
+/           MultiRefineRegions and below the minimum refinement level
+/           for any of those MultiRefineRegions 
 /
-/  RETURNS: FAIL or SUCCESS
+/  RETURNS: number of flagged cells, or -1 on failure
 /
 ************************************************************************/
 
@@ -37,7 +39,7 @@ int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
 
   /* declarations */
   int i, j, k, index, dim, region, size = 1;
-  float CellSize, xpos, ypos, zpos, ring_width, rad, dr;
+  FLOAT CellSize, xpos, ypos, zpos;
   int LocalMaximumRefinementLevel = 0;
   int LocalMinimumRefinementLevel = 0;
   int Start[MAX_DIMENSION], End[MAX_DIMENSION], NIter = 0;
@@ -98,13 +100,13 @@ int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
             /* Of those regions the cell is within, adopt refinement constraints of refine regions with maximum allowed refinement */
             if (LocalMaximumRefinementLevel < MultiRefineRegionMaximumLevel[region]){
                 if(debug && MyProcessorNumber == ROOT_PROCESSOR){
-                  fprintf(stderr,"Maximum cell refinement level updated from %i to %i\n",LocalMaximumRefinementLevel,MultiRefineRegionMaximumLevel[region]);
+                  fprintf(stderr,"Maximum cell refinement level updated from %"ISYM" to %"ISYM"\n",LocalMaximumRefinementLevel,MultiRefineRegionMaximumLevel[region]);
                 }
                 LocalMaximumRefinementLevel = MultiRefineRegionMaximumLevel[region];
             }
             if (LocalMinimumRefinementLevel < MultiRefineRegionMinimumLevel[region]){
                 if(debug && MyProcessorNumber == ROOT_PROCESSOR){
-                  fprintf(stderr,"Minimum cell refinement level updated from %i to %i\n",LocalMinimumRefinementLevel,MultiRefineRegionMinimumLevel[region]);
+                  fprintf(stderr,"Minimum cell refinement level updated from %"ISYM" to %"ISYM"\n",LocalMinimumRefinementLevel,MultiRefineRegionMinimumLevel[region]);
                 }
                 LocalMinimumRefinementLevel = MultiRefineRegionMinimumLevel[region];
             }
@@ -131,11 +133,6 @@ int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
     FlaggingField[i] = (FlaggingField[i] >= 1)? 1 : 0;
     NumberOfFlaggedCells += FlaggingField[i];
   }
-
-  if (debug)
-    printf("FlagCellsToBeRefinedByMultiRefineRegion: NumberOfFlaggedCells = %d (%.1f%%)\n",
-	   NumberOfFlaggedCells, float(NumberOfFlaggedCells)*100.0/
-	   float(size));
 
   return NumberOfFlaggedCells;
 }

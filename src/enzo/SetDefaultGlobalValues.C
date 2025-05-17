@@ -264,18 +264,12 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MultiRefineRegionDefaultStarMass = FLOAT_UNDEFINED;
   NumberOfStaticMultiRefineRegions = 0;
   for (i = 0; i < MAX_STATIC_REGIONS+MAX_TRACKS; i++) {
-    MultiRefineRegionMaximumLevel[i] = INT_UNDEFINED;
+    MultiRefineRegionMaximumLevel[i] = -1;
     MultiRefineRegionMinimumLevel[i] = 0;
     MultiRefineRegionMinimumStarMass[i] = FLOAT_UNDEFINED;
-    MultiRefineRegionGeometry[i] = -1; 
-    MultiRefineRegionRadius[i] = INT_UNDEFINED;
-    MultiRefineRegionWidth[i] = 3.0;
-    MultiRefineRegionStaggeredRefinement[i] = 0.0;
-    for (dim = 0; dim < MAX_DIMENSION; dim++) {
+   for (dim = 0; dim < MAX_DIMENSION; dim++) {
       MultiRefineRegionLeftEdge[i][dim] = FLOAT_UNDEFINED;
       MultiRefineRegionRightEdge[i][dim] = FLOAT_UNDEFINED;
-      MultiRefineRegionCenter[i][dim]         = FLOAT_UNDEFINED;
-      MultiRefineRegionOrientation[i][dim]    = FLOAT_UNDEFINED;
     }
   }
 

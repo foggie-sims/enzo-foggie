@@ -388,8 +388,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   WriteListOfFloats(fptr, MetaData.TopGridRank, MustRefineRegionLeftEdge);
   fprintf(fptr, "MustRefineRegionRightEdge  = ");
   WriteListOfFloats(fptr, MetaData.TopGridRank, MustRefineRegionRightEdge);
-  fprintf(fptr, "RefineRegionTimeType   = %d\n", RefineRegionTimeType);
-  fprintf(fptr, "MustRefineRegionTimeType   = %d\n", MustRefineRegionTimeType);
+  fprintf(fptr, "RefineRegionTimeType   = %"ISYM"\n", RefineRegionTimeType);
+  fprintf(fptr, "MustRefineRegionTimeType   = %"ISYM"\n", MustRefineRegionTimeType);
   fprintf(fptr, "MustRefineParticlesLeftEdge   = ");
   WriteListOfFloats(fptr, MetaData.TopGridRank, MustRefineParticlesLeftEdge);
   fprintf(fptr, "MustRefineParticlesRightEdge  = ");
@@ -406,10 +406,10 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   WriteListOfFloats(fptr, MetaData.TopGridRank, CoolingRefineRegionLeftEdge);
   fprintf(fptr, "CoolingRefineRegionRightEdge  = ");
   WriteListOfFloats(fptr, MetaData.TopGridRank, CoolingRefineRegionRightEdge);
-  fprintf(fptr, "CoolingRefineRegionTimeType   = %d\n", CoolingRefineRegionTimeType);
+  fprintf(fptr, "CoolingRefineRegionTimeType   = %"ISYM"\n", CoolingRefineRegionTimeType);
   if (CoolingRefineRegionFile != NULL)
     fprintf(fptr, "CoolingRefineRegionFile     = %s\n", CoolingRefineRegionFile);
-  fprintf(fptr, "MultiRefineRegionTimeType   = %d\n", MultiRefineRegionTimeType);
+  fprintf(fptr, "MultiRefineRegionTimeType   = %"ISYM"\n", MultiRefineRegionTimeType);
   if (MultiRefineRegionFile != NULL)
      fprintf(fptr, "MultiRefineRegionFile     = %s\n", MultiRefineRegionFile);
 
@@ -712,39 +712,21 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
           MultiRefineRegionMinimumOuterLevel);
   
   for (int ireg = 0; ireg < MAX_STATIC_REGIONS; ireg++){
-    if (MultiRefineRegionGeometry[ireg] >= 0) {
+    if (MultiRefineRegionMaximumLevel[ireg] >= 0) {
       fprintf(fptr, "MultiRefineRegionMaximumLevel[%"ISYM"] = %"ISYM"\n", ireg,
               MultiRefineRegionMaximumLevel[ireg]);
 
       fprintf(fptr, "MultiRefineRegionMinimumLevel[%"ISYM"] = %"ISYM"\n", ireg,
               MultiRefineRegionMinimumLevel[ireg]);
 
-      fprintf(fptr, "MultiRefineRegionMinimumStarMass[%"ISYM"] = %"ISYM"\n", ireg,
+      fprintf(fptr, "MultiRefineRegionMinimumStarMass[%"ISYM"] = %"FSYM"\n", ireg,
               MultiRefineRegionMinimumStarMass[ireg]);
-
-      fprintf(fptr, "MultiRefineRegionGeometry[%"ISYM"] = %"ISYM"\n", ireg,
-              MultiRefineRegionGeometry[ireg]);
-
-      fprintf(fptr, "MultiRefineRegionRadius[%"ISYM"] = %"GSYM"\n", ireg,
-              MultiRefineRegionRadius[ireg]);
-
-      fprintf(fptr, "MultiRefineRegionWidth[%"ISYM"] = %"GSYM"\n", ireg,
-              MultiRefineRegionWidth[ireg]);
-
-      fprintf(fptr, "MultiRefineRegionStaggeredRefinement[%"ISYM"] =%"GSYM"\n",
-              ireg, MultiRefineRegionStaggeredRefinement[ireg]);
 
       fprintf(fptr, "MultiRefineRegionLeftEdge[%"ISYM"] = ", ireg);
       WriteListOfFloats(fptr, MAX_DIMENSION, MultiRefineRegionLeftEdge[ireg]);
 
       fprintf(fptr, "MultiRefineRegionRightEdge[%"ISYM"] = ", ireg);
       WriteListOfFloats(fptr, MAX_DIMENSION, MultiRefineRegionRightEdge[ireg]);
-
-      fprintf(fptr, "MultiRefineRegionCenter[%"ISYM"] = ", ireg);
-      WriteListOfFloats(fptr, MAX_DIMENSION, MultiRefineRegionCenter[ireg]);
-
-      fprintf(fptr, "MultiRefineRegionOrientation[%"ISYM"] = ", ireg);
-      WriteListOfFloats(fptr, MAX_DIMENSION, MultiRefineRegionOrientation[ireg]);
 
       fprintf(fptr, "\n");
     }
