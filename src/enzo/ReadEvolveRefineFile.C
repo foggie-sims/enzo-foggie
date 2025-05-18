@@ -380,7 +380,7 @@ int ReadEvolveRefineFile(void)
             return FAIL;
           }
           if(EvolveMultiRefineRegionMinimumStarMass[i][j]>1.0e+20){
-            fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found an unreasonably high minimum stellar mass requested in your track file for track %"ISYM.\n",i);
+            fprintf(stderr, "ReadEvolveRefineRegion (MultiRefineRegion) has found an unreasonably high minimum stellar mass requested in your track file for track %"ISYM".\n",i);
             return FAIL;
           }
         }
