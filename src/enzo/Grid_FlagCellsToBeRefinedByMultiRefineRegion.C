@@ -63,7 +63,7 @@ int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
   }
 
   if(debug && MyProcessorNumber == ROOT_PROCESSOR){
-    fprintf(stderr,"%i evolving MultiRefineRegions detected.\n",NIter);
+    fprintf(stderr,"Cell Flagging: %"ISYM" evolving MultiRefineRegions detected.\n",NIter);
   }
 
   /* loop over dimensions - I guess this is unnecessary,

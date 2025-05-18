@@ -401,6 +401,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 	      ENZO_VFAIL("MultiRefineRegion number %"ISYM" (MAX_STATIC_REGIONS) > MAX allowed\n", dim);
 	    ret++;
 	    MultiRefineRegionMaximumLevel[dim] = int_dummy;
+      if (dim > NumberOfStaticMultiRefineRegions-1){
+        NumberOfStaticMultiRefineRegions = dim+1;
+      }
     }
     if (sscanf(line, "MultiRefineRegionMinimumLevel[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2){
       ret++;

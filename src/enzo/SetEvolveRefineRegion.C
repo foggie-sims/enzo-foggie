@@ -6,6 +6,7 @@
      03 May 2005 : JHW -- Created 
      26 April 2019: BWO -- updated for MustRefine and CoolingRefine regions,
                            added linear interpolation between times for all regions.
+     14 December 2023: ACW - updated for MultiRefine regions
 ------------------------------------------------------------------------*/
 
 #include <stdlib.h>
@@ -22,7 +23,7 @@ void my_exit(int status);
 int SetEvolveRefineRegion (FLOAT time) 
 {
 
-  int timestep, staticRegion, i, region, NStaticMultiRefineRegions;
+  int timestep, staticRegion, i, region;
   FLOAT a, dadt, redshift;
 
   /* Return if not used */
@@ -358,13 +359,6 @@ int SetEvolveRefineRegion (FLOAT time)
     }
 
     /* Set MultiRefineRegion to EvolveMultiRefineRegion */
-    
-    /* Check how many static MultiRefineRegions there are */
-    NStaticMultiRefineRegions = 0;
-    while (MultiRefineRegionMaximumLevel[NStaticMultiRefineRegions]>=0)
-        NStaticMultiRefineRegions ++;
-    NumberOfStaticMultiRefineRegions = NStaticMultiRefineRegions;
-
     if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
       fprintf(stderr,"SetEvolveRefineRegion sees %"ISYM" static MultiRefineRegions and %"ISYM" evolving ones.\n",NumberOfStaticMultiRefineRegions,NumberOfMultiRefineTracks);
       fprintf(stderr,"SetEvolveRefineRegion says you have %"ISYM" time entries per track.\n",NumberOfMultiRefineTimeEntries);
