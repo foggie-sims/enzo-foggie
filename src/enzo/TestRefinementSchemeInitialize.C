@@ -29,7 +29,7 @@ int TestRefinementSchemeInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &To
     DataLabel[i++] = Vel2Name;
     DataLabel[i++] = Vel3Name;
 
-    float TestRefinementUniformDensity = 1.0;
+    float TestRefinementUniformDensity = 0.00001;
     float TestRefinementUniformTotalEnergy = 1.0;
     float TestRefinementUniformInternalEnergy = 1.0;
     float TestRefinementUniformVelocity[MAX_DIMENSION];
