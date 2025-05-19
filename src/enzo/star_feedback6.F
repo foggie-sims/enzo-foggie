@@ -639,8 +639,8 @@ c     mean molecular weight!!!
 c
                         if (Z_cell .gt. 0.95_RKIND) 
      &                    Z_cell = 0.95_RKIND
-                        if ((mu_cell .lt. 0.4_RKIND) .or. 
-     &                    (mu_cell .gt. 16._RKIND) .or.
+                        if ((mu_cell .lt. 0.0625_RKIND) .or. 
+     &                    (mu_cell .gt. 2._RKIND) .or.
      &                    (mu_cell .ne. mu_cell))
      &                    mu_cell = 0.8125_RKIND*(1._RKIND-Z_cell) + 
      &                     Z_cell/16._RKIND

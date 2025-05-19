@@ -1754,11 +1754,11 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        }
 	    
 	  }
-     if (mu_field[index] < 0.4 || mu_field[index] > 16.0) {
+     if (mu_field[index] < 0.0625 || mu_field[index] > 2.0) {
 
       FILE *mu_error_file = fopen("mu_and_baryon_fields.txt", "a");
       //printf("mu < 0 in Grid_StarParticleHandler.C ! mu = %"FSYM"\n", mu_field[index]);
-      fprintf(mu_error_file, "mu_field = %"FSYM"\n", mu_field[index]);
+      fprintf(mu_error_file, "inverse mu_field = %"FSYM"\n", mu_field[index]);
       if (MultiSpecies > 0) {
          fprintf(mu_error_file, "BaryonField[DeNum] = %"ESYM"\n", BaryonField[DeNum][index]);
          fprintf(mu_error_file, "BaryonField[HINum] = %"ESYM"\n", BaryonField[HINum][index]);
