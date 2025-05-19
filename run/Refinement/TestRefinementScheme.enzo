@@ -36,3 +36,12 @@ MinimumEfficiency         = 0.3
 CellFlaggingMethod        = 20    // use MultiRefineRegion for refinement
 MultiRefineRegionTimeType = 0    // use code time
 MultiRefineRegionFile     = RefinementTestTrackFile.txt // location of MRR track file
+
+# 
+# make 1 static MultiRefineRegion
+#
+MultiRefineRegionLeftEdge[0] = 0.5 0.5 0.5
+MultiRefineRegionRightEdge[0] = 0.51 0.51 0.51
+MultiRefineRegionMaximumLevel[0] = 2
+MultiRefineRegionMinimumLevel[0] = 1
+MultiRefineRegionMinimumStarMass[0] = 1.0e+5.0
