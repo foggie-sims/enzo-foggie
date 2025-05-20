@@ -5,7 +5,7 @@
 #
 ProblemType            = 15 // test refinement scheme
 TopGridRank            = 3
-TopGridDimensions      = 30 30 30
+TopGridDimensions      = 32 32 32
 SelfGravity                = 1       // gravity on
 LeftFaceBoundaryCondition  = 3 3 3    // periodic
 RightFaceBoundaryCondition = 3 3 3
@@ -41,7 +41,7 @@ MultiRefineRegionFile     = RefinementTestTrackFile.txt // location of MRR track
 # make 1 static MultiRefineRegion
 #
 MultiRefineRegionLeftEdge[0] = 0.5 0.5 0.5
-MultiRefineRegionRightEdge[0] = 0.51 0.51 0.51
+MultiRefineRegionRightEdge[0] = 0.5125 0.5125 0.5125
 MultiRefineRegionMaximumLevel[0] = 2
 MultiRefineRegionMinimumLevel[0] = 1
 MultiRefineRegionMinimumStarMass[0] = 1.0e+5.0
