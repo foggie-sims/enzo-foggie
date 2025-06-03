@@ -128,3 +128,13 @@ MultiRefineRegionSpatiallyVaryingStarMass = 1
 GreensFunctionMaxNumber = 40
 ParallelRootGridIO      = 1
 ParallelParticleIO      = 1
+
+
+#
+# create a static multirefine MultiRefineRegion
+#
+MultiRefineRegionLeftEdge[0] = 0.63 0.63 0.63
+MultiRefineRegionRightEdge[0] = 0.65 0.65 0.65
+MultiRefineRegionMaximumLevel[0] = 2
+MultiRefineRegionMinimumLevel[0] = 2
+MultiRefineRegionMinimumStarMass[0] = 1.0e+7.0

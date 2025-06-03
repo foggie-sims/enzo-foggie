@@ -79,8 +79,6 @@ int RotatingDiskInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			       TopGridData &MetaData);
 int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			       TopGridData &MetaData);
-int TestRefinementSchemeInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
-             TopGridData &MetaData);
 int ConductionTestInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			     TopGridData &MetaData);
 int ConductionBubbleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
@@ -467,10 +465,6 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
 
   if (ProblemType == 14)
     ret = RotatingSphereInitialize(fptr, Outfptr, TopGrid, MetaData);
-
-  // 15) Refinement Scheme
-  if (ProblemType == 15)
-    ret = TestRefinementSchemeInitialize(fptr, Outfptr, TopGrid, MetaData);
 
   // 20) Zeldovich Pancake
  
