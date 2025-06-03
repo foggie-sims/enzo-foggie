@@ -259,7 +259,7 @@ def test_phase():
     assert_rel_equal(data[('data', 'cell_mass')], ds_comp.data[('data', 'cell_mass')], 8)
 
 def test_context_aware_star_formation_and_multirefinement():
-    ds = yt.load(os.path.join(_dir_name, 'DD0013/DD0013'))
+    ds = yt.load(os.path.join(_dir_name, 'DD0012/DD0012'))
     data  = ds.all_data()
 
     # Read in evolving multirefine region coordinates for this snapshot and find expected position of the MRR
@@ -276,7 +276,7 @@ def test_context_aware_star_formation_and_multirefinement():
     # Create box that correspond to where our evolving MRR should be and check that all cells within it meet the minimum
     # refinement criteria specified in the track file
     MRR1 = ds.box(MRR1_corners[:3],MRR1_corners[3:])
-    assert(np.all(MRR1['index','grid_level']>=llim))
+    assert(np.all(MRR1['index','grid_level']>=llim[timestep]))
 
     # Do the same for the static multirefine region
     MRR2 = ds.box(np.array([0.63,0.63,0.63]),np.array([0.65,0.65,0.65]))
@@ -286,7 +286,7 @@ def test_context_aware_star_formation_and_multirefinement():
     # Note that this will only be meaningful if the minimum star particle mass threshold in the MRR
     # is less than (1-StarMassEjectionFraction)*StarMakerMinimumMass, so first we'll make sure that this is true
     SmallestDefaultStar = (1-ds.parameters['StarMassEjectionFraction'])*ds.parameters['StarMakerMinimumMass']
-    assert (np.any(slim<=SmallestDefaultStar))
+    assert (np.any(slim[timestep]<=SmallestDefaultStar))
 
     # then we'll check we've formed at least one small star particle
     TotSmallStars = len(data[('nbody','particle_mass')][data[('nbody','particle_mass')].in_units('Msun')<SmallestDefaultStar])
@@ -295,9 +295,3 @@ def test_context_aware_star_formation_and_multirefinement():
     # and finally we'll check that all of the small star particles are within our MultiRefineRegion
     SmallStarsInSphere = len(MRR1[('nbody','particle_mass')][MRR1[('nbody','particle_mass')].in_units('Msun')<SmallestDefaultStar])
     assert_equal(SmallStarsInSphere,TotSmallStars)
-
-
-
-
-
-
