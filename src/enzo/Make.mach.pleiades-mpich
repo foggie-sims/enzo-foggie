@@ -107,7 +107,8 @@ MACH_OPT_WARN        =
 MACH_OPT_DEBUG       = -g -O0
 # Best for pleiades ivy bridge nodes.
 # See: goo.gl/A0IFMV
-MACH_OPT_HIGH        = -g -O2 -xAVX -ip -ipo 
+# MACH_OPT_HIGH        = -g -O2 -xAVX -ip -ipo # original defaults dropped by JT 061025 
+MACH_OPT_HIGH        = -g -O2 
 # for aggressive compilation on Ivy / Sandy 
 MACH_OPT_AGGRESSIVE  = -O3 -xAVX -ip -ipo 
 # for aggressive compilation on Haswell / Broadwell 
