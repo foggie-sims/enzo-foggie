@@ -1754,30 +1754,34 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        }
 	    
 	  }
-     if (debug && mu_field[index] < 0.) {
-      printf("mu < 0 in Grid_StarParticleHandler.C ! mu = %"FSYM"\n", mu_field[index]);
+     if (mu_field[index] < 0.0625 || mu_field[index] > 2.0) {
+
+      FILE *mu_error_file = fopen("mu_and_baryon_fields.txt", "a");
+      //printf("mu < 0 in Grid_StarParticleHandler.C ! mu = %"FSYM"\n", mu_field[index]);
+      fprintf(mu_error_file, "inverse mu_field = %"FSYM"\n", mu_field[index]);
       if (MultiSpecies > 0) {
-         printf("BaryonField[DeNum] = %"FSYM"\n", BaryonField[DeNum][index]);
-         printf("BaryonField[HINum] = %"FSYM"\n", BaryonField[HINum][index]);
-         printf("BaryonField[HIINum] = %"FSYM"\n", BaryonField[HIINum][index]);
-         printf("BaryonField[HeINum] = %"FSYM"\n", BaryonField[HeINum][index]);
-         printf("BaryonField[HeIINum] = %"FSYM"\n", BaryonField[HeIINum][index]);
-         printf("BaryonField[HeIIINum] = %"FSYM"\n", BaryonField[HeIIINum][index]);
-         printf("BaryonField[DensNum] = %"FSYM"\n", BaryonField[DensNum][index]);
+         fprintf(mu_error_file, "BaryonField[DeNum] = %"ESYM"\n", BaryonField[DeNum][index]);
+         fprintf(mu_error_file, "BaryonField[HINum] = %"ESYM"\n", BaryonField[HINum][index]);
+         fprintf(mu_error_file, "BaryonField[HIINum] = %"ESYM"\n", BaryonField[HIINum][index]);
+         fprintf(mu_error_file, "BaryonField[HeINum] = %"ESYM"\n", BaryonField[HeINum][index]);
+         fprintf(mu_error_file, "BaryonField[HeIINum] = %"ESYM"\n", BaryonField[HeIINum][index]);
+         fprintf(mu_error_file, "BaryonField[HeIIINum] = %"ESYM"\n", BaryonField[HeIIINum][index]);
+         fprintf(mu_error_file, "BaryonField[DensNum] = %"ESYM"\n", BaryonField[DensNum][index]);
       }
       if (MultiSpecies > 1) {
-         printf("BaryonField[HMNum] = %"FSYM"\n", BaryonField[HMNum][index]);
-         printf("BaryonField[H2INum] = %"FSYM"\n", BaryonField[H2INum][index]);
-         printf("BaryonField[H2IINum] = %"FSYM"\n", BaryonField[H2IINum][index]);
+         fprintf(mu_error_file, "BaryonField[HMNum] = %"ESYM"\n", BaryonField[HMNum][index]);
+         fprintf(mu_error_file, "BaryonField[H2INum] = %"ESYM"\n", BaryonField[H2INum][index]);
+         fprintf(mu_error_file, "BaryonField[H2IINum] = %"ESYM"\n", BaryonField[H2IINum][index]);
       }
       if (MultiSpecies > 2) {
-         printf("BaryonField[DINum] = %"FSYM"\n", BaryonField[DINum][index]);
-         printf("BaryonField[DIINum] = %"FSYM"\n", BaryonField[DIINum][index]);
-         printf("BaryonField[HDINum] = %"FSYM"\n", BaryonField[HDINum][index]);
+         fprintf(mu_error_file, "BaryonField[DINum] = %"ESYM"\n", BaryonField[DINum][index]);
+         fprintf(mu_error_file, "BaryonField[DIINum] = %"ESYM"\n", BaryonField[DIINum][index]);
+         fprintf(mu_error_file, "BaryonField[HDINum] = %"ESYM"\n", BaryonField[HDINum][index]);
       }
       if (MetalNum != -1) {
-         printf("BaryonField[MetalNum] = %"FSYM"\n", BaryonField[MetalNum][index]);
+         fprintf(mu_error_file, "BaryonField[MetalNum] = %"ESYM"\n", BaryonField[MetalNum][index]);
       }
+      fclose(mu_error_file);
      }
 	}
       }
