@@ -173,6 +173,10 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
     params->domain_dimensions[0] = MetaData->TopGridDims[0];
     params->domain_dimensions[1] = MetaData->TopGridDims[1];
     params->domain_dimensions[2] = MetaData->TopGridDims[2];
+	for (int d = 2; d > params->dimensionality - 1; d--) {
+		params->domain_dimensions[d] = 1;
+	}
+
     params->refine_by = RefineBy;
     params->index_offset = 1;
     params->num_grids = num_grids;
@@ -312,7 +316,7 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
         field_list[libyt_field_i].field_name = DataLabel[i];
         field_list[libyt_field_i].field_type = "cell-centered";
         field_list[libyt_field_i].field_dtype = EYT_BFLOAT;
-        for (j = 0; j < 6; j++) {
+        for (j = 0; j < 2 * params->dimensionality; j++) {
             /*
              * It may be possible that in some cases, this global value is not
              * correct; however, it's pretty unlikely, and non-cell-centered
@@ -338,7 +342,7 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
     field_list[libyt_field_i].field_name = "Temperature";
     field_list[libyt_field_i].field_type = "cell-centered";
     field_list[libyt_field_i].field_dtype = EYT_BFLOAT;
-    for (j = 0; j < 6; j++) {
+    for (j = 0; j < 2 * params->dimensionality; j++) {
         field_list[libyt_field_i].field_ghost_cell[j] = NumberOfGhostZones;
     }
     libyt_field_i = libyt_field_i + 1;
@@ -347,7 +351,7 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
     field_list[libyt_field_i].field_type = "cell-centered";
     field_list[libyt_field_i].field_unit = "code_time";
     field_list[libyt_field_i].field_dtype = EYT_BFLOAT;
-    for (j = 0; j < 6; j++) {
+    for (j = 0; j < 2 * params->dimensionality; j++) {
         field_list[libyt_field_i].field_ghost_cell[j] = NumberOfGhostZones;
     }
 
