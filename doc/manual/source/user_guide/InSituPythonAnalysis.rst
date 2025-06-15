@@ -283,6 +283,8 @@ If we installed ``libyt`` at ``$(LOCAL_LIBYT_INSTALL)``, which this folder inclu
 
 This includes ``libyt`` header, links to the library, and adds library search path for ``libyt`` library for Enzo executable.
 
+There are examples in ``Make.mach.darwin`` and ``Make.mach.linux-gnu`` make file.
+
 How to Run Enzo
 ---------------
 Put inline Python script (default file name is ``inline.py``) and Enzo executable in the same folder and run Enzo.
