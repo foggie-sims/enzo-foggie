@@ -397,17 +397,23 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
         return FAIL;
     }
 
-    /* Run yt_run_Function and yt_run_FunctionArguments */
+    /* Run Python function using yt_run_Function and yt_run_FunctionArguments
+     * The following code blocks are examples of how to call the Python function with or without passing args.
+     * This part is optional as long as we don't need to call Python function, and we can use it as a template. */
+
+    /*   yt_run_Function is used to run a Python function without arguments.
+     *   For example, this is equivalent to call yt_inline() in Python.*/
 	// if (yt_run_Function("yt_inline") != YT_SUCCESS) {
 	// 	   fprintf(stderr, "Error while running yt_run_Function and call yt_inline\n");
 	// 	   return FAIL;
 	// }
 
-        // example for calling a Python function named "yt_inline_args" that accepts arguments
-        // if (yt_run_FunctionArguments("yt_inline_args",
-                                    1, // number of args expected in the Python function
-                                    "\'density\'" // argument passed to yt_inline_args
-                                    ) != YT_SUCCESS) {
+    /*   yt_run_FunctionArguments is used to run a Python function with arguments.
+     *   For example, this is equivalent to call yt_inline_args('density') in Python. */
+    // if (yt_run_FunctionArguments("yt_inline_args",    // Python function name
+    //                              1,                   // number of args expected in the Python function
+    //                              "\'density\'"        // argument passed to yt_inline_args
+    //                              ) != YT_SUCCESS) {
  	//     fprintf(stderr, "Error while running yt_run_FunctionArguments and call yt_inline_args\n");
 	//     return FAIL;
     // }
