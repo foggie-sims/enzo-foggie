@@ -403,7 +403,11 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
 	// 	   return FAIL;
 	// }
 
-    // if (yt_run_FunctionArguments("yt_inline_args", 1, "\'density\'") != YT_SUCCESS) {
+        // example for calling a Python function named "yt_inline_args" that accepts arguments
+        // if (yt_run_FunctionArguments("yt_inline_args",
+                                    1, // number of args expected in the Python function
+                                    "\'density\'" // argument passed to yt_inline_args
+                                    ) != YT_SUCCESS) {
  	//     fprintf(stderr, "Error while running yt_run_FunctionArguments and call yt_inline_args\n");
 	//     return FAIL;
     // }
