@@ -15,7 +15,7 @@ Below are links to the build and runtime requirements, which must be installed.
 ``libyt`` GitHub repo can be found `here <https://github.com/yt-project/libyt>`_.
 We can compile ``libyt`` using different options based on our used cases, so that Enzo can have different in situ analysis feature when it links to ``libyt``.
 
-A brief description of each mode (option) is shown here. The options are for compiling ``libyt`` only, and they are mutually independent.
+A brief description of each mode (option) is shown here. The options are for compiling ``libyt`` only. The serial and parallel modes are mutually exclusive, as are the normal, interactive, and Jupyter kernal modes.
 Please follow the instructions in ``libyt`` `how to install <https://libyt.readthedocs.io/en/latest/how-to-install/how-to-install.html#how-to-install>`__:
 
 * `libyt`_ (>=0.3.0, <1.0): a C shared library for in situ analysis.
