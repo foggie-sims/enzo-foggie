@@ -114,7 +114,7 @@ extern "C" void FORTRAN_NAME(star_maker2)(int *nx, int *ny, int *nz,
 		         float *mp, float *tdp, float *tcp, float *metalf,
 	            int *imetalSNIa, float *metalSNIa, float *metalfSNIa,
                int *iminit, float *minit,
-               int *usetracer, int *numtracer,
+               int *usetracer, int *usetracerwithstarform, int *numtracer,
                float *tracer1, float *tracer2, float *tracer3, float *tracer4,
                float *tracer5, float *tracer6, float *tracer7, float *tracer8);
  
@@ -332,7 +332,7 @@ extern "C" void FORTRAN_NAME(star_feedback2)(int *nx, int *ny, int *nz,
 	     float *mp, float *tdp, float *tcp, float *metalf, int *type,
 	     float *justburn, int *iminit, float *minit,
         int *crmodel, float *crfeedback, float *cr,
-        int *usetracer, int *numtracer,
+        int *usetracer, int *usetracerwithstarfeed, int *numtracer,
         float *tracer1, float *tracer2, float *tracer3, float *tracer4,
         float *tracer5, float *tracer6, float *tracer7, float *tracer8);
 
@@ -918,7 +918,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        tg->ParticleAttribute[2],
        &StarMakerTypeIaSNe, BaryonField[MetalIaNum], tg->ParticleAttribute[3],
        &StarMakerStoreInitialMass, tg->ParticleInitialMass,
-       &UseTracerFluid, &NumberOfTracerFluidFields,
+       &UseTracerFluid, &UseTracerFluidWithStarFormation, &NumberOfTracerFluidFields,
        TracerFluid01Pointer, TracerFluid02Pointer, TracerFluid03Pointer, TracerFluid04Pointer,
        TracerFluid05Pointer, TracerFluid06Pointer, TracerFluid07Pointer, TracerFluid08Pointer);
 
@@ -1679,7 +1679,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        ParticleAttribute[2], ParticleType, &RadiationData.IntegratedStarFormation, 
        &StarMakerStoreInitialMass, ParticleInitialMass,
        &CRModel, &CRFeedback, (CRModel?BaryonField[CRNum]:NULL),
-       &UseTracerFluid, &NumberOfTracerFluidFields,
+       &UseTracerFluid, &UseTracerFluidWithStellarFeedback, &NumberOfTracerFluidFields,
        TracerFluid01Pointer, TracerFluid02Pointer, TracerFluid03Pointer, TracerFluid04Pointer,
        TracerFluid05Pointer, TracerFluid06Pointer, TracerFluid07Pointer, TracerFluid08Pointer);
    }

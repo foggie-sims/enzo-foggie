@@ -1331,6 +1331,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "UseTracerFluid = %"ISYM"\n", UseTracerFluid);
   fprintf(fptr, "NumberOfTracerFluidFields = %"ISYM"\n", NumberOfTracerFluidFields);
   fprintf(fptr, "SetTracerFluidFieldsOnStart = %"ISYM"\n", SetTracerFluidFieldsOnStart);
+  fprintf(fptr, "UseTracerFluidWithStarFormation = %"ISYM"\n", UseTracerFluidWithStarFormation);
+  fprintf(fptr, "UseTracerFluidWithStellarFeedback = %"ISYM"\n", UseTracerFluidWithStellarFeedback);
 
 
   /* Output current time */

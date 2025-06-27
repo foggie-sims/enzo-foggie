@@ -3,7 +3,7 @@
 #
 #  define problem
 #
-ProblemType            = 90        // TestStarParaticle
+ProblemType            = 90        // TestStarParticle
 TopGridRank            = 3
 TopGridDimensions      = 50 50 50
 StarParticleFeedback   = 1 //Star feedback method 0, thermal feedback (Cen & Ostriker)
@@ -57,5 +57,8 @@ RadiativeCooling  =  0
 #  set some misc global parameters
 #
 
-UseTracerFluid = 1
-NumberOfTracerFluidFields = 8
+UseTracerFluid                    = 1   // Turns on tracer fluids in general (allows fields to be created)
+UseTracerFluidWithStarFormation   = 1   // Lets star formation routine know that it can edit tracer fields
+UseTracerFluidWithStellarFeedback = 1   // Lets stellar feedback routine know that it can edit tracer fields
+NumberOfTracerFluidFields         = 8   // Sets the number of tracer fluids
+                                        //   (must be 1 <= N <=8 at present)

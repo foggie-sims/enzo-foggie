@@ -691,6 +691,16 @@ calculations as well.
   Initializes tracer fluids upon instantiation of the simulation if
   set to 1. This will require the user to add code in the appropriate
   problem generator to set the fields in the way that they want.  Default: 0
+``UseTracerFluidWithStarFormation`` (external)
+Switch that turns on the ability of the star formation routines to
+use or modify the tracer fluids.  This is currently only implemented
+in star_maker2 .  Default: 0
+``UseTracerFluidWithStellarFeedback`` (external)
+Switch that turns on the ability of the stellar feedback routines to
+use or modify the tracer fluids.  This is currently only implemented
+in star_feedback2.  Default: 0
+
+
 
 .. _simulation_identifiers_parameters:
 

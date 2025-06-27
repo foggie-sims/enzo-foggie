@@ -1429,6 +1429,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "UseTracerFluid = %"ISYM, &UseTracerFluid);
     ret += sscanf(line, "NumberOfTracerFluidFields = %"ISYM, &NumberOfTracerFluidFields);
     ret += sscanf(line, "SetTracerFluidFieldsOnStart = %"ISYM, &SetTracerFluidFieldsOnStart);
+    ret += sscanf(line, "UseTracerFluidWithStarFormation = %"ISYM, &UseTracerFluidWithStarFormation);
+    ret += sscanf(line, "UseTracerFluidWithStellarFeedback = %"ISYM, &UseTracerFluidWithStellarFeedback);
 
     /* If the dummy char space was used, then make another. */
 
