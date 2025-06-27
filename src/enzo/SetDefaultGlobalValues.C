@@ -630,6 +630,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   ReadGhostZones                   = FALSE;
   WriteGhostZones                  = FALSE;
   OutputParticleTypeGrouping       = FALSE;
+  ApplyBoundsToBaryonFields        = FALSE;
   RestrictDensity                  = FALSE;
   RestrictVelocity                 = FALSE;
   RestrictTemperature              = FALSE;

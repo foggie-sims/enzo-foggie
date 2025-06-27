@@ -1578,6 +1578,28 @@ General Hydrodynamics Parameters
 ``ZEUSLinearArtificialViscosity`` (external)
     This is the linear artificial viscosity parameter C1 of Stone &
     Norman. Default: 0.0
+``ApplyBoundsToBaryonFields`` (external)
+    This parameter calls a routine of the same name that lives in EvolveLevel, which
+    applies upper and lower bounds to density, velocity, and/or temperature (which can)
+    all be set independently, as described immediately below.  Values for these bounds
+    are hard-coded in the routine ``Grid_ApplyBoundsToBaryonFields.C``.  This is meant to
+    be a solution of last resort for when multiphysics simulations are experiencing some
+    sort of instability that causes them to crash.  At present this is limited to non-ZEUS
+    hydro algorithms.  Default: 0 (off)
+``RestrictDensity`` (external)
+    Applies upper and lower bounds to density field. Both bounds are positive values.
+    Requires ``ApplyBoundsToBaryonFields`` to be turned on in order for it to do something.
+    Default: 0 (off)
+``RestrictVelocity`` (external)
+    Applies upper and lower bounds to velocity field.  In this case, the lower bound is
+    a negative number rather than a small positive number, since velocity can have both positive
+    and negative values.  Requires ``ApplyBoundsToBaryonFields``
+    to be turned on in order for it to do something.  Default: 0 (off)
+``RestrictTemperature`` (external)
+    Applies upper and lower bounds to temperature field. Both bounds are positive values.
+    Requires ``ApplyBoundsToBaryonFields`` to be turned on in order for it to do something.
+    Default: 0 (off)
+
 
 .. _minimum_pressure_support_parameters:
 

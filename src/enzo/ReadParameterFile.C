@@ -1020,6 +1020,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       StarFeedbackTabularFilename = dummy;
     ret += sscanf(line, "StarFeedbackTrackMetalSources = %"ISYM, &StarFeedbackTrackMetalSources);
 
+    ret += sscanf(line, "ApplyBoundsToBaryonFields = %"ISYM,
+		  &ApplyBoundsToBaryonFields);
     ret += sscanf(line, "RestrictDensity = %"ISYM,
 		  &RestrictDensity);
     ret += sscanf(line, "RestrictVelocity = %"ISYM,
