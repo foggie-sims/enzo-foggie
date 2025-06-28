@@ -342,8 +342,8 @@ extern "C" void FORTRAN_NAME(star_feedback2_tab)(
          FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
          float *mp, float *tcp, float *metalf, float *minit, int *type,
          float *esnii, float *esnia, int *itracksrc, float *zsnii, float *zsnia,
-         int *ntabz, int *ntabage, float *tabz, float *tabage, 
-         float *tabmass, float *tabmetal, float *tabevent);
+         int *ntabz, int *ntabage, double *tabz, double *tabage, 
+         double *tabmass, double *tabmetal, double *tabevent);
  
 extern "C" void FORTRAN_NAME(star_feedback3mom)(int *nx, int *ny, int *nz,
 						float *d, float *mu, float *dm, float *te, float *ge, float *u, float *v,
@@ -359,21 +359,21 @@ extern "C" void FORTRAN_NAME(star_feedback3mom)(int *nx, int *ny, int *nz,
 	     float *justburn, int *iminit, float *minit, float *kinf, float *exptime);
 
 extern "C" void FORTRAN_NAME(star_feedback6)(int *nx, int *ny, int *nz,
-						float *d, float *mu, float *dm, float *te, float *ge, float *u, float *v,
-		       float *w, float *metal, float *zfield1, float *zfield2,
+						float *d, float *mu, float *te, float *ge, float *u, float *v,
+		       float *w, float *metal,
 	     int *idual, int *imetal, int *imulti_metals, hydro_method *imethod, 
-		       float *dt, float *r, float *dx, FLOAT *t, float *z, int *procnum,
+		       float *dt, float *dx, FLOAT *t, float *z, int *procnum,
              float *d1, float *x1, float *v1, float *t1,
-                       float *thermal, float *m_eject, float *yield,
+             float *m_eject, float *yield,
              int *nmax, FLOAT *xstart, FLOAT *ystart, FLOAT *zstart,
 		       int *ibuff,
              FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
              float *mp, float *tdp, float *tcp, float *metalf, int *type, int *particleID,
-	     float *justburn, float *exptime, float *mom_mult,
-             int *mom_canc, int *feedback_log, int *use_tabfbk, float *minit,
+	          float *nsn_timestep, float *exptime, float *mom_mult, int *inject_cap,
+             int *feedback_log, int *use_tabfbk, float *minit,
              float *ergSNII, float *ergSNIa, int *itracksrc, float *metalSNII,
-             float *metalSNIa, int *ntabZ, int *ntabAge, float *tabZ, float *tabAge, 
-         float *tabMass, float *tabMetal, float *tabEvents);
+             float *metalSNIa, int *ntabZ, int *ntabAge, double *tabZ, double *tabAge, 
+             double *tabMass, double *tabMetal, double *tabEvents);
 
 extern "C" void FORTRAN_NAME(star_feedback3)(int *nx, int *ny, int *nz,
              float *d, float *dm, float *te, float *ge, float *u, float *v,
@@ -1720,7 +1720,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
   if (STARFEED_METHOD(MECH_STAR)) {
 
-    //---- UNIGRID (NON-JEANS MASS) VERSION WITH MOMENTUM
+    //---- MOMENTUM FEEDBACK
 
     // Compute mu across grid
     float *mu_field = new float[size];
@@ -1749,23 +1749,54 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 	    if (MultiSpecies > 2) {
 	      mu_field[index] += (BaryonField[DINum][index] + BaryonField[DIINum][index])/2.0 + (BaryonField[HDINum][index]/3.0);
 	    }
+       if (MetalNum != -1) {
+         mu_field[index] += BaryonField[MetalNum][index]/16.0;
+       }
 	    
 	  }
+     if (mu_field[index] < 0.0625 || mu_field[index] > 2.0) {
+
+      FILE *mu_error_file = fopen("mu_and_baryon_fields.txt", "a");
+      //printf("mu < 0 in Grid_StarParticleHandler.C ! mu = %"FSYM"\n", mu_field[index]);
+      fprintf(mu_error_file, "inverse mu_field = %"FSYM"\n", mu_field[index]);
+      if (MultiSpecies > 0) {
+         fprintf(mu_error_file, "BaryonField[DeNum] = %"ESYM"\n", BaryonField[DeNum][index]);
+         fprintf(mu_error_file, "BaryonField[HINum] = %"ESYM"\n", BaryonField[HINum][index]);
+         fprintf(mu_error_file, "BaryonField[HIINum] = %"ESYM"\n", BaryonField[HIINum][index]);
+         fprintf(mu_error_file, "BaryonField[HeINum] = %"ESYM"\n", BaryonField[HeINum][index]);
+         fprintf(mu_error_file, "BaryonField[HeIINum] = %"ESYM"\n", BaryonField[HeIINum][index]);
+         fprintf(mu_error_file, "BaryonField[HeIIINum] = %"ESYM"\n", BaryonField[HeIIINum][index]);
+         fprintf(mu_error_file, "BaryonField[DensNum] = %"ESYM"\n", BaryonField[DensNum][index]);
+      }
+      if (MultiSpecies > 1) {
+         fprintf(mu_error_file, "BaryonField[HMNum] = %"ESYM"\n", BaryonField[HMNum][index]);
+         fprintf(mu_error_file, "BaryonField[H2INum] = %"ESYM"\n", BaryonField[H2INum][index]);
+         fprintf(mu_error_file, "BaryonField[H2IINum] = %"ESYM"\n", BaryonField[H2IINum][index]);
+      }
+      if (MultiSpecies > 2) {
+         fprintf(mu_error_file, "BaryonField[DINum] = %"ESYM"\n", BaryonField[DINum][index]);
+         fprintf(mu_error_file, "BaryonField[DIINum] = %"ESYM"\n", BaryonField[DIINum][index]);
+         fprintf(mu_error_file, "BaryonField[HDINum] = %"ESYM"\n", BaryonField[HDINum][index]);
+      }
+      if (MetalNum != -1) {
+         fprintf(mu_error_file, "BaryonField[MetalNum] = %"ESYM"\n", BaryonField[MetalNum][index]);
+      }
+      fclose(mu_error_file);
+     }
 	}
       }
     }
     
     FORTRAN_NAME(star_feedback6)(
        GridDimension, GridDimension+1, GridDimension+2,
-       BaryonField[DensNum], mu_field, dmfield,
+       BaryonField[DensNum], mu_field,
           BaryonField[TENum], BaryonField[GENum], BaryonField[Vel1Num],
           BaryonField[Vel2Num], BaryonField[Vel3Num], BaryonField[MetalNum],
-          BaryonField[MetalNum+1], BaryonField[MetalNum+2],
        &DualEnergyFormalism, &MetallicityField, &MultiMetals, &HydroMethod,
-       &dtFixed, BaryonField[NumberOfBaryonFields], &CellWidthTemp,
+       &dtFixed, &CellWidthTemp,
           &Time, &zred, &MyProcessorNumber,
        &DensityUnits, &LengthUnits, &VelocityUnits, &TimeUnits,
-          &StarFeedbackAdditionalThermalEnergy, &StarMassEjectionFraction,
+          &StarMassEjectionFraction,
           &StarMetalYield, 
        &NumberOfParticles,
           CellLeftEdge[0], CellLeftEdge[1], CellLeftEdge[2], &GhostZones,
@@ -1774,9 +1805,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        ParticleVelocity[0], ParticleVelocity[1],
           ParticleVelocity[2],
        ParticleMass, ParticleAttribute[1], ParticleAttribute[0],
-       ParticleAttribute[2], ParticleType, ParticleNumber, &RadiationData.IntegratedStarFormation,
-       &StarMakerExplosionDelayTime, &MomentumMultiplier, &MomentumCancellationToThermal,
-       &WriteFeedbackLogFiles, &StarFeedbackUseTabularYields, ParticleInitialMass,
+       ParticleAttribute[2], ParticleType, ParticleNumber,
+       &StarFeedbackSNePerTimestepLimit, &StarMakerExplosionDelayTime, &StarFeedbackMomentumMultiplier,
+       &StarFeedbackInjectCappedVelocity, &WriteFeedbackLogFiles, &StarFeedbackUseTabularYields, ParticleInitialMass,
        &StarFeedbackTabularSNIIEnergy, &StarFeedbackTabularSNIaEnergy,
        &StarFeedbackTrackMetalSources, BaryonField[MetalIINum], BaryonField[MetalIaNum],
        &FBTable.n_met, &FBTable.n_age, FBTable.ini_met, FBTable.pop_age, 
