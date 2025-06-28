@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -314,7 +315,16 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
          * */
 
         field_list[libyt_field_i].field_name = DataLabel[i];
-        field_list[libyt_field_i].field_type = "cell-centered";
+        if (strcmp(DataLabel[i], "x-velocity") == 0 || strcmp(DataLabel[i], "y-velocity") == 0 || strcmp(DataLabel[i], "z-velocity") == 0) {
+            if (HydroMethod == Zeus_Hydro) {
+                field_list[libyt_field_i].field_type = "face-centered";
+            }
+            else {
+                field_list[libyt_field_i].field_type = "cell-centered";
+            }
+        } else {
+            field_list[libyt_field_i].field_type = "cell-centered";
+        }
         field_list[libyt_field_i].field_dtype = EYT_BFLOAT;
         for (j = 0; j < 2 * params->dimensionality; j++) {
             /*

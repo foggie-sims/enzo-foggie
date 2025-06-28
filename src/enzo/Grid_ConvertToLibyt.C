@@ -83,6 +83,21 @@ void grid::ConvertToLibyt(int LocalGridID, int GlobalGridID, int ParentID, int l
         int libyt_field = libyt_field_lookup[field];
         if (libyt_field == -1) continue; // TODO: will this ever be -1?
         GridInfo.field_data[libyt_field].data_ptr = BaryonField[field];
+        if (HydroMethod == Zeus_Hydro) {
+            if (strcmp(DataLabel[field], "x-velocity") == 0) {
+                GridInfo.field_data[libyt_field].data_dimensions[0] = NumberOfGhostZones * 2 + GridInfo.grid_dimensions[2];
+                GridInfo.field_data[libyt_field].data_dimensions[1] = NumberOfGhostZones * 2 + GridInfo.grid_dimensions[1];
+                GridInfo.field_data[libyt_field].data_dimensions[2] = NumberOfGhostZones * 2 + GridInfo.grid_dimensions[0] + 1;
+            } else if (strcmp(DataLabel[field], "y-velocity") == 0) {
+                GridInfo.field_data[libyt_field].data_dimensions[0] = NumberOfGhostZones * 2 + GridInfo.grid_dimensions[2];
+                GridInfo.field_data[libyt_field].data_dimensions[1] = NumberOfGhostZones * 2 + GridInfo.grid_dimensions[1] + 1;
+                GridInfo.field_data[libyt_field].data_dimensions[2] = NumberOfGhostZones * 2 + GridInfo.grid_dimensions[0];
+            } else if (strcmp(DataLabel[field], "z-velocity") == 0) {
+                GridInfo.field_data[libyt_field].data_dimensions[0] = NumberOfGhostZones * 2 + GridInfo.grid_dimensions[2] + 1;
+                GridInfo.field_data[libyt_field].data_dimensions[1] = NumberOfGhostZones * 2 + GridInfo.grid_dimensions[1];
+                GridInfo.field_data[libyt_field].data_dimensions[2] = NumberOfGhostZones * 2 + GridInfo.grid_dimensions[0];
+            }
+        }
     }
 
     long grid_size = GridDimension[0] * GridDimension[1] * GridDimension[2];
