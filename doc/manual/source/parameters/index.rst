@@ -1586,19 +1586,22 @@ General Hydrodynamics Parameters
     all be set independently, as described immediately below.  Values for these bounds
     are hard-coded in the routine ``Grid_ApplyBoundsToBaryonFields.C``.  This is meant to
     be a solution of last resort for when multiphysics simulations are experiencing some
-    sort of instability that causes them to crash.  At present this is limited to non-ZEUS
-    hydro algorithms.  Values can be 1 (on) and 0 (off). Default: 0 (off)
+    sort of instability that causes them to crash.  At present this capability is limited
+    to the PPM Direct Euler hydro algorithm (HydroMethod = 0).
+    Values can be 1 (on) and 0 (off). Default: 0 (off)
 ``RestrictDensity`` (external)
     Applies upper and lower bounds to density field. Both bounds are positive values.
+    Lower bound is set to tiny_number and upper bound is set to 1010\ :sup:`16` Particles
+    per cubic centimeter, which is roughly 1e-8 grams per cc.
     Requires ``ApplyBoundsToBaryonFields`` to be turned on in order for it to do something.
     Values can be 1 (on) and 0 (off).  Default: 0 (off)
 ``RestrictVelocity`` (external)
-    Applies upper and lower bounds to velocity magnitude.  The upper bound is set to 3000 km/s. 
-    Requires ``ApplyBoundsToBaryonFields``to be turned on in order for it to do something. 
+    Applies upper bound to velocity magnitude (does not set lower bound).  The upper bound is set to 3000 km/s.
+    Requires ``ApplyBoundsToBaryonFields``to be turned on in order for it to do something.
     Values can be 1 (on) and 0 (off).  Default: 0 (off)
 ``RestrictTemperature`` (external)
     Applies upper and lower bounds to temperature field (really, internal energy field). Both 
-    bounds are positive values, with the upper bound capped everywhere at 10\ :sup:`9` K. 
+    bounds are positive values, with the lower bound set to 1 K and the upper bound set to 10\ :sup:`9` K.
     Requires ``ApplyBoundsToBaryonFields`` to be turned on in order for it to do something.
     Values can be 1 (on) and 0 (off). Default: 0 (off)
 
