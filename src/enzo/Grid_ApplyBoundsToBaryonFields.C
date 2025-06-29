@@ -2,7 +2,7 @@
 /
 /  GRID CLASS (COMPUTE FLOORS AND CEILINGS FOR SELECT BARYON FIELDS)
 /
-/  written by: Brian O'Shea
+/  written by: Brian O'Shea and Cassi Lochhaas
 /  date:       May 2025
 /  modified1:
 /
@@ -44,11 +44,6 @@ int grid::ApplyBoundsToBaryonFields()
   // I need to fix this!
   if (HydroMethod == Zeus_Hydro){
     ENZO_FAIL("Grid::ApplyBoundsToBaryonFields: does not support ZEUS hydro method (HydroMethod=2) yet!\n");  
-  }
-
-  // I need to fix this!
-  if (GridRank != 3){
-    ENZO_FAIL("Grid::ApplyBoundsToBaryonFields: does not support non-3D simulations yet!  (GridRank != 3)\n");  
   }
 
   /* Get Units. */
