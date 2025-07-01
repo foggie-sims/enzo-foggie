@@ -100,6 +100,7 @@ int CheckForOutput(HierarchyEntry *TopGrid, TopGridData &MetaData,
 int CheckForTimeAction(LevelHierarchyEntry *LevelArray[],
 		       TopGridData &MetaData);
 int CheckForResubmit(TopGridData &MetaData, int &Stop);
+int CheckForLibytCall(LevelHierarchyEntry *LevelArray[], TopGridData &MetaData);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int OutputLevelInformation(FILE *fptr, TopGridData &MetaData,
 			   LevelHierarchyEntry *LevelArray[]);
@@ -619,7 +620,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
 #ifdef USE_LIBYT
     LCAPERF_START("CallInSitulibyt");
-    CallInSitulibyt(LevelArray, &MetaData, 0, 1);
+    CheckForLibytCall(LevelArray, MetaData);
     LCAPERF_STOP("CallInSitulibyt");
 #endif
 
