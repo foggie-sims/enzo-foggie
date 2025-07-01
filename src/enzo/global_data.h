@@ -982,6 +982,9 @@ EXTERN PyObject *my_processor;
 #ifdef USE_LIBYT
 #include <vector>
 EXTERN char libyt_script_name[512];
+EXTERN char libyt_fig_basename[512];
+EXTERN int CycleSkipLibytCall;
+EXTERN int CycleLastLibytCall;
 EXTERN void *param_libyt;
 EXTERN void *param_yt;
 EXTERN std::vector<void*> libyt_generated_data;
