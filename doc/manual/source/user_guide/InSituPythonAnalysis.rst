@@ -83,7 +83,7 @@ General
 
 * **How to change import Python file name?**
 
-  The default Python script will be imported is ``inline.py``.
+  The default Python script will be imported or created (if it does not exist) is ``inline.py``.
 
   If we want to change the script name, set the file name without its extension to ``libyt_script_name`` in Enzo parameter file.
   For example, we want to make the Python script to be ``test.py``:
@@ -92,6 +92,28 @@ General
 
       libyt_script_name = test
 
+
+* **How to change the figure base name?**
+
+  The default figure base name is ``Fig``.
+
+  We can change it by setting ``libyt_fig_basename`` in Enzo parameter file:
+
+  ::
+
+      libyt_fig_basename = Enzo
+
+
+* **How to call libyt in situ analysis routine?**
+
+  Enzo parameter ``CycleSkipLibytCall`` (default is ``1``) and ``CycleLastLibytCall`` (default is ``0``) govern when to call in situ analysis routine.
+  We can change the interval of calling libyt routine or completely close it (set to ``0``) by setting them in Enzo parameter file:
+
+  ::
+
+      CycleSkipLibytCall = 2  // call libyt routine every 2 cycles
+
+  The logic is similar to how cycle-based output parameters work. (See :ref:`cycle_base_output`)
 
 * **How to call Python functions during simulation runtime? And what should I be aware of?**
 
@@ -125,7 +147,7 @@ General
     def yt_inline_args(field):
         pass
 
-  Please make sure the functions we called are defined inside the script. Otherwise, in ``libyt`` normal modes, the simulation will terminate simply because it cannot find the Python function, while in the other modes, it will labeled as failed.
+  Please make sure the functions we called are defined inside the script. Otherwise, in ``libyt`` normal modes, the simulation will terminate simply because it cannot find the Python function, while in the other modes, it will be labeled as failed.
 
   See how to use yt to do analysis `here <https://libyt.readthedocs.io/en/latest/in-situ-python-analysis/using-yt.html>`__.
 
