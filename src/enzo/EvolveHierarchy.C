@@ -130,6 +130,8 @@ int SetEvolveRefineRegion(FLOAT time);
 
 int SetStellarMassThreshold(FLOAT time);
 int SetStellarFeedbackEfficiency(FLOAT time);
+int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
+                    int level, int from_topgrid);
 
 #ifdef MEM_TRACE
 Eint64 mused(void);
@@ -613,6 +615,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     LCAPERF_START("CallPython");
     CallPython(LevelArray, &MetaData, 0, 1);
     LCAPERF_STOP("CallPython");
+#endif
+
+#ifdef USE_LIBYT
+    LCAPERF_START("CallInSitulibyt");
+    CallInSitulibyt(LevelArray, &MetaData, 0, 1);
+    LCAPERF_STOP("CallInSitulibyt");
 #endif
 
     /* Check for resubmission */

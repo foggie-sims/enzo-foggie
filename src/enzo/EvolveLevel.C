@@ -846,12 +846,12 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     LCAPERF_STOP("CallPython");
 #endif
 
-#ifdef USE_LIBYT
-    LCAPERF_START("CallInSitulibyt");
-    //CallEmptyInteractivePython(LevelArray, MetaData, level, 0);
-    CallInSitulibyt(LevelArray, MetaData, level, 0);
-    LCAPERF_STOP("CallInSitulibyt");
-#endif
+//#ifdef USE_LIBYT
+//    LCAPERF_START("CallInSitulibyt");
+//    //CallEmptyInteractivePython(LevelArray, MetaData, level, 0);
+//    CallInSitulibyt(LevelArray, MetaData, level, 0);
+//    LCAPERF_STOP("CallInSitulibyt");
+//#endif
 
     /* Update SubcycleNumber and the timestep counter for the
        streaming data if this is the bottom of the hierarchy -- Note
