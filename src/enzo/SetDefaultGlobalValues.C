@@ -623,9 +623,9 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   StarMassEjectionFraction         = 0.25;
   StarMetalYield                   = 0.02;
   StarEnergyToThermalFeedback      = 1.0e-5;
-  StarFeedbackAdditionalThermalEnergy = 0.0;
-  MomentumMultiplier               = 1.0;
-  MomentumCancellationToThermal    = 1;
+  StarFeedbackMomentumMultiplier   = 1.0;
+  StarFeedbackInjectCappedVelocity = 0;
+  StarFeedbackSNePerTimestepLimit  = 1.0e-6;
   WriteFeedbackLogFiles            = 0;
   StarEnergyToStellarUV            = 3.0e-6;
   StarEnergyToQuasarUV             = 5.0e-6;
@@ -646,6 +646,9 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   ReadGhostZones                   = FALSE;
   WriteGhostZones                  = FALSE;
   OutputParticleTypeGrouping       = FALSE;
+  RestrictDensity                  = FALSE;
+  RestrictVelocity                 = FALSE;
+  RestrictTemperature              = FALSE;
 
   IsotropicConduction = FALSE;
   AnisotropicConduction = FALSE;

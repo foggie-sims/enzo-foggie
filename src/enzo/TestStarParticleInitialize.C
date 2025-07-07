@@ -54,6 +54,12 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
   char *HeIName   = "HeI_Density";
   char *HeIIName  = "HeII_Density";
   char *HeIIIName = "HeIII_Density";
+  char *HMName    = "HM_Density";
+  char *H2IName   = "H2I_Density";
+  char *H2IIName  = "H2II_Density";
+  char *DIName    = "DI_Density";
+  char *DIIName   = "DII_Density";
+  char *HDIName   = "HDI_Density";
 
 
   /* declarations */
@@ -139,7 +145,7 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
     ENZO_FAIL("Error in TestStarParticleInitialize: please specify either TestStarParticleEnergy or TestStarParticleTemperature");
 
   if (TestStarParticleTemperature > 0){
-    double DensityUnits, LengthUnits, TemperatureUnits, TimeUnits, VelocityUnits;
+    float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits, VelocityUnits;
     if (GetUnits(&DensityUnits, &LengthUnits,&TemperatureUnits, &TimeUnits,
               &VelocityUnits, MetaData.Time) == FAIL){
       fprintf(stderr, "Error in GetUnits.\n");
@@ -151,7 +157,7 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
 
   /* add gas velocity to internal energy to find total energy */
 
-  double TotalEnergy = TestStarParticleEnergy;
+  float TotalEnergy = TestStarParticleEnergy;
   for (dim = 0; dim < MetaData.TopGridRank; dim++)
     TotalEnergy += 0.5*POW(TestStarParticleVelocity[dim], 2);
   
@@ -190,6 +196,16 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
     DataLabel[count++] = HeIName;
     DataLabel[count++] = HeIIName;
     DataLabel[count++] = HeIIIName;
+    if (TestProblemData.MultiSpecies > 1) {
+      DataLabel[count++] = HMName;
+      DataLabel[count++] = H2IName;
+      DataLabel[count++] = H2IIName;
+    }
+    if (TestProblemData.MultiSpecies > 2) {
+      DataLabel[count++] = DIName;
+      DataLabel[count++] = DIIName;
+      DataLabel[count++] = HDIName;
+    }
   }
   if (TestProblemData.UseMetallicityField)
     DataLabel[count++] = MetalName;
