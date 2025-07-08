@@ -338,7 +338,7 @@ c              Set tracer fluid field values (if relevant), checking also to ens
 c              the user wants to modify the tracer fluids in the star formation routine. The
 c              latter step is redundant in this specific implementation, but is being added as
 c              a future-proofing measure because it's conceivable that somebody might want to
-c              use the tracer fields in some wah without modifying them. We don't have anything specific
+c              use the tracer fields in some way without modifying them. We don't have anything specific
 c              to set them to at this point, so we're just going to set them to the density
 c              since that is the only density-related field that we KNOW will exist.  Note that
 c              the code below is meant as an example; it assumes that (1) tracer fluids already
@@ -351,7 +351,9 @@ c              because if you do not do so then at best the code will seg fault 
 c              will accidentally overwrite other simulation values, with unpredictable and likely
 c              hard-to-debug results.  If additional tracer fluids are added then you will have to
 c              manually update the number of tracer fields in various places (function call, variable
-c              definition, if statements below, etc.).
+c              definition, if statements below, etc.).  Note also that this reference implementation
+c              doesn't set the tracer fluids to different values, but it's easy to do so by writing
+c              something to the effect of "if (numtracer .eq. 1) then (what you want to do)".
 c
 c              Another important note: we cannot easily or cheaply add additional attributes to
 c              particles, so if you want to record something relating to a specific particle (the
@@ -365,35 +367,43 @@ c
                if (usetracer .eq. 1) then
                   if (usetracerwithstarform .eq. 1) then
                      if (numtracer .ge. 1) then
-                        tracer1(i,j,k) = d(i,j,k)
+                        tracer1(i,j,k) = (1._RKIND - starfraction)
+     &                                   * d(i,j,k)
                      endif
 
                      if (numtracer .ge. 2) then
-                        tracer2(i,j,k) = d(i,j,k)
+                        tracer2(i,j,k) = (1._RKIND - starfraction)
+     &                                   * d(i,j,k)
                      endif
 
                      if (numtracer .ge. 3) then
-                        tracer3(i,j,k) = d(i,j,k)
+                        tracer3(i,j,k) = (1._RKIND - starfraction)
+     &                                   * d(i,j,k)
                      endif
 
                      if (numtracer .ge. 4) then
-                        tracer4(i,j,k) = d(i,j,k)
+                        tracer4(i,j,k) = (1._RKIND - starfraction)
+     &                                   * d(i,j,k)
                      endif
 
                      if (numtracer .ge. 5) then
-                        tracer5(i,j,k) = d(i,j,k)
+                        tracer5(i,j,k) = (1._RKIND - starfraction)
+     &                                   * d(i,j,k)
                      endif
 
                      if (numtracer .ge. 6) then
-                        tracer6(i,j,k) = d(i,j,k)
+                        tracer6(i,j,k) = (1._RKIND - starfraction)
+     &                                   * d(i,j,k)
                      endif
 
                      if (numtracer .ge. 7) then
-                        tracer7(i,j,k) = d(i,j,k)
+                        tracer7(i,j,k) = (1._RKIND - starfraction)
+     &                                   * d(i,j,k)
                      endif
 
                      if (numtracer .ge. 8) then
-                        tracer8(i,j,k) = d(i,j,k)
+                        tracer8(i,j,k) = (1._RKIND - starfraction)
+     &                                   * d(i,j,k)
                      endif
                   endif
                endif
@@ -704,7 +714,12 @@ c
 c           Tracer fluid feedback (modifying the same way we modify
 c           the density field for now).  Note that we both check for
 c           the existence of tracer fluids AND check to see if the user
-c           wants to modify this in stellar feedback.
+c           wants to modify this in stellar feedback.  This reference
+c           implementation does the same thing to all of the tracer fields
+c           that exist; however, it's easy to modify only a subset of the
+c           fields (if you wish to use some of the tracer fluids for an
+c           unrelated purpose) by selecting on specific numbers or ranges
+c           of numbers.
 c
 c           Look in the comments above "if (usetracer .eq. 1)" in the
 c           star_maker2 routine immediately above this routine for more

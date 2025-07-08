@@ -16,7 +16,7 @@ a user-specified number of "color field" fluids upon the initialization of a sim
 that allow the user to set a "dye" that advects along with the density field and other
 color fields.  A working example of this can be found in the routines for the Rotating
 Cylinder problem, and cosmology simulations can also be initialized with tracer fluids
-(though the fields themselves are currently set to a constant tiny value when they are,
+(though the fields themselves are currently set to a constant tiny value when they are
 instantiated and will need to be modified by users as needed). This can be readily
 extended to other types of simulations as well. The tracer fluids can also be manipulated
 during simulation runtime, as will be described shortly.
