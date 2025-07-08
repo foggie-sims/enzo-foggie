@@ -1590,12 +1590,30 @@ General Hydrodynamics Parameters
 ``ZEUSLinearArtificialViscosity`` (external)
     This is the linear artificial viscosity parameter C1 of Stone &
     Norman. Default: 0.0
-``RestrictTemperature`` (external)
-    This is used to turn on and off capping the temperature everywhere at
-    10\ :sup:`9` K. Values can be 1 for capping or 0 for no capping. Default: 0
+``ApplyBoundsToBaryonFields`` (external)
+    This parameter calls a routine of the same name that lives in EvolveLevel, which
+    applies upper and lower bounds to density, velocity, and/or temperature (which can)
+    all be set independently, as described immediately below.  Values for these bounds
+    are hard-coded in the routine ``Grid_ApplyBoundsToBaryonFields.C``.  This is meant to
+    be a solution of last resort for when multiphysics simulations are experiencing some
+    sort of instability that causes them to crash.  At present this capability is limited
+    to the PPM Direct Euler hydro algorithm (HydroMethod = 0).
+    Values can be 1 (on) and 0 (off). Default: 0 (off)
+``RestrictDensity`` (external)
+    Applies upper and lower bounds to density field. Both bounds are positive values.
+    Lower bound is set to tiny_number and upper bound is set to 1010\ :sup:`16` Particles
+    per cubic centimeter, which is roughly 1e-8 grams per cc.
+    Requires ``ApplyBoundsToBaryonFields`` to be turned on in order for it to do something.
+    Values can be 1 (on) and 0 (off).  Default: 0 (off)
 ``RestrictVelocity`` (external)
-    This is used to turn on and off capping the velocity everywhere at 
-    3000 km/s. Values can be 1 for capping or 0 for no capping. Default: 0
+    Applies upper bound to velocity magnitude (does not set lower bound).  The upper bound is set to 3000 km/s.
+    Requires ``ApplyBoundsToBaryonFields``to be turned on in order for it to do something.
+    Values can be 1 (on) and 0 (off).  Default: 0 (off)
+``RestrictTemperature`` (external)
+    Applies upper and lower bounds to temperature field (really, internal energy field). Both 
+    bounds are positive values, with the lower bound set to 1 K and the upper bound set to 10\ :sup:`9` K.
+    Requires ``ApplyBoundsToBaryonFields`` to be turned on in order for it to do something.
+    Values can be 1 (on) and 0 (off). Default: 0 (off)
 
 .. _minimum_pressure_support_parameters:
 
