@@ -1256,5 +1256,7 @@ EXTERN int PopIIIRotating;
 EXTERN int UseTracerFluid;
 EXTERN int NumberOfTracerFluidFields;
 EXTERN int SetTracerFluidFieldsOnStart;
+EXTERN int UseTracerFluidWithStarFormation;
+EXTERN int UseTracerFluidWithStellarFeedback;
 
 #endif

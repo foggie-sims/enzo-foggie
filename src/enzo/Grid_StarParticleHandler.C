@@ -113,7 +113,10 @@ extern "C" void FORTRAN_NAME(star_maker2)(int *nx, int *ny, int *nz,
                FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
 		         float *mp, float *tdp, float *tcp, float *metalf,
 	            int *imetalSNIa, float *metalSNIa, float *metalfSNIa,
-               int *iminit, float *minit);
+               int *iminit, float *minit,
+               int *usetracer, int *usetracerwithstarform, int *numtracer,
+               float *tracer1, float *tracer2, float *tracer3, float *tracer4,
+               float *tracer5, float *tracer6, float *tracer7, float *tracer8);
  
 extern "C" void FORTRAN_NAME(star_maker3mom)(int *nx, int *ny, int *nz,
              float *d, float *dm, float *temp, float *u, float *v, float *w,
@@ -328,7 +331,10 @@ extern "C" void FORTRAN_NAME(star_feedback2)(int *nx, int *ny, int *nz,
              FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
 	     float *mp, float *tdp, float *tcp, float *metalf, int *type,
 	     float *justburn, int *iminit, float *minit,
-        int *crmodel, float *crfeedback, float *cr);
+        int *crmodel, float *crfeedback, float *cr,
+        int *usetracer, int *usetracerwithstarfeed, int *numtracer,
+        float *tracer1, float *tracer2, float *tracer3, float *tracer4,
+        float *tracer5, float *tracer6, float *tracer7, float *tracer8);
 
 extern "C" void FORTRAN_NAME(star_feedback2_tab)(
          int *nx, int *ny, int *nz,
@@ -773,7 +779,26 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       MetalPointer = BaryonField[SNColourNum];
   } // ENDELSE both metal types
 
-  //printf("Star type \n");
+
+  int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
+
+  float *TracerFluid01Pointer, *TracerFluid02Pointer, *TracerFluid03Pointer, *TracerFluid04Pointer,
+     *TracerFluid05Pointer, *TracerFluid06Pointer, *TracerFluid07Pointer, *TracerFluid08Pointer;
+
+   if(UseTracerFluid){
+     if(this->IdentifyTracerFluidFields(TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num) == FAIL){
+       ENZO_FAIL("Error in IdentifyPhysicalQuantities.\n");
+     }
+     if(NumberOfTracerFluidFields >= 1) TracerFluid01Pointer = BaryonField[TF01Num];
+     if(NumberOfTracerFluidFields >= 2) TracerFluid02Pointer = BaryonField[TF02Num];
+     if(NumberOfTracerFluidFields >= 3) TracerFluid03Pointer = BaryonField[TF03Num];
+     if(NumberOfTracerFluidFields >= 4) TracerFluid04Pointer = BaryonField[TF04Num];
+     if(NumberOfTracerFluidFields >= 5) TracerFluid05Pointer = BaryonField[TF05Num];
+     if(NumberOfTracerFluidFields >= 6) TracerFluid06Pointer = BaryonField[TF06Num];
+     if(NumberOfTracerFluidFields >= 7) TracerFluid07Pointer = BaryonField[TF07Num];
+     if(NumberOfTracerFluidFields >= 8) TracerFluid08Pointer = BaryonField[TF08Num];
+   }
+
   /* Set the units. */
  
   float DensityUnits = 1, LengthUnits = 1, TemperatureUnits = 1,
@@ -892,7 +917,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        tg->ParticleMass, tg->ParticleAttribute[1], tg->ParticleAttribute[0],
        tg->ParticleAttribute[2],
        &StarMakerTypeIaSNe, BaryonField[MetalIaNum], tg->ParticleAttribute[3],
-       &StarMakerStoreInitialMass, tg->ParticleInitialMass);
+       &StarMakerStoreInitialMass, tg->ParticleInitialMass,
+       &UseTracerFluid, &UseTracerFluidWithStarFormation, &NumberOfTracerFluidFields,
+       TracerFluid01Pointer, TracerFluid02Pointer, TracerFluid03Pointer, TracerFluid04Pointer,
+       TracerFluid05Pointer, TracerFluid06Pointer, TracerFluid07Pointer, TracerFluid08Pointer);
 
       for (i = NumberOfNewParticlesSoFar; i < NumberOfNewParticles; i++)
          tg->ParticleType[i] = NormalStarType;
@@ -1650,7 +1678,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        ParticleMass, ParticleAttribute[1], ParticleAttribute[0],
        ParticleAttribute[2], ParticleType, &RadiationData.IntegratedStarFormation, 
        &StarMakerStoreInitialMass, ParticleInitialMass,
-       &CRModel, &CRFeedback, (CRModel?BaryonField[CRNum]:NULL));
+       &CRModel, &CRFeedback, (CRModel?BaryonField[CRNum]:NULL),
+       &UseTracerFluid, &UseTracerFluidWithStellarFeedback, &NumberOfTracerFluidFields,
+       TracerFluid01Pointer, TracerFluid02Pointer, TracerFluid03Pointer, TracerFluid04Pointer,
+       TracerFluid05Pointer, TracerFluid06Pointer, TracerFluid07Pointer, TracerFluid08Pointer);
    }
   } // end: if NORMAL_STAR
  

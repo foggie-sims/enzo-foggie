@@ -1096,6 +1096,9 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   UseTracerFluid = 0;
   NumberOfTracerFluidFields = 0;
   SetTracerFluidFieldsOnStart = 0;
+  UseTracerFluidWithStarFormation = 0;
+  UseTracerFluidWithStellarFeedback = 0;
+
 
   return SUCCESS;
 }

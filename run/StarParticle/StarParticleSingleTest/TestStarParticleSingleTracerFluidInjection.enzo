@@ -1,0 +1,64 @@
+#
+# AMR PROBLEM DEFINITION FILE: TestStarParticle
+#
+#  define problem
+#
+ProblemType            = 90        // TestStarParticle
+TopGridRank            = 3
+TopGridDimensions      = 50 50 50
+StarParticleFeedback   = 1 //Star feedback method 0, thermal feedback (Cen & Ostriker)
+TestStarParticleDensity = 1.0
+TestStarParticleEnergy  = 6.55410093179e-06
+TestProblemInitialMetallicityFraction  =  2e-3
+TestStarParticleStarMass = 100.0
+StarEnergyToThermalFeedback = 0.0  # We set the feedback energy to zero so we can
+			           # observe the tracer fluid density feedback!
+StarMassEjectionFraction = 0.25
+Initialdt = 0.0010017410642
+
+#
+#  Units
+#
+LengthUnits  =  1.2344e+21
+TimeUnits              = 3.15e13  // 10 Myr
+DensityUnits           = 1.0e-24  // 1 part/cc
+
+#
+#  set I/O and stop/start parameters
+#
+StopTime               = 1
+dtDataDump             = 0.1
+
+#
+#  set Hydro parameters
+#
+HydroMethod            = 0
+DualEnergyFormalism    = 1
+CourantSafetyNumber    = 0.4
+PPMDiffusionParameter  = 0       // diffusion off
+PPMFlatteningParameter = 0       // flattening on
+PPMSteepeningParameter = 0       // steepening on
+Gamma = 1.6666667
+
+#
+#  set grid refinement parameters
+#
+StaticHierarchy           = 1    // static hierarchy
+RefineBy                  = 2    // refinement factor
+MaximumRefinementLevel    = 0
+CellFlaggingMethod        = 0
+
+#
+# Cooling
+#
+RadiativeCooling  =  0
+
+#
+#  set some misc global parameters
+#
+
+UseTracerFluid                    = 1   // Turns on tracer fluids in general (allows fields to be created)
+UseTracerFluidWithStarFormation   = 1   // Lets star formation routine know that it can edit tracer fields
+UseTracerFluidWithStellarFeedback = 1   // Lets stellar feedback routine know that it can edit tracer fields
+NumberOfTracerFluidFields         = 8   // Sets the number of tracer fluids
+                                        //   (must be 1 <= N <=8 at present)
