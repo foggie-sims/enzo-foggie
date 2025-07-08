@@ -357,6 +357,7 @@ OBJS_CONFIG_LIB = \
 	Grid_AnalyzeTrackPeaks.o \
     	Grid_AppendActiveParticlesToList.o \
 	Grid_AppendForcingToBaryonFields.o \
+        Grid_ApplyBoundsToBaryonFields.o \
     	Grid_ApplyGalaxyParticleFeedback.o \
     	Grid_ApplyGalaxyParticleGravity.o \
     	Grid_ApplySmartStarParticleFeedback.o \

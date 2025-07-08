@@ -997,12 +997,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "StarMetalYield = %"FSYM, &StarMetalYield);
     ret += sscanf(line, "StarEnergyToThermalFeedback = %"FSYM,
 		  &StarEnergyToThermalFeedback);
-    ret += sscanf(line, "StarFeedbackAdditionalThermalEnergy = %"FSYM,
-		  &StarFeedbackAdditionalThermalEnergy);
-    ret += sscanf(line, "MomentumMultiplier = %"FSYM,
-		  &MomentumMultiplier);
-    ret += sscanf(line, "MomentumCancellationToThermal = %"ISYM,
-		  &MomentumCancellationToThermal);
+    ret += sscanf(line, "StarFeedbackMomentumMultiplier = %"FSYM,
+		  &StarFeedbackMomentumMultiplier);
+    ret += sscanf(line, "StarFeedbackInjectCappedVelocity = %"ISYM,
+        &StarFeedbackInjectCappedVelocity);
+    ret += sscanf(line, "StarFeedbackSNePerTimestepLimit = %"FSYM,
+        &StarFeedbackSNePerTimestepLimit);
     ret += sscanf(line, "WriteFeedbackLogFiles = %"ISYM,
 		  &WriteFeedbackLogFiles);
     ret += sscanf(line, "StarEnergyToStellarUV = %"FSYM, &StarEnergyToStellarUV);
@@ -1019,6 +1019,13 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (sscanf(line, "StarFeedbackTabularFilename = %s", dummy) == 1)
       StarFeedbackTabularFilename = dummy;
     ret += sscanf(line, "StarFeedbackTrackMetalSources = %"ISYM, &StarFeedbackTrackMetalSources);
+
+    ret += sscanf(line, "RestrictDensity = %"ISYM,
+		  &RestrictDensity);
+    ret += sscanf(line, "RestrictVelocity = %"ISYM,
+      &RestrictVelocity);
+    ret += sscanf(line, "RestrictTemperature = %"ISYM,
+      &RestrictTemperature);
 
     ret += sscanf(line, "StarClusterUseMetalField = %"ISYM,
 		  &StarClusterUseMetalField);

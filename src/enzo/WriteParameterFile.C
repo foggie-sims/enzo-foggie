@@ -934,12 +934,12 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
           StarMetalYield);
   fprintf(fptr, "StarEnergyToThermalFeedback           = %"GSYM"\n",
           StarEnergyToThermalFeedback);
-  fprintf(fptr, "StarFeedbackAdditionalThermalEnergy   = %"GSYM"\n",
-          StarFeedbackAdditionalThermalEnergy);
-  fprintf(fptr, "MomentumMultiplier                    = %"GSYM"\n",
-          MomentumMultiplier);
-  fprintf(fptr, "MomentumCancellationToThermal         = %"ISYM"\n",
-          MomentumCancellationToThermal);
+  fprintf(fptr, "StarFeedbackMomentumMultiplier        = %"GSYM"\n",
+          StarFeedbackMomentumMultiplier);
+  fprintf(fptr, "StarFeedbackSNePerTimestepLimit       = %"GSYM"\n",
+          StarFeedbackSNePerTimestepLimit);
+  fprintf(fptr, "StarFeedbackInjectCappedVelocity      = %"ISYM"\n",
+    StarFeedbackInjectCappedVelocity);
   fprintf(fptr, "WriteFeedbackLogFiles                 = %"ISYM"\n",
           WriteFeedbackLogFiles);
   fprintf(fptr, "StarEnergyToStellarUV                 = %"GSYM"\n",
@@ -964,6 +964,13 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
           StarFeedbackTabularSNIaEnergy);
   fprintf(fptr, "StarFeedbackTrackMetalSources         = %"ISYM"\n",
           StarFeedbackTrackMetalSources);
+
+  fprintf(fptr, "RestrictDensity                       = %"ISYM"\n",
+    RestrictDensity);
+  fprintf(fptr, "RestrictVelocity                      = %"ISYM"\n",
+    RestrictVelocity);
+  fprintf(fptr, "RestrictTemperature                   = %"ISYM"\n",
+    RestrictTemperature);
 
   fprintf(fptr, "StarMakerUseJeansMass                 = %"ISYM"\n",
 	  StarMakerUseJeansMass);
