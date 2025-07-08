@@ -965,6 +965,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "StarFeedbackTrackMetalSources         = %"ISYM"\n",
           StarFeedbackTrackMetalSources);
 
+  fprintf(fptr, "ApplyBoundsToBaryonFields             = %"ISYM"\n",
+    ApplyBoundsToBaryonFields);
   fprintf(fptr, "RestrictDensity                       = %"ISYM"\n",
     RestrictDensity);
   fprintf(fptr, "RestrictVelocity                      = %"ISYM"\n",

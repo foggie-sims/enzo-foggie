@@ -730,14 +730,12 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
         }
       }// end CRModel if 
 
-
       /* Check to see if baryon fields need to be bounded; if so, apply bounds */
-      if(1){  // BWO -- ALWAYS CALL THIS FOR NOW
+      if(ApplyBoundsToBaryonFields){
          if(Grids[grid1]->GridData->ApplyBoundsToBaryonFields() == FAIL){
             ENZO_FAIL("Error in grid->ApplyBoundsToBaryonFields.\n");
         }
       }
-
 
       /* Gravity: clean up AccelerationField. */
 
