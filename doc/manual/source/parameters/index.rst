@@ -2314,7 +2314,14 @@ General Star Formation
 
 ``MultiRefineRegionSpatiallyVaryingStarMass`` (external)
     If set to 1, this turns on the ability to use different minimum star particle masses in 
-    MultiRefine regions. 
+    MultiRefine regions. Note that this interacts with ``StarMakerMinimumMassRamp``. The minimum
+    star particle mass that is specified for a given MultiRefine region will be compared to the 
+    minimum star particle mass for the simulation as a whole at the time at which the calculation 
+    is being done and the smaller of the two values adopted. If ``StarMakerMinimumMassRamp`` is in 
+    use, ``StarMakerMinimumMassRamp`` and its associated parameters will be used to calculate the 
+    simulation's current global minimum star particle mass first and the minimum star particle mass
+    specified for a particular MultiRefine region will be compared to the resultant value (and the
+    smaller of the two values will be adopted), rather than to the value specified by ``StarMakerMinimumMass``.
     Default: 0 (OFF)
 
 ``MultiRefineRegionMinimumStarMass[#]`` (external)
@@ -2429,6 +2436,8 @@ The parameters below are considered in ``StarParticleCreation`` method
      (2) linear evolution of mass in redshift
      (3) exponential evolution of mass in time
      (4) exponential evolution of mass in redshift
+     Note that this interacts with ``MultiRefineRegionSpatiallyVaryingStarMass``; 
+     please look at that parameter description for more information.
      Default: 0 (off)
 ``StarMakerMinimumMassRampStartTime`` (external) 
      The code unit time, or redshift, to start the ramp of the StarMakerMinimumMass
