@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -128,7 +129,7 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
 
     /* ExportParameterFile(MetaData, CurrentTime, OldTime, dtFixed); */
     params->frontend = "enzo";
-    params->fig_basename = "Fig";
+    params->fig_basename = libyt_fig_basename;
     params->domain_left_edge[0] = (double) DomainLeftEdge[0];
     params->domain_left_edge[1] = (double) DomainLeftEdge[1];
     params->domain_left_edge[2] = (double) DomainLeftEdge[2];
@@ -314,7 +315,16 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
          * */
 
         field_list[libyt_field_i].field_name = DataLabel[i];
-        field_list[libyt_field_i].field_type = "cell-centered";
+        if (strcmp(DataLabel[i], "x-velocity") == 0 || strcmp(DataLabel[i], "y-velocity") == 0 || strcmp(DataLabel[i], "z-velocity") == 0) {
+            if (HydroMethod == Zeus_Hydro) {
+                field_list[libyt_field_i].field_type = "face-centered";
+            }
+            else {
+                field_list[libyt_field_i].field_type = "cell-centered";
+            }
+        } else {
+            field_list[libyt_field_i].field_type = "cell-centered";
+        }
         field_list[libyt_field_i].field_dtype = EYT_BFLOAT;
         for (j = 0; j < 2 * params->dimensionality; j++) {
             /*
@@ -397,17 +407,23 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
         return FAIL;
     }
 
-    /* Run yt_run_Function and yt_run_FunctionArguments */
+    /* Run Python function using yt_run_Function and yt_run_FunctionArguments
+     * The following code blocks are examples of how to call the Python function with or without passing args.
+     * This part is optional as long as we don't need to call Python function, and we can use it as a template. */
+
+    /*   yt_run_Function is used to run a Python function without arguments.
+     *   For example, this is equivalent to call yt_inline() in Python.*/
 	// if (yt_run_Function("yt_inline") != YT_SUCCESS) {
 	// 	   fprintf(stderr, "Error while running yt_run_Function and call yt_inline\n");
 	// 	   return FAIL;
 	// }
 
-        // example for calling a Python function named "yt_inline_args" that accepts arguments
-        // if (yt_run_FunctionArguments("yt_inline_args",
-                                    1, // number of args expected in the Python function
-                                    "\'density\'" // argument passed to yt_inline_args
-                                    ) != YT_SUCCESS) {
+    /*   yt_run_FunctionArguments is used to run a Python function with arguments.
+     *   For example, this is equivalent to call yt_inline_args('density') in Python. */
+    // if (yt_run_FunctionArguments("yt_inline_args",    // Python function name
+    //                              1,                   // number of args expected in the Python function
+    //                              "\'density\'"        // argument passed to yt_inline_args
+    //                              ) != YT_SUCCESS) {
  	//     fprintf(stderr, "Error while running yt_run_FunctionArguments and call yt_inline_args\n");
 	//     return FAIL;
     // }

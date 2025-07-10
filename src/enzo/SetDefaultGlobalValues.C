@@ -970,6 +970,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
 #ifdef USE_LIBYT
   strcpy(libyt_script_name, "inline");
+  strcpy(libyt_fig_basename, "Fig");
+  // cycle-based libyt call
+  CycleSkipLibytCall = 1;
+  CycleLastLibytCall = 0;
 #endif
 
   /* Some stateful variables for EvolveLevel */

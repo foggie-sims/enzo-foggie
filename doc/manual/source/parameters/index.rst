@@ -3881,7 +3881,21 @@ libyt In Situ Python Analysis
 
 ``libyt_script_name`` (external)
     The Python script name to be imported.
-    The name should omit the file extension ``.py``.
+    The name should omit the file extension ``.py``. (Default: ``inline``, meaning ``inline.py`` will be imported or created if it does not exist.)
+
+``libyt_fig_basename`` (external)
+    Figure basename for the yt script if there is figure output. (Default: ``Fig``)
+
+``CycleSkipLibytCall`` (external)
+    Control the cycle-based libyt calls. The number of cycles (top grid timesteps) between libyt calls. Zero turns off the cycle-based outputs. (Default: 1)
+
+    Similar to :ref:`cycle_base_output`.
+
+``CycleLastLibytCall`` (internal)
+    Control the cycle-based libyt calls.
+    The last cycle on which a cycled libyt call was made.
+
+    Similar to :ref:`cycle_base_output`.
 
 ``NumberOfLibytCalls`` (internal)
     Internal parameter tracked by Enzo.
