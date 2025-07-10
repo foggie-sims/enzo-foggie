@@ -634,6 +634,12 @@ EXTERN float HaloFinderLinkingLength;
 EXTERN float HaloFinderTimestep;
 EXTERN FLOAT HaloFinderLastTime;
 
+/* Parameters to turn on floors and ceilings on baryon fields */
+EXTERN int ApplyBoundsToBaryonFields;
+EXTERN int RestrictDensity;
+EXTERN int RestrictVelocity;
+EXTERN int RestrictTemperature;
+
 /************************************************/
 /* Global data for specific problems or methods */
 /************************************************/
@@ -1259,5 +1265,7 @@ EXTERN int PopIIIRotating;
 EXTERN int UseTracerFluid;
 EXTERN int NumberOfTracerFluidFields;
 EXTERN int SetTracerFluidFieldsOnStart;
+EXTERN int UseTracerFluidWithStarFormation;
+EXTERN int UseTracerFluidWithStellarFeedback;
 
 #endif

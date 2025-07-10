@@ -924,12 +924,12 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
           StarMetalYield);
   fprintf(fptr, "StarEnergyToThermalFeedback           = %"GSYM"\n",
           StarEnergyToThermalFeedback);
-  fprintf(fptr, "StarFeedbackAdditionalThermalEnergy   = %"GSYM"\n",
-          StarFeedbackAdditionalThermalEnergy);
-  fprintf(fptr, "MomentumMultiplier                    = %"GSYM"\n",
-          MomentumMultiplier);
-  fprintf(fptr, "MomentumCancellationToThermal         = %"ISYM"\n",
-          MomentumCancellationToThermal);
+  fprintf(fptr, "StarFeedbackMomentumMultiplier        = %"GSYM"\n",
+          StarFeedbackMomentumMultiplier);
+  fprintf(fptr, "StarFeedbackSNePerTimestepLimit       = %"GSYM"\n",
+          StarFeedbackSNePerTimestepLimit);
+  fprintf(fptr, "StarFeedbackInjectCappedVelocity      = %"ISYM"\n",
+    StarFeedbackInjectCappedVelocity);
   fprintf(fptr, "WriteFeedbackLogFiles                 = %"ISYM"\n",
           WriteFeedbackLogFiles);
   fprintf(fptr, "StarEnergyToStellarUV                 = %"GSYM"\n",
@@ -954,6 +954,15 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
           StarFeedbackTabularSNIaEnergy);
   fprintf(fptr, "StarFeedbackTrackMetalSources         = %"ISYM"\n",
           StarFeedbackTrackMetalSources);
+
+  fprintf(fptr, "ApplyBoundsToBaryonFields             = %"ISYM"\n",
+    ApplyBoundsToBaryonFields);
+  fprintf(fptr, "RestrictDensity                       = %"ISYM"\n",
+    RestrictDensity);
+  fprintf(fptr, "RestrictVelocity                      = %"ISYM"\n",
+    RestrictVelocity);
+  fprintf(fptr, "RestrictTemperature                   = %"ISYM"\n",
+    RestrictTemperature);
 
   fprintf(fptr, "StarMakerUseJeansMass                 = %"ISYM"\n",
 	  StarMakerUseJeansMass);
@@ -1321,6 +1330,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "UseTracerFluid = %"ISYM"\n", UseTracerFluid);
   fprintf(fptr, "NumberOfTracerFluidFields = %"ISYM"\n", NumberOfTracerFluidFields);
   fprintf(fptr, "SetTracerFluidFieldsOnStart = %"ISYM"\n", SetTracerFluidFieldsOnStart);
+  fprintf(fptr, "UseTracerFluidWithStarFormation = %"ISYM"\n", UseTracerFluidWithStarFormation);
+  fprintf(fptr, "UseTracerFluidWithStellarFeedback = %"ISYM"\n", UseTracerFluidWithStellarFeedback);
 
 
   /* Output current time */

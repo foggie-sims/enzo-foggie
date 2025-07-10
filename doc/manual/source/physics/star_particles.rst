@@ -240,19 +240,25 @@ Select this method by setting ``StarParticleFeedback = 64``.
 *Source: star_feedback6.F*
 
 This method follows the algorithm described in `Kimm & Cen (2014) <https://ui.adsabs.harvard.edu/abs/2014ApJ...788..121K/abstract>`_ 
-and `Kim et al. (2015) <https://ui.adsabs.harvard.edu/abs/2015MNRAS.451.2900K/abstract>`_. 
+and `Kimm et al. (2015) <https://ui.adsabs.harvard.edu/abs/2015MNRAS.451.2900K/abstract>`_. 
 This method is purely for star particle feedback and can be paired with 
 any star particle creation method. Currently, this method only provides 
 feedback from Type II and (optionally) Type Ia supernovae. Additional feedback sources 
 are a work in progress and will be added later.
 
-At each time step, a certain amount of mass, metals, momentum, and thermal 
-energy is deposited into a cube of 27 cells centered on the cell that hosts 
-the star particle. There are two options for determining the amounts that 
-are deposited:
+This method acts per each timestep. It starts by calculating and saving 
+the host grid cell, number of supernovae, and amount of mass and metals 
+ejected for every particle, skipping over those with negligible contributions. 
+For particles in the same host cell, it sums up their individual contributions 
+to produce a total contribution per *cell* rather than per *particle*.
 
-#. Use the slow feedback method of Cen & Ostriker, which determines the 
-   mass of the star particle that has formed in this time step, as in Method 0:
+There are two options for determining the number of supernovae and amounts 
+of ejected material that are deposited by each particle:
+
+#. Use either the slow or instantaneous feedback method of Cen & Ostriker,
+   as in Method 0. The instantaneous method assumes the full mass of 
+   the star particle forms at once, while slow method determines the 
+   mass of the star particle that has formed in this time step:
 
    .. math::
    
@@ -269,8 +275,7 @@ are deposited:
    Z\ :sub:`star` is the star particle metallicity.  This formulation
    accounts for gas recycling back into the stars.
 
-   The ejected momentum and thermal energy are determined through the 
-   supernova rate (see below), which is simply calculated as
+   The number of supernovae is simply calculated as
    N\ :sub:`SN` = M\ :sub:`form`/(100 M\ :sub:`sun`), under the assumption 
    that one Type II supernova occurs for each 100 solar masses of 
    stars formed. This option only accounts for Type II supernovae.
@@ -281,35 +286,58 @@ are deposited:
    supernovae rates, ejected mass, and ejected metals. See :ref:`tabular_sources`. 
    The supernova rates depend on the initial mass, age, and metallicity 
    of the star particle. Select this option with ``StarFeedbackUseTabularYields = 1``.
+   Note that while the Tabular Feedback method allows for the user to choose 
+   the energy of both Type II and Type Ia supernovae separately through the 
+   ``StarFeedbackTabularSNIIEnergy`` and ``StarFeedbackTabularSNIaEnergy``
+   parameters, this feedback scheme does not allow for values other than
+   10\ :sup:`51` ergs for either type of supernovae, and will result in 
+   an error if the user sets these parameters to any other value.
 
 Once the number of supernovae, ejected mass, and ejected metals for this 
-time step have been determined through 
-either option, the total injected momentum depends on whether or not the Sedov 
-blast wave for the explosion(s) would be resolved, which is determined by 
-comparing the ejected mass to the swept-up mass in each cell surrounding 
-the star particle. 
+time step contributed by *all* particles in each grid cell have been determined through 
+either option, the rest of the scheme operates on the summed contribution 
+of all particles to the grid.
+
+The parameter ``StarFeedbackSNePerTimestepLimit`` determines the threshold below 
+which the feedback routine will skip over injected any feedback. If there are 
+fewer than ``StarFeedbackSNePerTimestepLimit`` supernovae occurring in a given 
+cell and a given time step, no feedback will take place for that cell and time step.
+The default value of this parameter is 1e-3. Larger values, like 0.1 or 1, may 
+miss a significant amount of feedback because the supernova rate is a continuous 
+distribution with time, so having at least 1 SN per cell per time step
+typically requires very large star particles or very large time steps. Smaller 
+values than 1e-3 lead to injecting minute amounts of feedback each time step, 
+which can significantly slow down the code without significantly affecting 
+the total amount of feedback injected.
+
+For each grid cell in which supernovae are occuring ("explosion cell"), the total momentum that 
+will be injected into the 27 cells in a 3x3x3 cube surrounding the cell 
+depends on whether or not the Sedov blast wave for the explosion would 
+be resolved, which is determined by comparing the ejected mass to the swept-up 
+mass in each cell surrounding the explosion cell. 
 
 The ejected mass per cell is given by dM\ :sub:`ej` = M\ :sub:`ej`/N\ :sub:`cells`, 
-where M\ :sub:`ej` is the total ejected mass at this time step and N\ :sub:`cells` 
+where M\ :sub:`ej` is the total ejected mass at this time step from all particles 
+in the explosion cell and N\ :sub:`cells` 
 is the number of cells among which the feedback is distributed. Currently, 
 N\ :sub:`cells` = 27 and allowing different values using the parameters 
 ``StarFeedbackDistRadius`` and ``StarFeebackDistCellStep`` is NOT implemented.
 
-For each cell surrounding the host cell of the star particle, the swept-up 
+For each cell surrounding the explosion cell, the swept-up 
 mass is given by:
 
 .. math::
 
    {\rm d}M_{\rm swept} = \rho_{\rm cell} (\Delta x_{\rm cell}/2)^3 + 
-   \frac{(1-N_{\rm cells})\rho_{\rm host}\Delta x_{\rm host}^3}{N_{\rm cells}} + 
+   \frac{(1-N_{\rm cells})\rho_{\rm expl}\Delta x_{\rm expl}^3}{N_{\rm cells}} + 
    {\rm d}M_{\rm ej}
 
-where :math:`\rho_{\mathrm{cell}}` and :math:`\rho_{\mathrm{host}}` are 
-the densities of the cell of consideration and the host cell, and 
-:math:`\Delta x_{\mathrm{cell}}` and :math:`\Delta x_{\mathrm{host}}` are 
-the sizes of the cell of consideration and the host cell.
+where :math:`\rho_{\mathrm{cell}}` and :math:`\rho_{\mathrm{expl}}` are 
+the densities of the cell of consideration and the explosion cell, and 
+:math:`\Delta x_{\mathrm{cell}}` and :math:`\Delta x_{\mathrm{expl}}` are 
+the sizes of the cell of consideration and the explosion cell.
 
-For each cell surrounding the star particle, the ratio of the ejected mass 
+For each cell surrounding the explosion cell, the ratio of the ejected mass 
 per cell to the swept-up mass per cell is :math:`\chi = {\rm d}M_{\rm swept}/{\rm d}M_{\rm ej}` 
 and :math:`\chi` is compared to a threshold value given by:
 
@@ -318,11 +346,11 @@ and :math:`\chi` is compared to a threshold value given by:
    \chi_{\rm thr} = 69.58 N_{\rm SN}^{-2/17} n_{\rm avg}^{-4/17} Z_{\rm avg}^{-0.28}
 
 where n\ :sub:`avg` is the average hydrogen number density of all cells 
-surrounding the star particle (including the host cell) and Z\ :sub:`avg` is 
-the average metallicity of all cells surrounding the star particle (including 
-the host cell), with a minumum of 0.01 solar.
+surrounding the explosion cell (including the explosion cell) and Z\ :sub:`avg` is 
+the average metallicity of all cells surrounding the explosion cell (including 
+the explosion cell), with a minumum of 0.01 solar.
 
-For each cell surrounding the star particle, :math:`\chi` is checked against 
+For each cell surrounding the explosion cell, :math:`\chi` is checked against 
 :math:`\chi_{\rm thr}`:
 
 * If :math:`\chi < \chi_{\rm thr}`, the Sedov blast wave explosion is 
@@ -343,31 +371,47 @@ For each cell surrounding the star particle, :math:`\chi` is checked against
 
    {\rm d}p = \frac{3 \times 10^5\ M_\odot\ \rm{km/s}\ N_{\rm SN}^{16/17} n_{\rm avg}^{-2/17} Z_{\rm avg}^{-0.14}}{N_{\rm cells}}
 
-Because this calculation is done for every cell surrounding the star particle, 
+Because this calculation is done for every cell surrounding the explosion cell, 
 it is not assumed that the supernovae explode in constant-density ISM.
 
-The momentum is added symmetrically outward from the host cell of the star 
-particle, in the frame of the particle, in order to account for the movement 
-of the particle. If any cell surrounding the particle would receive a momentum 
-kick that would change its velocity by 1000 km/s or greater, the amount of 
-momentum it receives is limited to that which produces a velocity change 
-of 1000 km/s.
+The frame of the explosion is determined by the N\ :sub:`SN`-weighted average 
+velocity of all particles located in the explosion cell. The velocity grids are 
+translated into this frame for all the following calculations and translated
+back to the lab frame at the end. The momentum is added 
+symmetrically outward from the explosion cell in the explosion frame to account 
+for the movement of the particles that are exploding. If any cell surrounding 
+the explosion cell would receive a momentum kick that would change its velocity 
+by 1000 km/s or greater (in the explosion frame), the amount of momentum it receives is limited to 
+that which produces a velocity change of 1000 km/s.
 
-If the total amount of momentum injected through this method does not sum 
-to 10\ :sup:`51` ergs of kinetic energy per supernova, thermal energy is 
-added to the host cell such that the total kinetic + thermal energy is 
-10\ :sup:`51` ergs per supernova.
+In order to account for thermalization of flows colliding with each other 
+within the injection region, the momentum is first deposited on a dummy 
+grid that uses the gas density of the true grid, but is initialized with 
+zero velocities. The total kinetic energy on this dummy grid is calculated 
+as the sum of :math:`\frac{1}{2}\frac{|p|^2}{m}` in each cell, where 
+:math:`|p|` is the magnitude of the momentum and m is the mass in each cell. 
 
-There is an option in this method to approximate the thermalization of gas 
-flows colliding with each other when the momentum is injected. 
-If the momentum of any of the surrounding cells *decreases* when the feedback 
-momentum is injected, due to e.g. momentum deposited in the opposite direction 
-as the motion of the gas in the cell, then thermal energy is injected into 
-that cell. The amount of thermal energy injected is equal to the difference 
-between the change in the cell's momentum and the change in its momentum 
-it would have had if it was stationary, converted from momentum to kinetic 
-energy. By default this option is off, but it can be turned on with 
-``MomentumCancellationToThermal = 1``.
+The momentum is then deposited on the velocity grids (in the explosion frame), and the kinetic energy within 
+the injection region is again calculated. The difference between the 
+dummy grid's kinetic energy and the velocity grids' kinetic energy is injected 
+as thermal energy split evenly among the 27 cells in the injection region. This process 
+accounts for any kinetic energy that is "lost" due to the momentum that is 
+deposited canceling out with gas velocities existing already on the grid. 
+Depositing the "lost" energy as thermal accounts for the thermalization 
+of gas flows colliding with one another, as calculated by the momentum 
+cancelation. Finally, the velocity grids are translated back to the lab frame.
+
+In addition to the limit on the velocity kick such that no cell receives a kick 
+higher than 1000 km/s, there are two additional limiters placed on the cells 
+in the 3x3x3 injection region. The first is that no cell in this region can 
+have a velocity magnitude higher than 3000 km/s in the lab frame. By default, 
+any "lost" energy from capping the velocity in this way is simply discarded.
+However, if the user parameter ``StarFeedbackInjectCappedVelocity = 1``, the 
+"lost" velocity from capping at 3000 km/s is converted to kinetic energy and then injected as thermal 
+energy split evenly among the 27 cells in the injection region. The other limiter 
+is that no cell in this region can have an internal specific energy corresponding 
+to a temperature higher than 10\ :sup:`9` K. Any energy that would 
+put a cell over this cap is discarded, even if ``StarFeedbackInjectCappedVelocity = 1``.
 
 While the amount of momentum to inject in this method is fully determined 
 by the supernova rate and ejection mass, there is an option to multiply 
@@ -375,25 +419,58 @@ the injection momentum by a value to increase or decrease the amount of
 momentum injected. Use ``MomentumMultiplier`` to set this value. By default, 
 ``MomentumMultiplier = 1.0``.
 
-There is an option to write to file feedback logs that list, for each time 
-step, the following columns:
+There is an option to write feedback logs to file, which can be turned on 
+with ``WriteFeedbackLogFiles = 1``. If this option is turned on, two sets 
+of log files are created, ``feedbacklog_parts_XXXXXXXX.txt`` and 
+``feedbacklog_grid_XXXXXXXX.txt``, where ``XXXXXXXX`` is the processor number. 
+
+The first log writes information about each particle that is contributing to 
+feedback. The columns in ``feedbacklog_parts_XXXXXXXX.txt`` are:
 
 * Simulation time in Myr
+* x-index of particle on grid
+* y-index of particle on grid 
+* z-index of particle on grid
 * Particle ID number
 * Particle age in Myr
 * Current mass of the star particle in M\ :sub:`sun`
 * Initial mass of the star particle in M\ :sub:`sun`
-* Number of supernovae in this time step
+* Number of supernovae in this particle in this time step
 * M\ :sub:`ej` in M\ :sub:`sun`
 * The ejected metal mass, M\ :sub:`Z,ej` in M\ :sub:`sun`
-* The total momentum injected in M\ :sub:`sun` km/s 
-* The thermal energy injected in ergs 
 
-Each processor creates one log file, titled ``feedbacklog_XXXXXXX.txt`` 
-where ``XXXXXXX`` is the processor number. Because each file has one new 
-row per particle per time step, these files can get very large and it is 
-not recommended to use them except for debugging short runs. By default, 
-these logs are not created, but can be turned on with ``WriteFeedbackLogFiles = 1``.
+The second log writes the summed contribution from all particles that 
+participate in feedback, for each explosion cell. The columns in 
+``feedbacklog_grid_XXXXXXXX.txt`` are:
+
+* Simulation time in Myr 
+* x-index of explosion cell 
+* y-index of explosion cell 
+* z-index of explosion cell 
+* Number of supernovae in this timestep in this explosion cell 
+* Mass ejected from all supernovae in this explosion cell in M\ :sub:`sun` 
+* Metal mass ejected from all supernovae in this explosion cell in M\ :sub:`sun` 
+* Momentum injected by all supernovae in this explosion cell in M\ :sub:`sun` km/s 
+* Thermal energy injected by momentum cancellation due to colliding flows 
+  from this explosion cell, in ergs
+* Kinetic energy lost (or injected as thermal if ``StarFeedbackInjectCappedVelocity = 1``)
+  from capping the lab-frame velocity at 3000 km/s, in ergs
+* Thermal energy lost from capping the specific internal energy corresponding 
+  to a temperature of 10\ :sup:`9` K, in ergs
+
+Because the first file has one new row per particle per time step and the 
+second file has one new row per exploding grid cell per time step, 
+these files can get very large and it is not recommended to use them except 
+for debugging short runs. They will likely also slow down the calculation by 
+performing many I/O operations.
+
+In cosmological testing, it was found that this feedback scheme very occasionally
+leads to a runaway effect where a large amount of momentum injected in a single low-density
+cell causes the cell to evacuate, which increases the temperature, which drives an
+expansion that increase the velocity again, and so on until 1-2 cells are left 
+with relativsitic temperatures and velocities. To combat this, it is highly 
+recommended to run this feedback scheme using the floors and ceilings (link here)
+options ``RestrictTemperature = 1`` and ``RestrictVelocity = 1``.
 
 
 .. _method_7:

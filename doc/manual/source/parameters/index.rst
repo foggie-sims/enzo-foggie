@@ -100,6 +100,8 @@ common convention of 0 meaning false or off and 1 for true or on.
 
    * `Magnetic Supernova Feedback`_
 
+   * `Momentum Feedback`_
+
    * `Active Particles`_
 
 * `Radiation Parameters`_
@@ -691,6 +693,16 @@ calculations as well.
   Initializes tracer fluids upon instantiation of the simulation if
   set to 1. This will require the user to add code in the appropriate
   problem generator to set the fields in the way that they want.  Default: 0
+``UseTracerFluidWithStarFormation`` (external)
+Switch that turns on the ability of the star formation routines to
+use or modify the tracer fluids.  This is currently only implemented
+in star_maker2 .  Default: 0
+``UseTracerFluidWithStellarFeedback`` (external)
+Switch that turns on the ability of the stellar feedback routines to
+use or modify the tracer fluids.  This is currently only implemented
+in star_feedback2.  Default: 0
+
+
 
 .. _simulation_identifiers_parameters:
 
@@ -1605,6 +1617,30 @@ General Hydrodynamics Parameters
 ``ZEUSLinearArtificialViscosity`` (external)
     This is the linear artificial viscosity parameter C1 of Stone &
     Norman. Default: 0.0
+``ApplyBoundsToBaryonFields`` (external)
+    This parameter calls a routine of the same name that lives in EvolveLevel, which
+    applies upper and lower bounds to density, velocity, and/or temperature (which can)
+    all be set independently, as described immediately below.  Values for these bounds
+    are hard-coded in the routine ``Grid_ApplyBoundsToBaryonFields.C``.  This is meant to
+    be a solution of last resort for when multiphysics simulations are experiencing some
+    sort of instability that causes them to crash.  At present this capability is limited
+    to the PPM Direct Euler hydro algorithm (HydroMethod = 0).
+    Values can be 1 (on) and 0 (off). Default: 0 (off)
+``RestrictDensity`` (external)
+    Applies upper and lower bounds to density field. Both bounds are positive values.
+    Lower bound is set to tiny_number and upper bound is set to 1010\ :sup:`16` Particles
+    per cubic centimeter, which is roughly 1e-8 grams per cc.
+    Requires ``ApplyBoundsToBaryonFields`` to be turned on in order for it to do something.
+    Values can be 1 (on) and 0 (off).  Default: 0 (off)
+``RestrictVelocity`` (external)
+    Applies upper bound to velocity magnitude (does not set lower bound).  The upper bound is set to 3000 km/s.
+    Requires ``ApplyBoundsToBaryonFields``to be turned on in order for it to do something.
+    Values can be 1 (on) and 0 (off).  Default: 0 (off)
+``RestrictTemperature`` (external)
+    Applies upper and lower bounds to temperature field (really, internal energy field). Both 
+    bounds are positive values, with the lower bound set to 1 K and the upper bound set to 10\ :sup:`9` K.
+    Requires ``ApplyBoundsToBaryonFields`` to be turned on in order for it to do something.
+    Values can be 1 (on) and 0 (off). Default: 0 (off)
 
 .. _minimum_pressure_support_parameters:
 
@@ -2657,6 +2693,23 @@ The parameters below are currently considered in ``StarParticleCreation`` method
 ``MagneticSupernovaDuration`` (external)
     The duration (in years) over which the total magnetic supernova energy is injected. This should be set to at least 5 times the minimum timestep of the simulation. Default: 5e4
 
+
+.. _momentum_feedback_parameters:
+
+Momentum Feedback
+^^^^^^^^^^^^^^^^^
+
+The parameters below are currently considered in ``StarFeedback`` method 6.
+See :ref:`method_6`.
+
+``StarFeedbackMomentumMultiplier`` (external)
+    This parameter is used to multiply the strength of the injected momentum. Default value is 1.0.
+``StarFeedbackSNePerTimestepLimit`` (external)
+    This parameter is used to limit how many supernovae must occur per cell per time step in order for feedback to be injected. Default value is 1e-3.
+``StarFeedbackInjectCappedVelocity`` (external)
+    This parameter is used to turn on or off the conversion of velocity over 3000 km/s into thermal energy. Possible values are 0 or 1, and default is 0.
+``WriteFeedbackLogFiles`` (external)
+    This parameter is used to turn on or off the outputting of feedback information from this method to text files at runtime. Possible values are 0 or 1, and default is 0.
 
 
 .. _active_particles_parameters:

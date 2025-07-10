@@ -2,6 +2,25 @@
 #include "phys_const.def"
 #include "error.def"
 
+c  Notes about tracer fluids
+c  Written by Brian O'Shea, June 2025
+c
+c  star_maker2 and star_feedback2 now have the ability to modify tracer fluids
+c  in a way that is currently extremely simple, but which can easily be modified
+c  and ported to other star formation and feedback algorithms in Enzo. Each
+c  routine now takes in the usetracer and numtracer arguments, as well as either
+c  usetracerwithstarform in star_maker2 and usetracerwithstarfeed in star_feedback2.
+c  usetracer and numtracer correspond to the user parameters UseTracerFluid and
+c  NumberOfTracerFluidFields, respectively, which are used broadly across the code.
+c  usetracerwithstarform and usetracerwithstarfeed correspond to
+c  UseTracerFluidWithStarFormation and UseTracerFluidWithStellarFeedback, respectively.
+c  These parameters, as well as pointers to all of the possible tracer fields, have
+c  to be added to the function definition in Grid::StarParticleHandler and in the actual
+c  function calls, defined in the star_maker and star_feedback routines, and then used
+c  however you want them to be used.  Look below for explanations.  Also, note that
+c  additional narrative documentation can be found in the user manual in
+c  physics/analysis_modules.rst
+
 c=======================================================================
 c////////////////////////  SUBROUTINE STAR_MAKER \\\\\\\\\\\\\\\\\\\\\\\
 c
@@ -18,7 +37,10 @@ c
      &                      xp, yp, zp, up, vp, wp,
      &                      mp, tdp, tcp, metalf,
      &                      imetalSNIa, metalSNIa, metalfSNIa,
-     &                      iminit, minit)
+     &                      iminit, minit, usetracer,
+     &                      usetracerwithstarform, numtracer,
+     &                      tracer1, tracer2, tracer3, tracer4,
+     &                      tracer5, tracer6, tracer7, tracer8)
 
 c
 c  CREATES GALAXY PARTICLES
@@ -74,6 +96,10 @@ c    level - current level of refinement
 c    procnum - processor number (for output)
 c    imetalSNIa - SN Ia metallicity flag (0 - none, 1 - yes)
 c    iminit - whether to store initial mass separately
+c    usetracer - whether tracer fluids are used
+c    usetracerwithstarform - whether tracer fluids are used in star formation
+c    numtracer - number of tracer fields used (usetracer must be 1)
+c    tracer1, tracer2, tracer3, tracer4, tracer5, tracer6, tracer7, tracer8 - tracer fluid fields.
 c
 c  OUTPUTS:
 c
@@ -112,6 +138,11 @@ c
       R_PREC    mp(nmax), tdp(nmax), tcp(nmax), metalf(nmax),
      &     metalfSNIa(nmax), minit(nmax)
       R_PREC    odthresh, masseff, smthresh, mintdyn, tempthresh
+      INTG_PREC usetracer, usetracerwithstarform, numtracer
+      R_PREC    tracer1(nx,ny,nz), tracer2(nx,ny,nz), tracer3(nx,ny,nz),
+     &     tracer4(nx,ny,nz), tracer5(nx,ny,nz), tracer6(nx,ny,nz),
+     &     tracer7(nx,ny,nz), tracer8(nx,ny,nz)
+
 c
       R_PREC   sformsum
       save   sformsum
@@ -301,6 +332,82 @@ c
 c               write(7+procnum,1000) level,bmass*starfraction,tcp(ii),
 c     &                           tdp(ii)*t1,d(i,j,k)*d1,z,metalf(ii)
 c
+
+c
+c              Set tracer fluid field values (if relevant), checking also to ensure that
+c              the user wants to modify the tracer fluids in the star formation routine. The
+c              latter step is redundant in this specific implementation, but is being added as
+c              a future-proofing measure because it's conceivable that somebody might want to
+c              use the tracer fields in some way without modifying them. We don't have anything
+c              specific to set them to at this point, so we're just going to modify them based on
+c              the starfraction value in the same way that we modify the density field.  Note that
+c              the code below is meant as an example; it assumes that (1) tracer fluids already
+c              exist in the simulation, meaning they were either instantiated from the beginning
+c              of the calculation or were inserted at some point during simulation runtime, and
+c              (2) you have set the appropriate number of tracer fluids for whatever you want to
+c              do.  Regarding point #2, it's important to ensure that the field you're trying to
+c              modify actually exists (hence the "if (numtracer .ge. SOME NUMBER)" statements),
+c              because if you do not do so then at best the code will seg fault and at worst it
+c              will accidentally overwrite other simulation values, with unpredictable and likely
+c              hard-to-debug results.  If additional tracer fluids are added then you will have to
+c              manually update the number of tracer fields in various places (function call, variable
+c              definition, if statements below, etc.).  Note also that this reference implementation
+c              doesn't set the tracer fluids to different values, but it's easy to do so by writing
+c              something to the effect of "if (numtracer .eq. 1) then (what you want to do)".
+c
+c              Another important note: we cannot easily or cheaply add additional attributes to
+c              particles, so if you want to record something relating to a specific particle (the
+c              specific composition of tracer fields in the cell where a specific star formed, for
+c              example) you would have to write it out to either stdout or to a log file. Examples
+c              of how to do both of those things are available elsewhere in this file and in other
+c              Fortran files in Enzo.  Note that newly-created star particles do not have a permanent
+c              and unique index number yet (that happens at the end of Grid::StarParticleHandler),
+c              so if you want that type of information this may require some cleverness on your part!
+c
+               if (usetracer .eq. 1) then
+                  if (usetracerwithstarform .eq. 1) then
+                     if (numtracer .ge. 1) then
+                        tracer1(i,j,k) = (1._RKIND - starfraction)
+     &                                   * tracer1(i,j,k)
+                     endif
+
+                     if (numtracer .ge. 2) then
+                        tracer2(i,j,k) = (1._RKIND - starfraction)
+     &                                   * tracer2(i,j,k)
+                     endif
+
+                     if (numtracer .ge. 3) then
+                        tracer3(i,j,k) = (1._RKIND - starfraction)
+     &                                   * tracer3(i,j,k)
+                     endif
+
+                     if (numtracer .ge. 4) then
+                        tracer4(i,j,k) = (1._RKIND - starfraction)
+     &                                   * tracer4(i,j,k)
+                     endif
+
+                     if (numtracer .ge. 5) then
+                        tracer5(i,j,k) = (1._RKIND - starfraction)
+     &                                   * tracer5(i,j,k)
+                     endif
+
+                     if (numtracer .ge. 6) then
+                        tracer6(i,j,k) = (1._RKIND - starfraction)
+     &                                   * tracer6(i,j,k)
+                     endif
+
+                     if (numtracer .ge. 7) then
+                        tracer7(i,j,k) = (1._RKIND - starfraction)
+     &                                   * tracer7(i,j,k)
+                     endif
+
+                     if (numtracer .ge. 8) then
+                        tracer8(i,j,k) = (1._RKIND - starfraction)
+     &                                   * tracer8(i,j,k)
+                     endif
+                  endif
+               endif
+
  1000          format(i5,1x,6(1pe10.3,1x))
 c
 c              Do not generate more star particles than available
@@ -339,7 +446,11 @@ c
      &                      xp, yp, zp, up, vp, wp,
      &                      mp, tdp, tcp, metalf, type, justburn,
      &                      iminit, minit, 
-     &                      crmodel, crfeedback, cr)
+     &                      crmodel, crfeedback, cr,
+     &                      usetracer, usetracerwithstarfeed,
+     &                      numtracer,
+     &                      tracer1, tracer2, tracer3, tracer4,
+     &                      tracer5, tracer6, tracer7, tracer8)
 
 c
 c  RELEASES "STAR" PARTICLE ENERGY, MASS AND METALS
@@ -392,6 +503,10 @@ c    distcells - total number of cells over which to distribute feedback
 c    crmodel   - boolean: 1 = include cosmic ray physics, 0 = no cosmic ray physics                                                
 c    crfeedback - fraction of thermal supernova energy to return as cosmic rays                                                    
 c    cr         - Cosmic ray BaryonField  
+c    usetracer - whether tracer fluids are used in the code at all
+c    usetracerwithstarfeed - whether tracer fluids are used in stellar feedback
+c    numtracer - number of tracer fields used (usetracer must be 1)
+c    tracer1, tracer2, tracer3, tracer4, tracer5, tracer6, tracer7, tracer8 - tracer fluid fields.
 c
 c  OUTPUTS:
 c    d,u,v,w,ge,e - modified field
@@ -420,6 +535,11 @@ c
       INTG_PREC crmodel
       R_PREC cr(nx,ny,nz), minit(npart)
       R_PREC crfeedback
+      INTG_PREC usetracer, usetracerwithstarfeed, numtracer
+      R_PREC    tracer1(nx,ny,nz), tracer2(nx,ny,nz), tracer3(nx,ny,nz),
+     &     tracer4(nx,ny,nz), tracer5(nx,ny,nz), tracer6(nx,ny,nz),
+     &     tracer7(nx,ny,nz), tracer8(nx,ny,nz)
+
 c
 c  Locals
 c    (msolar_e51 is one solar rest mass energy divided by 10^51 erg)
@@ -588,6 +708,75 @@ c
                         u(ic,jc,kc) = u(ic,jc,kc)/d(ic,jc,kc)
                         v(ic,jc,kc) = v(ic,jc,kc)/d(ic,jc,kc)
                         w(ic,jc,kc) = w(ic,jc,kc)/d(ic,jc,kc)
+
+
+c
+c           Tracer fluid feedback (modifying the same way we modify
+c           the density field for now).  Note that we both check for
+c           the existence of tracer fluids AND check to see if the user
+c           wants to modify this in stellar feedback.  This reference
+c           implementation does the same thing to all of the tracer fields
+c           that exist; however, it's easy to modify only a subset of the
+c           fields (if you wish to use some of the tracer fluids for an
+c           unrelated purpose) by selecting on specific numbers or ranges
+c           of numbers.
+c
+c           Look in the comments above "if (usetracer .eq. 1)" in the
+c           star_maker2 routine immediately above this routine for more
+c           information/caveats about using tracer fluids in star particle
+c           routines, and in the documentation in physics/analysis_modules.rst
+c           for additional narrative information.
+c
+                        if (usetracer .eq. 1) then
+
+                           if (usetracerwithstarfeed .eq. 1) then
+
+                              if (numtracer .ge. 1) then
+                                 tracer1(ic,jc,kc) =  tracer1(ic,jc,kc)
+     &                                             + distmass
+                              endif
+
+                              if (numtracer .ge. 2) then
+                                 tracer2(ic,jc,kc) =  tracer2(ic,jc,kc)
+     &                                             + distmass
+                              endif
+
+                              if (numtracer .ge. 3) then
+                                 tracer3(ic,jc,kc) =  tracer3(ic,jc,kc)
+     &                                             + distmass
+                              endif
+
+                              if (numtracer .ge. 4) then
+                                 tracer4(ic,jc,kc) =  tracer4(ic,jc,kc)
+     &                                             + distmass
+                              endif
+
+                              if (numtracer .ge. 5) then
+                                 tracer5(ic,jc,kc) =  tracer5(ic,jc,kc)
+     &                                             + distmass
+                              endif
+
+                              if (numtracer .ge. 6) then
+                                 tracer6(ic,jc,kc) =  tracer6(ic,jc,kc)
+     &                                             + distmass
+                              endif
+
+                              if (numtracer .ge. 7) then
+                                 tracer7(ic,jc,kc) =  tracer7(ic,jc,kc)
+     &                                             + distmass
+                              endif
+
+                              if (numtracer .ge. 8) then
+                                 tracer8(ic,jc,kc) =  tracer8(ic,jc,kc)
+     &                                             + distmass
+                              endif
+
+                           endif
+                        endif
+
+
+
+
 c
 c           If te is really total energy (and it is unless imethod=2),
 c             then just set this value
