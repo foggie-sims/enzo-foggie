@@ -7,6 +7,9 @@ This feature enables Enzo to do in situ analysis using Python, by calling and us
 This avoids outputting data to disk before conducting analysis.
 Here, we use `yt <https://yt-project.org>`__ as an analysis platform.
 
+Currently, Zeus (``HydroMethod = 2``) face-centered fields (e.g., ``x-velocity``, ``y-velocity``, ``z-velocity``) are not supported.
+Particle type supports ``DarkMatter`` and active particles only.
+
 Requirements
 ------------
 
