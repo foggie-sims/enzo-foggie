@@ -263,7 +263,8 @@ def test_context_aware_star_formation_and_multirefinement():
     data  = ds.all_data()
 
     # Read in evolving multirefine region coordinates for this snapshot and find expected position of the MRR
-    t,x1,y1,z1,x2,y2,z2,llim,slim = np.loadtxt('AMRNestedCosmologyTestTrackFile.txt',skiprows=2,usecols=(1,2,3,4,5,6,7,8,10),unpack=True)
+    t,x1,y1,z1,x2,y2,z2,llim,slim = np.loadtxt(os.path.join(_dir_name, 'AMRNestedCosmologyTestTrackFile.txt'),
+                                               skiprows=2,usecols=(1,2,3,4,5,6,7,8,10),unpack=True)
     current_time = ds.current_redshift
     timestep = 0
     while t[timestep]>current_time:
