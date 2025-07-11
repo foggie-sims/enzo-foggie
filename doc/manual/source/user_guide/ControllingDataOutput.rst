@@ -89,6 +89,8 @@ Timing Methods
 
 There are 6 ways to trigger output from Enzo.
 
+.. _cycle_base_output:
+
 Cycle Based Output
 ~~~~~~~~~~~~~~~~~~
 
