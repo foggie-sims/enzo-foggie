@@ -257,3 +257,42 @@ def test_phase():
     assert_rel_equal(data[('data', 'temperature')], ds_comp.data[('data', 'temperature')], 8)
     assert_rel_equal(data[('data', 'cooling_time')], ds_comp.data[('data', 'cooling_time')], 8)
     assert_rel_equal(data[('data', 'cell_mass')], ds_comp.data[('data', 'cell_mass')], 8)
+
+def test_context_aware_star_formation_and_multirefinement():
+    ds = yt.load(os.path.join(_dir_name, 'DD0012/DD0012'))
+    data  = ds.all_data()
+
+    # Read in evolving multirefine region coordinates for this snapshot and find expected position of the MRR
+    t,x1,y1,z1,x2,y2,z2,llim,slim = np.loadtxt(os.path.join(_dir_name, 'AMRNestedCosmologyTestTrackFile.txt'),
+                                               skiprows=2,usecols=(1,2,3,4,5,6,7,8,10),unpack=True)
+    current_time = ds.current_redshift
+    timestep = 0
+    while t[timestep]>current_time:
+        timestep += 1
+
+    tfrac = (current_time-t[timestep-1])/(t[timestep]-t[timestep-1])
+    MRR1_corners = np.array([x1[timestep-1]+(x1[timestep]-x1[timestep-1])*tfrac,y1[timestep-1]+(y1[timestep]-y1[timestep-1])*tfrac,z1[timestep-1]+(z1[timestep]-z1[timestep-1])*tfrac,\
+                                x2[timestep-1]+(x2[timestep]-x2[timestep-1])*tfrac,y2[timestep-1]+(y2[timestep]-y2[timestep-1])*tfrac,z2[timestep-1]+(z2[timestep]-z2[timestep-1])*tfrac])
+
+    # Create box that correspond to where our evolving MRR should be and check that all cells within it meet the minimum
+    # refinement criteria specified in the track file
+    MRR1 = ds.box(MRR1_corners[:3],MRR1_corners[3:])
+    assert(np.all(MRR1['index','grid_level']>=llim[timestep]))
+
+    # Do the same for the static multirefine region
+    MRR2 = ds.box(np.array([0.63,0.63,0.63]),np.array([0.65,0.65,0.65]))
+    assert(np.all(MRR2['index','grid_level']>=2))
+
+    # Check that small star particles are confined to the evolving multirefine region
+    # Note that this will only be meaningful if the minimum star particle mass threshold in the MRR
+    # is less than (1-StarMassEjectionFraction)*StarMakerMinimumMass, so first we'll make sure that this is true
+    SmallestDefaultStar = (1-ds.parameters['StarMassEjectionFraction'])*ds.parameters['StarMakerMinimumMass']
+    assert (np.any(slim[timestep]<=SmallestDefaultStar))
+
+    # then we'll check we've formed at least one small star particle
+    TotSmallStars = len(data[('nbody','particle_mass')][data[('nbody','particle_mass')].in_units('Msun')<SmallestDefaultStar])
+    assert (TotSmallStars>0)
+
+    # and finally we'll check that all of the small star particles are within our MultiRefineRegion
+    SmallStarsInSphere = len(MRR1[('nbody','particle_mass')][MRR1[('nbody','particle_mass')].in_units('Msun')<SmallestDefaultStar])
+    assert_equal(SmallStarsInSphere,TotSmallStars)
