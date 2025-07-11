@@ -1143,8 +1143,10 @@ Hierarchy Control Parameters
     code units or redshift, see the parameter above); the next six columns give the values 
     of ``MultiRefineRegionLeft/RightEdge``; the next two columns give the values of
     ``MultiRefineRegionMinimum/MaximumLevel``; and the final column gives the value
-    of ``MultiRefineRegionMinimumStarMass`` (in units of Msol). For example, this
-    might be a text file when time is indexed by redshift:
+    of ``MultiRefineRegionMinimumStarMass`` (in units of Msol). Note that 
+    ``MultiRefineRegionSpatiallyVaryingStarMass`` must be set to 1 (ON) for this last column
+    to be used! 
+    For example, this might be a text file when time is indexed by redshift:
     ::
        
      2

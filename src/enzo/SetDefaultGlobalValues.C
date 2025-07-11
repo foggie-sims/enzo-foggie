@@ -260,8 +260,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   MultiRefineRegionMaximumOuterLevel = INT_UNDEFINED;
   MultiRefineRegionMinimumOuterLevel = INT_UNDEFINED;
-  MultiRefineRegionSpatiallyVaryingStarMass = INT_UNDEFINED;
-  MultiRefineRegionDefaultStarMass = FLOAT_UNDEFINED;
+  MultiRefineRegionSpatiallyVaryingStarMass = 0;
+  MultiRefineRegionDefaultStarMass = FLOAT_UNDEFINED; // cannot be set by user; internal use only
   NumberOfStaticMultiRefineRegions = 0;
   for (i = 0; i < MAX_STATIC_REGIONS+MAX_TRACKS; i++) {
     MultiRefineRegionMaximumLevel[i] = -1;

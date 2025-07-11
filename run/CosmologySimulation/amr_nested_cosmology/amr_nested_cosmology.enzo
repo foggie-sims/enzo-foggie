@@ -131,7 +131,9 @@ ParallelParticleIO      = 1
 
 
 #
-# create a static multirefine MultiRefineRegion
+# Create a static multirefine MultiRefineRegion
+# Note that this is in addition the evolving
+# MultiRefineRegions created in MultiRefineRegionFile
 #
 MultiRefineRegionLeftEdge[0] = 0.63 0.63 0.63
 MultiRefineRegionRightEdge[0] = 0.65 0.65 0.65
