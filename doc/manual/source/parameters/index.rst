@@ -1160,9 +1160,9 @@ Hierarchy Control Parameters
 
     In this case, there are two time-evolving MultiRefineRegions. The first is refined to a minimum of 9 and a maximum 
     of 11 levels of refinement, starting at the z=4.6092 value and moves via linear interpolation until 
-    the z=4.5045 value. During this time, star particles as small as 500 Msol are permitted to form in this region.
+    the z=4.4045 value. During this time, star particles as small as 500 Msol are permitted to form in this region.
     The second region is refined to a minimum of 10 and a maximum of 11 levels of refinement. Between z=4.6092 and 
-    z=4.5045, star particles within this region can form with a mass as low as 125 Msol, but this increases to 150 
+    z=4.4045, star particles within this region can form with a mass as low as 125 Msol, but this increases to 150 
     Msol and then 175 Msol at z=4.4045. The code will crash if the simulation starts before the earliest time given 
     or evolves until after the latest time in the file. All regions must use the same set of time entries. In cells where
     multiple MultiRefineRegions overlap, the highest ``MultiRefineRegionMinimum/MaximumLevel`` for those regions will be 
