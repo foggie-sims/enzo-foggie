@@ -694,13 +694,13 @@ calculations as well.
   set to 1. This will require the user to add code in the appropriate
   problem generator to set the fields in the way that they want.  Default: 0
 ``UseTracerFluidWithStarFormation`` (external)
-Switch that turns on the ability of the star formation routines to
-use or modify the tracer fluids.  This is currently only implemented
-in star_maker2 .  Default: 0
+  Switch that turns on the ability of the star formation routines to
+  use or modify the tracer fluids.  This is currently only implemented
+  in star_maker2 .  Default: 0
 ``UseTracerFluidWithStellarFeedback`` (external)
-Switch that turns on the ability of the stellar feedback routines to
-use or modify the tracer fluids.  This is currently only implemented
-in star_feedback2.  Default: 0
+  Switch that turns on the ability of the stellar feedback routines to
+  use or modify the tracer fluids.  This is currently only implemented
+  in star_feedback2.  Default: 0
 
 
 
@@ -1607,7 +1607,7 @@ General Hydrodynamics Parameters
     Values can be 1 (on) and 0 (off).  Default: 0 (off)
 ``RestrictVelocity`` (external)
     Applies upper bound to velocity magnitude (does not set lower bound).  The upper bound is set to 3000 km/s.
-    Requires ``ApplyBoundsToBaryonFields``to be turned on in order for it to do something.
+    Requires ``ApplyBoundsToBaryonFields`` to be turned on in order for it to do something.
     Values can be 1 (on) and 0 (off).  Default: 0 (off)
 ``RestrictTemperature`` (external)
     Applies upper and lower bounds to temperature field (really, internal energy field). Both 
