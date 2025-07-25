@@ -461,10 +461,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
     /* If provided, set RefineRegion from evolving RefineRegion 
        OR set MustRefineRegion from evolving MustRefineRegion 
-       OR set CoolingRefineRegion from evolving CoolingRefineRegion */
+       OR set CoolingRefineRegion from evolving CoolingRefineRegion
+       OR set MultiRefineRegion from evolving MultiRefineRegion */
     if ((RefineRegionTimeType == 1) || (RefineRegionTimeType == 0)
         || (MustRefineRegionTimeType == 1) || (MustRefineRegionTimeType == 0)
-        || (CoolingRefineRegionTimeType == 1) || (CoolingRefineRegionTimeType == 0)) {
+        || (CoolingRefineRegionTimeType == 1) || (CoolingRefineRegionTimeType == 0)
+        || (MultiRefineRegionTimeType == 1) || (MultiRefineRegionTimeType == 0)) {
         if (SetEvolveRefineRegion(MetaData.Time) == FAIL) 
 	  ENZO_FAIL("Error in SetEvolveRefineRegion.");
     }
@@ -473,6 +475,13 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     if (StarMakerMinimumMassRamp > 0) {
         if (SetStellarMassThreshold(MetaData.Time) == FAIL) 
 	  ENZO_FAIL("Error in SetStellarMassThreshold.");
+    }
+
+    /* If using spatially varying star particle mass threshold, store stellar mass 
+    threshold for this root grid timestep. StarMakerMinimumMass will get reset to
+    this value in all grids that aren't in a MultiRefine region */
+    if (MultiRefineRegionSpatiallyVaryingStarMass > 0){
+      MultiRefineRegionDefaultStarMass = StarMakerMinimumMass;
     }
 
     /* Set evolving feedback efficiency */
@@ -529,7 +538,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
         return FAIL;
     }
 
-
+/* Now that we've formed stars, reset this to original value */
+StarMakerMinimumMass = MultiRefineRegionDefaultStarMass;
 
 #ifdef USE_MPI 
     CommunicationBarrier();

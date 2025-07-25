@@ -882,7 +882,6 @@ gradient force to gravitational force for one-zone collapse test. */
 
    int SetFlaggingField(int &NumberOfFlaggedCells, int level);
 
-
 /* Set flagging field from refine regions */
 
    int SetFlaggingFieldMultiRefineRegions(int level);
@@ -983,6 +982,10 @@ gradient force to gravitational force for one-zone collapse test. */
 
    int FlagCellsToBeRefinedByMustRefineRegion(int level);
 
+/* Flag all cells which are within user-specified refinement regions. */
+
+   int FlagCellsToBeRefinedByMultiRefineRegion(int level);
+
 /* Flag all cells which are above a user-specified metallicity. */
 
    int FlagCellsToBeRefinedByMetallicity(int level);
@@ -995,6 +998,9 @@ gradient force to gravitational force for one-zone collapse test. */
    Flagged cells in the boundary zones and within one zone of the boundary. */
 
    int FlagBufferZones();
+
+/* Set minimum star particle mass for cells within multirefine regions*/
+   int SetMinimumStarMass();
 
 /* Identify new subgrids for this grid (and prove Fermat's last theorem too)
    (gg #5) */

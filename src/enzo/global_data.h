@@ -261,18 +261,16 @@ EXTERN FLOAT RefineRegionRightEdge[MAX_DIMENSION];
 EXTERN int RefineRegionAutoAdjust;
 
 EXTERN int MultiRefineRegion;
-EXTERN FLOAT MultiRefineRegionLeftEdge[MAX_STATIC_REGIONS][MAX_DIMENSION];
-EXTERN FLOAT MultiRefineRegionRightEdge[MAX_STATIC_REGIONS][MAX_DIMENSION];
-EXTERN int MultiRefineRegionGeometry[MAX_STATIC_REGIONS];
-EXTERN FLOAT MultiRefineRegionCenter[MAX_STATIC_REGIONS][MAX_DIMENSION];
-EXTERN FLOAT MultiRefineRegionOrientation[MAX_STATIC_REGIONS][MAX_DIMENSION];
-EXTERN FLOAT MultiRefineRegionRadius[MAX_STATIC_REGIONS];
-EXTERN FLOAT MultiRefineRegionWidth[MAX_STATIC_REGIONS];
-EXTERN int MultiRefineRegionMaximumLevel[MAX_STATIC_REGIONS];
-EXTERN int MultiRefineRegionMinimumLevel[MAX_STATIC_REGIONS];
+EXTERN FLOAT MultiRefineRegionLeftEdge[MAX_STATIC_REGIONS+MAX_TRACKS][MAX_DIMENSION];
+EXTERN FLOAT MultiRefineRegionRightEdge[MAX_STATIC_REGIONS+MAX_TRACKS][MAX_DIMENSION];
+EXTERN int MultiRefineRegionMaximumLevel[MAX_STATIC_REGIONS+MAX_TRACKS];
+EXTERN int MultiRefineRegionMinimumLevel[MAX_STATIC_REGIONS+MAX_TRACKS];
+EXTERN float MultiRefineRegionMinimumStarMass[MAX_STATIC_REGIONS+MAX_TRACKS];
 EXTERN int MultiRefineRegionMaximumOuterLevel;
 EXTERN int MultiRefineRegionMinimumOuterLevel;
-EXTERN FLOAT MultiRefineRegionStaggeredRefinement[MAX_STATIC_REGIONS];
+EXTERN int MultiRefineRegionSpatiallyVaryingStarMass;
+EXTERN float MultiRefineRegionDefaultStarMass;
+EXTERN int NumberOfStaticMultiRefineRegions;
 
 /* Uniform gravity: on/off flag, direction, and strength. */
 
@@ -573,6 +571,17 @@ EXTERN FLOAT EvolveCoolingRefineRegionTime[MAX_REFINE_REGIONS]; // time bins
 EXTERN FLOAT EvolveCoolingRefineRegionLeftEdge[MAX_REFINE_REGIONS][3]; // left corners
 EXTERN FLOAT EvolveCoolingRefineRegionRightEdge[MAX_REFINE_REGIONS][3]; // right corners
 
+/* Evolving MultiRefine region*/
+EXTERN char *MultiRefineRegionFile;
+EXTERN int MultiRefineRegionTimeType; // 0=time 1=redshift
+EXTERN int NumberOfMultiRefineTracks; // how many multirefine regions are being evolved?
+EXTERN int NumberOfMultiRefineTimeEntries; // how many times are they being evolved for?
+EXTERN FLOAT EvolveMultiRefineRegionTime[MAX_TIME_ENTRIES]; // time bins
+EXTERN FLOAT EvolveMultiRefineRegionLeftEdge[MAX_TRACKS][MAX_TIME_ENTRIES][3]; // left corners
+EXTERN FLOAT EvolveMultiRefineRegionRightEdge[MAX_TRACKS][MAX_TIME_ENTRIES][3]; // right corners
+EXTERN int EvolveMultiRefineRegionMinimumLevel[MAX_TRACKS]; // minimum allowable level
+EXTERN int EvolveMultiRefineRegionMaximumLevel[MAX_TRACKS]; // maximum allowable level
+EXTERN float EvolveMultiRefineRegionMinimumStarMass[MAX_TRACKS][MAX_TIME_ENTRIES]; // minimum allowed star particle formation mass
 
 /* Processor identifier for this thread/processor */
 

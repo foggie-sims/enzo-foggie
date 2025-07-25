@@ -278,6 +278,15 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 	  return FAIL;
 	}
 	break;
+
+	/* ==== METHOD 20: FORCE REFINEMENT TO SOME LEVEL IN MULTIPLE REGIONS  ==== */
+      case 20:
+	NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMultiRefineRegion(level);
+	if (NumberOfFlaggedCells < 0) {
+	  fprintf(stderr, "Error in grid->FlagCellsToBeRefinedByMultiRefineRegion.\n");
+	  return FAIL;
+	}
+	break;
 	
 	/* ==== METHOD 100: UNDO REFINEMENT IN SOME REGIONS ==== */
 	
