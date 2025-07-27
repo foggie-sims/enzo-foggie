@@ -1017,7 +1017,8 @@ c
                   do j = 1_IKIND,3_IKIND
                      do i = 1_IKIND,3_IKIND
                         mom_inj = mom_inj + mom_per_cell(i, j, k)
-                        energy_inj = energy_inj + energy_per_cell(i, j, k)
+                        energy_inj = energy_inj + 
+     &                      energy_per_cell(i, j, k)
                      enddo
                   enddo
                enddo
