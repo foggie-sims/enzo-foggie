@@ -914,6 +914,18 @@ void my_exit(int status)
     delete [] FBTable.event_rate;
   }
 
+  /* 
+    Always free memory for pre-SN feedback tables.
+    These were loaded in ReadParameterFile.C
+  */
+  if (StarFeedbackPreSNFeedback) {
+    delete [] pSNFBTable.ini_met;
+    delete [] pSNFBTable.pop_age;
+    delete [] pSNFBTable.mass_yield;
+    delete [] pSNFBTable.metm_yield;
+    delete [] pSNFBTable.mom_rate;
+  }
+
   if (status == EXIT_SUCCESS) {
 
     if (MyProcessorNumber==0) {

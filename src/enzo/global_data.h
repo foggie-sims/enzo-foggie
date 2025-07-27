@@ -383,6 +383,10 @@ EXTERN EquilibriumTableType EquilibriumTable;
 
 EXTERN FeedbackTableType FBTable;
 
+/* Table of pre-SN stellar feedback yields */
+
+EXTERN PreSNFeedbackTableType pSNFBTable;
+
 /* Gadget Equilibrium cooling on/off flag */
 
 EXTERN int GadgetEquilibriumCooling;

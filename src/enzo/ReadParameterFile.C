@@ -65,6 +65,7 @@ int CheckShearingBoundaryConsistency(TopGridData &MetaData);
 void get_uuid(char *buffer);
 
 int ReadFeedbackTable(char *filename);
+int ReadPreSNFeedbackTable(char *filename);
 
 int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 {
@@ -999,10 +1000,18 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &StarEnergyToThermalFeedback);
     ret += sscanf(line, "StarFeedbackMomentumMultiplier = %"FSYM,
 		  &StarFeedbackMomentumMultiplier);
-    ret += sscanf(line, "StarFeedbackInjectCappedVelocity = %"ISYM,
-        &StarFeedbackInjectCappedVelocity);
+    ret += sscanf(line, "StarFeedbackCapVelocityKick = %"ISYM,
+        &StarFeedbackCapVelocityKick);
     ret += sscanf(line, "StarFeedbackSNePerTimestepLimit = %"FSYM,
         &StarFeedbackSNePerTimestepLimit);
+    ret += sscanf(line, "StarFeedbackStochasticSNe = %"ISYM,
+        &StarFeedbackStochasticSNe);
+    ret += sscanf(line, "StarFeedbackPreSNFeedback = %"ISYM,
+        &StarFeedbackPreSNFeedback);
+    ret += sscanf(line, "StarFeedbackPreSNMomentum = %"ISYM,
+        &StarFeedbackPreSNMomentum);
+    if (sscanf(line, "StarFeedbackPreSNFilename = %s", dummy) == 1)
+      StarFeedbackPreSNFilename = dummy;
     ret += sscanf(line, "WriteFeedbackLogFiles = %"ISYM,
 		  &WriteFeedbackLogFiles);
     ret += sscanf(line, "StarEnergyToStellarUV = %"FSYM, &StarEnergyToStellarUV);
@@ -2211,6 +2220,18 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       ENZO_FAIL("Error in ReadFeedbackTable.");
     } else {
       if (debug) fprintf(stderr, "Successfully read in feedback table %s.\n", StarFeedbackTabularFilename);
+    }
+  }
+
+  if (StarFeedbackPreSNFeedback) {
+
+    if (!StarMakerStoreInitialMass)
+      ENZO_FAIL("StarFeedbackPreSNFeedback requires StarMakerStoreInitialMass to be enabled.");
+
+    if (ReadPreSNFeedbackTable(StarFeedbackPreSNFilename) == FAIL) {
+      ENZO_FAIL("Error in ReadPreSNFeedbackTable.");
+    } else {
+      if (debug) fprintf(stderr, "Successfully read in pre-SN feedback table %s.\n", StarFeedbackPreSNFilename);
     }
   }
 
