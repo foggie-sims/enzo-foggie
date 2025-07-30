@@ -715,7 +715,7 @@ c
      &             wind_metal*(dunits*(x1*dx)**3._RKIND)/
      &             SolarMass,
      &             wind_mom*(dunits*(x1*dx)**3._RKIND)/
-     &             SolarMass*(vunits*1e5_RKIND)
+     &             SolarMass*(vunits/1e5_RKIND)
                endif
 c
  10         continue

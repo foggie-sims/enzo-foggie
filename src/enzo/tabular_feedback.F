@@ -114,7 +114,7 @@ c      Note that the initial mass is expressed as a mass density
      &            mom_table, metal_array, age_array,
      &            metal_size, age_size)
 c 
-      momentum_yield = momentum_yield * mass_init / (1e5_RKIND*vunits) ! convert from km/s to code units
+      momentum_yield = momentum_yield * mass_init / (vunits/1e5_RKIND) ! convert from km/s to code units
       end subroutine
 c
 c ===============================================
