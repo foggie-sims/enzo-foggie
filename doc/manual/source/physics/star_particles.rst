@@ -304,6 +304,19 @@ of ejected material that are deposited by each particle:
    cumulative number in the continuous method, the nature of Poisson sampling 
    is such that there may be more or fewer SNe per particle than expected.
 
+   In the stochastic SNe method, the amount of mass and metals to eject for 
+   each supernova is calculated by integrating the mass (or metals) ejection 
+   rate from the Tabular Feedback tables, and dividing that by the integrated 
+   SN rate from the same tables. This gives the expected value of ejection mass 
+   per supernova explosion. However, if a star particle is very small and has 
+   the unlikely event of a supernova, this could theoretically eject more than
+   the mass of the particle. To account for this, the mass per SN ejection 
+   is rescaled by the ratio of the current particle mass to its initial mass, 
+   and then the minimum of this value or of 0.25 times the current particle 
+   mass is taken as the ejection mass. For metals, a similar rescaling occurs, 
+   but the minimum is taken between this value or 0.02 times the current particle 
+   mass.
+
 Once the number of supernovae, ejected mass, and ejected metals for this 
 time step contributed by *all* particles in each grid cell have been determined through 
 either option, the rest of the scheme operates on the summed contribution 
