@@ -45,7 +45,7 @@ int SetStellarMassThreshold(FLOAT time)
   /* Calculate redshift */
   if (ComovingCoordinates) {
     CosmologyComputeExpansionFactor(time, &a, &dadt);
-    redshift = (1 + InitialRedshift)/a - 1;
+    redshift = (1.0 + InitialRedshift)/a - 1.0;
   }
 
   /* recast redshift and time to be the same precision as everything else; only important if

@@ -232,9 +232,10 @@ before the call to the problem initializer as follows:
 
         if (TopGrid.GridData->InitializeUniformGrid(MyProblemUniformDensity,
                                               MyProblemUniformTotalEnergy,
-                                              MyProblemUniformTotalEnergy,
+                                              MyProblemUniformInternalEnergy,
                                               MyProblemUniformVelocity,
-                                              MyProblemUniformBField) == FAIL) {
+                                              MyProblemUniformBField,
+                                              MyProblemUniformCR) == FAIL) {
                                                  ENZO_FAIL("Error in InitializeUniformGrid.");
                                                  }
 
@@ -278,7 +279,7 @@ a more complete list, including extra chemical species.
       char *Vel1Name = "x-velocity";
       char *Vel2Name = "y-velocity";
       char *Vel3Name = "z-velocity";
-      i = 0;
+      int i = 0;
       DataLabel[i++] = DensName;
       DataLabel[i++] = TEName;
       if (DualEnergyFormalism)
@@ -301,8 +302,7 @@ put problem specific parameters in the main parameter file reader.
 
 The usual pattern reads each line of the parameter file, and tries
 to match each line with a parameter. This allows the parameter file
-to be independent of of order. The typical pattern looks like
-this:
+to be independent of order. The typical pattern looks like this:
 
 .. code-block:: c
 
@@ -390,8 +390,8 @@ There are three important events that need to happen in
 * Fill ``BaryonField`` with your desired initial conditions.
 
 Ensuring the proper sequence of the first two is somewhat cumbersome, we
-recommend simplifying by calling ``InitializeUniformGrid`` from ``MyTestInitialize``
-before calling ``MyProblemInitialize.``
+recommend simplifying by calling ``InitializeUniformGrid`` from ``MyProblemInitialize``
+before calling ``MyProblemInitializeGrid.``
 
 When setting your desired initial conditions, make sure to only set field values
 on Grids which live on the current processor. In Enzo, each Grid is a
@@ -484,7 +484,7 @@ Top Grid, one must now initialize a ``HierarchyEntry`` linked list (of which ``T
 is the head) and call the problem initializer on each subgrid. There are several
 ways to do this, depending on the complexity of the code. One first needs to
 understand the ``HierarchyEntry`` linked list. This Page gives a tutorial on the
-linked lists, and links to examples in the code.
+linked lists, and links to examples in the code. :ref:`LinkedLists`
 
 Using ParallelRootGridIO
 ~~~~~~~~~~~~~~~~~~~~~~~~
