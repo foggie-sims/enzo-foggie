@@ -694,13 +694,13 @@ calculations as well.
   set to 1. This will require the user to add code in the appropriate
   problem generator to set the fields in the way that they want.  Default: 0
 ``UseTracerFluidWithStarFormation`` (external)
-Switch that turns on the ability of the star formation routines to
-use or modify the tracer fluids.  This is currently only implemented
-in star_maker2 .  Default: 0
+  Switch that turns on the ability of the star formation routines to
+  use or modify the tracer fluids.  This is currently only implemented
+  in star_maker2 .  Default: 0
 ``UseTracerFluidWithStellarFeedback`` (external)
-Switch that turns on the ability of the stellar feedback routines to
-use or modify the tracer fluids.  This is currently only implemented
-in star_feedback2.  Default: 0
+  Switch that turns on the ability of the stellar feedback routines to
+  use or modify the tracer fluids.  This is currently only implemented
+  in star_feedback2.  Default: 0
 
 
 
@@ -1607,7 +1607,7 @@ General Hydrodynamics Parameters
     Values can be 1 (on) and 0 (off).  Default: 0 (off)
 ``RestrictVelocity`` (external)
     Applies upper bound to velocity magnitude (does not set lower bound).  The upper bound is set to 3000 km/s.
-    Requires ``ApplyBoundsToBaryonFields``to be turned on in order for it to do something.
+    Requires ``ApplyBoundsToBaryonFields`` to be turned on in order for it to do something.
     Values can be 1 (on) and 0 (off).  Default: 0 (off)
 ``RestrictTemperature`` (external)
     Applies upper and lower bounds to temperature field (really, internal energy field). Both 
@@ -2665,8 +2665,16 @@ See :ref:`method_6`.
     This parameter is used to multiply the strength of the injected momentum. Default value is 1.0.
 ``StarFeedbackSNePerTimestepLimit`` (external)
     This parameter is used to limit how many supernovae must occur per cell per time step in order for feedback to be injected. Default value is 1e-3.
-``StarFeedbackInjectCappedVelocity`` (external)
-    This parameter is used to turn on or off the conversion of velocity over 3000 km/s into thermal energy. Possible values are 0 or 1, and default is 0.
+``StarFeedbackStochasticSNe`` (external)
+    This parameter is used to turn on stochastic supernovae. Possible values are 0 or 1, and default value is 0.
+``StarFeedbackCapVelocityKick`` (external)
+    This parameter is used to turn on or off capping the velocity kick in any cell to 1000 km/s. Possible values are 0 or 1, and default is 0.
+``StarFeedbackPreSNFeedback`` (external)
+    This parameter turns on (1) and off (0) the injection of mass and metals from stellar winds in the first 5 Myr of a star particle's evolution. Default is 0.
+``StarFeedbackPreSNMomentum`` (external)
+    This parameter turns on (1) and off (0) the injection of momentum from stellar winds in the first 5 Myr of a star particle's evolution. Must be used with ``StarFeedbackPreSNFeedback = 1``. Default is 0.
+``StarFeedbackPreSNFilename`` (external)
+    This parameter gives the filename of the table from which stellar wind mass, metals, and momentum is drawn. This is necessary if using ``StarFeedbackPreSNFeedback = 1``.
 ``WriteFeedbackLogFiles`` (external)
     This parameter is used to turn on or off the outputting of feedback information from this method to text files at runtime. Possible values are 0 or 1, and default is 0.
 

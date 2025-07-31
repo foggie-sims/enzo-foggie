@@ -113,7 +113,7 @@ c-----------------------------------------------------------------------
       implicit none
 #include "fortran_types.def"
 c-----------------------------------------------------------------------
-#define FORTRAN_DEBUG
+#define NO_FORTRAN_DEBUG
 c
 c  Arguments
 c
@@ -169,11 +169,6 @@ c
       R_PREC n_cell, Z_cell, ke, ge_cap, ge_cell, ge_lost_to_cap
       R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, reduct_ratio,
      &     mass_term, vel_mag, ke_before_cap, ke_lost_to_cap, delta_ge
-      R_PREC v_mag, max_v, max_T, min_density, min_den_x, min_den_y,
-     &     min_den_z, max_T_x, max_T_y, max_T_z, max_v_x, max_v_y,
-     &     max_v_z
-      INTG_PREC min_den_i, min_den_j, min_den_k, max_T_i, max_T_j,
-     &     max_T_k, max_v_i, max_v_j, max_v_k
       R_PREC mz_eject, mzeject_ii, mzeject_ia
       R_PREC metal_per_cell, metal_ii_per_cell, metal_ia_per_cell
       R_PREC u1(3,3,3), v1(3,3,3), w1(3,3,3), d1(3,3,3),
@@ -197,7 +192,6 @@ c
       character*32 feedbacklog_particles
       character*32 feedbacklog_grid
       character*32 debug_filename
-      character*32 grid_filename
       character*8   post
 
 c
@@ -251,9 +245,6 @@ c
       enddo
       debug_filename = 'feedbackdebug_' // post // '.txt'
       open(unit=7,file=debug_filename,status='unknown',
-     &        position='append')
-      grid_filename = 'gridinfo_' // post // '.txt'
-      open(unit=8,file=grid_filename,status='unknown',
      &        position='append')
 #endif
 c
@@ -874,7 +865,8 @@ c
 c     If KE injected onto grid is less than what it was in the dummy
 c     (because of momentum cancellation due to non-static gas), add
 c     the remaining energy as thermal into the host cell.
-c
+c 
+               add_therm_w = 0._RKIND
                kin_energy_inj_w = kin_energy_end_w - kin_energy_b_wind
                if (kin_energy_inj_w .lt. kin_energy_dummy_w) then
                   add_therm_w = (kin_energy_dummy_w-kin_energy_inj_w)
@@ -1300,6 +1292,14 @@ c
      &             ke_lost_to_cap*dunits*
      &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
      &             ge_lost_to_cap*dunits*
+     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
+     &             pSNmass_grid(ic,jc,kc)*
+     &             (dunits*(x1*dx)**3._RKIND)/SolarMass,
+     &             pSNmetal_grid(ic,jc,kc)*(dunits*(x1*dx)**3._RKIND)/
+     &             SolarMass,
+     &             pSNmom_grid*(dunits*(dx*x1)**3._RKIND)*
+     &             vunits/SolarMass/1e5_RKIND,
+     &             add_therm_w*dunits*
      &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
                endif
 c
@@ -1310,19 +1310,6 @@ c
       enddo ! end loop over feedback grid
 c
 c
-#ifdef FORTRAN_DEBUG
-      write(8,*) 'after: min_d, x, y, z, i, j, k', min_density*dunits,
-     &  min_den_x*x1*3.24078e-22, min_den_y*x1*3.24078e-22,
-     &  min_den_z*x1*3.24078e-22, min_den_i, min_den_j, min_den_k
-      write(8,*) 'after: max_T, x, y, z, i, j, k', max_T
-     &  *(vunits**2_IKIND)*8.06e-9_RKIND, max_T_x*x1*3.24078e-22,
-     &  max_T_y*x1*3.24078e-22, max_T_z*x1*3.24078e-22, max_T_i,
-     &  max_T_j, max_T_k
-      write(8,*) 'after: max_v, x, y, z, i, j, k', max_v
-     &  *vunits/1.e5_RKIND, max_v_x*x1*3.24078e-22, 
-     &  max_v_y*x1*3.24078e-22, max_v_z*x1*3.24078e-22, max_v_i,
-     &  max_v_j, max_v_k
-#endif
       if (feedback_log .eq. 1) then
          close(4)
          close(5)
