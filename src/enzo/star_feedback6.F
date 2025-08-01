@@ -165,10 +165,10 @@ c
       R_PREC ke_before(3,3,3), mom_per_cell(3,3,3)
       R_PREC energy_per_cell(3,3,3), energy_per_cell1(3,3,3)
       R_PREC Z_avg, n_avg, Z_floor,
-     &	  realmass, mu_cell, fbuff, add_therm, delta_therm
-      R_PREC n_cell, Z_cell, ke, ge_cap, ge_cell, ge_lost_to_cap
+     &	  realmass, mu_cell, fbuff, add_therm
+      R_PREC n_cell, Z_cell, ke
       R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, reduct_ratio,
-     &     mass_term, vel_mag, ke_before_cap, ke_lost_to_cap, delta_ge
+     &     mass_term, vel_mag, delta_ge
       R_PREC mz_eject, mzeject_ii, mzeject_ia
       R_PREC metal_per_cell, metal_ii_per_cell, metal_ia_per_cell
       R_PREC u1(3,3,3), v1(3,3,3), w1(3,3,3), d1(3,3,3),
@@ -1204,7 +1204,6 @@ c
 c           Add the change in the kinetic energy to the total energy field
 c     
                ke_injected = 0._RKIND
-               ke_lost_to_cap = 0._RKIND
                te_sum = 0._RKIND
                ge_sum = 0._RKIND
                ke_sum = 0._RKIND
@@ -1235,8 +1234,6 @@ c                       te is *specific* energy (energy/mass)
 c
 c          Inject the energy lost due to colliding flows as thermal energy
 c          spread through the injection region.
-c          E_cap = 3/2 kbT/(mu*mp) = 2e17 erg/g, where
-c          T = 10^9 K and mu = 0.6 for fully ionized gas.
 c
                delta_ge = add_therm/distcells
                do k = -1_IKIND, +1_IKIND
@@ -1288,10 +1285,6 @@ c
      &             mom_inj*(dunits*(dx*x1)**3._RKIND)*
      &             vunits/SolarMass/1e5_RKIND,
      &             add_therm*dunits*
-     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
-     &             ke_lost_to_cap*dunits*
-     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
-     &             ge_lost_to_cap*dunits*
      &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
      &             pSNmass_grid(ic,jc,kc)*
      &             (dunits*(x1*dx)**3._RKIND)/SolarMass,
