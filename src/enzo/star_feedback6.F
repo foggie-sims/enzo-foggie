@@ -166,9 +166,9 @@ c
       R_PREC energy_per_cell(3,3,3), energy_per_cell1(3,3,3)
       R_PREC Z_avg, n_avg, Z_floor,
      &	  realmass, mu_cell, fbuff, add_therm
-      R_PREC n_cell, Z_cell, ke
-      R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum, reduct_ratio,
-     &     mass_term, vel_mag, delta_ge
+      R_PREC n_cell, Z_cell
+      R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum,
+     &     mass_term, vel_mag, delta_ge, add_ge
       R_PREC mz_eject, mzeject_ii, mzeject_ia
       R_PREC metal_per_cell, metal_ii_per_cell, metal_ia_per_cell
       R_PREC u1(3,3,3), v1(3,3,3), w1(3,3,3), d1(3,3,3),
@@ -1180,8 +1180,8 @@ c
 #endif
 c
 c     If KE injected onto grid is less than what it was in the dummy
-c     (because of momentum cancellation due to non-static gas), add
-c     the remaining energy as thermal into the host cell.
+c     (because of momentum cancellation due to non-static gas), calculate
+c     how much energy to inject as thermal.
 c
                kin_energy_inj = kin_energy_end - kin_energy_before
                if (kin_energy_inj .lt. kin_energy_dummy) then
@@ -1201,7 +1201,9 @@ c
                call momentum_convert(u, v, w, d, up_avg, vp_avg, 
      &               wp_avg, nx, ny, nz, ic, jc, kc, -1_IKIND)
 c
-c           Add the change in the kinetic energy to the total energy field
+c           Add the change in the kinetic energy to the total energy field,
+c           and inject energy lost due to colliding flows (add_therm) and
+c           thermal energy from resolved Sedov-Taylor phase (energy_per_cell).
 c     
                ke_injected = 0._RKIND
                te_sum = 0._RKIND
@@ -1209,9 +1211,19 @@ c
                ke_sum = 0._RKIND
                mom_sum = 0._RKIND
                mass_sum = 0._RKIND
+               delta_ge = add_therm/distcells
                do k = -1_IKIND, +1_IKIND
                   do j = -1_IKIND, +1_IKIND
                      do i = -1_IKIND, +1_IKIND
+                        add_ge = delta_ge+energy_per_cell(i+2,j+2,k+2)
+                        te(ic+i,jc+j,kc+k) = te(ic+i,jc+j,kc+k) + 
+     &                    add_ge/d(ic+i,jc+j,kc+k)
+                        if (idual .eq. 1_IKIND) then
+                           ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k) + 
+     &                       add_ge/d(ic+i,jc+j,kc+k)
+                           ge_sum = ge_sum +
+     &                       ge(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
+                        endif
                         vel_mag = (u(ic+i ,jc+j ,kc+k)**2_IKIND + 
      &                    v(ic+i ,jc+j ,kc+k)**2_IKIND + 
      &                    w(ic+i ,jc+j ,kc+k)**2_IKIND)**0.5_RKIND
@@ -1225,43 +1237,11 @@ c
                         ke_sum = ke_sum + ke_after
                         mom_sum = mom_sum + mass_term*vel_mag
                         mass_sum = mass_sum + mass_term
+                        te_sum = te_sum + 
+     &                    te(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
 c                       ke_after has units of mass*velocity^2/volume
 c                       te has units of mass*velocity^2/volume/mass*volume = velocity^2
 c                       te is *specific* energy (energy/mass)
-                     enddo
-                  enddo
-               enddo
-c
-c          Inject the energy lost due to colliding flows as thermal energy
-c          spread through the injection region.
-c
-               delta_ge = add_therm/distcells
-               do k = -1_IKIND, +1_IKIND
-                  do j = -1_IKIND, +1_IKIND
-                     do i = -1_IKIND, +1_IKIND
-                        te(ic+i,jc+j,kc+k) = te(ic+i,jc+j,kc+k) + 
-     &                    delta_ge/d(ic+i,jc+j,kc+k)
-                        ke = 0.5_RKIND*
-     &                    (u(ic+i,jc+j,kc+k)**2_IKIND +
-     &                    v(ic+i,jc+j,kc+k)**2_IKIND +
-     &                    w(ic+i,jc+j,kc+k)**2_IKIND)
-                        if (idual .eq. 1_IKIND) then
-                           ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k) + 
-     &                       delta_ge/d(ic+i,jc+j,kc+k)
-#ifdef FORTRAN_DEBUG
-                           write(7,*) 'ge, te, ke after injection:',
-     &                       ge(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)*
-     &                       dunits*vunits**2._RKIND*(x1*dx)**3._RKIND,
-     &                       te(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)*
-     &                       dunits*vunits**2._RKIND*(x1*dx)**3._RKIND,
-     &                       ke*d(ic+i,jc+j,kc+k)*
-     &                       dunits*vunits**2._RKIND*(x1*dx)**3._RKIND
-#endif
-                           ge_sum = ge_sum +
-     &                       ge(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
-                        endif
-                        te_sum = te_sum + 
-     &                    te(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
                      enddo
                   enddo
                enddo
@@ -1284,6 +1264,8 @@ c
      &             SolarMass,
      &             mom_inj*(dunits*(dx*x1)**3._RKIND)*
      &             vunits/SolarMass/1e5_RKIND,
+     &             energy_inj*dunits*
+     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
      &             add_therm*dunits*
      &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
      &             pSNmass_grid(ic,jc,kc)*
@@ -1736,15 +1718,6 @@ c     Add mass
 c
                d(ic+i,jc+j,kc+k) = d(ic+i,jc+j,kc+k)
      &                       + delta_mass
-c
-c     Add thermal energy for any cells where Sedov-Taylor phase is resolved
-c     (calculated in get_mom_per_cell)
-c
-               te(ic+i,jc+j,kc+k) = te(i+ic,j+jc,k+kc) + 
-     &               energy_per_cell(i+2,j+2,k+2)/d(ic+i,jc+j,kc+k)
-               if (idual .eq. 1_IKIND)
-     &           ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k)+ 
-     &               energy_per_cell(i+2,j+2,k+2)/d(ic+i,jc+j,kc+k)
 c     
 c     End loop over cells in particle-frame
 c     
