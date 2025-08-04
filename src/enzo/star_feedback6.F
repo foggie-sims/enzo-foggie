@@ -736,6 +736,7 @@ c     BEGIN PRE-SUPERNOVA FEEDBACK
 c
 c     If injecting momentum from pre-SN feedback:
 c
+               add_therm_w = 0._RKIND
                if (preSN .eq. 1_IKIND .and. 
      &               pSNmass_grid(ic,jc,kc) .gt. 1e-15_RKIND) then
                   if (preSNmom .eq. 1_IKIND) then
@@ -1012,6 +1013,9 @@ c
      &                  nx, ny, nz, ic, jc, kc,
      &                  mom_mult)
 c           mom_per_cell has units of mass*velocity/volume
+#ifdef FORTRAN_DEBUG
+               write(7,*) 'energy_per_cell', energy_per_cell
+#endif
 c
 c     If not injecting any momentum or energy, skip
 c
@@ -1026,6 +1030,10 @@ c
                      enddo
                   enddo
                enddo
+#ifdef FORTRAN_DEBUG
+               write(7,*) 'energy_inj', energy_inj
+     &                  *dunits*(dx*x1)**3._RKIND*vunits**2._RKIND
+#endif
                if (mom_inj .eq. 0._RKIND) then
                   if (energy_inj .eq. 0._RKIND) then
 #ifdef FORTRAN_DEBUG
@@ -1114,7 +1122,6 @@ c
                         ge1(i+2,j+2,k+2) = 0._RKIND
                         te1(i+2,j+2,k+2) = 0._RKIND
                         metal1(i+2,j+2,k+2) = 0._RKIND
-                        energy_per_cell1(i+2,j+2,k+2) = 0._RKIND
                      enddo
                   enddo
                enddo
@@ -1130,7 +1137,6 @@ c
      &                        0._RKIND, 0._RKIND, 0._RKIND,
      &                        metalSNII, metalSNIa,
      &                        mass_per_cell, mom_per_cell,
-     &                        energy_per_cell1,
      &                        dx, x1, dunits, vunits)
 c
 c     Calculate mass and energy in dummy fields
@@ -1162,7 +1168,6 @@ c
      &                        metal_ii_per_cell,
      &                        metalSNII, metalSNIa,
      &                        mass_per_cell, mom_per_cell,
-     &                        energy_per_cell,
      &                        dx, x1, dunits, vunits)
 c
 c     Calculate the mass and energy in the affected region again.
@@ -1272,7 +1277,7 @@ c
      &             (dunits*(x1*dx)**3._RKIND)/SolarMass,
      &             pSNmetal_grid(ic,jc,kc)*(dunits*(x1*dx)**3._RKIND)/
      &             SolarMass,
-     &             pSNmom_grid*(dunits*(dx*x1)**3._RKIND)*
+     &             pSNmom_grid(ic,jc,kc)*(dunits*(dx*x1)**3._RKIND)*
      &             vunits/SolarMass/1e5_RKIND,
      &             add_therm_w*dunits*
      &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
@@ -1562,7 +1567,6 @@ c
      &                        mzeject, mzeject_ia, mzeject_ii,
      &                        metalSNII, metalSNIa,
      &                        mass_per_cell, mom_per_cell,
-     &                        energy_per_cell,
      &                        dx, x1, dunits, vunits)
 c
       implicit none
@@ -1575,7 +1579,6 @@ c
       R_PREC    d(nx, ny, nz), metal(nx,ny,nz), ge(nx,ny,nz)
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz), te(nx,ny,nz)
       R_PREC    mass_per_cell, mom_per_cell(3_IKIND,3_IKIND,3_IKIND)
-      R_PREC    energy_per_cell(3_IKIND,3_IKIND,3_IKIND)
       R_PREC    mzeject, mzeject_ia, mzeject_ii
       R_PREC    metalSNII(nx,ny,nz), metalSNIa(nx,ny,nz)
       R_PREC    dunits, x1, vunits, dx, mult
