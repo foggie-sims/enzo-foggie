@@ -696,8 +696,11 @@ mass) / ``H2StarMakerMinimumMass``.
 
 By default, this ``H2StarMakerMinimumMass`` is 0.
 When ``MultiRefineRegionSpatiallyVaryingStarMass`` is set,
-``H2StarMakerMinimumMass`` will vary in space just like ``StarMakerMinimumMass``
-(REFERENCE ANNA'S FORTHCOMING DOCS).
+``H2StarMakerMinimumMass`` will vary in space just like ``StarMakerMinimumMass``.
+In a given region, the particle mass threshold will be 
+whichever value is lower between 
+``MultiRefineRegionMinimumStarMass`` and ``H2StarMakerMinimumMass``.
+See the :ref:`general_star_formation_parameters` parameters for more.
 
 For some applications, it may be desirable to create stars only 
 at local density peaks. For this purpose, setting 
