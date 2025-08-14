@@ -269,8 +269,8 @@ EXTERN float MultiRefineRegionMinimumStarMass[MAX_STATIC_REGIONS+MAX_TRACKS];
 EXTERN int MultiRefineRegionMaximumOuterLevel;
 EXTERN int MultiRefineRegionMinimumOuterLevel;
 EXTERN int MultiRefineRegionSpatiallyVaryingStarMass;
-EXTERN FLOAT MultiRefineRegionDefaultStarMass;
-EXTERN FLOAT MultiRefineRegionDefaultH2RegStarMass;
+EXTERN float MultiRefineRegionDefaultStarMass;
+EXTERN float MultiRefineRegionDefaultH2RegStarMass;
 EXTERN int NumberOfStaticMultiRefineRegions;
 
 /* Uniform gravity: on/off flag, direction, and strength. */
