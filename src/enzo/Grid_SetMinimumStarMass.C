@@ -113,8 +113,10 @@ int grid::SetMinimumStarMass(){
        if ((GridLeftEdge[0] <= MRRRightEdge[0]) && (GridRightEdge[0] >= MRRLeftEdge[0]) &&
           (GridLeftEdge[1] <= MRRRightEdge[1]) && (GridRightEdge[1] >= MRRLeftEdge[1]) &&
           (GridLeftEdge[2] <= MRRRightEdge[2]) && (GridRightEdge[2] >= MRRLeftEdge[2])){
-        if (StarMakerMinimumMass>MRRMinimumStarMass){
+        if (StarMakerMinimumMass > MRRMinimumStarMass){
           StarMakerMinimumMass = MRRMinimumStarMass;
+        }
+        if (H2StarMakerMinimumMass > MRRMinimumStarMass){
           H2StarMakerMinimumMass = MRRMinimumStarMass;
         }
       } // if region in MRR
