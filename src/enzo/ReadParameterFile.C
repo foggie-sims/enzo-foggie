@@ -2201,6 +2201,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     }
   }
 
+  if (H2StarMakerMinimumMass > 0) { // non-default
+    fprintf(stderr,"WARNING: Use of H2StarMakerMinimumMass is deprecated. Copying the supplied value to StarMakerMinimumMass instead.");
+    StarMakerMinimumMass = H2StarMakerMinimumMass;
+  }
+  /* Allow StarMakerMinimumMass to set H2StarMakerMinimumMass
+     so I don't have to rewrite a bunch of code. */
+  H2StarMakerMinimumMass = StarMakerMinimumMass;
+
   // Tracer fluid tests
   if(UseTracerFluid > 0){
     if(NumberOfTracerFluidFields < 1)
