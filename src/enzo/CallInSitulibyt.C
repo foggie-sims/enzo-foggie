@@ -228,7 +228,7 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
     yt_get_ParticlesPtr(&particle_list);
 
     // TODO: make sure enzo's particle is always DarkMatter
-    particle_list[0].par_type = "DarkMatter";
+    particle_list[0].par_type = "io";
 
     // We have the attributes: 3 positions, 3 velocities, "mass", ID and Type
     // and extras.
@@ -257,8 +257,33 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
                                "typeia_fraction"
 #endif
                               };
+	const char *attr_unit[] = {"code_length",
+		                       "code_length",
+							   "code_length",
+                               "code_velocity",
+                               "code_velocity",
+                               "code_velocity",
+							   "code_mass",
+							   "",
+							   "",
+#ifdef WINDS
+							   "code_time",
+							   "code_time",
+							   "",
+							   "",
+							   "",
+							   "",
+							   "",
+#else
+							   "code_time",
+							   "code_time",
+							   "",
+							   ""
+#endif
+							  };
     for (int v = 0; v < particle_list[0].num_attr; v++) {
         particle_list[0].attr_list[v].attr_name = attr_name[v];
+		particle_list[0].attr_list[v].attr_unit = attr_unit[v];
         particle_list[0].attr_list[v].attr_dtype = (v < 3) ? EYT_PFLOAT : EYT_BFLOAT;
     }
     // Now go back and reset it for index and type
