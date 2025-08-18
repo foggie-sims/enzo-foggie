@@ -262,6 +262,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 		 Restart);
 
   PrintMemoryUsage("Output");
+
+#ifdef USE_LIBYT
+    LCAPERF_START("CallInSitulibyt");
+    CheckForLibytCall(LevelArray, MetaData);
+    LCAPERF_STOP("CallInSitulibyt");
+#endif
  
   /* Compute the acceleration field so ComputeTimeStep can find dtAccel.
      (Actually, this is a huge pain-in-the-ass, so only do it if the
