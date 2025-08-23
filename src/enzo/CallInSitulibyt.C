@@ -228,7 +228,7 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
     yt_get_ParticlesPtr(&particle_list);
 
     // TODO: make sure enzo's particle is always DarkMatter
-    particle_list[0].par_type = "io";
+    particle_list[0].par_type = "DarkMatter";
 
     // We have the attributes: 3 positions, 3 velocities, "mass", ID and Type
     // and extras.
