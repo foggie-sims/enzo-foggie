@@ -3897,6 +3897,17 @@ libyt In Situ Python Analysis
 
     Similar to :ref:`cycle_base_output`.
 
+``dtLibytCall`` (external)
+    Control the time-based libyt calls. The time interval between libyt calls. Zero turns off the time-based outputs. (Default: 0.0)
+
+    Similar to :ref:`time_base_output`.
+
+``TimeLastLibytCall`` (internal)
+    Control the time-based libyt calls.
+    The last time on which a timed libyt call was made.
+
+    Similar to :ref:`time_base_output`.
+
 ``NumberOfLibytCalls`` (internal)
     Internal parameter tracked by Enzo.
 

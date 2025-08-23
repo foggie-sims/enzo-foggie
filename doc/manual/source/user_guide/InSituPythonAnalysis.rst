@@ -109,14 +109,19 @@ General
 
 * **How to call libyt in situ analysis routine?**
 
-  Enzo parameter ``CycleSkipLibytCall`` (default is ``1``) and ``CycleLastLibytCall`` (default is ``0``) govern when to call in situ analysis routine.
+  Enzo parameter ``CycleSkipLibytCall`` (default is ``1``)/``CycleLastLibytCall`` (default is ``0``) for cycle-based libyt call
+  and ``dtLibytCall`` (default is ``0.0``) for time-based libyt call govern when to call in situ analysis routine.
   We can change the interval of calling libyt routine or completely close it (set to ``0``) by setting them in Enzo parameter file:
 
   ::
 
       CycleSkipLibytCall = 2  // call libyt routine every 2 cycles
 
-  The logic is similar to how cycle-based output parameters work. (See :ref:`cycle_base_output`)
+  ::
+
+      dtLibytCall = 0.1       // call libyt routine every 0.1 time unit
+
+  The logic is similar to how cycle-based and time-based output data dump parameters work. (See :ref:`cycle_base_output` and :ref:`time_base_output`.)
 
 * **How to call Python functions during simulation runtime? And what should I be aware of?**
 
