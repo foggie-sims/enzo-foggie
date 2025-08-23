@@ -4,6 +4,12 @@
 #define YT_SET_USERPARAM_NONINTEGER(X, Y, Z) yt_set_UserParameterDouble(X, Y, Z)
 #endif
 
+#ifdef CONFIG_PFLOAT_4
+#define YT_SET_USERPARAM_PNONINTEGER(X, Y, Z) yt_set_UserParameterFloat(X, Y, Z)
+#else
+#define YT_SET_USERPARAM_PNONINTEGER(X, Y, Z) yt_set_UserParameterDouble(X, Y, Z)
+#endif
+
 #ifdef SMALL_INTS
 #define YT_SET_USERPARAM_INTEGER(X, Y, Z) yt_set_UserParameterInt(X, Y, Z)
 #else
@@ -44,8 +50,8 @@ YT_SET_USERPARAM_INTEGER("MaximumGravityRefinementLevel", 1, &MaximumGravityRefi
 YT_SET_USERPARAM_INTEGER("MaximumParticleRefinementLevel", 1, &MaximumParticleRefinementLevel);
 YT_SET_USERPARAM_INTEGER("FastSiblingLocatorEntireDomain", 1, &FastSiblingLocatorEntireDomain);
 YT_SET_USERPARAM_INTEGER("CellFlaggingMethod", MAX_FLAGGING_METHODS, CellFlaggingMethod);
-yt_set_UserParameterDouble("MustRefineRegionLeftEdge", MAX_DIMENSION, MustRefineRegionLeftEdge);
-yt_set_UserParameterDouble("MustRefineRegionRightEdge", MAX_DIMENSION, MustRefineRegionRightEdge);
+YT_SET_USERPARAM_PNONINTEGER("MustRefineRegionLeftEdge", MAX_DIMENSION, MustRefineRegionLeftEdge);
+YT_SET_USERPARAM_PNONINTEGER("MustRefineRegionRightEdge", MAX_DIMENSION, MustRefineRegionRightEdge);
 YT_SET_USERPARAM_INTEGER("AvoidRefineRegionLevel", MAX_STATIC_REGIONS, AvoidRefineRegionLevel);
 YT_SET_USERPARAM_INTEGER("MustRefineRegionMinRefinementLevel", 1, &MustRefineRegionMinRefinementLevel);
 YT_SET_USERPARAM_INTEGER("MetallicityRefinementMinLevel", 1, &MetallicityRefinementMinLevel);
@@ -63,8 +69,8 @@ YT_SET_USERPARAM_INTEGER("MinimumSubgridEdge", 1, &MinimumSubgridEdge);
 YT_SET_USERPARAM_INTEGER("MaximumSubgridSize", 1, &MaximumSubgridSize);
 YT_SET_USERPARAM_NONINTEGER("CriticalGridRatio", 1, &CriticalGridRatio);
 YT_SET_USERPARAM_INTEGER("NumberOfBufferZones", 1, &NumberOfBufferZones);
-yt_set_UserParameterDouble("DomainLeftEdge", MAX_DIMENSION, DomainLeftEdge);
-yt_set_UserParameterDouble("DomainRightEdge", MAX_DIMENSION, DomainRightEdge);
+YT_SET_USERPARAM_PNONINTEGER("DomainLeftEdge", MAX_DIMENSION, DomainLeftEdge);
+YT_SET_USERPARAM_PNONINTEGER("DomainRightEdge", MAX_DIMENSION, DomainRightEdge);
 YT_SET_USERPARAM_NONINTEGER("GridVelocity", MAX_DIMENSION, GridVelocity);
 for (i = 0; i < MAX_DIMENSION; i++){
     snprintf(tempname, 255, "DimUnits_%d", i);
@@ -86,28 +92,28 @@ for (i = 0; i < MAX_NUMBER_OF_BARYON_FIELDS; i++){
     if (!DataUnits[i]) continue;
     yt_set_UserParameterString(tempname, DataUnits[i]);
 }
-yt_set_UserParameterDouble("RefineRegionLeftEdge", MAX_DIMENSION, RefineRegionLeftEdge);
-yt_set_UserParameterDouble("RefineRegionRightEdge", MAX_DIMENSION, RefineRegionRightEdge);
+YT_SET_USERPARAM_PNONINTEGER("RefineRegionLeftEdge", MAX_DIMENSION, RefineRegionLeftEdge);
+YT_SET_USERPARAM_PNONINTEGER("RefineRegionRightEdge", MAX_DIMENSION, RefineRegionRightEdge);
 YT_SET_USERPARAM_INTEGER("RefineRegionAutoAdjust", 1, &RefineRegionAutoAdjust);
 YT_SET_USERPARAM_INTEGER("MultiRefineRegion", 1, &MultiRefineRegion);
 YT_SET_USERPARAM_INTEGER("MultiRefineRegionGeometry", MAX_STATIC_REGIONS, MultiRefineRegionGeometry);
-yt_set_UserParameterDouble("MultiRefineRegionRadius", MAX_STATIC_REGIONS, MultiRefineRegionRadius);
-yt_set_UserParameterDouble("MultiRefineRegionWidth", MAX_STATIC_REGIONS, MultiRefineRegionWidth);
+YT_SET_USERPARAM_PNONINTEGER("MultiRefineRegionRadius", MAX_STATIC_REGIONS, MultiRefineRegionRadius);
+YT_SET_USERPARAM_PNONINTEGER("MultiRefineRegionWidth", MAX_STATIC_REGIONS, MultiRefineRegionWidth);
 YT_SET_USERPARAM_INTEGER("MultiRefineRegionMaximumLevel", MAX_STATIC_REGIONS, MultiRefineRegionMaximumLevel);
 YT_SET_USERPARAM_INTEGER("MultiRefineRegionMinimumLevel", MAX_STATIC_REGIONS, MultiRefineRegionMinimumLevel);
 YT_SET_USERPARAM_INTEGER("MultiRefineRegionMaximumOuterLevel", 1, &MultiRefineRegionMaximumOuterLevel);
 YT_SET_USERPARAM_INTEGER("MultiRefineRegionMinimumOuterLevel", 1, &MultiRefineRegionMinimumOuterLevel);
-yt_set_UserParameterDouble("MultiRefineRegionStaggeredRefinement", MAX_STATIC_REGIONS, MultiRefineRegionStaggeredRefinement);
+YT_SET_USERPARAM_PNONINTEGER("MultiRefineRegionStaggeredRefinement", MAX_STATIC_REGIONS, MultiRefineRegionStaggeredRefinement);
 YT_SET_USERPARAM_INTEGER("UniformGravity", 1, &UniformGravity);
 YT_SET_USERPARAM_INTEGER("UniformGravityDirection", 1, &UniformGravityDirection);
 YT_SET_USERPARAM_NONINTEGER("UniformGravityConstant", 1, &UniformGravityConstant);
 YT_SET_USERPARAM_INTEGER("PointSourceGravity", 1, &PointSourceGravity);
-yt_set_UserParameterDouble("PointSourceGravityPosition", MAX_DIMENSION, PointSourceGravityPosition);
+YT_SET_USERPARAM_PNONINTEGER("PointSourceGravityPosition", MAX_DIMENSION, PointSourceGravityPosition);
 YT_SET_USERPARAM_NONINTEGER("PointSourceGravityConstant", 1, &PointSourceGravityConstant);
 YT_SET_USERPARAM_NONINTEGER("PointSourceGravityCoreRadius", 1, &PointSourceGravityCoreRadius);
 YT_SET_USERPARAM_INTEGER("DiskGravity", 1, &DiskGravity);
-yt_set_UserParameterDouble("DiskGravityPosition", MAX_DIMENSION, DiskGravityPosition);
-yt_set_UserParameterDouble("DiskGravityAngularMomentum", MAX_DIMENSION, DiskGravityAngularMomentum);
+YT_SET_USERPARAM_PNONINTEGER("DiskGravityPosition", MAX_DIMENSION, DiskGravityPosition);
+YT_SET_USERPARAM_PNONINTEGER("DiskGravityAngularMomentum", MAX_DIMENSION, DiskGravityAngularMomentum);
 yt_set_UserParameterDouble("DiskGravityStellarDiskMass", 1, &DiskGravityStellarDiskMass);
 yt_set_UserParameterDouble("DiskGravityStellarDiskScaleHeightR", 1, &DiskGravityStellarDiskScaleHeightR);
 yt_set_UserParameterDouble("DiskGravityStellarDiskScaleHeightz", 1, &DiskGravityStellarDiskScaleHeightz);
@@ -135,8 +141,8 @@ YT_SET_USERPARAM_INTEGER("RadiativeCoolingModel", 1, &RadiativeCoolingModel);
 YT_SET_USERPARAM_INTEGER("use_grackle", 1, &use_grackle);
 YT_SET_USERPARAM_INTEGER("GadgetEquilibriumCooling", 1, &GadgetEquilibriumCooling);
 YT_SET_USERPARAM_INTEGER("RandomForcing", 1, &RandomForcing);
-yt_set_UserParameterDouble("RandomForcingEdot", 1, &RandomForcingEdot);
-yt_set_UserParameterDouble("RandomForcingMachNumber", 1, &RandomForcingMachNumber);
+YT_SET_USERPARAM_PNONINTEGER("RandomForcingEdot", 1, &RandomForcingEdot);
+YT_SET_USERPARAM_PNONINTEGER("RandomForcingMachNumber", 1, &RandomForcingMachNumber);
 YT_SET_USERPARAM_INTEGER("DrivenFlowAlpha", MAX_DIMENSION, DrivenFlowAlpha);
 YT_SET_USERPARAM_INTEGER("DrivenFlowSeed", 1, &DrivenFlowSeed);
 YT_SET_USERPARAM_NONINTEGER("DrivenFlowWeight", 1, &DrivenFlowWeight);
@@ -211,22 +217,22 @@ if (RefineRegionFile)
     yt_set_UserParameterString("RefineRegionFile", RefineRegionFile);
 YT_SET_USERPARAM_INTEGER("RefineRegionTimeType", 1, &RefineRegionTimeType);
 YT_SET_USERPARAM_INTEGER("EvolveRefineRegionNtimes", 1, &EvolveRefineRegionNtimes);
-yt_set_UserParameterDouble("EvolveRefineRegionTime", MAX_REFINE_REGIONS, EvolveRefineRegionTime);
+YT_SET_USERPARAM_PNONINTEGER("EvolveRefineRegionTime", MAX_REFINE_REGIONS, EvolveRefineRegionTime);
 if (MustRefineRegionFile)
     yt_set_UserParameterString("MustRefineRegionFile", MustRefineRegionFile);
 YT_SET_USERPARAM_INTEGER("MustRefineRegionTimeType", 1, &MustRefineRegionTimeType);
 YT_SET_USERPARAM_INTEGER("EvolveMustRefineRegionNtimes", 1, &EvolveMustRefineRegionNtimes);
-yt_set_UserParameterDouble("EvolveMustRefineRegionTime", MAX_REFINE_REGIONS, EvolveMustRefineRegionTime);
+YT_SET_USERPARAM_PNONINTEGER("EvolveMustRefineRegionTime", MAX_REFINE_REGIONS, EvolveMustRefineRegionTime);
 YT_SET_USERPARAM_INTEGER("EvolveMustRefineRegionMinLevel", MAX_REFINE_REGIONS, EvolveMustRefineRegionMinLevel);
 YT_SET_USERPARAM_INTEGER("UseCoolingRefineRegion", 1, &UseCoolingRefineRegion);
 YT_SET_USERPARAM_INTEGER("EvolveCoolingRefineRegion", 1, &EvolveCoolingRefineRegion);
-yt_set_UserParameterDouble("CoolingRefineRegionLeftEdge", MAX_DIMENSION, CoolingRefineRegionLeftEdge);
-yt_set_UserParameterDouble("CoolingRefineRegionRightEdge", MAX_DIMENSION, CoolingRefineRegionRightEdge);
+YT_SET_USERPARAM_PNONINTEGER("CoolingRefineRegionLeftEdge", MAX_DIMENSION, CoolingRefineRegionLeftEdge);
+YT_SET_USERPARAM_PNONINTEGER("CoolingRefineRegionRightEdge", MAX_DIMENSION, CoolingRefineRegionRightEdge);
 if (CoolingRefineRegionFile)
     yt_set_UserParameterString("CoolingRefineRegionFile", CoolingRefineRegionFile);
 YT_SET_USERPARAM_INTEGER("CoolingRefineRegionTimeType", 1, &CoolingRefineRegionTimeType);
 YT_SET_USERPARAM_INTEGER("EvolveCoolingRefineRegionNtimes", 1, &EvolveCoolingRefineRegionNtimes);
-yt_set_UserParameterDouble("EvolveCoolingRefineRegionTime", MAX_REFINE_REGIONS, EvolveCoolingRefineRegionTime);
+YT_SET_USERPARAM_PNONINTEGER("EvolveCoolingRefineRegionTime", MAX_REFINE_REGIONS, EvolveCoolingRefineRegionTime);
 YT_SET_USERPARAM_INTEGER("MyProcessorNumber", 1, &MyProcessorNumber);
 YT_SET_USERPARAM_INTEGER("NumberOfProcessors", 1, &NumberOfProcessors);
 YT_SET_USERPARAM_NONINTEGER("CommunicationTime", 1, &CommunicationTime);
@@ -262,7 +268,7 @@ YT_SET_USERPARAM_INTEGER("HaloFinderCycleSkip", 1, &HaloFinderCycleSkip);
 YT_SET_USERPARAM_INTEGER("HaloFinderRunAfterOutput", 1, &HaloFinderRunAfterOutput);
 YT_SET_USERPARAM_NONINTEGER("HaloFinderLinkingLength", 1, &HaloFinderLinkingLength);
 YT_SET_USERPARAM_NONINTEGER("HaloFinderTimestep", 1, &HaloFinderTimestep);
-yt_set_UserParameterDouble("HaloFinderLastTime", 1, &HaloFinderLastTime);
+YT_SET_USERPARAM_PNONINTEGER("HaloFinderLastTime", 1, &HaloFinderLastTime);
 YT_SET_USERPARAM_NONINTEGER("MinimumSlopeForRefinement", MAX_FLAGGING_METHODS, MinimumSlopeForRefinement);
 YT_SET_USERPARAM_INTEGER("SlopeFlaggingFields", MAX_FLAGGING_METHODS, SlopeFlaggingFields);
 YT_SET_USERPARAM_NONINTEGER("MinimumOverDensityForRefinement", MAX_FLAGGING_METHODS, MinimumOverDensityForRefinement);
@@ -276,8 +282,8 @@ YT_SET_USERPARAM_NONINTEGER("JeansRefinementColdTemperature", 1, &JeansRefinemen
 YT_SET_USERPARAM_INTEGER("MustRefineParticlesRefineToLevel", 1, &MustRefineParticlesRefineToLevel);
 YT_SET_USERPARAM_INTEGER("MustRefineParticlesRefineToLevelAutoAdjust", 1, &MustRefineParticlesRefineToLevelAutoAdjust);
 YT_SET_USERPARAM_NONINTEGER("MustRefineParticlesMinimumMass", 1, &MustRefineParticlesMinimumMass);
-yt_set_UserParameterDouble("MustRefineParticlesLeftEdge", MAX_DIMENSION, MustRefineParticlesLeftEdge);
-yt_set_UserParameterDouble("MustRefineParticlesRightEdge", MAX_DIMENSION, MustRefineParticlesRightEdge);
+YT_SET_USERPARAM_PNONINTEGER("MustRefineParticlesLeftEdge", MAX_DIMENSION, MustRefineParticlesLeftEdge);
+YT_SET_USERPARAM_PNONINTEGER("MustRefineParticlesRightEdge", MAX_DIMENSION, MustRefineParticlesRightEdge);
 YT_SET_USERPARAM_INTEGER("MustRefineParticlesCreateParticles", 1, &MustRefineParticlesCreateParticles);
 YT_SET_USERPARAM_NONINTEGER("MinimumShearForRefinement", 1, &MinimumShearForRefinement);
 YT_SET_USERPARAM_INTEGER("OldShearMethod", 1, &OldShearMethod);
@@ -302,8 +308,8 @@ yt_set_UserParameterDouble("SimpleQ", 1, &SimpleQ);
 YT_SET_USERPARAM_NONINTEGER("SimpleRampTime", 1, &SimpleRampTime);
 YT_SET_USERPARAM_INTEGER("StarFormationOncePerRootGridTimeStep", 1, &StarFormationOncePerRootGridTimeStep);
 YT_SET_USERPARAM_INTEGER("TimeActionType", MAX_TIME_ACTIONS, TimeActionType);
-yt_set_UserParameterDouble("TimeActionTime", MAX_TIME_ACTIONS, TimeActionTime);
-yt_set_UserParameterDouble("TimeActionRedshift", MAX_TIME_ACTIONS, TimeActionRedshift);
+YT_SET_USERPARAM_PNONINTEGER("TimeActionTime", MAX_TIME_ACTIONS, TimeActionTime);
+YT_SET_USERPARAM_PNONINTEGER("TimeActionRedshift", MAX_TIME_ACTIONS, TimeActionRedshift);
 YT_SET_USERPARAM_NONINTEGER("TimeActionParameter", MAX_TIME_ACTIONS, TimeActionParameter);
 for (i = 0; i < MAX_CUBE_DUMPS; i++){
     snprintf(tempname, 255, "CubeDumps_%d", i);
@@ -312,9 +318,9 @@ for (i = 0; i < MAX_CUBE_DUMPS; i++){
 }
 YT_SET_USERPARAM_INTEGER("TracerParticleOn", 1, &TracerParticleOn);
 YT_SET_USERPARAM_INTEGER("TracerParticleOutputVelocity", 1, &TracerParticleOutputVelocity);
-yt_set_UserParameterDouble("TracerParticleCreationSpacing", 1, &TracerParticleCreationSpacing);
-yt_set_UserParameterDouble("TracerParticleCreationLeftEdge", MAX_DIMENSION, TracerParticleCreationLeftEdge);
-yt_set_UserParameterDouble("TracerParticleCreationRightEdge", MAX_DIMENSION, TracerParticleCreationRightEdge);
+YT_SET_USERPARAM_PNONINTEGER("TracerParticleCreationSpacing", 1, &TracerParticleCreationSpacing);
+YT_SET_USERPARAM_PNONINTEGER("TracerParticleCreationLeftEdge", MAX_DIMENSION, TracerParticleCreationLeftEdge);
+YT_SET_USERPARAM_PNONINTEGER("TracerParticleCreationRightEdge", MAX_DIMENSION, TracerParticleCreationRightEdge);
 YT_SET_USERPARAM_INTEGER("ParticleTypeInFile", 1, &ParticleTypeInFile);
 YT_SET_USERPARAM_INTEGER("OutputParticleTypeGrouping", 1, &OutputParticleTypeGrouping);
 YT_SET_USERPARAM_INTEGER("ExternalBoundaryIO", 1, &ExternalBoundaryIO);
@@ -402,9 +408,9 @@ yt_set_UserParameterDouble("HaloCentralDensity", 1, &HaloCentralDensity);
 yt_set_UserParameterDouble("HaloVirialRadius", 1, &HaloVirialRadius);
 YT_SET_USERPARAM_NONINTEGER("ExternalGravityConstant", 1, &ExternalGravityConstant);
 YT_SET_USERPARAM_NONINTEGER("ExternalGravityDensity", 1, &ExternalGravityDensity);
-yt_set_UserParameterDouble("ExternalGravityPosition", MAX_DIMENSION, ExternalGravityPosition);
+YT_SET_USERPARAM_PNONINTEGER("ExternalGravityPosition", MAX_DIMENSION, ExternalGravityPosition);
 yt_set_UserParameterDouble("ExternalGravityRadius", 1, &ExternalGravityRadius);
-yt_set_UserParameterDouble("ExternalGravityOrientation", MAX_DIMENSION, ExternalGravityOrientation);
+YT_SET_USERPARAM_PNONINTEGER("ExternalGravityOrientation", MAX_DIMENSION, ExternalGravityOrientation);
 YT_SET_USERPARAM_INTEGER("UsePoissonDivergenceCleaning", 1, &UsePoissonDivergenceCleaning);
 YT_SET_USERPARAM_INTEGER("PoissonDivergenceCleaningBoundaryBuffer", 1, &PoissonDivergenceCleaningBoundaryBuffer);
 YT_SET_USERPARAM_NONINTEGER("PoissonDivergenceCleaningThreshold", 1, &PoissonDivergenceCleaningThreshold);
@@ -436,7 +442,7 @@ YT_SET_USERPARAM_INTEGER("CIECooling", 1, &CIECooling);
 YT_SET_USERPARAM_INTEGER("H2OpticalDepthApproximation", 1, &H2OpticalDepthApproximation);
 YT_SET_USERPARAM_INTEGER("RadiativeTransfer", 1, &RadiativeTransfer);
 YT_SET_USERPARAM_INTEGER("RadiativeTransferHydrogenOnly", 1, &RadiativeTransferHydrogenOnly);
-yt_set_UserParameterDouble("PhotonTime", 1, &PhotonTime);
+YT_SET_USERPARAM_PNONINTEGER("PhotonTime", 1, &PhotonTime);
 YT_SET_USERPARAM_NONINTEGER("dtPhoton", 1, &dtPhoton);
 yt_set_UserParameterDouble("EscapedPhotonCount", 4, EscapedPhotonCount);
 yt_set_UserParameterDouble("TotalEscapedPhotonCount", 4, TotalEscapedPhotonCount);
@@ -464,7 +470,7 @@ YT_SET_USERPARAM_INTEGER("ShearingVelocityDirection", 1, &ShearingVelocityDirect
 YT_SET_USERPARAM_INTEGER("ShearingOtherDirection", 1, &ShearingOtherDirection);
 YT_SET_USERPARAM_INTEGER("UseMHD", 1, &UseMHD);
 YT_SET_USERPARAM_INTEGER("MaxVelocityIndex", 1, &MaxVelocityIndex);
-yt_set_UserParameterDouble("TopGridDx", MAX_DIMENSION, TopGridDx);
+YT_SET_USERPARAM_PNONINTEGER("TopGridDx", MAX_DIMENSION, TopGridDx);
 YT_SET_USERPARAM_INTEGER("ShearingBoxProblemType", 1, &ShearingBoxProblemType);
 YT_SET_USERPARAM_NONINTEGER("IsothermalSoundSpeed", 1, &IsothermalSoundSpeed);
 YT_SET_USERPARAM_INTEGER("MoveParticlesBetweenSiblings", 1, &MoveParticlesBetweenSiblings);
@@ -475,7 +481,7 @@ YT_SET_USERPARAM_INTEGER("ParticleSplitterMustRefine", 1, &ParticleSplitterMustR
 if (ParticleSplitterMustRefineIDFile)
     yt_set_UserParameterString("ParticleSplitterMustRefineIDFile", ParticleSplitterMustRefineIDFile);
 YT_SET_USERPARAM_NONINTEGER("ParticleSplitterFraction", MAX_SPLIT_ITERATIONS, ParticleSplitterFraction);
-yt_set_UserParameterDouble("ParticleSplitterCenter", MAX_DIMENSION, ParticleSplitterCenter);
+YT_SET_USERPARAM_PNONINTEGER("ParticleSplitterCenter", MAX_DIMENSION, ParticleSplitterCenter);
 YT_SET_USERPARAM_NONINTEGER("ParticleSplitterCenterRegion", MAX_SPLIT_ITERATIONS, ParticleSplitterCenterRegion);
 YT_SET_USERPARAM_INTEGER("ResetMagneticField", 1, &ResetMagneticField);
 YT_SET_USERPARAM_NONINTEGER("ResetMagneticFieldAmplitude", MAX_DIMENSION, ResetMagneticFieldAmplitude);
@@ -534,7 +540,7 @@ YT_SET_USERPARAM_NONINTEGER("StellarWindRadius", 1, &StellarWindRadius);
 YT_SET_USERPARAM_NONINTEGER("StellarWindDensity", 1, &StellarWindDensity);
 YT_SET_USERPARAM_NONINTEGER("StellarWindSpeed", 1, &StellarWindSpeed);
 YT_SET_USERPARAM_NONINTEGER("StellarWindTemperature", 1, &StellarWindTemperature);
-yt_set_UserParameterDouble("StellarWindCenterPosition", 3, StellarWindCenterPosition);
+YT_SET_USERPARAM_PNONINTEGER("StellarWindCenterPosition", 3, StellarWindCenterPosition);
 YT_SET_USERPARAM_INTEGER("MHDCTSlopeLimiter", 1, &MHDCTSlopeLimiter);
 YT_SET_USERPARAM_INTEGER("MHDCTDualEnergyMethod", 1, &MHDCTDualEnergyMethod);
 YT_SET_USERPARAM_INTEGER("MHDCTPowellSource", 1, &MHDCTPowellSource);
