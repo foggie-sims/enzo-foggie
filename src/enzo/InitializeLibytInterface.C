@@ -26,6 +26,12 @@
 #define YT_SET_USERPARAM_NONINTEGER(X, Y, Z) yt_set_UserParameterDouble(X, Y, Z)
 #endif
 
+#ifdef CONFIG_PFLOAT_4
+#define YT_SET_USERPARAM_PNONINTEGER(X, Y, Z) yt_set_UserParameterFloat(X, Y, Z)
+#else
+#define YT_SET_USERPARAM_PNONINTEGER(X, Y, Z) yt_set_UserParameterDouble(X, Y, Z)
+#endif
+
 #ifdef SMALL_INTS
 #define YT_SET_USERPARAM_INTEGER(X, Y, Z) yt_set_UserParameterInt(X, Y, Z)
 #else
@@ -112,12 +118,12 @@ void ExportParameterFileToLibyt(TopGridData *MetaData, FLOAT CurrentTime, FLOAT 
     CosmologyComputeExpansionFactor(CurrentTime, &a, &dadt);
     CurrentRedshift = (1 + InitialRedshift)/a - 1;
 
-    YT_SET_USERPARAM_NONINTEGER("CosmologyCurrentRedshift", 1, &CurrentRedshift);
+    YT_SET_USERPARAM_PNONINTEGER("CosmologyCurrentRedshift", 1, &CurrentRedshift);
     YT_SET_USERPARAM_NONINTEGER("CosmologyComovingBoxSize", 1, &ComovingBoxSize);
     YT_SET_USERPARAM_NONINTEGER("CosmologyOmegaMatterNow", 1, &OmegaMatterNow);
     YT_SET_USERPARAM_NONINTEGER("CosmologyOmegaLambdaNow", 1, &OmegaLambdaNow);
     YT_SET_USERPARAM_NONINTEGER("CosmologyHubbleConstantNow", 1, &HubbleConstantNow);
-    YT_SET_USERPARAM_NONINTEGER("CosmologyInitialRedshift", 1, &InitialRedshift);
+    YT_SET_USERPARAM_PNONINTEGER("CosmologyInitialRedshift", 1, &InitialRedshift);
   }
 
   YT_SET_USERPARAM_NONINTEGER("DensityUnits", 1, &DensityUnits);
@@ -126,9 +132,9 @@ void ExportParameterFileToLibyt(TopGridData *MetaData, FLOAT CurrentTime, FLOAT 
   YT_SET_USERPARAM_NONINTEGER("TimeUnits", 1, &TimeUnits);
   YT_SET_USERPARAM_INTEGER("HydroMethod", 1, &HydroMethod);
   YT_SET_USERPARAM_INTEGER("DualEnergyFormalism", 1, &DualEnergyFormalism);
-  YT_SET_USERPARAM_NONINTEGER("InitialTime", 1, &CurrentTime);
-  YT_SET_USERPARAM_NONINTEGER("StopTime", 1, &MetaData->StopTime);
-  YT_SET_USERPARAM_NONINTEGER("OldTime", 1, &OldTime);
+  YT_SET_USERPARAM_PNONINTEGER("InitialTime", 1, &CurrentTime);
+  YT_SET_USERPARAM_PNONINTEGER("StopTime", 1, &MetaData->StopTime);
+  YT_SET_USERPARAM_PNONINTEGER("OldTime", 1, &OldTime);
   YT_SET_USERPARAM_NONINTEGER("dtFixed", 1, &dtFixed);
   YT_SET_USERPARAM_INTEGER("ComovingCoordinates", 1, &ComovingCoordinates);
 
@@ -151,8 +157,8 @@ void ExportParameterFileToLibyt(TopGridData *MetaData, FLOAT CurrentTime, FLOAT 
   YT_SET_USERPARAM_NONINTEGER("CurrentMaximumDensity", 1, &CurrentMaximumDensity);
   YT_SET_USERPARAM_NONINTEGER("AngularVelocity", 1, &AngularVelocity);
   YT_SET_USERPARAM_NONINTEGER("VelocityGradient", 1, &VelocityGradient);
-  YT_SET_USERPARAM_NONINTEGER("dtDataDump", 1, &MetaData->dtDataDump);
-  YT_SET_USERPARAM_NONINTEGER("TimeLastDataDump", 1, &MetaData->TimeLastDataDump);
+  YT_SET_USERPARAM_PNONINTEGER("dtDataDump", 1, &MetaData->dtDataDump);
+  YT_SET_USERPARAM_PNONINTEGER("TimeLastDataDump", 1, &MetaData->TimeLastDataDump);
   YT_SET_USERPARAM_INTEGER("WroteData", 1, &MetaData->WroteData);
 
   YT_SET_USERPARAM_INTEGER("TopGridDimensions", MAX_DIMENSION, MetaData->TopGridDims);
