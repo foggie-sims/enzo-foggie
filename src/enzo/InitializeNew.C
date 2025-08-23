@@ -881,9 +881,11 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
     MetaData.TimeLastDataDump = MetaData.Time - MetaData.dtDataDump*1.00001;
   if (MetaData.TimeLastHistoryDump == FLOAT_UNDEFINED)
     MetaData.TimeLastHistoryDump = MetaData.Time - MetaData.dtHistoryDump;
+#ifdef USE_LIBYT
   if (TimeLastLibytCall == FLOAT_UNDEFINED) {
     TimeLastLibytCall = MetaData.Time - dtLibytCall * 1.00001;
   }
+#endif
   
   if (MetaData.TimeLastTracerParticleDump == FLOAT_UNDEFINED)
     MetaData.TimeLastTracerParticleDump =
