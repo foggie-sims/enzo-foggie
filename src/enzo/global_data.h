@@ -985,6 +985,8 @@ EXTERN char libyt_script_name[512];
 EXTERN char libyt_fig_basename[512];
 EXTERN int CycleSkipLibytCall;
 EXTERN int CycleLastLibytCall;
+EXTERN float dtLibytCall;
+EXTERN float TimeLastLibytCall;
 EXTERN void *param_libyt;
 EXTERN void *param_yt;
 EXTERN std::vector<void*> libyt_generated_data;

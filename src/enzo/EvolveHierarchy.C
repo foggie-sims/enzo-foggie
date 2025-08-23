@@ -262,6 +262,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 		 Restart);
 
   PrintMemoryUsage("Output");
+
+#ifdef USE_LIBYT
+    LCAPERF_START("CallInSitulibyt");
+    CheckForLibytCall(LevelArray, MetaData);
+    LCAPERF_STOP("CallInSitulibyt");
+#endif
  
   /* Compute the acceleration field so ComputeTimeStep can find dtAccel.
      (Actually, this is a huge pain-in-the-ass, so only do it if the
@@ -413,6 +419,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
           MetaData.TimeLastDataDump += MetaData.dtDataDump;
         dt = min(1.0001*(MetaData.TimeLastDataDump + MetaData.dtDataDump -
               MetaData.Time), dt);
+      }
+      if (dtLibytCall > 0.0) {
+        while (TimeLastLibytCall + dtLibytCall < MetaData.Time) {
+          TimeLastLibytCall += dtLibytCall;
+        }
+        dt = min(1.0001*(TimeLastLibytCall + dtLibytCall - MetaData.Time), dt);
       }
 
       /* Set the time step.  If it will cause Time += dt > StopTime, then

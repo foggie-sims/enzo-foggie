@@ -29,7 +29,7 @@ int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
                     int level, int from_topgrid);
 
 int CheckForLibytCall(LevelHierarchyEntry *LevelArray[], TopGridData &MetaData) {
-     /* Check for libyt call: cycle-based. */
+  /* Check for libyt call: cycle-based. */
   if (MetaData.CycleNumber >= CycleLastLibytCall + CycleSkipLibytCall   &&
       CycleSkipLibytCall > 0) {
 
@@ -38,7 +38,19 @@ int CheckForLibytCall(LevelHierarchyEntry *LevelArray[], TopGridData &MetaData) 
     // Call libyt in situ routine
     CallInSitulibyt(LevelArray, &MetaData, 0, 1);
   }
-    return SUCCESS;
+
+  /* Check for libyt call: time-based. */
+  if (MetaData.Time >= TimeLastLibytCall + dtLibytCall &&
+      dtLibytCall > 0.0) {
+
+    TimeLastLibytCall += dtLibytCall;
+    std::cout << "(CheckForLibytCall) TimeLastLibytCall -- after: " << TimeLastLibytCall << std::endl;
+
+    // Call libyt in situ routine
+    CallInSitulibyt(LevelArray, &MetaData, 0, 1);
+  }
+
+  return SUCCESS;
 }
 
 #endif // #ifdef USE_LIBYT
