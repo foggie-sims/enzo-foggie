@@ -120,9 +120,10 @@ General
 
 * **How to call Python functions during simulation runtime? And what should I be aware of?**
 
-  We can call Python function using libyt API ``yt_run_Function`` and ``yt_run_FunctionArguments``. See how to use them `here <https://libyt.readthedocs.io/en/latest/libyt-api/run-python-function.html>`__.
+  The Python file that is imported should contain functions detailing the analysis we want to run.
+  We can call these Python functions using libyt API ``yt_run_Function`` and ``yt_run_FunctionArguments``. See how to use them `here <https://libyt.readthedocs.io/en/latest/libyt-api/run-python-function.html>`__.
 
-  Un-comment the code in ``src/enzo/CallInSitulibyt.C``:
+  For an example, you can un-comment the code in ``src/enzo/CallInSitulibyt.C``:
 
   ::
 
