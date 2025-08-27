@@ -185,6 +185,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "libyt_fig_basename = %s\n", libyt_fig_basename);
   fprintf(fptr, "CycleSkipLibytCall  = %"ISYM"\n", CycleSkipLibytCall);
   fprintf(fptr, "CycleLastLibytCall  = %"ISYM"\n", CycleLastLibytCall);
+  fprintf(fptr, "TimeLastLibytCall    = %"GSYM"\n", TimeLastLibytCall);
+  fprintf(fptr, "dtLibytCall          = %"GSYM"\n", dtLibytCall);
 #endif
 
   fprintf(fptr, "TimingCycleSkip             = %"ISYM"\n", TimingCycleSkip);

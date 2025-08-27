@@ -21,7 +21,7 @@ We can compile ``libyt`` using different options based on our used cases, so tha
 A brief description of each mode (option) is shown here. The options are for compiling ``libyt`` only. The serial and parallel modes are mutually exclusive, as are the normal, interactive, and Jupyter kernal modes.
 Please follow the instructions in ``libyt`` `how to install <https://libyt.readthedocs.io/en/latest/how-to-install/how-to-install.html#how-to-install>`__:
 
-* `libyt`_ (>=0.3.0, <1.0): a C shared library for in situ analysis.
+* `libyt`_ (>=0.4.0, <1.0): a C shared library for in situ analysis.
 
   * **Serial Mode** (``-DSERIAL_MODE=ON``): Compile ``libyt`` using GCC compiler.
 
@@ -109,14 +109,19 @@ General
 
 * **How to call libyt in situ analysis routine?**
 
-  Enzo parameter ``CycleSkipLibytCall`` (default is ``1``) and ``CycleLastLibytCall`` (default is ``0``) govern when to call in situ analysis routine.
+  Enzo parameter ``CycleSkipLibytCall`` (default is ``1``)/``CycleLastLibytCall`` (default is ``0``) for cycle-based libyt call
+  and ``dtLibytCall`` (default is ``0.0``) for time-based libyt call govern when to call in situ analysis routine.
   We can change the interval of calling libyt routine or completely close it (set to ``0``) by setting them in Enzo parameter file:
 
   ::
 
       CycleSkipLibytCall = 2  // call libyt routine every 2 cycles
 
-  The logic is similar to how cycle-based output parameters work. (See :ref:`cycle_base_output`)
+  ::
+
+      dtLibytCall = 0.1       // call libyt routine every 0.1 time unit
+
+  The logic is similar to how cycle-based and time-based output data dump parameters work. (See :ref:`cycle_base_output` and :ref:`time_base_output`.)
 
 * **How to call Python functions during simulation runtime? And what should I be aware of?**
 

@@ -974,6 +974,9 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   // cycle-based libyt call
   CycleSkipLibytCall = 1;
   CycleLastLibytCall = 0;
+  // time-based libyt call
+  TimeLastLibytCall = FLOAT_UNDEFINED;
+  dtLibytCall = 0.0;
 #endif
 
   /* Some stateful variables for EvolveLevel */

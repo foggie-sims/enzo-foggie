@@ -116,6 +116,8 @@ CycleLastDataDump. (So if you change CycleSkipDataDump from 0 to 10
 from a Redshift dump at n=70, you'll get an output every timestep
 for 7 timesteps.)
 
+.. _time_base_output:
+
 Time Based Output
 ~~~~~~~~~~~~~~~~~
 
