@@ -52,12 +52,12 @@ void grid::ConvertToLibyt(int LocalGridID, int GlobalGridID, int ParentID, int l
      * In here, we'll happily do whatever we're told.
      *
      * */
-    float grid_unit_length[MAX_DIMENSION] = {1.0, 1.0, 1.0};
+    float cell_width[MAX_DIMENSION] = {1.0, 1.0, 1.0};
     for (int i = 0; i < MAX_DIMENSION; i++) {
         GridInfo.grid_dimensions[i] = (this->GridEndIndex[i]) - (this->GridStartIndex[i]) + 1; // this is active dimension
         GridInfo.left_edge[i] = this->GridLeftEdge[i];
         GridInfo.right_edge[i] = this->GridRightEdge[i];
-        grid_unit_length[i] = (GridInfo.right_edge[i] - GridInfo.left_edge[i]) / GridInfo.grid_dimensions[i];
+        cell_width[i] = (GridInfo.right_edge[i] - GridInfo.left_edge[i]) / GridInfo.grid_dimensions[i];
     }
     GridInfo.id = GlobalGridID;
     GridInfo.parent_id = ParentID;
@@ -126,7 +126,7 @@ void grid::ConvertToLibyt(int LocalGridID, int GlobalGridID, int ParentID, int l
         // Get real particle mass
         float *particle_mass = new float [this->ReturnNumberOfParticles()];
         for (int i = 0; i < this->ReturnNumberOfParticles(); i++) {
-            particle_mass[i] = this->ParticleMass[i] * grid_unit_length[0] * grid_unit_length[1] * grid_unit_length[2];
+            particle_mass[i] = this->ParticleMass[i] * cell_width[0] * cell_width[1] * cell_width[2];
         }
         libyt_generated_data.push_back(particle_mass);
 
