@@ -408,18 +408,19 @@ c     this timestep to get how much mass and metals each integer SN event
 c     is expected to inject, then multiply by number of SNe.
 c     Divide this by initial mass of particle so that it is an ejection fraction
 c     of particle mass, then multiply by the current mass and take a minimum
-c     with 0.25*current mass to ensure no more than 25% of the particle's mass
+c     with StarMassEjectionFraction*current mass to ensure no more than 
+c     a user-specified fraction of the particle's mass
 c     can be ejected at once.
 c
                   if (nsn_ii_sto .gt. 0._RKIND) then
                      meject_ii = min((meject_ii / nsn_ii * nsn_ii_sto)* 
-     &                           mp(n)/minit(n), 0.25_RKIND*mp(n))
+     &                           mp(n)/minit(n), m_eject_frac*mp(n))
                   else
                      meject_ii = 0._RKIND
                   endif
                   if (nsn_ia_sto .gt. 0._RKIND) then
                      meject_ia = min((meject_ia / nsn_ia * nsn_ia_sto)*
-     &                           mp(n)/minit(n), 0.25_RKIND*mp(n))
+     &                           mp(n)/minit(n), m_eject_frac*mp(n))
                   else
                      meject_ia = 0._RKIND
                   endif
@@ -433,19 +434,19 @@ c
      &              dunits*x1**3._RKIND/SolarMass*dx**3_IKIND
 #endif
 c
-c     Metals done similarly to mass, but ensure no more than 2% of current
-c     mass ejected as metals
+c     Metals done similarly to mass, but ensure no more than StarMetalYield 
+c     of current mass ejected as metals
 c
                   if (imetal .eq. 1_IKIND) then
                      if (nsn_ii_sto .gt. 0._RKIND) then
                         mzeject_ii = min((mzeject_ii / nsn_ii * 
-     &                    nsn_ii_sto)*mp(n)/minit(n), 0.02_RKIND*mp(n))
+     &                    nsn_ii_sto)*mp(n)/minit(n), yield*mp(n))
                      else
                         mzeject_ii = 0._RKIND
                      endif
                      if (nsn_ia_sto .gt. 0._RKIND) then
                         mzeject_ia = min((mzeject_ia / nsn_ia * 
-     &                    nsn_ia_sto)*mp(n)/minit(n), 0.02_RKIND*mp(n))
+     &                    nsn_ia_sto)*mp(n)/minit(n), yield*mp(n))
                      else
                         mzeject_ia = 0._RKIND
                      endif

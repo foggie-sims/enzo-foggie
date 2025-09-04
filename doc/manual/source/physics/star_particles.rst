@@ -308,13 +308,15 @@ of ejected material that are deposited by each particle:
    each supernova is calculated by integrating the mass (or metals) ejection 
    rate from the Tabular Feedback tables, and dividing that by the integrated 
    SN rate from the same tables. This gives the expected value of ejection mass 
-   per supernova explosion. However, if a star particle is very small and has 
+   per supernova explosion, but note that the Tabular Feedback tables are IMF-averaged
+   and the ejection mass and rate mapped to time, so this is just an average expectation
+   for ejection mass per supernova. However, if a star particle is very small and has 
    the unlikely event of a supernova, this could theoretically eject more than
    the mass of the particle. To account for this, the mass per SN ejection 
    is rescaled by the ratio of the current particle mass to its initial mass, 
-   and then the minimum of this value or of 0.25 times the current particle 
+   and then the minimum of this value or of ``StarMassEjectionFraction`` times the current particle 
    mass is taken as the ejection mass. For metals, a similar rescaling occurs, 
-   but the minimum is taken between this value or 0.02 times the current particle 
+   but the minimum is taken between this value or ``StarMetalYield`` times the current particle 
    mass.
 
 Once the number of supernovae, ejected mass, and ejected metals for this 
@@ -325,17 +327,17 @@ of all particles to the grid.
 The parameter ``StarFeedbackSNePerTimestepLimit`` determines the threshold below 
 which the feedback routine will skip over injected any feedback. If there are 
 fewer than ``StarFeedbackSNePerTimestepLimit`` supernovae occurring in a given 
-cell and a given time step, no feedback will take place for that cell and time step.
+star particle and a given time step, no feedback will take place for that particle and time step.
 The default value of this parameter is 1e-3. Larger values, like 0.1 or 1, may 
 miss a significant amount of feedback because by default the supernova rate is a continuous 
-distribution with time, so having at least 1 SN per cell per time step
+distribution with time, so having at least 1 SN per particle per time step
 typically requires very large star particles or very large time steps. Smaller 
 values than 1e-3 lead to injecting minute amounts of feedback each time step, 
 which can significantly slow down the code without significantly affecting 
 the total amount of feedback injected. If using stochastic supernovae with 
 ``StarFeedbackStochasticSNe = 1``, the value of ``StarFeedbackSNePerTimestepLimit``, if 
 less than one, is not used because stochastic supernovae already ensures the number 
-number of supernovae in each timestep cannot be between zero and one. 
+number of supernovae per particle in each timestep cannot be between zero and one. 
 If ``StarFeedbackSNePerTimestepLimit`` is greater than one, it will limit 
 the stochastic supernovae case in the same way.
 
@@ -439,18 +441,24 @@ momentum injected. Use ``MomentumMultiplier`` to set this value. By default,
 There is an option to include mass, metals, and momentum feedback from stellar 
 winds, generally referred to hereafter as "pre-SN feedback." Pre-SN feedback 
 operates analogously to the Tabular Feedback method for supernovae described 
-above, but only operates during the first 5 Myr after a star particle forms. 
+above, but only operates during the first 4 Myr after a star particle forms. 
 Pre-SN feedback can be turned on with ``StarFeedbackPreSNFeedback = 1``. 
 The mass, metals, and momentum rates from stellar winds are read from a table
 and integrated over the timestep, analogously to Tabular Feedback. The table
 is given by ``StarFeedbackPreSNFilename``, which must point to an HDF5 file 
 that specifies the stellar wind properties in a grid of star particle metallicity 
-and particle age. The file ``preSN_feedback_S99.hdf5`` in ``run/TabularFeedbackTest``
+and particle age. The file ``preSN_feedback_S99.hdf5`` in ``input/``
 is in the correct format, with six metallicity values and 500 age values.
 The values in this table were computed with Starburst99 models for a Kroupa
 IMF between 0.1 and 100 solar masses. The table includes age values beyond 
-5 Myr, but currently pre-SN feedback is implemented only within 5 Myr of 
-the creation time of the star particle.
+4 Myr, but currently pre-SN feedback is implemented only within 4 Myr of 
+the creation time of the star particle. The python notebook ``combine_SB99_hdf5.ipynb``
+in ``input/`` describes and scripts how to convert SB99 tables into an HDF5 
+table of the correct format for Enzo to read. The number and values of metallicity 
+and age, and intervals between the values, need not strictly match the existing table, but the notebook 
+describes the structure the table must have. Using a table from a different 
+source should work as long as the overall structure and units of the table 
+are equivalent to what's in the notebook.
 
 If pre-SN feedback is turned on, the mass and metals from stellar winds 
 are deposited on the grid before any nearby supernovae mass, metals, and 
@@ -933,6 +941,7 @@ feedback methods:
 
 * :ref:`method_0` (Type II and Ia SNe only)
 * :ref:`method_1` (Type II and Ia SNe only)
+* :ref:`method_6` (Type II and Ia SNe only)
 
 Source Tracking
 +++++++++++++++

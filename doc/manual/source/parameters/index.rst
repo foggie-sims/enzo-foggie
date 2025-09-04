@@ -2394,11 +2394,19 @@ The parameters below are considered in ``StarParticleCreation`` method
     Default: 1.1e4
 ``StarMassEjectionFraction`` (external)
     The mass fraction of created stars which is returned to the gas
-    phase. Default: 0.25
+    phase. If using feedback method 6 with ``StarFeedbackStochasticSNe = 1`` and
+    ``StarFeedbackUseTabularYields = 1``, then the mass fraction that is returned 
+    to the gas phase is calculated from the feedback tables with
+    ``StarMassEjectionFraction`` being an upper limit on the ejection mass
+    (see :ref:`method_6`). Default: 0.25
 ``StarMetalYield`` (external)
     The mass fraction of metals produced by each unit mass of stars
-    created (i.e. it is multiplied by mstar, not ejected). Default:
-    0.02
+    created (i.e. it is multiplied by mstar, not ejected). If using 
+    feedback method 6 with ``StarFeedbackStochasticSNe = 1`` and
+    ``StarFeedbackUseTabularYields = 1``, then the metal mass fraction that is returned 
+    to the gas phase is calculated from the feedback tables with
+    ``StarMetalYield`` being an upper limit on the ejection mass
+    (see :ref:`method_6`). Default: 0.02
 ``StarEnergyToThermalFeedback`` (external)
     The fraction of the rest-mass energy of the stars created which is
     returned to the gas phase as thermal energy. Default: 1e-5
