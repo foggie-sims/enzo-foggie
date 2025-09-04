@@ -33,7 +33,7 @@ int ReadPreSNFeedbackTable(char *name)
     file_id = H5Fopen(name, H5F_ACC_RDONLY, H5P_DEFAULT);
     grp_id = H5Gopen(file_id, "indexer");
     if (grp_id == h5_error) {
-      fprintf(stderr, "Can't open data group in %s.\n",name);
+      fprintf(stderr, "Can't open indexer group in %s.\n",name);
     }
 
     status = H5Gclose(grp_id);
