@@ -393,7 +393,6 @@ c     this timestep to draw from a Poisson distribution to get an integer
 c     number
 c
                if (stochastic .eq. 1_IKIND) then
-                  nsn_timestep = 1._RKIND
                   nsn_ii_sto = nsn_ii
                   nsn_ia_sto = nsn_ia
                   call draw_stochastic(nsn_ii_sto, nsn_ia_sto, dt)
