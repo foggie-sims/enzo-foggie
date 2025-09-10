@@ -309,8 +309,9 @@ of ejected material that are deposited by each particle:
    rate from the Tabular Feedback tables, and dividing that by the integrated 
    SN rate from the same tables. This gives the expected value of ejection mass 
    per supernova explosion, but note that the Tabular Feedback tables are IMF-averaged
-   and the ejection mass and rate mapped to time, so this is just an average expectation
-   for ejection mass per supernova. However, if a star particle is very small and has 
+   so the ejection mass and rate as a function of time are average expectation
+   values for a full population and are not intended to be a prescription using individual
+   massive star and SN models. If a star particle is very small and has 
    the unlikely event of a supernova, this could theoretically eject more than
    the mass of the particle. To account for this, the mass per SN ejection 
    is rescaled by the ratio of the current particle mass to its initial mass, 
@@ -976,7 +977,7 @@ To read these additional fields into `yt <https://yt-project.org/>`_ you'll need
 Generating Feedback Tables
 ++++++++++++++++++++++++++
 
-The script for generating feedback yield tables is provided as a 
+The script for generating feedback yield tables for SNe and long-timescale feedback is provided as a 
 git submodule inside the ``input/stellar_feedback_for_hydro`` directory.
 If you've cloned the Enzo source code from GitHub, 
 you can run ``git submodule update --init --recursive`` to activate this submodule
@@ -992,6 +993,12 @@ SYGMA parameters such as the IMF, nucleosynthetic yield tables, Type II SNe mass
 and Type Ia SNe delay time distribution can be set by modifying the ``params`` dictionary
 at the top of ``chemical_feedback.py``. Additional parameters supported by SYGMA can also
 be added to this dictionary; see the `SYGMA documentation <https://nugrid.github.io/NuPyCEE/SPHINX/build/html/sygma.html>`_.
+
+The script for combining pre-SN feedback yield tables for stellar winds from Starburst99 
+is provided as a Jupyter notebook in ``input/combine_pySB_hdf5.ipynb``. You will need numpy and h5py
+installed as well as jupyter, and you will need to obtain the tables by running pyStarburst.
+The resultant table is saved as ``input/preSN_feedback_SB99.hdf5``. See the `documentation for 
+pyStarburst <https://github.com/CalumHawcroft/Starburst>`_.
 
 .. _active_particles_dk:
 
