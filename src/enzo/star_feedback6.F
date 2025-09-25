@@ -395,7 +395,13 @@ c
                if (stochastic .eq. 1_IKIND) then
                   nsn_ii_sto = nsn_ii
                   nsn_ia_sto = nsn_ia
-                  call draw_stochastic(nsn_ii_sto, nsn_ia_sto, dt)
+c     Don't do stochastic SNe if the expected number of SNe is too big
+                  if (nsn_ii_sto+nsn_ia_sto .lt. 4_IKIND) then
+                     call draw_stochastic(nsn_ii_sto, nsn_ia_sto, dt)
+                  else
+                     nsn_ii_sto = NINT(nsn_ii)
+                     nsn_ia_sto = NINT(nsn_ia)
+                  endif
                   nsn_sto = nsn_ia_sto + nsn_ii_sto
 #ifdef FORTRAN_DEBUG
                   write(7,*) 'nsn_sto, nsn_ii_sto, nsn_ia_sto:',
