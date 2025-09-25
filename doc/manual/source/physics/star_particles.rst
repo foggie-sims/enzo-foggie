@@ -303,6 +303,9 @@ of ejected material that are deposited by each particle:
    the expected cumulative number of SNe in the stochastic method matches the 
    cumulative number in the continuous method, the nature of Poisson sampling 
    is such that there may be more or fewer SNe per particle than expected.
+   If the Tabular Feedback tables suggest there should be greater than 4 SNe 
+   in a given timestep (in the case of large star particles), the number 
+   will not be randomly sampled and will instead just be rounded to the nearest integer.
 
    In the stochastic SNe method, the amount of mass and metals to eject for 
    each supernova is calculated by integrating the mass (or metals) ejection 
