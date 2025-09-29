@@ -104,7 +104,7 @@ c  Locals
 c
       INTG_PREC i, j, k, n, ic, jc, kc, stepk, stepj, cellstep, 
      &          iter, z_ub, a1_ub, a2_ub
-      R_PREC energy, events_ii, events_ia,
+      R_PREC energy, energy_ii, energy_ia, events_ii, events_ia,
      &     meject, meject_ii, meject_ia,
      &     mzeject, mzeject_ii, mzeject_ia,
      &     dratio, distmass, age
@@ -137,11 +137,11 @@ c
 c
 c         Integrate yield tables to get mass & energy yields
 c
-            call sne_mass(meject, minit(n), metalf(n), age,
-     &              dt, t1,
+            call sne_mass(meject, meject_ii, meject_ia, minit(n),
+     &              metalf(n), age, dt, t1,
      &              tabMass, tabZ, tabAge, ntabZ, ntabAge)
-            call sne_energy(energy, minit(n), metalf(n), age,
-     &              ergSNIa, ergSNII,
+            call sne_energy(energy, energy_ii, energy_ia, minit(n),
+     &              metalf(n), age, ergSNIa, ergSNII,
      &              dx, dt, x1, t1, d1, v1,
      &              tabEvents, tabZ, tabAge, ntabZ, ntabAge)
 c

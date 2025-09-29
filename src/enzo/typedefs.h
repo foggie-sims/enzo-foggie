@@ -15,6 +15,7 @@
 #include "CloudyCoolingData.h"
 #include "EquilibriumTable.h"
 #include "FeedbackTable.h"
+#include "PreSNFeedbackTable.h"
 #include "CoolData.h"
 #include "RateData.h"
 #include "RadiationFieldData.h"
