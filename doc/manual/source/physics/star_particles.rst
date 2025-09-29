@@ -744,12 +744,12 @@ This results in fewer and
 more massive star particles, which improves computational
 efficiency. Even so, it may be desirable to enforce a lower limit to
 the star particle mass in some cases. This can be done with the
-parameter ``H2StarMakerMinimumMass``, below which star particles are
+parameter ``StarMakerMinimumMass``, below which star particles are
 not created. However, with ``H2StarMakerStochastic``, if the
-stellar mass is less than H2StarMakerMinimumMass, then a star
-particle of mass equal to H2StarMakerMinimumMass is formed
+stellar mass is less than StarMakerMinimumMass, then a star
+particle of mass equal to StarMakerMinimumMass is formed
 stochastically with a probability of (stellar
-mass)/H2StarMakerMinimumMass.
+mass)/StarMakerMinimumMass.
 
 For some applications, it may be desireable to create stars only 
 at local density peaks. For this purpose, setting 

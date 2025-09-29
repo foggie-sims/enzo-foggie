@@ -2210,6 +2210,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     }
   }
 
+
   if (StarFeedbackPreSNFeedback) {
 
     if (!StarMakerStoreInitialMass)
@@ -2221,6 +2222,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       if (debug) fprintf(stderr, "Successfully read in pre-SN feedback table %s.\n", StarFeedbackPreSNFilename);
     }
   }
+
+  if (H2StarMakerMinimumMass > 0) { // non-default
+    ENZO_FAIL("Use of H2StarMakerMinimumMass is deprecated. Please use StarMakerMinimumMass instead.");
+  }
+  /* Allow StarMakerMinimumMass to set H2StarMakerMinimumMass
+     so I don't have to rewrite a bunch of code. */
+  H2StarMakerMinimumMass = StarMakerMinimumMass;
+
 
   // Tracer fluid tests
   if(UseTracerFluid > 0){

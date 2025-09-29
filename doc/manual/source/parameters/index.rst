@@ -2509,7 +2509,8 @@ The parameters below are considered in ``StarParticleCreation`` method 11.
 ``H2StarMakerNumberDensityThreshold`` (external)
     See :ref:`molecular_hydrogen_regulated_star_formation`.
 ``H2StarMakerMinimumMass`` (external)
-    See :ref:`molecular_hydrogen_regulated_star_formation`.
+    **Deprecated** in favor of ``StarMakerMinimumMass``.
+    You can still set this parameter; however, it will overwrite ``StarMakerMinimumMass``.
 ``H2StarMakerMinimumH2FractionForStarFormation`` (external)
     See :ref:`molecular_hydrogen_regulated_star_formation`.
 ``H2StarMakerStochastic`` (external)

@@ -1135,7 +1135,6 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "H2StarMakerH2FractionMethod        = %"ISYM"\n", H2StarMakerH2FractionMethod);
   fprintf(fptr, "H2StarMakerEfficiency              = %"GSYM"\n", H2StarMakerEfficiency);
   fprintf(fptr, "H2StarMakerNumberDensityThreshold  = %"GSYM"\n", H2StarMakerNumberDensityThreshold);
-  fprintf(fptr, "H2StarMakerMinimumMass             = %"GSYM"\n", H2StarMakerMinimumMass);
   fprintf(fptr, "H2StarMakerMinimumH2FractionForStarFormation = %"GSYM"\n", H2StarMakerMinimumH2FractionForStarFormation);
   fprintf(fptr, "H2StarMakerStochastic              = %"ISYM"\n", H2StarMakerStochastic);
   fprintf(fptr, "H2StarMakerUseSobolevColumn        = %"ISYM"\n", H2StarMakerUseSobolevColumn);
