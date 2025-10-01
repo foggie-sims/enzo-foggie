@@ -966,6 +966,7 @@ c
                do k = -1_IKIND,1_IKIND
                   do j = -1_IKIND,1_IKIND
                      do i = -1_IKIND,1_IKIND
+c        Convert metal density to metal fraction
                         Z_cell = metal(ic+i,jc+j,kc+k)/d(ic+i,jc+j,kc+k)
                         mu_cell = mu(ic+i,jc+j,kc+k)
 c
@@ -987,6 +988,8 @@ c
      &                    (mu_cell .ne. mu_cell))
      &                    mu_cell = 0.8125_RKIND*(1._RKIND-Z_cell) + 
      &                     Z_cell/16._RKIND
+c        Z_avg is average metallicity, so convert metal fraction to metallicity
+c        by assuming 0.02 is Zsun
                         Z_avg = Z_avg + Z_cell/0.02_RKIND
                         n_avg = n_avg + 
      &                     d(ic+i,jc+j,kc+k)*dunits*
