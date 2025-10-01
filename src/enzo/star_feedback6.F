@@ -966,7 +966,7 @@ c
                do k = -1_IKIND,1_IKIND
                   do j = -1_IKIND,1_IKIND
                      do i = -1_IKIND,1_IKIND
-                        Z_cell = metal(ic+i,jc+j,kc+k)
+                        Z_cell = metal(ic+i,jc+j,kc+k)/d(ic+i,jc+j,kc+k)
                         mu_cell = mu(ic+i,jc+j,kc+k)
 c
 c     The following adjustments to Z_cell and mu_cell are band-aids to
