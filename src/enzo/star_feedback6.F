@@ -1701,28 +1701,31 @@ c
                if (idual .eq. 1_IKIND)
      &           ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k)*dratio
 c     
-c     Metal feedback (note that in this function gas metal is
-c     a fraction (rho_metal/rho_gas)
+c     Metal feedback
+c     metal field is metal density here
 c     
                if (imetal .eq. 1_IKIND) then
                   metal(ic+i,jc+j,kc+k) = 
-     &               (metal(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k) + 
-     &               mzeject) /(d(ic+i, jc+j, kc+k) + delta_mass)
+     &               metal(ic+i,jc+j,kc+k) + mzeject
 c                 Ensure the metallicity doesn't get too high
-                  if (metal(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
-     &              metal(ic+i,jc+j,kc+k) = 0.95_RKIND
+                  if (metal(ic+i,jc+j,kc+k)/
+     &              (d(ic+i,jc+j,kc+k) + delta_mass) .gt. 0.95_RKIND)
+     &              metal(ic+i,jc+j,kc+k) = 0.95_RKIND * 
+     &              (d(ic+i,jc+j,kc+k) + delta_mass)
                   if (itracksrc .eq. 1) then
                      metalSNII(ic+i,jc+j,kc+k) =
-     &                 (metalSNII(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k) + 
-     &                 mzeject_ii) /(d(ic+i, jc+j, kc+k) + delta_mass)
+     &                 metalSNII(ic+i,jc+j,kc+k) + mzeject_ii
 c                 Put same cap on other metal fields
-                     if (metalSNII(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
-     &                 metalSNII(ic+i,jc+j,kc+k) = 0.95_RKIND
+                     if (metalSNII(ic+i,jc+j,kc+k)/
+     &                 (d(ic+i,jc+j,kc+k) + delta_mass) .gt. 0.95_RKIND)
+     &                 metalSNII(ic+i,jc+j,kc+k) = 0.95_RKIND * 
+     &                 (d(ic+i, jc+j, kc+k) + delta_mass)
                      metalSNIa(ic+i,jc+j,kc+k) =
-     &                 (metalSNIa(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k) + 
-     &                 mzeject_ia) /(d(ic+i, jc+j, kc+k) + delta_mass)
-                     if (metalSNIa(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
-     &                 metalSNIa(ic+i,jc+j,kc+k) = 0.95_RKIND
+     &                 metalSNIa(ic+i,jc+j,kc+k) + mzeject_ia
+                     if (metalSNIa(ic+i,jc+j,kc+k)/
+     &                 (d(ic+i,jc+j,kc+k) + delta_mass) .gt. 0.95_RKIND)
+     &                 metalSNIa(ic+i,jc+j,kc+k) = 0.95_RKIND * 
+     &                 (d(ic+i,jc+j,kc+k) + delta_mass)
                   endif
                endif
 c
@@ -1876,16 +1879,18 @@ c
                if (idual .eq. 1_IKIND)
      &           ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k)*dratio
 c     
-c     Metal feedback (note that in this function gas metal is
-c     a fraction (rho_metal/rho_gas)
+c     Metal feedback
+c     metal field is metal density here
 c     
                if (imetal .eq. 1_IKIND) then
                   metal(ic+i,jc+j,kc+k) = 
-     &               (metal(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k) + 
-     &               metal_per_cell) /(d(ic+i, jc+j, kc+k) + delta_mass)
+     &               metal(ic+i,jc+j,kc+k) + metal_per_cell
 c                 Ensure the metallicity doesn't get too high
-                  if (metal(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
-     &              metal(ic+i,jc+j,kc+k) = 0.95_RKIND
+                  if (metal(ic+i,jc+j,kc+k)/
+     &              (d(ic+i,jc+j,kc+k) + delta_mass)
+     &              .gt. 0.95_RKIND)
+     &              metal(ic+i,jc+j,kc+k) = 0.95_RKIND * 
+     &              (d(ic+i,jc+j,kc+k) + delta_mass)
                endif
 c
 c     Add mass
