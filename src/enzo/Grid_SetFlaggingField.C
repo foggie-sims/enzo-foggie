@@ -287,6 +287,11 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 	  return FAIL;
 	}
 	break;
+
+      case 21:
+        /* THIS IS WHERE WE WILL PUT THE ENERGY REFINEMENT */
+
+
 	
 	/* ==== METHOD 100: UNDO REFINEMENT IN SOME REGIONS ==== */
 	
