@@ -53,6 +53,9 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
   RestrictFlaggingToMustRefineParticles =
     (level == MustRefineParticlesRefineToLevel) &&
     (MustRefineParticlesCreateParticles > 0) && (!ParticleRefinementOnly);
+
+  /* Add code here to figure out refinement regions, criteria, etc. */
+
  
   /***********************************************************************/
   /* beginning of Cell flagging criterion routine                        */
