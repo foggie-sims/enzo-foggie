@@ -289,7 +289,11 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 	break;
 
       case 21:
-        /* THIS IS WHERE WE WILL PUT THE ENERGY REFINEMENT */
+	NumberOfFlaggedCells = this->FlagCellsToBeRefinedByTemperature();
+	if (NumberOfFlaggedCells < 0) {
+	  fprintf(stderr, "Error in grid->FlagCellsToBeRefinedByTemperature.\n");
+	  return FAIL;
+	}
 
 
 	
