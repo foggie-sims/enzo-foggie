@@ -294,6 +294,7 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 	  fprintf(stderr, "Error in grid->FlagCellsToBeRefinedByTemperature.\n");
 	  return FAIL;
 	}
+	break;
 
 
 	
