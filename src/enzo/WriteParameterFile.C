@@ -364,8 +364,6 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 
   fprintf(fptr, "FastSiblingLocatorEntireDomain      = %"ISYM"\n", 
 	  FastSiblingLocatorEntireDomain);
-  fprintf(fptr, "MustRefineRegionMinRefinementLevel  = %"ISYM"\n", 
-	  MustRefineRegionMinRefinementLevel);
   fprintf(fptr, "MetallicityRefinementMinLevel       = %"ISYM"\n", 
 	  MetallicityRefinementMinLevel);
   fprintf(fptr, "MetallicityRefinementMinMetallicity = %"GSYM"\n", 
@@ -384,12 +382,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   WriteListOfFloats(fptr, MetaData.TopGridRank, RefineRegionLeftEdge);
   fprintf(fptr, "RefineRegionRightEdge  = ");
   WriteListOfFloats(fptr, MetaData.TopGridRank, RefineRegionRightEdge);
-  fprintf(fptr, "MustRefineRegionLeftEdge   = ");
-  WriteListOfFloats(fptr, MetaData.TopGridRank, MustRefineRegionLeftEdge);
-  fprintf(fptr, "MustRefineRegionRightEdge  = ");
-  WriteListOfFloats(fptr, MetaData.TopGridRank, MustRefineRegionRightEdge);
   fprintf(fptr, "RefineRegionTimeType   = %"ISYM"\n", RefineRegionTimeType);
-  fprintf(fptr, "MustRefineRegionTimeType   = %"ISYM"\n", MustRefineRegionTimeType);
   fprintf(fptr, "MustRefineParticlesLeftEdge   = ");
   WriteListOfFloats(fptr, MetaData.TopGridRank, MustRefineParticlesLeftEdge);
   fprintf(fptr, "MustRefineParticlesRightEdge  = ");
@@ -397,19 +390,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "\n");
   if (RefineRegionFile != NULL)
     fprintf(fptr, "RefineRegionFile       = %s\n", RefineRegionFile);
-  if (MustRefineRegionFile != NULL)
-    fprintf(fptr, "MustRefineRegionFile       = %s\n", MustRefineRegionFile);
-
-  fprintf(fptr, "UseCoolingRefineRegion    = %"ISYM"\n", UseCoolingRefineRegion);
-  fprintf(fptr, "EvolveCoolingRefineRegion = %"ISYM"\n", EvolveCoolingRefineRegion);
-  fprintf(fptr, "CoolingRefineRegionLeftEdge   = ");
-  WriteListOfFloats(fptr, MetaData.TopGridRank, CoolingRefineRegionLeftEdge);
-  fprintf(fptr, "CoolingRefineRegionRightEdge  = ");
-  WriteListOfFloats(fptr, MetaData.TopGridRank, CoolingRefineRegionRightEdge);
-  fprintf(fptr, "CoolingRefineRegionTimeType   = %"ISYM"\n", CoolingRefineRegionTimeType);
-  if (CoolingRefineRegionFile != NULL)
-    fprintf(fptr, "CoolingRefineRegionFile     = %s\n", CoolingRefineRegionFile);
-  fprintf(fptr, "MultiRefineRegionTimeType   = %"ISYM"\n", MultiRefineRegionTimeType);
+    fprintf(fptr, "MultiRefineRegionTimeType   = %"ISYM"\n", MultiRefineRegionTimeType);
   if (MultiRefineRegionFile != NULL)
      fprintf(fptr, "MultiRefineRegionFile     = %s\n", MultiRefineRegionFile);
 
@@ -711,16 +692,18 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "MultiRefineRegionMinimumOuterLevel  = %"ISYM"\n",
           MultiRefineRegionMinimumOuterLevel);
   
-  for (int ireg = 0; ireg < MAX_STATIC_REGIONS; ireg++){
-    if (MultiRefineRegionMaximumLevel[ireg] >= 0) {
-      fprintf(fptr, "MultiRefineRegionMaximumLevel[%"ISYM"] = %"ISYM"\n", ireg,
-              MultiRefineRegionMaximumLevel[ireg]);
+  for (int ireg = 0; ireg < NumberOfStaticMultiRefineRegions; ireg++){
+    if (MultiRefineRegionMaximumLevel[ireg][0] >= 0){
+      fprintf(fptr, "MultiRefineRegionFlaggingMethod[%"ISYM"]    = ",ireg);
+      WriteListOfInts(fptr, MAX_FLAGGING_METHODS, MultiRefineRegionFlaggingMethod[ireg]);
 
-      fprintf(fptr, "MultiRefineRegionMinimumLevel[%"ISYM"] = %"ISYM"\n", ireg,
-              MultiRefineRegionMinimumLevel[ireg]);
+      fprintf(fptr, "MultiRefineRegionMaximumLevel[%"ISYM"]    = ",ireg);
+      WriteListOfInts(fptr, MAX_FLAGGING_METHODS, MultiRefineRegionMaximumLevel[ireg]);
 
-      fprintf(fptr, "MultiRefineRegionMinimumStarMass[%"ISYM"] = %"FSYM"\n", ireg,
-              MultiRefineRegionMinimumStarMass[ireg]);
+      fprintf(fptr, "MultiRefineRegionMinimumLevel[%"ISYM"]    = ",ireg);
+      WriteListOfInts(fptr, MAX_FLAGGING_METHODS, MultiRefineRegionMinimumLevel[ireg]);
+
+      fprintf(fptr, "MultiRefineRegionMinimumStarMass[%"ISYM"] = %"FSYM"\n",MultiRefineRegionMinimumStarMass[ireg]);
 
       fprintf(fptr, "MultiRefineRegionLeftEdge[%"ISYM"] = ", ireg);
       WriteListOfFloats(fptr, MAX_DIMENSION, MultiRefineRegionLeftEdge[ireg]);

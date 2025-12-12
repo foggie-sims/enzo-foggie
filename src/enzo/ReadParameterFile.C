@@ -344,10 +344,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &MaximumGravityRefinementLevel);
     ret += sscanf(line, "MaximumParticleRefinementLevel = %"ISYM,
 		  &MaximumParticleRefinementLevel);
-    ret += sscanf(line, "CellFlaggingMethod     = %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM,
+    ret += sscanf(line, "CellFlaggingMethod     = %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM,
 	     CellFlaggingMethod+0, CellFlaggingMethod+1, CellFlaggingMethod+2,
 	     CellFlaggingMethod+3, CellFlaggingMethod+4, CellFlaggingMethod+5,
-	     CellFlaggingMethod+6);
+	     CellFlaggingMethod+6, CellFlaggingMethod+7, CellFlaggingMethod+8);
     ret += sscanf(line, "FluxCorrection         = %"ISYM, &FluxCorrection);
     ret += sscanf(line, "UseCoolingTimestep     = %"ISYM, &UseCoolingTimestep);
     ret += sscanf(line, "CoolingTimestepSafetyFactor = %"FSYM, &CoolingTimestepSafetyFactor);
@@ -363,10 +363,11 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "CriticalGridRatio      = %"FSYM, &CriticalGridRatio);
     ret += sscanf(line, "NumberOfBufferZones    = %"ISYM, &NumberOfBufferZones);
     ret += sscanf(line, "FastSiblingLocatorEntireDomain = %"ISYM, &FastSiblingLocatorEntireDomain);
-    ret += sscanf(line, "MustRefineRegionMinRefinementLevel = %"ISYM,
-		  &MustRefineRegionMinRefinementLevel);
-    ret += sscanf(line, "MetallicityRefinementMinLevel = %"ISYM,
-		  &MetallicityRefinementMinLevel);
+    if (sscanf(line, "MetallicityRefinementMinLevel = %"ISYM, &dummy)==1){
+      MetallicityRefinementMinLevel = dummy;
+      GlobalMetallicityRefinementMinLevel = dummy;
+      ret++;
+    }
     ret += sscanf(line, "MetallicityRefinementMinMetallicity = %"FSYM,
 		  &MetallicityRefinementMinMetallicity);
     ret += sscanf(line, "MetallicityRefinementMinDensity = %"FSYM,
@@ -385,31 +386,35 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "RefineRegionRightEdge = %"PSYM" %"PSYM" %"PSYM,
 		  RefineRegionRightEdge, RefineRegionRightEdge+1,
 		  RefineRegionRightEdge+2);
-    ret += sscanf(line, "MustRefineRegionLeftEdge  = %"PSYM" %"PSYM" %"PSYM,
-		  MustRefineRegionLeftEdge, MustRefineRegionLeftEdge+1,
-		  MustRefineRegionLeftEdge+2);
-    ret += sscanf(line, "MustRefineRegionRightEdge  = %"PSYM" %"PSYM" %"PSYM,
-		  MustRefineRegionRightEdge, MustRefineRegionRightEdge+1,
-		  MustRefineRegionRightEdge+2);
 
     /* Parameters for the MultiRefineRegion mechanics */
-
     ret += sscanf(line, "MultiRefineRegionSpatiallyVaryingStarMass = %"ISYM, &MultiRefineRegionSpatiallyVaryingStarMass);
     ret += sscanf(line, "MultiRefineRegionMaximumOuterLevel  = %"ISYM, &MultiRefineRegionMaximumOuterLevel);
     ret += sscanf(line, "MultiRefineRegionMinimumOuterLevel  = %"ISYM, &MultiRefineRegionMinimumOuterLevel);
-    if (sscanf(line, "MultiRefineRegionMaximumLevel[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2){
+    dim = -1;
+    ret += sscanf(line, "MultiRefineRegionFlaggingMethod[%"ISYM"]     = %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM,
+	     &dim, MultiRefineRegionFlaggingMethod[dim]+0, MultiRefineRegionFlaggingMethod[dim]+1, MultiRefineRegionFlaggingMethod[dim]+2,
+	     MultiRefineRegionFlaggingMethod[dim]+3, MultiRefineRegionFlaggingMethod[dim]+4, MultiRefineRegionFlaggingMethod[dim]+5,
+	     MultiRefineRegionFlaggingMethod[dim]+6, MultiRefineRegionFlaggingMethod[dim]+7, MultiRefineRegionFlaggingMethod[dim]+8);
+
+    ret += sscanf(line, "MultiRefineRegionMaximumLevel[%"ISYM"]     = %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM,
+	     &dim, MultiRefineRegionMaximumLevel[dim]+0, MultiRefineRegionMaximumLevel[dim]+1, MultiRefineRegionMaximumLevel[dim]+2,
+	     MultiRefineRegionMaximumLevel[dim]+3, MultiRefineRegionMaximumLevel[dim]+4, MultiRefineRegionMaximumLevel[dim]+5,
+	     MultiRefineRegionMaximumLevel[dim]+6, MultiRefineRegionMaximumLevel[dim]+7, MultiRefineRegionMaximumLevel[dim]+8);
+
+    ret += sscanf(line, "MultiRefineRegionMinimumLevel[%"ISYM"]     = %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM,
+	     &dim, MultiRefineRegionMinimumLevel[dim]+0, MultiRefineRegionMinimumLevel[dim]+1, MultiRefineRegionMinimumLevel[dim]+2,
+	     MultiRefineRegionMaximumLevel[dim]+3, MultiRefineRegionMaximumLevel[dim]+4, MultiRefineRegionMinimumLevel[dim]+5,
+	     MultiRefineRegionMinimumLevel[dim]+6, MultiRefineRegionMinimumLevel[dim]+7, MultiRefineRegionMinimumLevel[dim]+8);
+
+    if (dim>-1){
 	    if (dim > MAX_STATIC_REGIONS-1)
 	      ENZO_VFAIL("MultiRefineRegion number %"ISYM" (MAX_STATIC_REGIONS) > MAX allowed\n", dim);
-	    ret++;
-	    MultiRefineRegionMaximumLevel[dim] = int_dummy;
       if (dim > NumberOfStaticMultiRefineRegions-1){
         NumberOfStaticMultiRefineRegions = dim+1;
       }
     }
-    if (sscanf(line, "MultiRefineRegionMinimumLevel[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2){
-      ret++;
-      MultiRefineRegionMinimumLevel[dim] = int_dummy;
-    }
+
     if (sscanf(line, "MultiRefineRegionLeftEdge[%"ISYM"] = ", &dim) == 1)
       ret += sscanf(line,
 		    "MultiRefineRegionLeftEdge[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM,
@@ -432,32 +437,6 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "RefineRegionTimeType = %"ISYM, &RefineRegionTimeType);
     if (sscanf(line, "RefineRegionFile = %s", dummy) == 1) {
       RefineRegionFile = dummy;
-      ret++;
-    }
-
-    /* Read evolving MustRefineRegion */
-
-    ret += sscanf(line, "MustRefineRegionTimeType = %"ISYM, &MustRefineRegionTimeType);
-    if (sscanf(line, "MustRefineRegionFile = %s", dummy) == 1) {
-      MustRefineRegionFile = dummy;
-      ret++;
-    }
-
-    /* cooling refinement region inputs */
-
-    ret += sscanf(line, "UseCoolingRefineRegion        = %"ISYM, &UseCoolingRefineRegion);
-    ret += sscanf(line, "EvolveCoolingRefineRegion     = %"ISYM, &EvolveCoolingRefineRegion);
-
-    ret += sscanf(line, "CoolingRefineRegionLeftEdge  = %"PSYM" %"PSYM" %"PSYM,
-		  CoolingRefineRegionLeftEdge, CoolingRefineRegionLeftEdge+1,
-		  CoolingRefineRegionLeftEdge+2);
-    ret += sscanf(line, "CoolingRefineRegionRightEdge  = %"PSYM" %"PSYM" %"PSYM,
-		  CoolingRefineRegionRightEdge, CoolingRefineRegionRightEdge+1,
-		  CoolingRefineRegionRightEdge+2);
-
-    ret += sscanf(line, "CoolingRefineRegionTimeType = %"ISYM, &CoolingRefineRegionTimeType);
-    if (sscanf(line, "CoolingRefineRegionFile = %s", dummy) == 1) {
-      CoolingRefineRegionFile = dummy;
       ret++;
     }
       
@@ -872,8 +851,11 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
                  &ShockwaveRefinementMinMach);
     ret += sscanf(line, "ShockwaveRefinementMinVelocity = %"FSYM,
                  &ShockwaveRefinementMinVelocity);
-    ret += sscanf(line, "ShockwaveRefinementMaxLevel = %"ISYM,
-                 &ShockwaveRefinementMaxLevel);
+    if (sscanf(line, "ShockwaveRefinementMaxLevel = %"ISYM, &dummy)==1){
+      ShockwaveRefinementMaxLevel = dummy;
+      GlobalShockwaveRefinementMaxLevel = dummy;
+      ret++;
+    }
     ret += sscanf(line, "ComovingCoordinates = %"ISYM,&ComovingCoordinates);
     ret += sscanf(line, "StarParticleCreation = %"ISYM, &StarParticleCreation);
     ret += sscanf(line, "BigStarFormation = %"ISYM, &BigStarFormation);
@@ -1779,15 +1761,13 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
   /* If TimeType is 0 or 1 for RefineRegion, MustRefineRegion, or CoolingRefineRegion, read in the input file. */
   if ((RefineRegionTimeType == 0) || (RefineRegionTimeType == 1)
-      || (MustRefineRegionTimeType == 0) || (MustRefineRegionTimeType == 1)
-      || (CoolingRefineRegionTimeType == 0) || (CoolingRefineRegionTimeType == 1)
       || (MultiRefineRegionTimeType == 0) || (MultiRefineRegionTimeType == 1)) {
       if (ReadEvolveRefineFile() == FAIL) {
         ENZO_FAIL("Error in ReadEvolveRefineFile.");
       }
   }
 
-  if( ((RefineRegionTimeType==1) || (MustRefineRegionTimeType==1) || (CoolingRefineRegionTimeType==1) || (MultiRefineRegionTimeType==1)) && (ComovingCoordinates==0)){
+  if( ((RefineRegionTimeType==1) || (MultiRefineRegionTimeType==1)) && (ComovingCoordinates==0)){
     ENZO_FAIL("You cannot have ComovingCoordinates turned off if your RegionTimeType is set to 1!");
   }
 
@@ -2229,6 +2209,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   /* Allow StarMakerMinimumMass to set H2StarMakerMinimumMass
      so I don't have to rewrite a bunch of code. */
   H2StarMakerMinimumMass = StarMakerMinimumMass;
+
+  /* For any static MultiRefineRegions that don't specify flagging methods, assume MustRefine (method 12).
+     This should allow for backwards compatibility with old MultiRefineRegion behavior */
+  for (i=0; i<NumberOfStaticMultiRefineRegions; i++){
+    if (MultiRefineRegionFlaggingMethod[i][0] == INT_UNDEFINED){
+      MultiRefineRegionFlaggingMethod[i][0] = 12;
+    }
+  }
 
 
   // Tracer fluid tests
