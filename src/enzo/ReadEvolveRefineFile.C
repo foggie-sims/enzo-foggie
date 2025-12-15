@@ -122,7 +122,7 @@ int ReadEvolveRefineFile(void)
     #ifdef MPI
       MPI_Bcast(NumberOfMultiRefineTracks, 1, MPI_LONG_INT, ROOT_PROCESSOR, MPI_COMM_WORLD);
     #endif
-    MRRTracks = new MultiRefineTrack[NumberOfMultiRefineTracks];
+    MRRTracks = new MultiRefineRegionTrack[NumberOfMultiRefineTracks];
 
     /* For each track, check whether it is enabled and, if so, read in number of time entries, 
       number of refinement types allowed, and list of refinement types */
