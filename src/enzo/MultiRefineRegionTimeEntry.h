@@ -18,8 +18,8 @@ struct MultiRefineRegionTimeEntry {
     /* Arrays that contain list of minimum and maximum levels
     permitted for MultiRefineRegion at this time. Order is
     the same as MultiRefineRegionTrack.RefTypes */
-    int* MinLevels;
-    int* MaxLevels;
+    int *MinLevels;
+    int *MaxLevels;
 
     /* Minimum star particle mass that can be formed in this
     MultiRefineRegion at this time in Msol */

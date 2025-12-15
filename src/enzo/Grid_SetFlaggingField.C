@@ -50,7 +50,7 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 		MetallicityRefinementMinLevel = GlobalMetallicityRefinementMinLevel;
 		ShockwaveRefinementMaxLevel = GlobalShockwaveRefinementMaxLevel;
 		
-		this->FindMultiRefineRegions()
+		this->FindMultiRefineRegions();
 	}
 
   /* For must-refine particles, restrict refinement to where they

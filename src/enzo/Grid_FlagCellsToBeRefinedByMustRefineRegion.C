@@ -49,7 +49,7 @@ int grid::FlagCellsToBeRefinedByMustRefineRegion(int level)
   FLOAT CellSize, xpos, ypos, zpos;
   int LocalMaximumRefinementLevel = 0;
   int LocalMinimumRefinementLevel = 0;
-  int Start[MAX_DIMENSION], End[MAX_DIMENSION], NIter = 0;
+  int Start[MAX_DIMENSION], End[MAX_DIMENSION];
   int NumberOfFlaggedCells = 0;
   int NRegions;
   int MRind = INT_UNDEFINED;
@@ -64,15 +64,6 @@ int grid::FlagCellsToBeRefinedByMustRefineRegion(int level)
   /* error check */
   if (FlaggingField == NULL) 
     ENZO_FAIL("Flagging Field is undefined");
-    
-  /* Check whether we're using evolving MultiRefine regions or not */
-  if((MultiRefineRegionTimeType == 0) || (MultiRefineRegionTimeType == 1)){
-    NIter = NumberOfEnabledMultiRefineTracks;
-  }
-
-  if(debug && MyProcessorNumber == ROOT_PROCESSOR){
-    fprintf(stderr,"Cell Flagging: %"ISYM" evolving enabled MultiRefineRegions detected.\n",NIter);
-  }
 
   /* loop over dimensions - I guess this is unnecessary,
    but it's handy to have shorter names */
@@ -100,7 +91,7 @@ int grid::FlagCellsToBeRefinedByMustRefineRegion(int level)
         
         NRegions = 0;
         /* Loop over multirefinement regions */
-        for (region = 0; region < MAX_STATIC_REGIONS + NIter; region++){
+        for (region = 0; region < NumberOfStaticMultiRefineRegions+NumberOfEnabledMultiRefineTracks; region++){
           /* Check whether this region uses MustRefine */
           for (int reftype = 0; reftype<MAX_FLAGGING_METHODS; reftype++){
             if (MultiRefineRegionFlaggingMethod[reftype] == 12){

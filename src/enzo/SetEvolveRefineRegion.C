@@ -156,10 +156,11 @@ int SetEvolveRefineRegion (FLOAT time)
           MultiRefineRegionLeftEdge[enbctr+NumberOfStaticMultiRefineRegions][2], MultiRefineRegionRightEdge[enbctr+NumberOfStaticMultiRefineRegions][0],
           MultiRefineRegionRightEdge[enbctr+NumberOfStaticMultiRefineRegions][1], MultiRefineRegionRightEdge[enbctr+NumberOfStaticMultiRefineRegions][2],
           MultiRefineRegionMinimumStarMass[enbctr+NumberOfStaticMultiRefineRegions]);
-        for (i=0; i<MRRTracks[region].NRefTypes; i++)
+        for (i=0; i<MRRTracks[region].NRefTypes; i++){
           fprintf(stdout, "                                                %"ISYM": %"ISYM" %"ISYM"\n", 
           MultiRefineRegionFlaggingMethod[enbctr+NumberOfStaticMultiRefineRegions][i],MultiRefineRegionMinimumLevel[enbctr+NumberOfStaticMultiRefineRegions][i],
           MultiRefineRegionMaximumLevel[enbctr+NumberOfStaticMultiRefineRegions]);
+        }
       }
     
       enbctr++;

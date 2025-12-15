@@ -757,8 +757,6 @@ OBJS_CONFIG_LIB = \
         Mpich_V1_Dims_create.o \
         multi_cool.o \
         MultigridSolver.o \
-        MultiRefineRegionTimeEntry.o \
-        MultiRefineRegionTrack.o \
         mused.o \
         NestedCosmologySimulationInitialize.o \
         ngpinterp.o \
