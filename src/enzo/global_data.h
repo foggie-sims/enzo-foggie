@@ -555,7 +555,7 @@ EXTERN FLOAT EvolveMultiRefineRegionRightEdge[MAX_TRACKS][MAX_TIME_ENTRIES][3]; 
 EXTERN int EvolveMultiRefineRegionMinimumLevel[MAX_TRACKS]; // minimum allowable level
 EXTERN int EvolveMultiRefineRegionMaximumLevel[MAX_TRACKS]; // maximum allowable level
 EXTERN float EvolveMultiRefineRegionMinimumStarMass[MAX_TRACKS][MAX_TIME_ENTRIES]; // minimum allowed star particle formation mass
-EXTERN MultiRefineRegionTrack *MRRTracks;
+EXTERN MultiRefineRegionTrackType *MRRTracks;
 
 /* Processor identifier for this thread/processor */
 
