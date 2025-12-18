@@ -20,6 +20,8 @@
 #include "RateData.h"
 #include "RadiationFieldData.h"
 #include "TestProblemData.h"
+#include "MultiRefineRegionTrack.h"
+#include "MultiRefineRegionTimeEntry.h"
 
 /* These are the different types of baryon fields. */
 
