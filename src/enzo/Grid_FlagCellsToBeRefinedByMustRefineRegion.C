@@ -94,7 +94,7 @@ int grid::FlagCellsToBeRefinedByMustRefineRegion(int level)
         for (region = 0; region < NumberOfStaticMultiRefineRegions+NumberOfEnabledMultiRefineTracks; region++){
           /* Check whether this region uses MustRefine */
           for (int reftype = 0; reftype<MAX_FLAGGING_METHODS; reftype++){
-            if (MultiRefineRegionFlaggingMethod[reftype] == 12){
+            if (MultiRefineRegionFlaggingMethod[region][reftype] == 12){
               MRind = reftype;
             }
           }
@@ -106,13 +106,13 @@ int grid::FlagCellsToBeRefinedByMustRefineRegion(int level)
               /* Of those regions the cell is within, adopt refinement constraints of refine regions with maximum allowed refinement */
               if (LocalMaximumRefinementLevel < MultiRefineRegionMaximumLevel[region][MRind]){
                   if(debug && MyProcessorNumber == ROOT_PROCESSOR){
-                    fprintf(stderr,"Maximum cell refinement level updated from %"ISYM" to %"ISYM"\n",LocalMaximumRefinementLevel,MultiRefineRegionMaximumLevel[region][MRind]);
+                    fprintf(stderr, "Maximum cell refinement level updated from %"ISYM" to %"ISYM"\n", LocalMaximumRefinementLevel, MultiRefineRegionMaximumLevel[region][MRind]);
                   }
                   LocalMaximumRefinementLevel = MultiRefineRegionMaximumLevel[region][MRind];
               }
               if (LocalMinimumRefinementLevel < MultiRefineRegionMinimumLevel[region][MRind]){
                   if(debug && MyProcessorNumber == ROOT_PROCESSOR){
-                    fprintf(stderr,"Minimum cell refinement level updated from %"ISYM" to %"ISYM"\n",LocalMinimumRefinementLevel,MultiRefineRegionMinimumLevel[region][MRind]);
+                    fprintf(stderr, "Minimum cell refinement level updated from %"ISYM" to %"ISYM"\n", LocalMinimumRefinementLevel, MultiRefineRegionMinimumLevel[region][MRind]);
                   }
                   LocalMinimumRefinementLevel = MultiRefineRegionMinimumLevel[region][MRind];
               }

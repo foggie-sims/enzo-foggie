@@ -37,7 +37,7 @@ int grid::FindMultiRefineRegions(int level)
 
     /* For each MultiRefineRegion, check whether there is overlap with this grid. If there is, 
        adjust the minimum and maximum refinement levels as necessary */
-    for (region=0; region<NumberOfStaticMultiRefineRegions+NumberOfEnabledMultiRefineRegions; region++){
+    for (region=0; region<NumberOfStaticMultiRefineRegions+NumberOfEnabledMultiRefineTracks; region++){
         /* If there is overlap between this grid and this MultiRefineRegion*/
         if(((GridRightEdge[0] > MultiRefineRegionLeftEdge[region][0]) && (GridLeftEdge[0] < MultiRefineRegionRightEdge[region][0]))
             && ((GridRightEdge[1] > MultiRefineRegionLeftEdge[region][1]) && (GridLeftEdge[1] < MultiRefineRegionRightEdge[region][1]))
@@ -45,8 +45,8 @@ int grid::FindMultiRefineRegions(int level)
             /* For each cell flagging method in this MultiRefineRegion...*/
             for (i = 0; i<MAX_FLAGGING_METHODS; i++){ 
                 /* If this MultiRefineRegion is using this cell flagging slot...*/
-                if (MultiRefineRegionFlaggingMethod[i] != INT_UNDEFINED){
-                    CurrentMethod = MultiRefineRegionFlaggingMethod[i];
+                if (MultiRefineRegionFlaggingMethod[region][i] != INT_UNDEFINED){
+                    CurrentMethod = MultiRefineRegionFlaggingMethod[region][i];
                     CMind = INT_UNDEFINED;
                     for (j=0; j<MAX_FLAGGING_METHODS; j++){
                         /* Identify the index of this cell flagging method (if it exists) */
@@ -91,7 +91,7 @@ int grid::FindMultiRefineRegions(int level)
         if ((CMind == INT_UNDEFINED) && (CellFlaggingMethod[i] != INT_UNDEFINED)){
             IniLocalCellFlaggingMethod[UFind] = CellFlaggingMethod[i];
             if (CellFlaggingMethod[i] == 13){
-                IniLocalMultiRefinementMinimumLevel[UFind] = MetallicityRefinementMinLevel;
+                IniLocalMultiRefineMinimumLevel[UFind] = MetallicityRefinementMinLevel;
             }
             else{
                 IniLocalMultiRefineMinimumLevel[UFind] = 0;
@@ -132,14 +132,14 @@ int grid::FindMultiRefineRegions(int level)
 
                 /* if methods 13 and/or 14 are in use, update limit variables to local values */
                 if (IniLocalCellFlaggingMethod[i] == 13){
-                    MetallicityRefinementMinLevel = IniLocalMultiRefinementMinimumLevel[i];
+                    MetallicityRefinementMinLevel = IniLocalMultiRefineMinimumLevel[i];
                 }
                 if (IniLocalCellFlaggingMethod[i] == 14){
-                    if (IniLocalMultiRefinementMaximumLevel[i] > LocalMultiRefineMaximumLevel){
+                    if (IniLocalMultiRefinemMaximumLevel[i] > LocalMultiRefineMaximumLevel){
                         ShockwaveRefinementMaxLevel = LocalMultiRefineMaximumLevel;
                     }
                     else{
-                        ShockwaveRefinementMaxLevel = IniLocalMultiRefinementMaximumLevel[i];
+                        ShockwaveRefinementMaxLevel = IniLocalMultiRefineMaximumLevel[i];
                     }
                 }
             }
@@ -152,8 +152,8 @@ int grid::FindMultiRefineRegions(int level)
     }
 
     if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
-        fprintf(stderr, 'FindMultiRefineRegions says the following cell flagging methods have been turned on for this grid: ');
-        WriteListOfInts(stderr, MAX_FLAGGING_METHODS, LocalCellFlaggingMethods);
+        fprintf(stderr, "FindMultiRefineRegions: the following cell flagging methods are active for this grid: ");
+        WriteListOfInts(stderr, MAX_FLAGGING_METHODS, LocalCellFlaggingMethod);
     }
     
 
