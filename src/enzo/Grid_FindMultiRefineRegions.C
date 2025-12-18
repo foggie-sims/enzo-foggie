@@ -135,7 +135,7 @@ int grid::FindMultiRefineRegions(int level)
                     MetallicityRefinementMinLevel = IniLocalMultiRefineMinimumLevel[i];
                 }
                 if (IniLocalCellFlaggingMethod[i] == 14){
-                    if (IniLocalMultiRefinemMaximumLevel[i] > LocalMultiRefineMaximumLevel){
+                    if (IniLocalMultiRefineMaximumLevel[i] > LocalMultiRefineMaximumLevel){
                         ShockwaveRefinementMaxLevel = LocalMultiRefineMaximumLevel;
                     }
                     else{
