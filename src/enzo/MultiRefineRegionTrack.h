@@ -1,7 +1,7 @@
 /* Struct for variables relating to individual MultiRefineRegion 
    tracks. Variables are populated in ReadEvolveRefineFile.C */
 
-#include "MultiRefineRegionTimeEntry.h"
+#include "typedefs.h"
 
 struct MultiRefineRegionTrackType {
 
