@@ -1,8 +1,8 @@
 #=======================================================================
 #
-# FILE:        Make.mach.nasa-aitken-milan 
+# FILE:        Make.mach.nasa-aitken-milan-mpich 
 #
-# DESCRIPTION: Makefile settings for NASA's aitken supercomputer 
+# DESCRIPTION: Makefile settings for NASA's aitken with mpich 
 #
 #    modules: module use -a /nasa/modulefiles/testing
 #             comp-intel/2020.4.304
@@ -13,23 +13,24 @@
 # DATE:        2021-06-02
 #
 # AUTHOR:      JT
-# DATE:        2025-09-08 
+# DATE:        2025-12-20 
+#
 #=======================================================================
 
-MACH_TEXT  = NASA Aitken Milan 
+MACH_TEXT  = NASA Aitken Milan (MPICH variant) 
 MACH_VALID = 1
-MACH_FILE  = Make.mach.nasa-aitken-milan 
+MACH_FILE  = Make.mach.nasa-aitken-rome
 
-MACHINE_NOTES = "MACHINE_NOTES for Aitken Rome nodes at NASA: \
+MACHINE_NOTES = "MACHINE_NOTES for NASA Aitken Milan nodes with MPICH4.0.3 : \
         The following modules are needed to compile: \
             module use -a /nasa/modulefiles/testing \
-            module load comp-intel/2020.4.304 mpi-hpe/mpt.2.23 hdf5/1.8.18_serial"
+            module load comp-intel/2020.4.304 hdf5/1.8.18_serial"
 
 #-----------------------------------------------------------------------
 # Install paths (local variables)
 #-----------------------------------------------------------------------
 
-LOCAL_MPI_INSTALL    = /nasa/modulefiles/sles15/mpi-hpe/mpt.2.23
+LOCAL_MPI_INSTALL = /u/jtumlins/installs/mpich-4.0.3/usr/local/
 LOCAL_HDF5_INSTALL   = /nasa/modulefiles/sles15/hdf5/1.8.18_serial
 LOCAL_PYTHON_INSTALL = $(YT_DEST)
 LOCAL_COMPILER_DIR    = /nasa/modulefiles/testing/comp-intel/2020.4.304
@@ -115,7 +116,8 @@ MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)
 #-----------------------------------------------------------------------
 #
 
-LOCAL_LIBS_MPI    = -L$(LOCAL_MPI_INSTALL)/lib -lmpi -lmpi++
+LOCAL_LIBS_MPI    = -L$(LOCAL_MPI_INSTALL)/lib -lmpi -lmpich -lmpicxx -lmpifort -L/u/jtumlins/installs/mpich-4.0.3/usr/lib -lucp -lucs -lucm -luct
+
 LOCAL_LIBS_HDF5   = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5 -lz
 LOCAL_LIBS_LZ     = -L/u/mpeeples/miniconda3/lib -lz
 LOCAL_LIBS_GRACKLE = -L$(LOCAL_GRACKLE_INSTALL)/lib64 -lgrackle
