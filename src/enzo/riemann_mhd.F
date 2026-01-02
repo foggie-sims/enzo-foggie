@@ -1583,9 +1583,9 @@ c=======================================================================
       implicit none 
 #include "fortran_types.def"  
       INTG_PREC ndx,nu,nxbe(4),method
+      INTG_PREC nc      
       R_PREC  u(ndx,nu),ux(ndx,nu),theta
       R_PREC  uc(ndx, nc), ucx(ndx, nc) 
-      INTG_PREC nc      
 c
 c...  local variable
       R_PREC  a,b,z,xmic, rhoa, du1,du2
