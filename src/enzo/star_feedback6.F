@@ -113,7 +113,7 @@ c-----------------------------------------------------------------------
       implicit none
 #include "fortran_types.def"
 c-----------------------------------------------------------------------
-#define NO_FORTRAN_DEBUG
+#define FORTRAN_DEBUG
 c
 c  Arguments
 c
@@ -966,8 +966,7 @@ c
                do k = -1_IKIND,1_IKIND
                   do j = -1_IKIND,1_IKIND
                      do i = -1_IKIND,1_IKIND
-c        Convert metal density to metal fraction
-                        Z_cell = metal(ic+i,jc+j,kc+k)/d(ic+i,jc+j,kc+k)
+                        Z_cell = metal(ic+i,jc+j,kc+k)
                         mu_cell = mu(ic+i,jc+j,kc+k)
 c
 c     The following adjustments to Z_cell and mu_cell are band-aids to
@@ -1702,30 +1701,28 @@ c
      &           ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k)*dratio
 c     
 c     Metal feedback
-c     metal field is metal density here
+c     metal fields are metal fractions here, need to convert to metal density
+c     before adding new metals
 c     
                if (imetal .eq. 1_IKIND) then
                   metal(ic+i,jc+j,kc+k) = 
-     &               metal(ic+i,jc+j,kc+k) + mzeject
+     &               (metal(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k) +mzeject)
+     &               /(d(ic+i,jc+j,kc+k) + delta_mass)
 c                 Ensure the metallicity doesn't get too high
-                  if (metal(ic+i,jc+j,kc+k)/
-     &              (d(ic+i,jc+j,kc+k) + delta_mass) .gt. 0.95_RKIND)
-     &              metal(ic+i,jc+j,kc+k) = 0.95_RKIND * 
-     &              (d(ic+i,jc+j,kc+k) + delta_mass)
+                  if (metal(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
+     &              metal(ic+i,jc+j,kc+k) = 0.95_RKIND
                   if (itracksrc .eq. 1) then
                      metalSNII(ic+i,jc+j,kc+k) =
-     &                 metalSNII(ic+i,jc+j,kc+k) + mzeject_ii
+     &                 (metalSNII(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k) + 
+     &                 mzeject_ii)/(d(ic+i,jc+j,kc+k) + delta_mass)
 c                 Put same cap on other metal fields
-                     if (metalSNII(ic+i,jc+j,kc+k)/
-     &                 (d(ic+i,jc+j,kc+k) + delta_mass) .gt. 0.95_RKIND)
-     &                 metalSNII(ic+i,jc+j,kc+k) = 0.95_RKIND * 
-     &                 (d(ic+i, jc+j, kc+k) + delta_mass)
+                     if (metalSNII(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
+     &                 metalSNII(ic+i,jc+j,kc+k) = 0.95_RKIND
                      metalSNIa(ic+i,jc+j,kc+k) =
-     &                 metalSNIa(ic+i,jc+j,kc+k) + mzeject_ia
-                     if (metalSNIa(ic+i,jc+j,kc+k)/
-     &                 (d(ic+i,jc+j,kc+k) + delta_mass) .gt. 0.95_RKIND)
-     &                 metalSNIa(ic+i,jc+j,kc+k) = 0.95_RKIND * 
-     &                 (d(ic+i,jc+j,kc+k) + delta_mass)
+     &                 (metalSNIa(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k) + 
+     &                 mzeject_ia)/(d(ic+i,jc+j,kc+k) + delta_mass)
+                     if (metalSNIa(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
+     &                 metalSNIa(ic+i,jc+j,kc+k) = 0.95_RKIND
                   endif
                endif
 c
@@ -1880,17 +1877,16 @@ c
      &           ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k)*dratio
 c     
 c     Metal feedback
-c     metal field is metal density here
+c     metal field is metal fraction here, need to conver to density
+c     before adding metal mass
 c     
                if (imetal .eq. 1_IKIND) then
                   metal(ic+i,jc+j,kc+k) = 
-     &               metal(ic+i,jc+j,kc+k) + metal_per_cell
+     &               (metal(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k) + 
+     &               metal_per_cell)/(d(ic+i,jc+j,kc+k) + delta_mass)
 c                 Ensure the metallicity doesn't get too high
-                  if (metal(ic+i,jc+j,kc+k)/
-     &              (d(ic+i,jc+j,kc+k) + delta_mass)
-     &              .gt. 0.95_RKIND)
-     &              metal(ic+i,jc+j,kc+k) = 0.95_RKIND * 
-     &              (d(ic+i,jc+j,kc+k) + delta_mass)
+                  if (metal(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
+     &              metal(ic+i,jc+j,kc+k) = 0.95_RKIND
                endif
 c
 c     Add mass
