@@ -1006,6 +1006,17 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   my_processor = PyLong_FromLong((Eint) MyProcessorNumber);
 #endif
 
+#ifdef USE_LIBYT
+  strcpy(libyt_script_name, "inline");
+  strcpy(libyt_fig_basename, "Fig");
+  // cycle-based libyt call
+  CycleSkipLibytCall = 1;
+  CycleLastLibytCall = 0;
+  // time-based libyt call
+  TimeLastLibytCall = FLOAT_UNDEFINED;
+  dtLibytCall = 0.0;
+#endif
+
   /* Some stateful variables for EvolveLevel */
   for(i = 0; i < MAX_DEPTH_OF_HIERARCHY; i++) {
     LevelCycleCount[i] = LevelSubCycleCount[i] = 0;
