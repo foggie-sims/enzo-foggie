@@ -926,6 +926,21 @@ void my_exit(int status)
     delete [] pSNFBTable.mom_rate;
   }
 
+  /* Free memory for MultiRefineRegion tracks. 
+     These were loaded in ReadEvolveRefineRegion.C */
+  if (MultiRefineRegionTimeType==0 || MultiRefineRegionTimeType==1){
+    int trind, teind;
+    for (trind=0; trind<NumberOfMultiRefineTracks; trind++){
+      for (teind=0; teind<MRRTracks[trind].NTimeEntries; teind++){
+        delete [] MRRTracks[trind].TimeEntries[teind].MinLevels;
+        delete [] MRRTracks[trind].TimeEntries[teind].MaxLevels;
+      }
+      delete [] MRRTracks[trind].TimeEntries;
+      delete [] MRRTracks[trind].RefTypes;
+    }
+    delete [] MRRTracks;
+  }
+
   if (status == EXIT_SUCCESS) {
 
     if (MyProcessorNumber==0) {

@@ -38,31 +38,47 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
  
   NumberOfFlaggedCells = INT_UNDEFINED;
 
+    /* If we are using MultiRefineRegions, identify which types of refinement
+     are permitted in this grid based on which MultiRefineRegions it overlaps
+	 with */
+    if (NumberOfStaticMultiRefineRegions+NumberOfEnabledMultiRefineRegions == 0){
+        LocalCellFlaggingMethod = CellFlaggingMethod;
+    }
+	else{
+		/* reset these variables to their original values in case FindMultiRefineRegions 
+		   has altered them */
+		MetallicityRefinementMinLevel = GlobalMetallicityRefinementMinLevel;
+		ShockwaveRefinementMaxLevel = GlobalShockwaveRefinementMaxLevel;
+		
+		this->FindMultiRefineRegions();
+	}
+
   /* For must-refine particles, restrict refinement to where they
      exist.  This is already done in Grid_SetParticleMassFlaggingField
      for simulations with particle-only criteria, and we don't have to
      consider this restriction here. */
   
-  int method, pmethod = INT_UNDEFINED;
+  int method, gmethod, pmethod = INT_UNDEFINED;
   bool ParticleRefinementOnly, RestrictFlaggingToMustRefineParticles;
   ParticleRefinementOnly = true;
   for (method = 0; method < MAX_FLAGGING_METHODS; method++)
-    ParticleRefinementOnly &= (CellFlaggingMethod[method] == 4 ||
-			       CellFlaggingMethod[method] == 8 ||
-			       CellFlaggingMethod[method] == INT_UNDEFINED);
+    ParticleRefinementOnly &= (LocalCellFlaggingMethod[method] == 4 ||
+			       LocalCellFlaggingMethod[method] == 8 ||
+			       LocalCellFlaggingMethod[method] == INT_UNDEFINED);
   RestrictFlaggingToMustRefineParticles =
     (level == MustRefineParticlesRefineToLevel) &&
     (MustRefineParticlesCreateParticles > 0) && (!ParticleRefinementOnly);
- 
+
+	
   /***********************************************************************/
   /* beginning of Cell flagging criterion routine                        */
 
   for (method = 0; method < MAX_FLAGGING_METHODS; method++) {
     if (level >= MustRefineParticlesRefineToLevel ||
-	CellFlaggingMethod[method] == 4 ||
+	LocalCellFlaggingMethod[method] == 4 ||
 	MustRefineParticlesCreateParticles == 0) {
  
-      switch (CellFlaggingMethod[method]) {
+      switch (LocalCellFlaggingMethod[method]) {
  
       case 0:   /* no action */
 	NumberOfFlaggedCells = (NumberOfFlaggedCells == INT_UNDEFINED ?
@@ -73,7 +89,7 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
  
       case 1:
  
-	/* flag all points needing extra resolution (FlagCellsToBeRefinedBySlop
+	/* flag all points needing extra resolution (FlagCellsToBeRefinedBySlope
 	   returns the number of flagged cells). */
  
 	NumberOfFlaggedCells = this->FlagCellsToBeRefinedBySlope();
@@ -96,11 +112,19 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 	if (this->AddFieldMassToMassFlaggingField() == FAIL) {
 	  ENZO_FAIL("Error in grid->AddFieldMassToMassFlaggingField.");
 	}
+
+	/* Find location of flagging field in global CellFlaggingMethod */
+	for (gmethod=0; gmethod<MAX_FLAGGING_METHODS; gmethod++){
+		if (CellFlaggingMethod[gmethod] == LocalCellFlaggingMethod[method]){
+			break;
+		}
+	}
  
 	/* flag all points that need extra resolution (FlagCellsToBeRefinedByMass
 	   return the number of flagged cells). */
+
  
-	NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMass(level, method, FALSE);
+	NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMass(level, gmethod, FALSE);
 	if (NumberOfFlaggedCells < 0) {
 	  ENZO_FAIL("Error in grid->FlagCellsToBeRefinedByMass (2).");
 	}
@@ -129,9 +153,15 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 	   Special case: (MRPCreateParticles > 0) && (level == MRPRefineToLevel).  
 	   See note below the case-statement. */
 	
-	pmethod = method;
+		/* Find location of flagging field in global CellFlaggingMethod */
+	for (pmethod=0; pmethod<MAX_FLAGGING_METHODS; pmethod++){
+		if (CellFlaggingMethod[pmethod] == LocalCellFlaggingMethod[method]){
+			break;
+		}
+	}
+
 	if (!RestrictFlaggingToMustRefineParticles) {
-	  NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMass(level, method, FALSE);
+	  NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMass(level, pmethod, FALSE);
 	  if (NumberOfFlaggedCells < 0) {
 	    ENZO_FAIL("Error in grid->FlagCellsToBeRefinedByMass (4).");
 	  }
@@ -167,7 +197,7 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 	/* Searching for must-refine particles now done in
 	   grid::SetParticleMassFlaggingField and stored in
 	   ParticleMassFlaggingField.  This is checked in method #4, which
-	   is automatically turned if method #8 is specified. */
+	   is automatically turned on if method #8 is specified. */
 
 	break;
  
@@ -203,15 +233,13 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 	}
 	break;
 
-	/* ==== METHOD 12: FORCE REFINEMENT TO SOME LEVEL IN A SET REGION ==== */
+	/* ==== METHOD 12: FORCE REFINEMENT TO SOME LEVEL IN SET REGIONS ==== */
  
       case 12:
-	if (level < MustRefineRegionMinRefinementLevel) {
 	  NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMustRefineRegion(level);
 	  if (NumberOfFlaggedCells < 0) {
 	    ENZO_FAIL("Error in grid->FlagCellsToBeRefinedByMustRefineRegion.");
 	  }
-	}
 	break;
  
 	/* ==== METHOD 13: FORCE REFINEMENT BASED ON METALLICITY OF GAS ==== */
@@ -278,15 +306,6 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 	  return FAIL;
 	}
 	break;
-
-	/* ==== METHOD 20: FORCE REFINEMENT TO SOME LEVEL IN MULTIPLE REGIONS  ==== */
-      case 20:
-	NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMultiRefineRegion(level);
-	if (NumberOfFlaggedCells < 0) {
-	  fprintf(stderr, "Error in grid->FlagCellsToBeRefinedByMultiRefineRegion.\n");
-	  return FAIL;
-	}
-	break;
 	
 	/* ==== METHOD 100: UNDO REFINEMENT IN SOME REGIONS ==== */
 	
@@ -308,13 +327,13 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 	
       default:
 	ENZO_VFAIL("CellFlaggingMethod[%"ISYM"] = %"ISYM" unknown\n", method,
-		   CellFlaggingMethod[method])
+		   LocalCellFlaggingMethod[method])
  
 	  }
 
       if (debug1 && NumberOfFlaggedCells > 0)
 	printf("SetFlaggingField[method = %"ISYM"]: NumberOfFlaggedCells = %"ISYM".\n",
-	       CellFlaggingMethod[method], NumberOfFlaggedCells);
+	       LocalCellFlaggingMethod[method], NumberOfFlaggedCells);
     } 
   } // ENDFOR methods
  

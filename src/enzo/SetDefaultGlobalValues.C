@@ -200,8 +200,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MaximumRefinementLevel    = 2;                 // three levels (w/ topgrid)
   MaximumGravityRefinementLevel = INT_UNDEFINED;
   MaximumParticleRefinementLevel = -1;            // unused if negative
-  MustRefineRegionMinRefinementLevel = -1;        // unused if negative
   MetallicityRefinementMinLevel = -1;
+  GlobalMetallicityRefinementMinLevel = -1; // internal
   MetallicityRefinementMinMetallicity = 1.0e-5;
   MetallicityRefinementMinDensity = FLOAT_UNDEFINED;
   FluxCorrection            = TRUE;
@@ -244,12 +244,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
     MetaData.NewMovieLeftEdge[dim]  = 0.0;
     MetaData.NewMovieRightEdge[dim] = 1.0;
     PointSourceGravityPosition[dim] = 0.0;
-    MustRefineRegionLeftEdge[dim]   = 0.0;
-    MustRefineRegionRightEdge[dim]  = 1.0;
     MustRefineParticlesLeftEdge[dim] = 0.0;
     MustRefineParticlesRightEdge[dim] = 0.0;
-    CoolingRefineRegionLeftEdge[dim]   = 0.0;
-    CoolingRefineRegionRightEdge[dim]  = 1.0;
     DiskGravityPosition[dim]        = 0.0;
     DiskGravityAngularMomentum[dim] = 0.0;
     GalaxySimulationRPSWindVelocity[dim] = 0.0;
@@ -263,15 +259,24 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MultiRefineRegionSpatiallyVaryingStarMass = 0;
   MultiRefineRegionDefaultStarMass = FLOAT_UNDEFINED; // cannot be set by user; internal use only
   NumberOfStaticMultiRefineRegions = 0;
-  for (i = 0; i < MAX_STATIC_REGIONS+MAX_TRACKS; i++) {
-    MultiRefineRegionMaximumLevel[i] = -1;
-    MultiRefineRegionMinimumLevel[i] = 0;
+  for (i = 0; i < MAX_STATIC_REGIONS+MAX_TRACKS; i++) { // iterate over potential regions
+    for (j=1; j<MAX_FLAGGING_METHODS; j++){ // iterate over potential flagging methods
+      MultiRefineRegionFlaggingMethod[i][j] = INT_UNDEFINED;
+      MultiRefineRegionMaximumLevel[i][j] = -1;
+      MultiRefineRegionMinimumLevel[i][j] = 0;
+    }
     MultiRefineRegionMinimumStarMass[i] = FLOAT_UNDEFINED;
-   for (dim = 0; dim < MAX_DIMENSION; dim++) {
+    for (dim = 0; dim < MAX_DIMENSION; dim++) {
       MultiRefineRegionLeftEdge[i][dim] = FLOAT_UNDEFINED;
       MultiRefineRegionRightEdge[i][dim] = FLOAT_UNDEFINED;
     }
   }
+
+  for (i=0; i < MAX_FLAGGING_METHODS; i++){
+    LocalCellFlaggingMethod[i] = INT_UNDEFINED;
+  }
+  LocalMultiRefineMaximumLevel = 0;
+  LocalMultiRefineMinimumLevel = 0;
 
   for (i = 0; i < MAX_STATIC_REGIONS; i++) {
     StaticRefineRegionLevel[i] = INT_UNDEFINED;
@@ -293,34 +298,6 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
     }
   }
 
-  /* for cooling refinement regions. */
-
-  UseCoolingRefineRegion = FALSE;
-  EvolveCoolingRefineRegion = FALSE;
-  CoolingRefineRegionFile = NULL;
-  CoolingRefineRegionTimeType = -1; /* 0=time bins 1=redshift bins*/
-
-  for (i = 0; i < MAX_REFINE_REGIONS; i++) {
-    EvolveCoolingRefineRegionTime[i] = FLOAT_UNDEFINED;
-    for (j = 0; j < MAX_DIMENSION; j++) {
-      EvolveCoolingRefineRegionLeftEdge[i][j]  = FLOAT_UNDEFINED;
-      EvolveCoolingRefineRegionRightEdge[i][j] = FLOAT_UNDEFINED;
-    }
-  }
-
-
-  /* For evolving MustRefine regions. */
-  MustRefineRegionFile = NULL;
-  MustRefineRegionTimeType = -1; /* 0=time bins 1=redshift bins*/
-  for (i = 0; i < MAX_REFINE_REGIONS; i++) {
-    EvolveMustRefineRegionTime[i] = FLOAT_UNDEFINED;
-    EvolveMustRefineRegionMinLevel[i] = INT_UNDEFINED;
-    for (j = 0; j < MAX_DIMENSION; j++) {
-      EvolveMustRefineRegionLeftEdge[i][j]  = FLOAT_UNDEFINED;
-      EvolveMustRefineRegionRightEdge[i][j] = FLOAT_UNDEFINED;
-    }
-  }
-    
   /* For evolving MultiRefine regions. */
   MultiRefineRegionFile = NULL;
   MultiRefineRegionTimeType = -1; /* 0=time bins 1=redshift bins*/
@@ -588,6 +565,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   ShockwaveRefinementMinMach = 1.3; // Only above M=1.3
   ShockwaveRefinementMinVelocity = 1.0e7; //1000 km/s
   ShockwaveRefinementMaxLevel = 0; 
+  GlobalShockwaveRefinementMaxLevel = 0; // internal
   MustRefineParticlesRefineToLevel = 0;
   MustRefineParticlesCreateParticles = 0;
   MustRefineParticlesRefineToLevelAutoAdjust = FALSE;

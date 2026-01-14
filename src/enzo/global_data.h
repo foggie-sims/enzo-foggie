@@ -166,12 +166,6 @@ EXTERN int FastSiblingLocatorEntireDomain;
 
 EXTERN int CellFlaggingMethod[MAX_FLAGGING_METHODS];
 
-/* left and right boundaries of the 'must refine region'
-   for CellFlaggingMethod = 10 */
-
-EXTERN FLOAT MustRefineRegionLeftEdge[MAX_DIMENSION];  // left edge
-EXTERN FLOAT MustRefineRegionRightEdge[MAX_DIMENSION];  // right edge
-
 /* left and right boundaries of the 'avoid refine region'
    for CellFlaggingMethod = 101 */
 
@@ -179,14 +173,10 @@ EXTERN int   AvoidRefineRegionLevel[MAX_STATIC_REGIONS];
 EXTERN FLOAT AvoidRefineRegionLeftEdge[MAX_STATIC_REGIONS][MAX_DIMENSION];
 EXTERN FLOAT AvoidRefineRegionRightEdge[MAX_STATIC_REGIONS][MAX_DIMENSION];
 
-/* specifies the level to which FlagCellsToBeRefinedByMustRefineRegion
-   will refine up to (does not prevent refinement to higher levels) */
-
-EXTERN int MustRefineRegionMinRefinementLevel;
-
 /* specifies the level to which FlagGridCellsToBeRefinedByMetallicity
    will refine up to (does not prevent refinement to higher levels) */
 EXTERN int MetallicityRefinementMinLevel;
+EXTERN int GlobalMetallicityRefinementMinLevel; // internal - cannot be set by user
 
 /* threshold metallicity and density for FlagGridCellsToBeRefinedByMetallicity */
 EXTERN float MetallicityRefinementMinMetallicity;
@@ -263,14 +253,18 @@ EXTERN int RefineRegionAutoAdjust;
 EXTERN int MultiRefineRegion;
 EXTERN FLOAT MultiRefineRegionLeftEdge[MAX_STATIC_REGIONS+MAX_TRACKS][MAX_DIMENSION];
 EXTERN FLOAT MultiRefineRegionRightEdge[MAX_STATIC_REGIONS+MAX_TRACKS][MAX_DIMENSION];
-EXTERN int MultiRefineRegionMaximumLevel[MAX_STATIC_REGIONS+MAX_TRACKS];
-EXTERN int MultiRefineRegionMinimumLevel[MAX_STATIC_REGIONS+MAX_TRACKS];
+EXTERN int MultiRefineRegionMaximumLevel[MAX_STATIC_REGIONS+MAX_TRACKS][MAX_FLAGGING_METHODS];
+EXTERN int MultiRefineRegionMinimumLevel[MAX_STATIC_REGIONS+MAX_TRACKS][MAX_FLAGGING_METHODS];
 EXTERN float MultiRefineRegionMinimumStarMass[MAX_STATIC_REGIONS+MAX_TRACKS];
 EXTERN int MultiRefineRegionMaximumOuterLevel;
 EXTERN int MultiRefineRegionMinimumOuterLevel;
 EXTERN int MultiRefineRegionSpatiallyVaryingStarMass;
-EXTERN float MultiRefineRegionDefaultStarMass;
+EXTERN float MultiRefineRegionDefaultStarMass; // internal - cannot be set by user
 EXTERN int NumberOfStaticMultiRefineRegions;
+EXTERN int MultiRefineRegionFlaggingMethod[MAX_STATIC_REGIONS+MAX_TRACKS][MAX_FLAGGING_METHODS];
+EXTERN int LocalCellFlaggingMethod[MAX_FLAGGING_METHODS]; // internal - cannot be set by user
+EXTERN int LocalMultiRefineMaximumLevel; // internal - cannot be set by user
+EXTERN int LocalMultiRefineMinimumLevel; // internal - cannot be set by user
 
 /* Uniform gravity: on/off flag, direction, and strength. */
 
@@ -550,42 +544,18 @@ EXTERN FLOAT EvolveRefineRegionTime[MAX_REFINE_REGIONS]; // time bins
 EXTERN FLOAT EvolveRefineRegionLeftEdge[MAX_REFINE_REGIONS][3]; // left corners
 EXTERN FLOAT EvolveRefineRegionRightEdge[MAX_REFINE_REGIONS][3]; // right corners
 
-/* Evolving MustRefine region. */
-EXTERN char *MustRefineRegionFile;
-EXTERN int MustRefineRegionTimeType; // 0=time 1=redshift
-EXTERN int EvolveMustRefineRegionNtimes;
-EXTERN FLOAT EvolveMustRefineRegionTime[MAX_REFINE_REGIONS]; // time bins
-EXTERN FLOAT EvolveMustRefineRegionLeftEdge[MAX_REFINE_REGIONS][3]; // left corners
-EXTERN FLOAT EvolveMustRefineRegionRightEdge[MAX_REFINE_REGIONS][3]; // right corners
-EXTERN int EvolveMustRefineRegionMinLevel[MAX_REFINE_REGIONS]; // minimum allowable level
-
-/* Cooling refinement region. */
-
-// user parameters for cooling refinement region
-EXTERN int UseCoolingRefineRegion;
-EXTERN int EvolveCoolingRefineRegion;
-EXTERN FLOAT CoolingRefineRegionLeftEdge[MAX_DIMENSION];  // left edge
-EXTERN FLOAT CoolingRefineRegionRightEdge[MAX_DIMENSION];  // right edge
-EXTERN char *CoolingRefineRegionFile;
-EXTERN int CoolingRefineRegionTimeType; // 0=time 1=redshift
-
-// internal parameters for cooling refinement region
-EXTERN int EvolveCoolingRefineRegionNtimes;
-EXTERN FLOAT EvolveCoolingRefineRegionTime[MAX_REFINE_REGIONS]; // time bins
-EXTERN FLOAT EvolveCoolingRefineRegionLeftEdge[MAX_REFINE_REGIONS][3]; // left corners
-EXTERN FLOAT EvolveCoolingRefineRegionRightEdge[MAX_REFINE_REGIONS][3]; // right corners
-
 /* Evolving MultiRefine region*/
 EXTERN char *MultiRefineRegionFile;
 EXTERN int MultiRefineRegionTimeType; // 0=time 1=redshift
 EXTERN int NumberOfMultiRefineTracks; // how many multirefine regions are being evolved?
-EXTERN int NumberOfMultiRefineTimeEntries; // how many times are they being evolved for?
+EXTERN int NumberOfEnabledMultiRefineTracks; // how many of those are enabled?
 EXTERN FLOAT EvolveMultiRefineRegionTime[MAX_TIME_ENTRIES]; // time bins
 EXTERN FLOAT EvolveMultiRefineRegionLeftEdge[MAX_TRACKS][MAX_TIME_ENTRIES][3]; // left corners
 EXTERN FLOAT EvolveMultiRefineRegionRightEdge[MAX_TRACKS][MAX_TIME_ENTRIES][3]; // right corners
 EXTERN int EvolveMultiRefineRegionMinimumLevel[MAX_TRACKS]; // minimum allowable level
 EXTERN int EvolveMultiRefineRegionMaximumLevel[MAX_TRACKS]; // maximum allowable level
 EXTERN float EvolveMultiRefineRegionMinimumStarMass[MAX_TRACKS][MAX_TIME_ENTRIES]; // minimum allowed star particle formation mass
+EXTERN MultiRefineRegionTrackType *MRRTracks;
 
 /* Processor identifier for this thread/processor */
 
@@ -732,6 +702,7 @@ EXTERN float RefineByResistiveLengthSafetyFactor;
 EXTERN float ShockwaveRefinementMinMach;
 EXTERN float ShockwaveRefinementMinVelocity;
 EXTERN int ShockwaveRefinementMaxLevel;
+EXTERN int GlobalShockwaveRefinementMaxLevel; // internal - cannot be set by user
 
 /* For CellFlaggingMethod = 15,   
    Minimum second derivative required for refinement.    */
