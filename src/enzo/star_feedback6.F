@@ -1877,7 +1877,7 @@ c
      &           ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k)*dratio
 c     
 c     Metal feedback
-c     metal field is metal fraction here, need to conver to density
+c     metal field is metal fraction here, need to convert to density
 c     before adding metal mass
 c     
                if (imetal .eq. 1_IKIND) then
