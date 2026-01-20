@@ -711,7 +711,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "MultiRefineRegionMinimumOuterLevel  = %"ISYM"\n",
           MultiRefineRegionMinimumOuterLevel);
   
-  for (int ireg = 0; ireg < MAX_STATIC_REGIONS; ireg++){
+  for (int ireg = 0; ireg < NumberOfStaticMultiRefineRegions; ireg++){
     if (MultiRefineRegionMaximumLevel[ireg] >= 0) {
       fprintf(fptr, "MultiRefineRegionMaximumLevel[%"ISYM"] = %"ISYM"\n", ireg,
               MultiRefineRegionMaximumLevel[ireg]);
