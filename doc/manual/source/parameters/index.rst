@@ -140,6 +140,8 @@ common convention of 0 meaning false or off and 1 for true or on.
    
    * `Inline Python`_
 
+* `libyt In Situ Python Analysis`_
+
 * `Other Parameters`_
    
    * `Other External Parameters`_
@@ -4067,6 +4069,49 @@ Other Internal Parameters
 ``VersionNumber`` (internal)
     Sets the version number of the code which is written out to restart
     dumps.
+
+.. _libyt_in_situ_python_analysis:
+
+libyt In Situ Python Analysis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``libyt_script_name`` (external)
+    The Python script name to be imported.
+    The name should omit the file extension ``.py``. (Default: ``inline``, meaning ``inline.py`` will be imported or created if it does not exist.)
+
+``libyt_fig_basename`` (external)
+    Figure basename for the yt script if there is figure output. (Default: ``Fig``)
+
+``CycleSkipLibytCall`` (external)
+    Control the cycle-based libyt calls. The number of cycles (top grid timesteps) between libyt calls. Zero turns off the cycle-based outputs. (Default: 1)
+
+    Similar to :ref:`cycle_base_output`.
+
+``CycleLastLibytCall`` (internal)
+    Control the cycle-based libyt calls.
+    The last cycle on which a cycled libyt call was made.
+
+    Similar to :ref:`cycle_base_output`.
+
+``dtLibytCall`` (external)
+    Control the time-based libyt calls. The time interval between libyt calls. Zero turns off the time-based outputs. (Default: 0.0)
+
+    Similar to :ref:`time_base_output`.
+
+``TimeLastLibytCall`` (internal)
+    Control the time-based libyt calls.
+    The last time on which a timed libyt call was made.
+
+    Similar to :ref:`time_base_output`.
+
+``NumberOfLibytCalls`` (internal)
+    Internal parameter tracked by Enzo.
+
+``NumberOfLibytTopGridCalls`` (internal)
+    Internal parameter tracked by Enzo.
+
+``NumberOfLibytSubcycleCalls`` (internal)
+    Internal parameter tracked by Enzo.
 
 .. _problem_type_parameters:
 
