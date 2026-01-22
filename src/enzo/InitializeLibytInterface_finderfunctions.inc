@@ -96,14 +96,8 @@ YT_SET_USERPARAM_PNONINTEGER("RefineRegionLeftEdge", MAX_DIMENSION, RefineRegion
 YT_SET_USERPARAM_PNONINTEGER("RefineRegionRightEdge", MAX_DIMENSION, RefineRegionRightEdge);
 YT_SET_USERPARAM_INTEGER("RefineRegionAutoAdjust", 1, &RefineRegionAutoAdjust);
 YT_SET_USERPARAM_INTEGER("MultiRefineRegion", 1, &MultiRefineRegion);
-YT_SET_USERPARAM_INTEGER("MultiRefineRegionGeometry", MAX_STATIC_REGIONS, MultiRefineRegionGeometry);
-YT_SET_USERPARAM_PNONINTEGER("MultiRefineRegionRadius", MAX_STATIC_REGIONS, MultiRefineRegionRadius);
-YT_SET_USERPARAM_PNONINTEGER("MultiRefineRegionWidth", MAX_STATIC_REGIONS, MultiRefineRegionWidth);
-YT_SET_USERPARAM_INTEGER("MultiRefineRegionMaximumLevel", MAX_STATIC_REGIONS, MultiRefineRegionMaximumLevel);
-YT_SET_USERPARAM_INTEGER("MultiRefineRegionMinimumLevel", MAX_STATIC_REGIONS, MultiRefineRegionMinimumLevel);
 YT_SET_USERPARAM_INTEGER("MultiRefineRegionMaximumOuterLevel", 1, &MultiRefineRegionMaximumOuterLevel);
 YT_SET_USERPARAM_INTEGER("MultiRefineRegionMinimumOuterLevel", 1, &MultiRefineRegionMinimumOuterLevel);
-YT_SET_USERPARAM_PNONINTEGER("MultiRefineRegionStaggeredRefinement", MAX_STATIC_REGIONS, MultiRefineRegionStaggeredRefinement);
 YT_SET_USERPARAM_INTEGER("UniformGravity", 1, &UniformGravity);
 YT_SET_USERPARAM_INTEGER("UniformGravityDirection", 1, &UniformGravityDirection);
 YT_SET_USERPARAM_NONINTEGER("UniformGravityConstant", 1, &UniformGravityConstant);
