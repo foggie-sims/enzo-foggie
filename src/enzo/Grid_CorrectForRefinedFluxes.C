@@ -875,6 +875,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 		      BaryonField[DensNum][index+Offset];
 		  }
 		}
+		}
            }
 	
 	} // if( CorrectLeftBaryonField || CorrectRightBaryonField)
