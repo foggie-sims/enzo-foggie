@@ -212,52 +212,33 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
     // Now write out which kind of (active) particles we have in this grid.
     fprintf(fptr, "PresentParticleTypes = ");
     // List types of standard particles
-    int unique_count = 0;
-    int types[NUM_PARTICLE_TYPES] = {0};
-    if (NumberOfParticles) {      
-      // Get the unique particle types
-      bool found;
-      for (int i = 0; i < NumberOfParticles; i++) {
-        found = false;
-        for (int j = 0; j < unique_count; j++) {
-          if (ParticleType[i] == types[j]) {
-            found = true;
-            break;
-          }
-        }
-        if (!found && unique_count < NUM_PARTICLE_TYPES) {
-          types[unique_count++] = ParticleType[i];
-        }
-      }
 
-      // Print labels for the unique particle types
-      for (int i = 0; i < unique_count; i++) {
-        if (types[i] == PARTICLE_TYPE_GAS)
+    if (NumberOfParticles) {
+      for (int i = 0; i < NUM_PARTICLE_TYPES; i++) {
+        if (i == PARTICLE_TYPE_GAS && ParticleTypeCount[i] > 0)
           fprintf(fptr, "Gas ");
-        else if (types[i] == PARTICLE_TYPE_DARK_MATTER)
+        else if (i == PARTICLE_TYPE_DARK_MATTER && ParticleTypeCount[i] > 0)
           fprintf(fptr, "DarkMatter ");
-        else if (types[i] == PARTICLE_TYPE_STAR)
+        else if (i == PARTICLE_TYPE_STAR && ParticleTypeCount[i] > 0)
           fprintf(fptr, "Star ");
-        else if (types[i] == PARTICLE_TYPE_TRACER)
+        else if (i == PARTICLE_TYPE_TRACER && ParticleTypeCount[i] > 0)
           fprintf(fptr, "Tracer ");
-        else if (types[i] == PARTICLE_TYPE_MUST_REFINE)
+        else if (i == PARTICLE_TYPE_MUST_REFINE && ParticleTypeCount[i] > 0)
           fprintf(fptr, "MustRefine ");
-        else if (types[i] == PARTICLE_TYPE_SINGLE_STAR)
+        else if (i == PARTICLE_TYPE_SINGLE_STAR && ParticleTypeCount[i] > 0)
           fprintf(fptr, "SingleStar ");
-        else if (types[i] == PARTICLE_TYPE_BLACK_HOLE)
+        else if (i == PARTICLE_TYPE_BLACK_HOLE && ParticleTypeCount[i] > 0)
           fprintf(fptr, "BlackHole ");
-        else if (types[i] == PARTICLE_TYPE_CLUSTER)
+        else if (i == PARTICLE_TYPE_CLUSTER && ParticleTypeCount[i] > 0)
           fprintf(fptr, "Cluster ");
-        else if (types[i] == PARTICLE_TYPE_MBH)
+        else if (i == PARTICLE_TYPE_MBH && ParticleTypeCount[i] > 0)
           fprintf(fptr, "MBH ");
-        else if (types[i] == PARTICLE_TYPE_COLOR_STAR)
+        else if (i == PARTICLE_TYPE_COLOR_STAR && ParticleTypeCount[i] > 0)
           fprintf(fptr, "ColorStar ");
-        else if (types[i] == PARTICLE_TYPE_SIMPLE_SOURCE)
+        else if (i == PARTICLE_TYPE_SIMPLE_SOURCE && ParticleTypeCount[i] > 0)
           fprintf(fptr, "SimpleSource ");
-        else if (types[i] == PARTICLE_TYPE_RAD)
+        else if (i == PARTICLE_TYPE_RAD && ParticleTypeCount[i] > 0)
           fprintf(fptr, "Rad ");
-        else
-          fprintf(fptr, "%d ", types[i]);
       }
     }
     // List types of active particles
@@ -271,16 +252,10 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
     // And their counts
     fprintf(fptr, "ParticleTypeCounts = ");
     if (NumberOfParticles) {
-      // Sum the number of unique particle types 
-      // (in the same order as the headers were printed)
-      int this_count;
-      for (int i = 0; i < unique_count; i++) {
-        this_count = 0;
-        for (int j = 0; j < NumberOfParticles; j++) {
-          if (ParticleType[j] == types[i])
-            this_count++;
+      for (int i = 0; i < NUM_PARTICLE_TYPES; i++) {
+        if (ParticleTypeCount[i] > 0) {
+          fprintf(fptr, "%"ISYM" ", ParticleTypeCount[i]);
         }
-        fprintf(fptr, "%"ISYM" ", this_count);
       }
     }
     for (int i = 0; i<EnabledActiveParticlesCount; i++){
