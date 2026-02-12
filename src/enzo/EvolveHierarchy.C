@@ -100,6 +100,7 @@ int CheckForOutput(HierarchyEntry *TopGrid, TopGridData &MetaData,
 int CheckForTimeAction(LevelHierarchyEntry *LevelArray[],
 		       TopGridData &MetaData);
 int CheckForResubmit(TopGridData &MetaData, int &Stop);
+int CheckForLibytCall(LevelHierarchyEntry *LevelArray[], TopGridData &MetaData);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int OutputLevelInformation(FILE *fptr, TopGridData &MetaData,
 			   LevelHierarchyEntry *LevelArray[]);
@@ -130,6 +131,8 @@ int SetEvolveRefineRegion(FLOAT time);
 
 int SetStellarMassThreshold(FLOAT time);
 int SetStellarFeedbackEfficiency(FLOAT time);
+int CallInSitulibyt(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
+                    int level, int from_topgrid);
 
 #ifdef MEM_TRACE
 Eint64 mused(void);
@@ -259,6 +262,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 		 Restart);
 
   PrintMemoryUsage("Output");
+
+#ifdef USE_LIBYT
+    LCAPERF_START("CallInSitulibyt");
+    CheckForLibytCall(LevelArray, MetaData);
+    LCAPERF_STOP("CallInSitulibyt");
+#endif
  
   /* Compute the acceleration field so ComputeTimeStep can find dtAccel.
      (Actually, this is a huge pain-in-the-ass, so only do it if the
@@ -418,6 +427,14 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
         dt = min(1.0001*(MetaData.TimeLastDataDump + MetaData.dtDataDump -
               MetaData.Time), dt);
       }
+#ifdef USE_LIBYT
+      if (dtLibytCall > 0.0) {
+        while (TimeLastLibytCall + dtLibytCall < MetaData.Time) {
+          TimeLastLibytCall += dtLibytCall;
+        }
+        dt = min(1.0001*(TimeLastLibytCall + dtLibytCall - MetaData.Time), dt);
+      }
+#endif
 
       /* Set the time step.  If it will cause Time += dt > StopTime, then
          set dt = StopTime - Time */
@@ -632,6 +649,12 @@ if (MultiRefineRegionSpatiallyVaryingStarMass > 0){
     LCAPERF_START("CallPython");
     CallPython(LevelArray, &MetaData, 0, 1);
     LCAPERF_STOP("CallPython");
+#endif
+
+#ifdef USE_LIBYT
+    LCAPERF_START("CallInSitulibyt");
+    CheckForLibytCall(LevelArray, MetaData);
+    LCAPERF_STOP("CallInSitulibyt");
 #endif
 
     /* Check for resubmission */
