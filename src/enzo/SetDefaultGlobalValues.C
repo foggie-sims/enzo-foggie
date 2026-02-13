@@ -206,6 +206,9 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MetallicityRefinementMinDensity = FLOAT_UNDEFINED;
   FluxCorrection            = TRUE;
 
+  MinimumTemperatureForRefinement = 1e5;  // K
+  TemperatureRefinementStoppingMassMsun = 100;
+
   UseCoolingTimestep = FALSE;
   CoolingTimestepSafetyFactor = 0.1;
 

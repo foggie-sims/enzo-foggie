@@ -971,6 +971,10 @@ gradient force to gravitational force for one-zone collapse test. */
 
    int FlagCellsToBeRefinedByCoolingTime();
 
+/* Flag "hot" cells whose mass is above a threshold. */
+
+   int FlagCellsToBeRefinedByTemperature();
+
 /* Flag particles within the MustRefineParticles region as MustRefine Particles */
    int MustRefineParticlesFlagInRegion();
 
