@@ -95,7 +95,8 @@ int grid::DepositMustRefineParticles(int pmethod, int level, bool KeepFlaggingFi
   bool *antirules;
   int *AntiFlaggingField;
   int NumberOfAntiRules = 0;
-  antirules = new bool[NumberOfAntiRules];
+  if (NumberOfAntiRules > 0)
+    antirules = new bool[NumberOfAntiRules];
 
   // Add an antirule to unflag over-refined dark matter particles.
   if (MustRefineParticlesCreateParticles == 4) {

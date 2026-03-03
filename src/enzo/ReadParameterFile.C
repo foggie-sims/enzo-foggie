@@ -2132,6 +2132,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (MyProcessorNumber == ROOT_PROCESSOR)
       fprintf(stderr,"Global Dir set to %s\n", cwd_buffer);
   }
+  delete [] cwd_buffer;
 
 #ifdef USE_UUID
   /* Generate unique identifier if one wasn't found. */

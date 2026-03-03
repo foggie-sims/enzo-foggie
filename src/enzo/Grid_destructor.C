@@ -122,6 +122,7 @@ grid::~grid()
   delete BoundaryFluxes;
  
   delete [] ParticleMass;
+  if (StarMakerStoreInitialMass) delete [] ParticleInitialMass;
   delete [] ParticleNumber;
   delete [] ParticleType;
   delete [] PotentialField;
