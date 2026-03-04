@@ -365,8 +365,12 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
       // like density, total energy, and internal energy
       if (FluxCorrection == 2){
         for (field = 0; field < NumberOfBaryonFields; field++) {
-          if (FieldType[field] >= ElectronDensity &&
-              FieldType[field] <= ExtraType1) {
+          if ((FieldType[field] >= ElectronDensity &&
+               FieldType[field] <= ExtraType1) ||
+              FieldType[field] == MetalSNIaDensity ||
+              FieldType[field] == MetalSNIIDensity ||
+              (FieldType[field] >= MetalAGBDensity &&
+               FieldType[field] <= TracerFluidField08Density)) {
             fieldNumberList.push_back(field);
           }
         }
