@@ -406,8 +406,9 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
             )
             || FieldType[field] == MetalSNIaDensity
             || FieldType[field] == MetalSNIIDensity
-          	&& FieldTypeNoInterpolate(FieldType[field]) == FALSE
-          	&& FieldTypeIsRadiation(FieldType[field]) == FALSE
+          )
+          && FieldTypeNoInterpolate(FieldType[field]) == FALSE
+          && FieldTypeIsRadiation(FieldType[field]) == FALSE
         ) {
           for (k = Start[2]; k <= End[2]; k++) {
             for (j = Start[1]; j <= End[1]; j++) {
@@ -850,17 +851,12 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	
           if (FluxCorrection == 1) {
 	  for (field = 0; field < NumberOfBaryonFields; field++)
-	    if (
-           (
-            (FieldType[field] >= ElectronDensity
-              && FieldType[field] <= ExtraType1
-            )
-            || FieldType[field] == MetalSNIaDensity
-            || FieldType[field] == MetalSNIIDensity
-          	)
-          	&& FieldTypeNoInterpolate(FieldType[field]) == FALSE
-          	&& FieldTypeIsRadiation(FieldType[field]) == FALSE
-        ) {
+	    if ( ((FieldType[field] >= ElectronDensity &&
+		   FieldType[field] <= ExtraType1) ||
+		  FieldType[field] == MetalSNIaDensity ||
+		  FieldType[field] == MetalSNIIDensity) &&
+		 FieldTypeNoInterpolate(FieldType[field]) == FALSE &&
+		 FieldTypeIsRadiation(FieldType[field]) == FALSE)
 	      for (k = Start[2]; k <= End[2]; k++)
 		for (j = Start[1]; j <= End[1]; j++) {
 		  index = (k*GridDimension[1] + j)*GridDimension[0] + Start[0];
@@ -869,7 +865,6 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 		    BaryonField[field][index+Offset] *=
 		      BaryonField[DensNum][index+Offset];
 		  }
-		}
 		}
            }
 	
