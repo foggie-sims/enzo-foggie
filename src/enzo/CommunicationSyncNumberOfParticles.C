@@ -36,7 +36,7 @@ int CommunicationSyncNumberOfParticles(HierarchyEntry *GridHierarchyPointer[],
 {
 
   int i, j, idx;
-  int stride = NUMBER_ENZO_PARTICLE_TYPES + MAX_ACTIVE_PARTICLE_TYPES;
+  int stride = NUMBER_ENZO_PARTICLE_TYPES + MAX_ACTIVE_PARTICLE_TYPES + NUM_PARTICLE_TYPES;
   int *buffer = new int[NumberOfGrids * stride];
 
   for (i = 0, idx = 0; i < NumberOfGrids; i++, idx += stride)
@@ -52,12 +52,19 @@ int CommunicationSyncNumberOfParticles(HierarchyEntry *GridHierarchyPointer[],
           buffer[idx+3+j] = 0.;
         }
       }
+      for (j = 0; j < NUM_PARTICLE_TYPES; j++) {
+        buffer[idx+3+MAX_ACTIVE_PARTICLE_TYPES+j] = GridHierarchyPointer[i]->GridData->
+          ReturnNumberOfParticlesOfThisType(j);
+      }
     } else {
       buffer[idx] = 0;
       buffer[idx+1] = 0;
       buffer[idx+2] = 0;
       for (j = 0; j < MAX_ACTIVE_PARTICLE_TYPES; j++) {
         buffer[idx+3+j] = 0;
+      }
+      for (j = 0; j < NUM_PARTICLE_TYPES; j++) {
+        buffer[idx+3+MAX_ACTIVE_PARTICLE_TYPES+j] = 0;
       }
     }
 
@@ -72,6 +79,10 @@ int CommunicationSyncNumberOfParticles(HierarchyEntry *GridHierarchyPointer[],
     for (j = 0; j < MAX_ACTIVE_PARTICLE_TYPES; j++) {
       GridHierarchyPointer[i]->GridData->SetActiveParticleTypeCounts(j,
         buffer[idx+3+j]);
+    }
+    for (j = 0; j < NUM_PARTICLE_TYPES; j++) {
+      GridHierarchyPointer[i]->GridData->SetParticleTypeCounts(j,
+        buffer[idx+3+MAX_ACTIVE_PARTICLE_TYPES+j]);
     }
   }
 
