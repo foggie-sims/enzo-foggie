@@ -345,18 +345,20 @@ number of supernovae per particle in each timestep cannot be between zero and on
 If ``StarFeedbackSNePerTimestepLimit`` is greater than one, it will limit 
 the stochastic supernovae case in the same way.
 
-For each grid cell in which supernovae are occuring ("explosion cell"), the total momentum that 
-will be injected into the 27 cells in a 3x3x3 cube surrounding the cell 
-depends on whether or not the Sedov blast wave for the explosion would 
-be resolved, which is determined by comparing the ejected mass to the swept-up 
-mass in each cell surrounding the explosion cell. 
+For each grid cell in which supernovae are occuring ("explosion cell"), the total momentum that
+will be injected into the cells surrounding the explosion cell
+depends on whether or not the Sedov blast wave for the explosion would
+be resolved, which is determined by comparing the ejected mass to the swept-up
+mass in each cell surrounding the explosion cell.
 
-The ejected mass per cell is given by dM\ :sub:`ej` = M\ :sub:`ej`/N\ :sub:`cells`, 
-where M\ :sub:`ej` is the total ejected mass at this time step from all particles 
-in the explosion cell and N\ :sub:`cells` 
-is the number of cells among which the feedback is distributed. Currently, 
-N\ :sub:`cells` = 27 and allowing different values using the parameters 
-``StarFeedbackDistRadius`` and ``StarFeebackDistCellStep`` is NOT implemented.
+The injection region is controlled by ``StarFeedbackDistRadius`` and
+``StarFeedbackDistCellStep``; see :ref:`distributed_feedback` for details.
+By default, both parameters are unset (value 0), which causes this method to
+fall back to a 3x3x3 cube (N\ :sub:`cells` = 27).
+
+The ejected mass per cell is given by dM\ :sub:`ej` = M\ :sub:`ej`/N\ :sub:`cells`,
+where M\ :sub:`ej` is the total ejected mass at this time step from all particles
+in the explosion cell and N\ :sub:`cells` is the number of cells in the injection region.
 
 For each cell surrounding the explosion cell, the swept-up 
 mass is given by:

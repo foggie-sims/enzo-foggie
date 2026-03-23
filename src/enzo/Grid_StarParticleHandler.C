@@ -371,6 +371,7 @@ extern "C" void FORTRAN_NAME(star_feedback6)(int *nx, int *ny, int *nz,
 		       float *dt, float *dx, FLOAT *t, float *z, int *procnum,
              float *d1, float *x1, float *v1, float *t1,
              float *m_eject, float *yield,
+             int *distrad, int *diststep, int *distcells,
              int *nmax, FLOAT *xstart, FLOAT *ystart, FLOAT *zstart,
 		       int *ibuff,
              FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
@@ -378,9 +379,9 @@ extern "C" void FORTRAN_NAME(star_feedback6)(int *nx, int *ny, int *nz,
 	          float *nsn_timestep, float *exptime, float *mom_mult, int *kick_cap,
              int *feedback_log, int *use_tabfbk, float *minit,
              float *ergSNII, float *ergSNIa, int *itracksrc, float *metalSNII,
-             float *metalSNIa, int *ntabZ, int *ntabAge, double *tabZ, double *tabAge, 
+             float *metalSNIa, int *ntabZ, int *ntabAge, double *tabZ, double *tabAge,
              double *tabMass, double *tabMetal, double *tabEvents, int *stochastic,
-             int *preSN, int *preSNmom, int *pSNntabZ, int *pSNntabAge, double *pSNtabZ, 
+             int *preSN, int *preSNmom, int *pSNntabZ, int *pSNntabAge, double *pSNtabZ,
              double *pSNtabAge, double *pSNtabMass, double *pSNtabMetal, double *pSNtabMom);
 
 extern "C" void FORTRAN_NAME(star_feedback3)(int *nx, int *ny, int *nz,
@@ -1830,6 +1831,18 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       }
     }
     
+    // Resolve feedback injection region parameters. Default (value 0) falls
+    // back to a 3x3x3 cube (distrad=1, diststep=3). Compute distcells here
+    // since ReadParameterFile only calculates StarFeedbackDistTotalCells for
+    // NORMAL_STAR/UNIGRID_STAR methods, not MECH_STAR.
+    int distRadEff  = (StarFeedbackDistRadius  > 0) ? StarFeedbackDistRadius  : 1;
+    int distStepEff = (StarFeedbackDistCellStep > 0) ? StarFeedbackDistCellStep : 3;
+    int distCellsEff = 0;
+    for (int dk = -distRadEff; dk <= distRadEff; dk++)
+      for (int dj = -distRadEff; dj <= distRadEff; dj++)
+        for (int di = -distRadEff; di <= distRadEff; di++)
+          if (ABS(dk) + ABS(dj) + ABS(di) <= distStepEff) distCellsEff++;
+
     FORTRAN_NAME(star_feedback6)(
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], mu_field,
@@ -1840,7 +1853,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           &Time, &zred, &MyProcessorNumber,
        &DensityUnits, &LengthUnits, &VelocityUnits, &TimeUnits,
           &StarMassEjectionFraction,
-          &StarMetalYield, 
+          &StarMetalYield,
+       &distRadEff, &distStepEff, &distCellsEff,
        &NumberOfParticles,
           CellLeftEdge[0], CellLeftEdge[1], CellLeftEdge[2], &GhostZones,
        ParticlePosition[0], ParticlePosition[1],
