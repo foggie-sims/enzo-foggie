@@ -32,7 +32,9 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
 int FindField(int field, int farray[], int numfields);
-
+int search_lower_bound(float *arr, float value, int low, int high, 
+		       int total);
+           
 int grid::GrackleWrapper()
 {
 
@@ -287,17 +289,11 @@ int grid::GrackleWrapper()
   //Convert to RT_H2_dissociation_rate and add to grackle fields
 
   //Sum all mass of young star particles on grid
-  float thisMass;
+  static const float metallicity_bins[6] = {0.0, 0.0004, 0.002, 0.006, 0.014, 0.02}; //Metallicity bins for SB99 tables
+  static const float age_bins[11] = {0,5e6,1e7,1.5e7,2e7,2.5e7,3e7,3.5e7,4e7,4.5e7,5e7}; //Age bins for SB99 tables. To do: check units, currently years
 
-  float[] metallicity_bins = {0.0, 0.0004, 0.002, 0.006, 0.014, 0.02}; //Metallicity bins for SB99 tables
-  float[] age_bins = {0,5e6,1e7,1.5e7,2e7,2.5e7,3e7,3.5e7,4e7,4.5e7,5e7}; //Age bins for SB99 tables. To do: check units, currently years
-
-  float TemperatureUnits, DensityUnits, LengthUnits, VelocityUnits, 
-    TimeUnits, aUnits = 1;
-  GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-	   &TimeUnits, &VelocityUnits, PhotonTime);
-  float yr_s = 3.15576e7; //Seconds in a year
-  float max_age = 5e7/yr_s * TimeUnits; //Max age of 50 Myin code units
+  float years_to_seconds = 3.15576e7f; //Seconds in a year
+  float max_age = 5e7f/years_to_seconds * TimeUnits; //Max age of 50 My in code units
 
   //Cheap implementation of lookup tables for SB99. Should do full interpolation in tabular_feedback, but this will give a quick proof of concept.
   //I've generated the full tables and have the framework for reading them in following the tabular_feedback scheme, but will leave as this for now.
@@ -318,19 +314,16 @@ int grid::GrackleWrapper()
 
   float k_diss_H2 = 0; //Photodissociation rate for H2 from LW band
   float k_det_HM = 0; //Photodetachment rate for H- from photons above 0.755 eV
-  for (i = 0; i < this->ParticleCount; i++) {
-    if (ABS(this->ParticleType[i]) == Star) {
-      float age = this->ReturnParticleAge(i) * TimeUnits / yr_s; //Convert to yr
-      if (age < 5e7) { //To do: check units, currently years
-          const float* upper_age = std::lower_bound(age_bins, age_bins + 11, age);
-          int aa = std::max(0, (upper_age - age_bins) - 1);
-          aa = std::min(aa,8);
+  for (i = 0; i < this->NumberOfParticles; i++) {
+    if (ABS(this->ParticleType[i]) == PARTICLE_TYPE_STAR) {
+      float age = (this->Time - this->ParticleAttribute[0][i]) * TimeUnits / years_to_seconds; //Convert to yr
+      if (age < 5e7) { //To do: Double check units are being handled correctly throughout
+          //To do: This stuff shouldn't be hardcoded like this, but I'm assuming we will replace this all with actually reading the tables
+          int aa = search_lower_bound((float*)age_bins, age, 0, 11, 11); 
           float t_age = (age - age_bins[aa]) / (age_bins[aa+1] - age_bins[aa]);
 
-          float metallicity = this->ReturnParticleMetallicity(i);
-          const float* upper_z = std::lower_bound(metallicity_bins, metallicity_bins + 6, metallicity);
-          int zz = std::max(0,(upper_z - metallicity_bins) - 1);
-          zz = std::min(zz,4);
+          float metallicity = this->ParticleAttribute[2][i];
+          int zz = search_lower_bound((float*)metallicity_bins, metallicity, 0, 6, 6);
           float t_z = (metallicity - metallicity_bins[zz]) / (metallicity_bins[zz+1] - metallicity_bins[zz]);
 
           float k_diss_H2_sb99_interp = (1-t_age) * (1-t_z) * kdiss_H2_sb99[zz][aa] + t_age * (1-t_z) * kdiss_H2_sb99[zz][aa+1] + (1-t_age) * t_z * kdiss_H2_sb99[zz+1][aa] + t_age * t_z * kdiss_H2_sb99[zz+1][aa+1];
@@ -351,10 +344,21 @@ int grid::GrackleWrapper()
   //Currently estimating as half the average extent of the grid which isn't great
   //To do: Account for any local extinction from unresolved sources around stars?
   float dilRad = 0.5 * (grid_dx + grid_dy + grid_dz)/3.0; //Get Half the average extent of the grid
-  my_fields.RT_H2_dissociation_rate = k_diss_H2 / (4.0 * 3.14159 * dilRad * dilRad); //Already in units of seconds (from table)
-  my_fields.RT_Hm_photodetachment_rate = k_det_HM / (4.0 * 3.14159 * dilRad * dilRad); //Already in units of seconds (from table)
-  //For Hm, use my_fields.RT_Hm_photodetachment_rate
+  k_diss_H2 = k_diss_H2  / (4.0 * 3.14159 * dilRad * dilRad);
+  k_det_HM = k_det_HM / (4.0 * 3.14159 * dilRad * dilRad);
 
+  float *k_diss_H2_grid = new float[size];
+  float *k_det_HM_grid = new float[size];
+
+  for (int i = 0; i < size; i++){
+      k_diss_H2_grid[i] = k_diss_H2;
+      k_det_HM_grid[i] = k_det_HM;
+  }
+
+
+  my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
+  //How do I feed this rate to grackle??
+  //my_fields.RT_HM_photodetachment_rate =  k_det_HM_grid; 
 
   /*                                              */
 
