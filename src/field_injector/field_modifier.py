@@ -115,14 +115,14 @@ def modify_tracer_fields(user_inputs):
     ds = yt.load(enzo_param_file)
 
     # do some error checking to make sure that this dataset actually has tracer fluids in it
-    if ds.parameters['UseTracerFluid'] not in ds.parameters:
+    if 'UseTracerFluid' not in ds.parameters:
         print("The parameter UseTracerFluid does not exist in the parameter file", enzo_param_file)
         print("This dataset may not have tracer fluids in it.  You need to investigate this.")
         print("Exiting.")
         sys.exit()
 
     # do some error checking to make sure that this dataset actually has tracer fluids in it
-    if ds.parameters['NumberOfTracerFluidFields'] not in ds.parameters:
+    if 'NumberOfTracerFluidFields' not in ds.parameters:
         print("The parameter NumberOfTracerFluidFields does not exist in the parameter file", enzo_param_file)
         print("This dataset may not have tracer fluids in it.  You need to investigate this.")
         print("Exiting.")
