@@ -1182,6 +1182,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "MovieTimestepCounter = %"ISYM, &MetaData.MovieTimestepCounter);
 
     ret += sscanf(line, "MultiMetals = %"ISYM, &MultiMetals);
+    ret += sscanf(line, "UseDustDensityField = %"ISYM, &UseDustDensityField);
+    ret += sscanf(line, "InitialDustToMetalRatio = %"FSYM, &InitialDustToMetalRatio);
     ret += sscanf(line, "IsotropicConduction = %"ISYM, &IsotropicConduction);
     ret += sscanf(line, "AnisotropicConduction = %"ISYM, &AnisotropicConduction);
     ret += sscanf(line, "IsotropicConductionSpitzerFraction = %"FSYM, &IsotropicConductionSpitzerFraction);

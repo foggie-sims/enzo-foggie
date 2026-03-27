@@ -172,11 +172,12 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
     /* Add "real" colour fields (metallicity, etc.) as colour variables. */
 
     int SNColourNum, MetalNum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum,
-      MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum; 
+      MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum, DustDensityNum;
 
     if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum,
                 MetalAGBNum, MetalNSMNum,
-                MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum) == FAIL)
+                MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum,
+                DustDensityNum) == FAIL)
       ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
 
     if (MetalNum != -1) {

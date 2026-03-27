@@ -77,6 +77,7 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *MetalIaName = "MetalSNIa_Density";
   char *MetalAGBName = "MetalAGB_Density";
   char *MetalNSMName = "MetalNSM_Density";
+  char *DustDensityName = "Dust_Density";
   char *BxName      = "Bx";
   char *ByName      = "By";
   char *BzName      = "Bz";
@@ -582,6 +583,8 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
       DataLabel[count++] = MetalNSMName;
    }
  }
+ if (UseDustDensityField)
+   DataLabel[count++] = DustDensityName;
 
  for (i = 0; i < count; i++)
    DataUnits[i] = NULL;

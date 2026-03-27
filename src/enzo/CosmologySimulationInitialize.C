@@ -128,6 +128,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *MetalIaName = "MetalSNIa_Density";
   char *MetalAGBName = "MetalAGB_Density";
   char *MetalNSMName = "MetalNSM_Density";
+  char *DustDensityName = "Dust_Density";
   char *GPotName  = "Grav_Potential";
   char *ForbidName  = "ForbiddenRefinement";
   char *MachName   = "Mach";
@@ -813,6 +814,8 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       DataLabel[i++] = ExtraNames[1];
     }
   }
+  if (UseDustDensityField)
+    DataLabel[i++] = DustDensityName;
   if(STARMAKE_METHOD(COLORED_POP3_STAR)){
     DataLabel[i++] = ForbidName;
   }

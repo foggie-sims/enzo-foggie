@@ -119,7 +119,8 @@ int grid::CosmologySimulationInitializeGrid(
  
   int idim, dim, i, j, vel, OneComponentPerFile, ndim, level;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
-    DINum, DIINum, HDINum, MetalNum, MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum;
+    DINum, DIINum, HDINum, MetalNum, MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum,
+    DustNum;
 
   int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
 
@@ -303,6 +304,8 @@ int grid::CosmologySimulationInitializeGrid(
         FieldType[ExtraField[1] = NumberOfBaryonFields++] = ExtraType1;
       }
     }
+    if (UseDustDensityField)
+      FieldType[DustNum = NumberOfBaryonFields++] = DustDensity;
     if(STARMAKE_METHOD(COLORED_POP3_STAR)){
       fprintf(stderr, "Initializing Forbidden Refinement color field\n");
       FieldType[ForbidNum = NumberOfBaryonFields++] = ForbiddenRefinement;
@@ -557,7 +560,18 @@ int grid::CosmologySimulationInitializeGrid(
         BaryonField[ForbidNum][i] = 0.0;
     }
   } // ENDIF UseMetallicityField
-  
+
+  // If using dust density, initialize as ratio of metallicity field
+  if (UseDustDensityField && ReadData) {
+    if (UseMetallicityField)
+      for (i = 0; i < size; i++)
+        BaryonField[DustNum][i] = InitialDustToMetalRatio *
+          CosmologySimulationInitialFractionMetal * BaryonField[0][i];
+    else
+      for (i = 0; i < size; i++)
+        BaryonField[DustNum][i] = tiny_number;
+  }
+
   /*  If using tracer fluids, set the field to something very small (tiny_number).
       Note that this routine is a good place to set the tracer fields to something
       that isn't tiny_number, but that is going to be highly problem-dependent and

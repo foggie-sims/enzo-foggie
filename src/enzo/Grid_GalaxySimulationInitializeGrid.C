@@ -189,7 +189,7 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
   /* declarations */
 
   int dim, i, j, k, m, field, disk, size, MetalNum, MetalIaNum, vel;
-  int MetalIINum, MetalAGBNum, MetalNSMNum;
+  int MetalIINum, MetalAGBNum, MetalNSMNum, DustNum;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum,
     H2IINum, DINum, DIINum, HDINum, B1Num, B2Num, B3Num, PhiNum;
   double DiskDensity, DiskVelocityMag;
@@ -284,6 +284,8 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
     FieldType[MetalAGBNum = NumberOfBaryonFields++] = MetalAGBDensity;
     FieldType[MetalNSMNum = NumberOfBaryonFields++] = MetalNSMDensity;
   }
+  if (UseDustDensityField)
+    FieldType[DustNum = NumberOfBaryonFields++] = DustDensity;
 
   /* Return if this doesn't concern us. */
 
@@ -621,7 +623,14 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
     BaryonField[MetalAGBNum][n] = tiny_number;
     BaryonField[MetalNSMNum][n] = tiny_number;
   }
-   
+
+  if (UseDustDensityField) {
+    if (UseMetallicityField)
+      BaryonField[DustNum][n] = InitialDustToMetalRatio * BaryonField[MetalNum][n];
+    else
+      BaryonField[DustNum][n] = tiny_number;
+  }
+
 	for (dim = 0; dim < GridRank; dim++)
 	  BaryonField[vel+dim][n] = Velocity[dim] + UniformVelocity[dim];
 

@@ -441,6 +441,10 @@ EXTERN int GloverChemistryModel;  // 0 is off, on is 1-7, excluding 6
 
 EXTERN int MultiMetals;
 
+/* Dust density field flag and initial dust-to-metal ratio */
+EXTERN int UseDustDensityField;
+EXTERN float InitialDustToMetalRatio;
+
 /* Cosmic Ray Model
  * 0: Off - default
  * 1: On, (two fluid model)

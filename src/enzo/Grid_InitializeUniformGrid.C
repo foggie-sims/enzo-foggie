@@ -36,7 +36,7 @@ int grid::InitializeUniformGrid(float UniformDensity,
 
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
     DINum, DIINum, HDINum, MetalNum, MetalIaNum, B1Num, B2Num, B3Num, PhiNum, CRNum,
-    MetalIINum, MetalAGBNum, MetalNSMNum;
+    MetalIINum, MetalAGBNum, MetalNSMNum, DustNum;
 
   int CINum, CIINum, OINum, OIINum, SiINum, SiIINum, SiIIINum, CHINum, CH2INum, 
     CH3IINum, C2INum, COINum, HCOIINum, OHINum, H2OINum, O2INum;
@@ -120,7 +120,10 @@ int grid::InitializeUniformGrid(float UniformDensity,
       FieldType[ExtraField[1] = NumberOfBaryonFields++] = ExtraType1;
     }
   }
- 
+
+  if (UseDustDensityField)
+    FieldType[DustNum = NumberOfBaryonFields++] = DustDensity;
+
   // Simon glover's chemistry models (there are several)
   //
   // model #1:  primordial (H, D, He)
@@ -321,6 +324,15 @@ int grid::InitializeUniformGrid(float UniformDensity,
         BaryonField[ExtraField[1]][i] = TestProblemData.MultiMetalsField2_Fraction*UniformDensity;
       }
     } // if(TestProblemData.UseMetallicityField)
+
+    // dust density field: initialize as ratio of metallicity
+    if (UseDustDensityField) {
+      if (TestProblemData.UseMetallicityField)
+        BaryonField[DustNum][i] = InitialDustToMetalRatio *
+          TestProblemData.MetallicityField_Fraction * UniformDensity;
+      else
+        BaryonField[DustNum][i] = tiny_number;
+    }
 
         // simon glover chemistry stuff
     if(TestProblemData.GloverChemistryModel){

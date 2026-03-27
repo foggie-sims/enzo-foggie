@@ -208,11 +208,13 @@ void ActiveParticleType::ConstructData(grid *_grid,
   /* Find metallicity field and set flag. */
 
   int SNColourNum, MetalNum, MetalIaNum, MetalIINum, MBHColourNum,
-    Galaxy1ColourNum, Galaxy2ColourNum, MetalAGBNum, MetalNSMNum;
+    Galaxy1ColourNum, Galaxy2ColourNum, MetalAGBNum, MetalNSMNum,
+    DustDensityNum;
 
   _grid->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum,
                               MetalIINum, MetalAGBNum, MetalNSMNum, MBHColourNum,
-                              Galaxy1ColourNum, Galaxy2ColourNum);
+                              Galaxy1ColourNum, Galaxy2ColourNum,
+                              DustDensityNum);
 
   /* Now we fill in the *Num attributes of data */
   data.DensNum = DensNum;

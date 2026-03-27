@@ -198,7 +198,10 @@ const field_type
   TracerFluidField07Density = 112,
   TracerFluidField08Density = 113,
 
-  FieldUndefined  = 114;
+  /* Dust density field */
+  DustDensity = 114,
+
+  FieldUndefined  = 115;
 
 /*
 enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,

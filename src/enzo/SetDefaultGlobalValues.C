@@ -645,6 +645,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   StarFeedbackTrackMetalSources    = FALSE;
   StarMakerUseJeansMass            = TRUE;
   MultiMetals                      = FALSE;
+  UseDustDensityField              = FALSE;
+  InitialDustToMetalRatio          = 1.0;
   NumberOfParticleAttributes       = INT_UNDEFINED;
   ParticleTypeInFile               = TRUE;
   ReadGhostZones                   = FALSE;

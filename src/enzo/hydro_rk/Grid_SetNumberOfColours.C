@@ -38,12 +38,13 @@ int grid::SetNumberOfColours(void)
 
   /* Count colours */  
 
-  int SNColourNum, MetalNum, MetalIaNum, MetalIINum, MBHColourNum, Galaxy1ColourNum, 
-    Galaxy2ColourNum, MetalAGBNum, MetalNSMNum; 
+  int SNColourNum, MetalNum, MetalIaNum, MetalIINum, MBHColourNum, Galaxy1ColourNum,
+    Galaxy2ColourNum, MetalAGBNum, MetalNSMNum, DustDensityNum;
 
-  if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum, 
-         MetalAGBNum, MetalNSMNum, MBHColourNum, 
-				 Galaxy1ColourNum, Galaxy2ColourNum) == FAIL) {
+  if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum,
+         MetalAGBNum, MetalNSMNum, MBHColourNum,
+				 Galaxy1ColourNum, Galaxy2ColourNum,
+				 DustDensityNum) == FAIL) {
     fprintf(stderr, "Error in grid->IdentifyColourFields.\n");
     return FAIL;
   }
@@ -66,6 +67,7 @@ int grid::SetNumberOfColours(void)
   }
 
   if (SNColourNum      != -1) _nc++;
+  if (DustDensityNum   != -1) _nc++;
   /*   //##### These fields are currently not being used and only causing interpolation problems
   if (MBHColourNum     != -1) _nc++;
   if (Galaxy1ColourNum != -1) _nc++;
