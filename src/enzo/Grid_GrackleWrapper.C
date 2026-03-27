@@ -315,16 +315,39 @@ int grid::GrackleWrapper()
   float k_diss_H2 = 0; //Photodissociation rate for H2 from LW band
   float k_det_HM = 0; //Photodetachment rate for H- from photons above 0.755 eV
   for (i = 0; i < this->NumberOfParticles; i++) {
-    if (ABS(this->ParticleType[i]) == PARTICLE_TYPE_STAR) {
+    if (this->ParticleType[i] == PARTICLE_TYPE_STAR) {
       float age = (this->Time - this->ParticleAttribute[0][i]) * TimeUnits / years_to_seconds; //Convert to yr
       if (age < 5e7) { //To do: Double check units are being handled correctly throughout
           //To do: This stuff shouldn't be hardcoded like this, but I'm assuming we will replace this all with actually reading the tables
           int aa = search_lower_bound((float*)age_bins, age, 0, 11, 11); 
-          float t_age = (age - age_bins[aa]) / (age_bins[aa+1] - age_bins[aa]);
+          float t_age=0.5f;
+          if (aa>=10){
+            aa=9;
+            t_age = 1;
+          }
+          else if (aa<0){
+            aa=0;
+            t_age=0;
+          }
+          else{
+              t_age = (age - age_bins[aa]) / (age_bins[aa+1] - age_bins[aa]);
+          }
 
           float metallicity = this->ParticleAttribute[2][i];
           int zz = search_lower_bound((float*)metallicity_bins, metallicity, 0, 6, 6);
-          float t_z = (metallicity - metallicity_bins[zz]) / (metallicity_bins[zz+1] - metallicity_bins[zz]);
+
+          float t_z=0.5f;
+          if (zz>=5){
+            zz=4;
+            t_z = 1;
+          }
+          else if (zz<0){
+            zz=0;
+            t_z=0;
+          }
+          else{
+              t_z = (metallicity - metallicity_bins[zz]) / (metallicity_bins[zz+1] - metallicity_bins[zz]);
+          }
 
           float k_diss_H2_sb99_interp = (1-t_age) * (1-t_z) * kdiss_H2_sb99[zz][aa] + t_age * (1-t_z) * kdiss_H2_sb99[zz][aa+1] + (1-t_age) * t_z * kdiss_H2_sb99[zz+1][aa] + t_age * t_z * kdiss_H2_sb99[zz+1][aa+1];
           float k_det_HM_sb99_interp = (1-t_age) * (1-t_z) * kdet_HM_sb99[zz][aa] + t_age * (1-t_z) * kdet_HM_sb99[zz][aa+1] + (1-t_age) * t_z * kdet_HM_sb99[zz+1][aa] + t_age * t_z * kdet_HM_sb99[zz+1][aa+1];
@@ -357,9 +380,17 @@ int grid::GrackleWrapper()
 
 
   my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
-  //How do I feed this rate to grackle??
-  //my_fields.RT_HM_photodetachment_rate =  k_det_HM_grid; 
+  my_fields.RT_HM_detachment_rate =  k_det_HM_grid;  //Feeds in Britton's Grackle Branch (foggie-sf) only
 
+  // Need to set the other fields to the same 0 array for now
+  float *EmptyRTArray = new float[size];
+  for (int i = 0; i < size; i++){
+      EmptyRTArray[i] = 0;
+  }
+  my_fields.RT_HI_ionization_rate   = EmptyRTArray;
+  my_fields.RT_HeI_ionization_rate  = EmptyRTArray;
+  my_fields.RT_HeII_ionization_rate = EmptyRTArray;
+  my_fields.RT_heating_rate = EmptyRTArray;
   /*                                              */
 
   /* Call the chemistry solver. */
