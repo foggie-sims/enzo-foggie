@@ -1,0 +1,81 @@
+#
+# AMR PROBLEM DEFINITION FILE: TestMultiStarParticle
+#
+#  define problem
+#
+ProblemType                = 92        // TestMultiStarParticle
+TopGridRank                = 3
+TopGridDimensions          = 64 64 64
+#
+#  Units
+#
+LengthUnits                = 1.2344e+21   // 400 pc
+TimeUnits                  = 3.15e13      // 10 Myr
+DensityUnits               = 1.0e-24      // ~1 part/cc
+#
+#  test problem parameters
+#
+TestMultiStarParticleDensity              = 1.0
+TestMultiStarParticleEnergy               = 6.55410093179e-06
+TestProblemInitialMetallicityFraction     = 2e-3   // ~0.1 Zsun
+#
+#  multi-star sphere parameters
+#
+TestMultiStarParticleNParticles           = 50     // minimum number of star particles;
+                                                   // actual count rounds up to complete
+                                                   // the last shell
+TestMultiStarParticleSphereRadius         = 0.15   // sphere radius in code units;
+                                                   // inter-particle spacing derived as
+                                                   // SphereRadius / n_shells
+TestMultiStarParticleCenter               = 0.5 0.5 0.5
+TestMultiStarParticleStarMass             = 100.0  // solar masses, same for all particles
+TestMultiStarParticleStarVelocity         = 0.0 0.0 0.0  // km/s, same for all particles
+TestMultiStarParticleStarMetallicityFraction = 0.0
+#
+#  star particle / feedback parameters
+#
+StarParticleFeedback            = 16384   // kinetic feedback (method 14)
+StarEnergyToThermalFeedback     = 5.59e-6
+StarMassEjectionFraction        = 0.25
+StarFeedbackKineticFraction     = 0.3
+StarMakerExplosionDelayTime     = 0.0
+#
+#  set I/O and stop/start parameters
+#
+StopTime                   = 1
+dtDataDump                 = 0.1
+Initialdt                  = 0.0010017410642
+OutputTemperature          = 1
+OutputCoolingTime          = 1
+#
+#  set Hydro parameters
+#
+HydroMethod                = 0
+DualEnergyFormalism        = 1
+CourantSafetyNumber        = 0.4
+PPMDiffusionParameter      = 0       // diffusion off
+PPMFlatteningParameter     = 0       // flattening on
+PPMSteepeningParameter     = 0       // steepening on
+Gamma                      = 1.6666667
+#
+#  set grid refinement parameters
+#
+StaticHierarchy            = 1       // static hierarchy
+RefineBy                   = 2
+MaximumRefinementLevel     = 0
+CellFlaggingMethod         = 0
+#
+#  Cooling
+#
+RadiativeCooling           = 0
+#MultiSpecies              = 1
+#MetalCooling              = 3
+#CloudyCoolingGridFile     = solar_2008_3D_metals.h5
+#TestProblemMultiSpecies   = 1
+#TestProblemUseMetallicityField        = 1
+#TestProblemHydrogenFractionByMass     = 0.75
+#TestProblemInitialMetallicityFraction = 2e-3
+#TestProblemInitialHIFraction          = 0.998
+#TestProblemInitialHeIFraction         = 1.0
+#TestProblemInitialHeIIFraction        = 1.0e-20
+#TestProblemInitialHeIIIIFraction      = 1.0e-20

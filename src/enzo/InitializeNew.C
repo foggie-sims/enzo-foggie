@@ -91,6 +91,8 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
 			       TopGridData &MetaData, float *Initialdt);
 int TestDoubleStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			       TopGridData &MetaData, float *Initialdt);
+int TestMultiStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
+			       TopGridData &MetaData, float *Initialdt);
 int KHInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
                           TopGridData &MetaData);
 int NohInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
@@ -603,7 +605,12 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   
   // 91) Test double star particle explosion
   if (ProblemType == 91)
-    ret = TestDoubleStarParticleInitialize(fptr, Outfptr, TopGrid, MetaData, 
+    ret = TestDoubleStarParticleInitialize(fptr, Outfptr, TopGrid, MetaData,
+				     Initialdt);
+
+  // 92) Test multi-star particle explosion (spherical formation)
+  if (ProblemType == 92)
+    ret = TestMultiStarParticleInitialize(fptr, Outfptr, TopGrid, MetaData,
 				     Initialdt);
   
   /* 101) 3D Collapse */
