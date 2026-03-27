@@ -1,5 +1,3 @@
-#include <unistd.h>
-#include <stdlib.h>
 /*
  * gen_uuid.c --- generate a DCE-compatible uuid
  *
