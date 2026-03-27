@@ -117,7 +117,7 @@ c-----------------------------------------------------------------------
       implicit none
 #include "fortran_types.def"
 c-----------------------------------------------------------------------
-#define FORTRAN_DEBUG
+#define NO_FORTRAN_DEBUG
 c
 c  Arguments
 c
@@ -1061,6 +1061,7 @@ c
 c           mom_per_cell has units of mass*velocity/volume
 #ifdef FORTRAN_DEBUG
                write(7,*) 'energy_per_cell', energy_per_cell
+     &                  *dunits*(dx*x1)**3._RKIND*vunits**2._RKIND
 #endif
 c
 c     If not injecting any momentum or energy, skip
@@ -1347,6 +1348,10 @@ c
      &             energy_inj*dunits*
      &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
      &             add_therm*dunits*
+     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
+     &             kin_energy_dummy*dunits*
+     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
+     &             kin_energy_inj*dunits*
      &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
      &             pSNmass_grid(ic,jc,kc)*
      &             (dunits*(x1*dx)**3._RKIND)/SolarMass,
