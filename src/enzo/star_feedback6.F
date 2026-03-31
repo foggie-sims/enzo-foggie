@@ -764,7 +764,8 @@ c
                      do i = -distrad, +distrad
                         cellstep = stepj + abs(i)
                         if (cellstep .le. diststep) then
-                           ke_b_wind(i+distrad+1,j+distrad+1,k+distrad+1)=
+                           ke_b_wind(i+distrad+1, j+distrad+1,
+     &                        k+distrad+1)=
      &                         0.5_RKIND*d(ic+i, jc+j, kc+k)*
      &                                 (u(ic+i ,jc+j ,kc+k)**2_IKIND +
      &                                  v(ic+i ,jc+j ,kc+k)**2_IKIND +
@@ -1102,7 +1103,8 @@ c
                      do i = -distrad, +distrad
                         cellstep = stepj + abs(i)
                         if (cellstep .le. diststep) then
-                           ke_before(i+distrad+1,j+distrad+1,k+distrad+1)=
+                           ke_before(i+distrad+1, j+distrad+1,
+     &                        k+distrad+1)=
      &                         0.5_RKIND*d(ic+i, jc+j, kc+k)*
      &                                 (u(ic+i ,jc+j ,kc+k)**2_IKIND +
      &                                  v(ic+i ,jc+j ,kc+k)**2_IKIND +
@@ -1416,7 +1418,8 @@ c
         ergs_51_sqr = 10._RKIND**(51._RKIND/2._RKIND)
         Nnbors = real(distcells, RKIND) - 1._RKIND ! 26
         betaSN = 1._RKIND/real(distcells, RKIND)   ! 1/27
-        Mej = mass_per_cell*real(distcells, RKIND)*dunits*(x1*dx)**3._RKIND
+        Mej = mass_per_cell*real(distcells, RKIND) * 
+     &     dunits*(x1*dx)**3._RKIND
         SN_energy = nsn*10**51._RKIND/Nnbors
         chi_th = 69.58_RKIND*(nsn)**(-2._RKIND/17._RKIND) * 
      &               (n_avg)**(-4._RKIND/17._RKIND) * 
@@ -1479,12 +1482,20 @@ c        and inject thermal into this cell equal to total - kinetic
      &                    *(dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
 #endif
                   else
+c        Unresolved, only momentum
                      pSN = mom_mult * 3.e10_RKIND*SolarMass * 
      &                        (nsn)**(16._RKIND/17._RKIND) * 
      &                        (n_avg)**(-2._RKIND/17._RKIND) * 
      &                        (Z_floor)**(-0.14_RKIND)
-                     energy_per_cell(i+distrad+1,
-     &                  j+distrad+1,k+distrad+1) = 0._RKIND
+c        ... unless mom_mult = 0, to mimic thermal-only for testing
+                     if (mom_mult .eq. 0._RKIND) then
+                        energy_per_cell(i+distrad+1,
+     &                    j+distrad+1,k+distrad+1) = SN_energy 
+     &                    /(dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
+                     else
+                        energy_per_cell(i+distrad+1,
+     &                    j+distrad+1,k+distrad+1) = 0._RKIND
+                     endif
 #ifdef FORTRAN_DEBUG
                      write(7,*) 'gt chi_th, pSN:',
      &                        pSN/SolarMass/1e5_RKIND
