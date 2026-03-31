@@ -295,6 +295,16 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
 
     my_fields.metal_density   = MetalPointer;
 
+    /* Dust density field — passed in same code density units as gas density */
+    int DustDensityNum = FindField(DustDensity, FieldType, NumberOfBaryonFields);
+    if (DustDensityNum != -1)
+      my_fields.dust_density = BaryonField[DustDensityNum];
+    else
+      my_fields.dust_density = NULL;
+
+    my_fields.sne_rate  = NULL;
+    my_fields.tau_dest  = NULL;
+
     my_fields.volumetric_heating_rate  = volumetric_heating_rate;
     my_fields.specific_heating_rate    = specific_heating_rate;
 

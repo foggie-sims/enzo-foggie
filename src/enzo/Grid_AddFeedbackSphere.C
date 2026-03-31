@@ -223,8 +223,21 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 	       energy*density factor. */
 	    factor = 0.578704;
 
+	    /* Split ejecta between dust and gas using dust_condensation_eff.
+	       Dust fraction goes into Dust_Density, remainder into Density.
+	       Metal ejecta comes from the gas fraction only. */
+	    double dust_cond_eff = 0.0;
+	    if (DustDensityNum > 0)
+	      dust_cond_eff = grackle_data->dust_condensation_eff;
+	    double GasEjectaDensity = (1.0 - dust_cond_eff) * EjectaDensity;
+	    double DustEjectaDensity = dust_cond_eff * EjectaDensity;
+	    double GasEjectaMetalDensity = GasEjectaDensity * StarMetalYield;
+
 	    OldDensity = BaryonField[DensNum][index];
-	    BaryonField[DensNum][index] += factor*EjectaDensity;
+	    BaryonField[DensNum][index] += factor*GasEjectaDensity;
+
+	    if (DustDensityNum > 0)
+	      BaryonField[DustDensityNum][index] += factor*DustEjectaDensity;
 
 	    /* Add total energies of spheres together, then divide by
 	       density to get specific energy */
@@ -232,24 +245,24 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 	    if (GENum >= 0 && DualEnergyFormalism) {
 
 	      newGE = (OldDensity * BaryonField[GENum][index] +
-		       ramp * factor * EjectaDensity * EjectaThermalEnergy) /
+		       ramp * factor * GasEjectaDensity * EjectaThermalEnergy) /
 		BaryonField[DensNum][index];
 	      newGE = min(newGE, maxGE);
 	      BaryonField[GENum][index] = newGE;
 	      BaryonField[TENum][index] = newGE;
 
 	      for (dim = 0; dim < GridRank; dim++)
-		BaryonField[TENum][index] += 
-		  0.5 * BaryonField[Vel1Num+dim][index] * 
+		BaryonField[TENum][index] +=
+		  0.5 * BaryonField[Vel1Num+dim][index] *
 		  BaryonField[Vel1Num+dim][index];
 
 	    } else {
 
 	      newGE = (OldDensity * BaryonField[TENum][index] +
-		       ramp * factor * EjectaDensity * EjectaThermalEnergy) /
+		       ramp * factor * GasEjectaDensity * EjectaThermalEnergy) /
 		BaryonField[DensNum][index];
 
-	      newGE = min(newGE, maxGE);  
+	      newGE = min(newGE, maxGE);
 	      BaryonField[TENum][index] = newGE;
 
 	    } //end if(GENum >= 0 && DualEnergyFormalism)
@@ -257,7 +270,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 	    /* Update species and colour fields */
 
 	    if (MetallicityField == TRUE && radius2 <= MetalRadius2)
-	      delta_fz = EjectaMetalDensity / OldDensity;
+	      delta_fz = GasEjectaMetalDensity / OldDensity;
 	    else
 	      delta_fz = 0.0;
 	    increase = BaryonField[DensNum][index] / OldDensity - delta_fz;
@@ -282,7 +295,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float DensityU
 	    }
 
 	    if (MetallicityField == TRUE)
-	      BaryonField[MetalNum][index] += EjectaMetalDensity;
+	      BaryonField[MetalNum][index] += GasEjectaMetalDensity;
 
 	    CellsModified++;
 

@@ -246,8 +246,21 @@ int grid::GrackleWrapper()
 
   my_fields.metal_density   = MetalPointer;
 
+  /* Dust density field — passed in same code density units as gas density */
+  int DustDensityNum = FindField(DustDensity, FieldType, NumberOfBaryonFields);
+  if (DustDensityNum != -1)
+    my_fields.dust_density = BaryonField[DustDensityNum];
+  else
+    my_fields.dust_density = NULL;
+
   my_fields.volumetric_heating_rate = volumetric_heating_rate;
   my_fields.specific_heating_rate   = specific_heating_rate;
+
+  /* Per-cell SN rate field (use_sne_field = 1) — NULL if not used */
+  my_fields.sne_rate  = NULL;
+
+  /* Per-cell dust destruction timescale field (use_tau_dest_field = 1) — NULL if not used */
+  my_fields.tau_dest  = NULL;
 
 #ifdef TRANSFER
   /* Find RT fields */

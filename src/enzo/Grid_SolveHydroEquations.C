@@ -194,6 +194,9 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
     if (MBHColourNum     != -1) colnum[NumberOfColours++] = MBHColourNum;
     if (Galaxy1ColourNum != -1) colnum[NumberOfColours++] = Galaxy1ColourNum;
     if (Galaxy2ColourNum != -1) colnum[NumberOfColours++] = Galaxy2ColourNum;
+    if (DustDensityNum   != -1) colnum[NumberOfColours++] = DustDensityNum;
+    //if (MetalAGBNum      != -1) colnum[NumberOfColours++] = MetalAGBNum;
+    //if (MetalNSMNum      != -1) colnum[NumberOfColours++] = MetalNSMNum;
 
 
     /* Add Simon Glover's chemistry species as color fields */

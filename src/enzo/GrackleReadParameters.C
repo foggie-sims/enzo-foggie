@@ -155,6 +155,32 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
     ret += sscanf(line, "use_dust_density_field = %d",
                   &grackle_data->use_dust_density_field);
 
+    /* New dust physics parameters (newchemcpp Grackle) */
+    ret += sscanf(line, "dust_model = %d",
+                  &grackle_data->dust_model);
+    ret += sscanf(line, "solver_method = %d",
+                  &grackle_data->solver_method);
+    ret += sscanf(line, "use_sne_field = %d",
+                  &grackle_data->use_sne_field);
+    ret += sscanf(line, "use_tau_dest_field = %d",
+                  &grackle_data->use_tau_dest_field);
+    ret += sscanf(line, "dust_destruction_eff = %lf",
+                  &grackle_data->dust_destruction_eff);
+    ret += sscanf(line, "sne_coeff = %lf",
+                  &grackle_data->sne_coeff);
+    ret += sscanf(line, "sne_shockspeed = %lf",
+                  &grackle_data->sne_shockspeed);
+    ret += sscanf(line, "dust_grainsize = %lf",
+                  &grackle_data->dust_grainsize);
+    ret += sscanf(line, "dust_growth_densref = %lf",
+                  &grackle_data->dust_growth_densref);
+    ret += sscanf(line, "dust_growth_tauref = %lf",
+                  &grackle_data->dust_growth_tauref);
+    ret += sscanf(line, "dust_condensation_eff = %lf",
+                  &grackle_data->dust_condensation_eff);
+    ret += sscanf(line, "sne_metal_yield = %lf",
+                  &grackle_data->sne_metal_yield);
+
     /* If the dummy char space was used, then make another. */
     if (*dummy != 0) {
       dummy = new char[MAX_LINE_LENGTH];
@@ -212,9 +238,9 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
     ENZO_FAIL("Photoelectric heating model 2, and ISRF field, in Grackle is not yet implemented.\n");
   }
 
-  if ( grackle_data->use_dust_density_field ){
-    ENZO_FAIL("Supplying dust density (use_dust_density_field) to Grackle is not yet implemented.\n");
-  }
+  // if ( grackle_data->use_dust_density_field ){
+  //   ENZO_FAIL("Supplying dust density (use_dust_density_field) to Grackle is not yet implemented.\n");
+  // }
 
   // Initialize Grackle units structure.
   FLOAT a_value, dadt;

@@ -51,6 +51,20 @@ int GrackleWriteParameters(FILE *fptr)
   fprintf(fptr, "use_isrf_field              = %d\n",  grackle_data->use_isrf_field);
   fprintf(fptr, "use_dust_density_field      = %d\n",  grackle_data->use_dust_density_field);
 
+  /* New dust physics parameters (newchemcpp Grackle) */
+  fprintf(fptr, "dust_model                  = %d\n",  grackle_data->dust_model);
+  fprintf(fptr, "solver_method               = %d\n",  grackle_data->solver_method);
+  fprintf(fptr, "use_sne_field               = %d\n",  grackle_data->use_sne_field);
+  fprintf(fptr, "use_tau_dest_field          = %d\n",  grackle_data->use_tau_dest_field);
+  fprintf(fptr, "dust_destruction_eff        = %lf\n", grackle_data->dust_destruction_eff);
+  fprintf(fptr, "sne_coeff                   = %lf\n", grackle_data->sne_coeff);
+  fprintf(fptr, "sne_shockspeed              = %lf\n", grackle_data->sne_shockspeed);
+  fprintf(fptr, "dust_grainsize              = %lf\n", grackle_data->dust_grainsize);
+  fprintf(fptr, "dust_growth_densref         = %lf\n", grackle_data->dust_growth_densref);
+  fprintf(fptr, "dust_growth_tauref          = %lf\n", grackle_data->dust_growth_tauref);
+  fprintf(fptr, "dust_condensation_eff       = %lf\n", grackle_data->dust_condensation_eff);
+  fprintf(fptr, "sne_metal_yield             = %lf\n", grackle_data->sne_metal_yield);
+
 #endif
 
   return SUCCESS;
