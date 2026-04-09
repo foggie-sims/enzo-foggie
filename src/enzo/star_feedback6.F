@@ -307,8 +307,10 @@ c     Make sure particle is in grid, skip if not
             if (xp(n) .lt. xstart .or. xp(n) .gt. xstart+dx*nx .or.
      &          yp(n) .lt. ystart .or. yp(n) .gt. ystart+dx*ny .or.
      &          zp(n) .lt. zstart .or. zp(n) .gt. zstart+dx*nz) then
+#ifdef FORTRAN_DEBUG
                write(7,*) 'warning: star particle out of grid',
      &              xp(n),yp(n),zp(n), xstart, ystart, zstart
+#endif
                goto 10
             endif
 c
@@ -666,6 +668,14 @@ c
             jc = int(ypos) + 1_IKIND
             kc = int(zpos) + 1_IKIND
 c
+c     Clamp feedback center so feedback region [ic-distrad, ic+distrad]
+c     stays within the allocated array, regardless of floating-point
+c     rounding in the position-to-index conversion above or parameter values.
+c
+            ic = max(distrad+1_IKIND, min(nx-distrad, ic))
+            jc = max(distrad+1_IKIND, min(ny-distrad, jc))
+            kc = max(distrad+1_IKIND, min(nz-distrad, kc))
+c
 c     Put nsn, meject, mzeject, and weighted particle velocity values on grid at this location
 c     Weight average velocity for SNe by number of SNe going off in each particle
 c
@@ -736,11 +746,14 @@ c     This will be used as the "particle velocity"
 c     when translating the momentum into the particle frame.
 c
 c
-c     Loop over the feedback grids, avoiding the edges
+c     Loop over the feedback grids, avoiding the edges.
+c     The bounds ibuff+distrad+1 to n*-ibuff-distrad ensure that the
+c     feedback region [ic-distrad, ic+distrad] always stays within the
+c     allocated array for any distrad or ibuff value.
 c
-      do kc=2_IKIND, nz-1_IKIND
-         do jc=2_IKIND, ny-1_IKIND
-            do ic=2_IKIND, nx-1_IKIND
+      do kc=ibuff+distrad+1_IKIND, nz-ibuff-distrad
+         do jc=ibuff+distrad+1_IKIND, ny-ibuff-distrad
+            do ic=ibuff+distrad+1_IKIND, nx-ibuff-distrad
 c
 c ====================================================================
 c     BEGIN PRE-SUPERNOVA FEEDBACK
@@ -757,6 +770,7 @@ c     before momentum is added.  This
 c     is needed at the end of the calculation to update the
 c     total energy (te) field.
 c
+               ke_b_wind = 0._RKIND
                do k = -distrad, +distrad
                   stepk = abs(k)
                   do j = -distrad, +distrad
@@ -1053,6 +1067,8 @@ c     Compute the mass and momentum that this cell is responsible for
 c     injecting
 c
                mass_per_cell = meject_grid(ic,jc,kc)/distcells
+               mom_per_cell = 0._RKIND
+               energy_per_cell = 0._RKIND
                call get_mom_per_cell(d, mass_per_cell,
      &                  distcells, mom_per_cell, energy_per_cell,
      &                  nsn_grid(ic,jc,kc), d(ic,jc,kc), dx, x1,
@@ -1096,6 +1112,7 @@ c     before momentum is added.  This
 c     is needed at the end of the calculation to update the
 c     total energy (te) field.
 c
+               ke_before = 0._RKIND
                do k = -distrad, +distrad
                   stepk = abs(k)
                   do j = -distrad, +distrad
