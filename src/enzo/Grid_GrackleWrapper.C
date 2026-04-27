@@ -14,6 +14,7 @@
 ************************************************************************/
 
 #include "preincludes.h"
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -44,6 +45,7 @@ int grid::GrackleWrapper()
     return SUCCESS;
 
   LCAPERF_START("grid_GrackleWrapper");
+  TIMER_START("GrackleWrapper");
 
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
       DINum, DIINum, HDINum, DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum;
@@ -324,6 +326,7 @@ int grid::GrackleWrapper()
   delete [] g_grid_start;
   delete [] g_grid_end;
 
+  TIMER_STOP("GrackleWrapper");
   LCAPERF_STOP("grid_GrackleWrapper");
 
 #endif

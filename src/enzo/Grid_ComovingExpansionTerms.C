@@ -13,6 +13,7 @@
 ************************************************************************/
 
 #include <stdio.h>
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -51,6 +52,7 @@ int grid::ComovingExpansionTerms()
     return SUCCESS;
 
   LCAPERF_START("ComovingExpansionTerms");
+  TIMER_START("ComovingExpansionTerms");
   this->DebugCheck("ComovingExpansionTerms");
 
   if (NumberOfBaryonFields > 0) {
@@ -306,6 +308,7 @@ int grid::ComovingExpansionTerms()
 
   }
 
+  TIMER_STOP("ComovingExpansionTerms");
   LCAPERF_STOP("ComovingExpansionTerms");
   return SUCCESS;
 }

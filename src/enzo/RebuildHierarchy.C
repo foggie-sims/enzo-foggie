@@ -573,22 +573,24 @@ int RebuildHierarchy(TopGridData *MetaData,
 
       tt0 = ReturnWallTime();
       /* Redistribute grids over processors to Load balance. */
+      TIMER_START("LoadBalanceGrids");
       switch( LoadBalancing ){
       case 1:
       case 2:
       case 3:
 	if (i >= LoadBalancingMinLevel && i <= LoadBalancingMaxLevel)
-	  CommunicationLoadBalanceGrids(SubgridHierarchyPointer, subgrids, 
+	  CommunicationLoadBalanceGrids(SubgridHierarchyPointer, subgrids,
 					MoveParticles);
 	break;
       case 4:
 	if (i >= LoadBalancingMinLevel && i <= LoadBalancingMaxLevel)
-	  LoadBalanceHilbertCurve(SubgridHierarchyPointer, subgrids, 
+	  LoadBalanceHilbertCurve(SubgridHierarchyPointer, subgrids,
 				  MoveParticles);
 	break;
       default:
 	break;
       }
+      TIMER_STOP("LoadBalanceGrids");
       tt1 = ReturnWallTime();
       RHperf[13] += tt1-tt0;
 

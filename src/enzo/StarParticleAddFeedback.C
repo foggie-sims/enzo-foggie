@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -67,6 +68,7 @@ int StarParticleAddFeedback(TopGridData *MetaData,
     return SUCCESS;
 
   LCAPERF_START("StarParticleAddFeedback");
+  TIMER_START("StarParticleAddFeedback");
 
   /* Get time and SNe timestep */
 
@@ -110,28 +112,32 @@ int StarParticleAddFeedback(TopGridData *MetaData,
 	  
     /* Compute some parameters */
 
+    TIMER_START("SPFeedback_CalcFbkParams");
     cstar->CalculateFeedbackParameters
-      (influenceRadius, RootCellWidth, SNe_dt, EjectaDensity, 
-       EjectaThermalEnergy, EjectaMetalDensity, DensityUnits, LengthUnits, 
-       TemperatureUnits, TimeUnits, VelocityUnits, dtForThisStar, 
+      (influenceRadius, RootCellWidth, SNe_dt, EjectaDensity,
+       EjectaThermalEnergy, EjectaMetalDensity, DensityUnits, LengthUnits,
+       TemperatureUnits, TimeUnits, VelocityUnits, dtForThisStar,
        Time, SphereCheck);
+    TIMER_STOP("SPFeedback_CalcFbkParams");
 
     if (SphereCheck) {
 
     /* Recalibrate MBHFeedbackThermalRadius if requested */
 
-    if (cstar->ReturnFeedbackFlag() == MBH_THERMAL)    
-      RecalibrateMBHFeedbackThermalRadius(cstar->ReturnPosition(), LevelArray, level, influenceRadius, 
+    if (cstar->ReturnFeedbackFlag() == MBH_THERMAL)
+      RecalibrateMBHFeedbackThermalRadius(cstar->ReturnPosition(), LevelArray, level, influenceRadius,
 					  EjectaDensity, EjectaMetalDensity, EjectaThermalEnergy);
 
     /* Determine if a sphere with enough mass (or equivalently radius
        for SNe) is enclosed within grids on this level */
 
     LCAPERF_START("star_FindFeedbackSphere");
+    TIMER_START("SPFeedback_FindSphere");
     cstar->FindFeedbackSphere
-      (LevelArray, level, influenceRadius, EjectaDensity, EjectaThermalEnergy, 
-       SphereContained, SkipMassRemoval, DensityUnits, LengthUnits, 
+      (LevelArray, level, influenceRadius, EjectaDensity, EjectaThermalEnergy,
+       SphereContained, SkipMassRemoval, DensityUnits, LengthUnits,
        TemperatureUnits, TimeUnits, VelocityUnits, Time, MarkedSubgrids);
+    TIMER_STOP("SPFeedback_FindSphere");
     LCAPERF_STOP("star_FindFeedbackSphere");
 
     /* If the particle already had sufficient mass, we still want to
@@ -157,14 +163,16 @@ int StarParticleAddFeedback(TopGridData *MetaData,
     SphereContainedNextLevel = FALSE;
 
     LCAPERF_START("star_FindFeedbackSphere2");
+    TIMER_START("SPFeedback_FindSphere");
     if ((cstar->ReturnFeedbackFlag() == MBH_THERMAL ||
 	 cstar->ReturnFeedbackFlag() == MBH_JETS ||
 	 cstar->ReturnFeedbackFlag() == CONT_SUPERNOVA) &&
 	LevelArray[level+1] != NULL)
       cstar->FindFeedbackSphere
-	(LevelArray, level+1, influenceRadius, EjectaDensity, EjectaThermalEnergy, 
-	 SphereContainedNextLevel, dummy, DensityUnits, LengthUnits, 
+	(LevelArray, level+1, influenceRadius, EjectaDensity, EjectaThermalEnergy,
+	 SphereContainedNextLevel, dummy, DensityUnits, LengthUnits,
 	 TemperatureUnits, TimeUnits, VelocityUnits, Time, MarkedSubgrids);
+    TIMER_STOP("SPFeedback_FindSphere");
     LCAPERF_STOP("star_FindFeedbackSphere2");
 
 //    if (debug) {
@@ -220,13 +228,15 @@ int StarParticleAddFeedback(TopGridData *MetaData,
 	deltaE = 0.0;
       }
 
+      TIMER_START("SPFeedback_AddSphere");
       for (l = level; l < MAX_DEPTH_OF_HIERARCHY; l++)
-	for (Temp = LevelArray[l]; Temp; Temp = Temp->NextGridThisLevel) 
+	for (Temp = LevelArray[l]; Temp; Temp = Temp->NextGridThisLevel)
 	  Temp->GridData->AddFeedbackSphere
-	    (cstar, l, influenceRadius, DensityUnits, LengthUnits, 
-	     VelocityUnits, TemperatureUnits, TimeUnits, EjectaDensity, 
-	     EjectaMetalDensity, EjectaThermalEnergy, Q_HI, sigma, deltaE, 
+	    (cstar, l, influenceRadius, DensityUnits, LengthUnits,
+	     VelocityUnits, TemperatureUnits, TimeUnits, EjectaDensity,
+	     EjectaMetalDensity, EjectaThermalEnergy, Q_HI, sigma, deltaE,
 	     CellsModified);
+      TIMER_STOP("SPFeedback_AddSphere");
     } // ENDIF
 
 //    fprintf(stdout, "StarParticleAddFeedback[%"ISYM"][%"ISYM"]: "
@@ -281,6 +291,7 @@ int StarParticleAddFeedback(TopGridData *MetaData,
     
   } // ENDFOR stars
 
+  TIMER_STOP("StarParticleAddFeedback");
   LCAPERF_STOP("StarParticleAddFeedback");
   return SUCCESS;
 

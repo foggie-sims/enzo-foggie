@@ -26,9 +26,9 @@
 #endif /* USE_MPI */
  
 #include <stdio.h>
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "ErrorExceptions.h"
-#include "performance.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -61,6 +61,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 {
 
   LCAPERF_START("UpdateFromFinerGrids");
+  TIMER_START("UpdateFromFinerGrids");
  
   int grid1, subgrid, StartGrid, EndGrid;
   HierarchyEntry *NextGrid;
@@ -308,6 +309,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
   CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
  
+  TIMER_STOP("UpdateFromFinerGrids");
   LCAPERF_STOP("UpdateFromFinerGrids");
   return SUCCESS;
 }

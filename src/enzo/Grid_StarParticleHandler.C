@@ -19,6 +19,7 @@
 #include <math.h>
 #include <iostream>
 #include "ErrorExceptions.h"
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -610,6 +611,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 	return SUCCESS;
 
   LCAPERF_START("grid_StarParticleHandler");
+  TIMER_START("StarParticleHandler");
 
   /* Compute size (in floats) of the current grid. */
  
@@ -840,7 +842,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
   /* ------------------------------------------------------------------- */
   /* 1) StarParticle creation. */
- 
+
+  TIMER_START("SPHandler_StarMaker");
   //  if (StarParticleCreation > 0 && level == MaximumRefinementLevel) {
   if (StarParticleCreation > 0) {
     
@@ -1611,8 +1614,12 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     }
 #endif 
 
+  TIMER_STOP("SPHandler_StarMaker");
+
   /* ------------------------------------------------------------------- */
   /* 2) StarParticle feedback. */
+
+  TIMER_START("SPHandler_StarFeedback");
  
 #ifdef STAR1
   //if (StarParticleFeedback == 1) {
@@ -2295,6 +2302,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
   //if (debug) printf("StarParticle: end\n");
 
+  TIMER_STOP("SPHandler_StarFeedback");
+  TIMER_STOP("StarParticleHandler");
   LCAPERF_STOP("grid_StarParticleHandler");
   return SUCCESS;
 }

@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "ErrorExceptions.h"
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -77,30 +78,39 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
     BigStarFormationDone = CommunicationMaxValue(BigStarFormationDone);
 
   LCAPERF_START("StarParticleFinalize");
+  TIMER_START("StarParticleFinalize");
 
   /* Update the star particle counters. */
 
+  TIMER_START("SPFinalize_CommUpdate");
   CommunicationUpdateStarParticleCount(Grids, MetaData, NumberOfGrids,
 				       TotalStarParticleCountPrevious);
+  TIMER_STOP("SPFinalize_CommUpdate");
 
   /* Update position and velocity of star particles from the actual
      particles */
 
+  TIMER_START("SPFinalize_UpdatePosVel");
   for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar)
     ThisStar->UpdatePositionVelocity();
-
+  TIMER_STOP("SPFinalize_UpdatePosVel");
 
   /* Apply any stellar feedback onto the grids and add any gas to the
      accretion rates of the star particles */
 
+  TIMER_START("StarParticleAddFeedback");
   StarParticleAddFeedback(MetaData, LevelArray, level, AllStars, AddedFeedback);
+  TIMER_STOP("StarParticleAddFeedback");
 
   /* Update star particles for any accretion */
 
+  TIMER_START("StarParticleAccretion");
   StarParticleAccretion(MetaData, LevelArray, level, AllStars);
+  TIMER_STOP("StarParticleAccretion");
 
   /* Collect all sink particles and report the total mass to STDOUT */
-  
+
+  TIMER_START("SPFinalize_SinkMass");
   if (STARMAKE_METHOD(SINK_PARTICLE) && level == MaximumRefinementLevel) {
     TotalMass = 0.0;
     for (l = 0; l <= MaximumRefinementLevel; l++)
@@ -110,27 +120,33 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
     CommunicationReduceValues(&TotalMass, 1, MPI_SUM);
 #endif
     if (debug)
-      fprintf(stdout, "SinkParticle: Time = %"GOUTSYM", TotalMass = %"GSYM"\n", 
+      fprintf(stdout, "SinkParticle: Time = %"GOUTSYM", TotalMass = %"GSYM"\n",
 	      TimeNow, TotalMass);
   }
+  TIMER_STOP("SPFinalize_SinkMass");
 
   /* Subtract gas from the grids that has accreted on to the star particles */
 
-  StarParticleSubtractAccretedMass(MetaData, LevelArray, level, AllStars);  
+  TIMER_START("StarParticleSubtractAccretedMass");
+  StarParticleSubtractAccretedMass(MetaData, LevelArray, level, AllStars);
+  TIMER_STOP("StarParticleSubtractAccretedMass");
 
   /* Check for any stellar deaths */
 
+  TIMER_START("StarParticleDeath");
   StarParticleDeath(LevelArray, level, AllStars);
+  TIMER_STOP("StarParticleDeath");
 
-  /* 
+  /*
      If the new particles are above a specified mass threshold,
      "activate" them.  Then check for any stellar deaths.
 
      Sync all star and normal particles that are stored in the grids
      to the global list (AllStars) so these changes are reflected
-     there. 
+     there.
   */
 
+  TIMER_START("SPFinalize_FinalizeLoop");
   int count = 0;
   int mbh_particle_io_count = 0;
   OutputNow = FALSE;
@@ -139,7 +155,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 //    if (debug) {
 //      printf("AddedFeedback[%d] = %d\n", count, AddedFeedback[count]);
 //     ThisStar->PrintInfo();
-//    } 
+//    }
     if (AddedFeedback[count]) {
       ThisStar->ActivateNewStar(TimeNow, Timestep);
       if (ThisStar->ReturnType() == PopIII && PopIIIOutputOnFeedback == TRUE)
@@ -153,40 +169,51 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
     // set the pointers in the global copy to NULL before deleting the stars.
     ThisStar->ResetAccretionPointers();
 
-    // If you use MBHParticleIO, copy some info to MBHParticleIOTemp[][]  
+    // If you use MBHParticleIO, copy some info to MBHParticleIOTemp[][]
     // for later use.  - Ji-hoon Kim, Nov.2009
     if (MBHParticleIO == TRUE && ThisStar->ReturnType() == PARTICLE_TYPE_MBH) {
       MBHParticleIOTemp[mbh_particle_io_count][0] = (double)(ThisStar->ReturnID());
-      MBHParticleIOTemp[mbh_particle_io_count][1] = ThisStar->ReturnMass();      
-      for (int dim = 0; dim < MAX_DIMENSION; dim++) 
+      MBHParticleIOTemp[mbh_particle_io_count][1] = ThisStar->ReturnMass();
+      for (int dim = 0; dim < MAX_DIMENSION; dim++)
 	MBHParticleIOTemp[mbh_particle_io_count][2+dim] = (double)(ThisStar->ReturnAccretedAngularMomentum()[dim]);
-      MBHParticleIOTemp[mbh_particle_io_count][5] = ThisStar->ReturnNotEjectedMass();      
+      MBHParticleIOTemp[mbh_particle_io_count][5] = ThisStar->ReturnNotEjectedMass();
       mbh_particle_io_count++;
     }
 
   } // ENDFOR stars
+  TIMER_STOP("SPFinalize_FinalizeLoop");
 
   if (PopIIIOutputOnFeedback)
     OutputNow = CommunicationMaxValue(OutputNow);
-  
+
   /* Merge star particles */
 
-  if (STARMAKE_METHOD(SINK_PARTICLE) && level == MaximumRefinementLevel) {  
+  TIMER_START("CommMergeStarParticle");
+  if (STARMAKE_METHOD(SINK_PARTICLE) && level == MaximumRefinementLevel) {
     if (CommunicationMergeStarParticle(Grids, NumberOfGrids) == FAIL) {
       printf("CommunicationMergeStarParticle failed.\n");
+      TIMER_STOP("CommMergeStarParticle");
+      TIMER_STOP("StarParticleFinalize");
+      LCAPERF_STOP("StarParticleFinalize");
       return FAIL;
     }
   }
+  TIMER_STOP("CommMergeStarParticle");
 
   /* Set minimum refinement level for metallicity if desired */
 
+  TIMER_START("SPSetRefinementLevel");
   StarParticleSetRefinementLevel(AllStars);
+  TIMER_STOP("SPSetRefinementLevel");
 
   /* Delete the global star particle list, AllStars */
 
+  TIMER_START("SPFinalize_DeleteStarList");
   DeleteStarList(AllStars);
   delete [] AddedFeedback;
+  TIMER_STOP("SPFinalize_DeleteStarList");
 
+  TIMER_STOP("StarParticleFinalize");
   LCAPERF_STOP("StarParticleFinalize");
   return SUCCESS;
 

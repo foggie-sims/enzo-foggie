@@ -530,11 +530,12 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
      EvolveLevel since it involves communications. */
   
   if (reallevel > MaximumGravityRefinementLevel) {
- 
+
     /* compute potential and acceleration on coarser level [LOCAL]
        (but only if there is at least a subgrid -- it should be only
        if there is a subgrrid on reallevel, but this is ok). */
- 
+
+    TIMER_START("SolveForPotential_Sub");
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
       if (Grids[grid1]->NextGridNextLevel != NULL) {
 	Grids[grid1]->GridData->SolveForPotential(MaximumGravityRefinementLevel);
@@ -591,7 +592,8 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
       } while (LastTemp != NULL);
 
     } // end:  if (!CopyGravPotential)
- 
+
+    TIMER_STOP("SolveForPotential_Sub");
   } // end: if (reallevel > MaximumGravityRefinementLevel)
 
     // --------------------------------------------------

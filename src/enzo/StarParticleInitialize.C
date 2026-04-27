@@ -12,6 +12,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -44,14 +45,15 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
     return SUCCESS;
 
   LCAPERF_START("StarParticleInitialize");
+  TIMER_START("StarParticleInitialize");
 
   /* Set MetaData->NumberOfParticles and prepare TotalStarParticleCountPrevious
-     these are to be used in CommunicationUpdateStarParticleCount 
-     in StarParticleFinalize */  
+     these are to be used in CommunicationUpdateStarParticleCount
+     in StarParticleFinalize */
 
   MetaData->NumberOfParticles = FindTotalNumberOfParticles(LevelArray);
   NumberOfOtherParticles = MetaData->NumberOfParticles - NumberOfStarParticles;
-  RecordTotalStarParticleCount(Grids, NumberOfGrids, 
+  RecordTotalStarParticleCount(Grids, NumberOfGrids,
 			       TotalStarParticleCountPrevious);
 
   /* Initialize the IMF lookup table if requested and not defined */
@@ -71,33 +73,39 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
     for (level = 0; level < MAX_DEPTH_OF_HIERARCHY-1; level++)
       for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel)
 	if (Temp->GridData->FindAllStarParticles(level) == FAIL) {
-	  	  ENZO_FAIL("Error in grid::FindAllStarParticles.");
+		  ENZO_FAIL("Error in grid::FindAllStarParticles.");
 	}
 
   /* Create a master list of all star particles */
 
+  TIMER_START("SPInit_FindAll");
   if (StarParticleFindAll(LevelArray, AllStars) == FAIL) {
         ENZO_FAIL("Error in StarParticleFindAll.");
   }
+  TIMER_STOP("SPInit_FindAll");
 
   if (MetaData->FirstTimestepAfterRestart == FALSE) {
 
     /* Merge any newly created, clustered particles */
 
+    TIMER_START("SPInit_MergeNew");
     if (StarParticleMergeNew(LevelArray, AllStars) == FAIL) {
         ENZO_FAIL("Error in StarParticleMergeNew.");
     }
+    TIMER_STOP("SPInit_MergeNew");
 
   /* Merge MBH particles that are close enough.  Ji-hoon Kim, Sep.2009 */
 
+    TIMER_START("SPInit_MergeMBH");
     if (StarParticleMergeMBH(LevelArray, AllStars) == FAIL) {
       ENZO_FAIL("Error in StarParticleMergeMBH.\n");
     }
+    TIMER_STOP("SPInit_MergeMBH");
 
   } // ENDIF !restart
 
-  /* 
-     Set feedback flags.  
+  /*
+     Set feedback flags.
 
      Sync all star and normal particles that are stored in the grids
      to the global list (AllStars) so these changes are reflected
@@ -110,18 +118,21 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 //      cstar->PrintInfo();
 //  }
 
+  TIMER_START("SPInit_SetFeedback");
   for (cstar = AllStars; cstar; cstar = cstar->NextStar) {
     cstar->SetFeedbackFlag(TimeNow);
     cstar->CopyToGrid();
     cstar->MirrorToParticle();
   }
+  TIMER_STOP("SPInit_SetFeedback");
 
-//  fprintf(stdout, "\nin StarParticleInitialize.C \n", MetaData->NumberOfParticles); 
-//  fprintf(stdout, "MetaData->NumberOfParticles = %d\n", MetaData->NumberOfParticles); 
+//  fprintf(stdout, "\nin StarParticleInitialize.C \n", MetaData->NumberOfParticles);
+//  fprintf(stdout, "MetaData->NumberOfParticles = %d\n", MetaData->NumberOfParticles);
 //  fprintf(stdout, "NumberOfStarParticles now = %d\n", NumberOfStarParticles);
 //  fprintf(stdout, "NumberOfOtherParticles now = %d\n", NumberOfOtherParticles);
 
 
+  TIMER_STOP("StarParticleInitialize");
   LCAPERF_STOP("StarParticleInitialize");
   return SUCCESS;
 

@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -50,6 +51,7 @@ int StarParticleAccretion(TopGridData *MetaData,
 #endif
 
   LCAPERF_START("StarParticleAccretion");
+  TIMER_START("StarParticleAccretion");
 
   Star *ThisStar;
   FLOAT Time;
@@ -120,6 +122,7 @@ int StarParticleAccretion(TopGridData *MetaData,
 
   }
 
+  TIMER_STOP("StarParticleAccretion");
   LCAPERF_STOP("StarParticleAccretion");
   return SUCCESS;
 

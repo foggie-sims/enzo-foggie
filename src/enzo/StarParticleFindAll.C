@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "ErrorExceptions.h"
+#include "EnzoTiming.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -58,6 +59,8 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
   HierarchyEntry **Grids;
   int NumberOfGrids, *NumberOfStarsInGrids;
 
+  TIMER_START("StarParticleFindAll");
+
   minStarLifetime = 1e20;
   TotalNumberOfStars = 0;
   LocalNumberOfStars = 0;
@@ -65,6 +68,7 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
   if (AllStars != NULL)
     DeleteStarList(AllStars);
 
+  TIMER_START("SPFindAll_LocalScan");
   for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {
 
     NumberOfGrids = GenerateGridArray(LevelArray, level, &Grids);
@@ -109,6 +113,7 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
     delete [] NumberOfStarsInGrids;
 
   } // ENDFOR level
+  TIMER_STOP("SPFindAll_LocalScan");
 
   /***********************************************/
   /*                                             */
@@ -116,6 +121,7 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
   /*                                             */
   /***********************************************/
 
+  TIMER_START("SPFindAll_Allgather");
   if (NumberOfProcessors > 1) {
 
 #ifdef USE_MPI
@@ -232,17 +238,19 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
     TotalNumberOfStars = LocalNumberOfStars;
     AllStars = LocalStars;
   }
+  TIMER_STOP("SPFindAll_Allgather");
 
   /* Find minimum stellar lifetime */
-  
+
   for (cstar = AllStars; cstar; cstar = cstar->NextStar)
     if (cstar->ReturnMass() > 1e-9)
       minStarLifetime = min(minStarLifetime, cstar->ReturnLifetime());
 
   /* Store in global variable */
-  
+
   G_TotalNumberOfStars = TotalNumberOfStars;
 
+  TIMER_STOP("StarParticleFindAll");
   return SUCCESS;
 
 }

@@ -15,6 +15,7 @@
 #endif
 #include <stdlib.h>
 #include <stdio.h>
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -47,6 +48,7 @@ int StarParticleDeath(LevelHierarchyEntry *LevelArray[], int level,
   Star *ThisStar, *MoveStar, *LastStar;
 
   LCAPERF_START("StarParticleDeath");
+  TIMER_START("StarParticleDeath");
   ThisStar = AllStars;
   AllStars = NULL;
   LastStar = NULL;
@@ -77,6 +79,7 @@ int StarParticleDeath(LevelHierarchyEntry *LevelArray[], int level,
 
   } // ENDWHILE stars
 
+  TIMER_STOP("StarParticleDeath");
   LCAPERF_STOP("StarParticleDeath");
   return SUCCESS;
 

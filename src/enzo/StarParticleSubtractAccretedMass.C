@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -62,6 +63,7 @@ int StarParticleSubtractAccretedMass(TopGridData *MetaData,
     return SUCCESS;
 
   LCAPERF_START("StarParticleSubtractAccretedMass");
+  TIMER_START("StarParticleSubtractAccretedMass");
 
   /* Get time and SNe timestep */
 
@@ -207,6 +209,7 @@ int StarParticleSubtractAccretedMass(TopGridData *MetaData,
 
   } // ENDFOR stars
 
+  TIMER_STOP("StarParticleSubtractAccretedMass");
   LCAPERF_STOP("StarParticleSubtractAccretedMass");
   return SUCCESS;
 

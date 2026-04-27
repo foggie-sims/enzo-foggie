@@ -14,6 +14,7 @@
 ************************************************************************/
 
 #include "preincludes.h"
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -29,6 +30,7 @@ int grid::MultiSpeciesHandler()
   if (GadgetEquilibriumCooling != 0) return SUCCESS;
 
   LCAPERF_START("grid_MultiSpeciesHandler");
+  TIMER_START("MultiSpeciesHandler");
 
 #ifdef USE_GRACKLE
   if (grackle_data->use_grackle == TRUE) {
@@ -36,6 +38,7 @@ int grid::MultiSpeciesHandler()
     if (this->GrackleWrapper() == FAIL) {
       ENZO_FAIL("Error in GrackleWrapper.\n");
     }
+    TIMER_STOP("MultiSpeciesHandler");
     return SUCCESS;
   }
 #endif
@@ -53,6 +56,7 @@ int grid::MultiSpeciesHandler()
   if (ProblemType == 62)
     this->CoolingTestResetEnergies();
 
+  TIMER_STOP("MultiSpeciesHandler");
   LCAPERF_STOP("grid_MultiSpeciesHandler");
   return SUCCESS;
 }
