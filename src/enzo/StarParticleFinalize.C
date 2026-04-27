@@ -80,11 +80,14 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
   LCAPERF_START("StarParticleFinalize");
   TIMER_START("StarParticleFinalize");
 
-  /* Update the star particle counters. */
+  /* Update the star particle counters.  With StarFormationOncePerRootGridTimeStep=1,
+     new particles can only appear at MaximumRefinementLevel, so skip the global
+     synchronization at all coarser levels. */
 
   TIMER_START("SPFinalize_CommUpdate");
-  CommunicationUpdateStarParticleCount(Grids, MetaData, NumberOfGrids,
-				       TotalStarParticleCountPrevious);
+  if (level == MaximumRefinementLevel)
+    CommunicationUpdateStarParticleCount(Grids, MetaData, NumberOfGrids,
+					 TotalStarParticleCountPrevious);
   TIMER_STOP("SPFinalize_CommUpdate");
 
   /* Update position and velocity of star particles from the actual
