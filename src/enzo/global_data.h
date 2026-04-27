@@ -766,6 +766,7 @@ EXTERN float SimpleRampTime;
    root grid time step (as in Kravtsov 2004, for example). Currently
    only implemented for H2REG_STAR. */
 EXTERN int   StarFormationOncePerRootGridTimeStep;
+EXTERN int   StarFormationMakeStarsActive;
 
 
 /* Parameters governing certain time or redshift-dependent actions. */

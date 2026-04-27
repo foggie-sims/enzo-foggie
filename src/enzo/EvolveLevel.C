@@ -409,8 +409,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     /* Currently (September 2023) this is only implemented for H2REG_STAR
     and NORMAL_STAR. MakeStars is completely ignored in all other star makers. */
 
-    if ( (STARMAKE_METHOD(H2REG_STAR) || STARMAKE_METHOD(NORMAL_STAR)) && 
-	 (level==0) && 
+    if ( (STARMAKE_METHOD(H2REG_STAR) || STARMAKE_METHOD(NORMAL_STAR)) &&
+	 (level==0) &&
 	 (StarFormationOncePerRootGridTimeStep) ) {
       /* At top level, set Grid::MakeStars to 1 for all grids.
          Individual star maker routines will need to check
@@ -426,6 +426,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
       TopGridTimeStep = LevelArray[0]->GridData->ReturnTimeStep();
 
+      /* Signal that CommunicationUpdateStarParticleCount must run once at
+         MaximumRefinementLevel this root timestep to account for any new
+         particles.  Cleared in StarParticleFinalize after the call. */
+      StarFormationMakeStarsActive = TRUE;
     }
 
     /* Streaming movie output (write after all parent grids are

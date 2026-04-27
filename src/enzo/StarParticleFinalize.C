@@ -81,13 +81,16 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
   TIMER_START("StarParticleFinalize");
 
   /* Update the star particle counters.  With StarFormationOncePerRootGridTimeStep=1,
-     new particles can only appear at MaximumRefinementLevel, so skip the global
-     synchronization at all coarser levels. */
+     new particles can only appear at MaximumRefinementLevel and only during the
+     first subcycle after MakeStars is set at level 0.  Skip the global
+     synchronization at all other times. */
 
   TIMER_START("SPFinalize_CommUpdate");
-  if (level == MaximumRefinementLevel)
+  if (level == MaximumRefinementLevel && StarFormationMakeStarsActive) {
     CommunicationUpdateStarParticleCount(Grids, MetaData, NumberOfGrids,
 					 TotalStarParticleCountPrevious);
+    StarFormationMakeStarsActive = FALSE;
+  }
   TIMER_STOP("SPFinalize_CommUpdate");
 
   /* Update position and velocity of star particles from the actual

@@ -602,6 +602,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SimpleQ                          = 1e50;
   SimpleRampTime                   = 0.1;
   StarFormationOncePerRootGridTimeStep = FALSE;
+  StarFormationMakeStarsActive         = FALSE;
   StarMakerTypeIaSNe               = FALSE;
   StarMakerTypeIISNeMetalField     = FALSE;
   StarMakerPlanetaryNebulae        = FALSE;
