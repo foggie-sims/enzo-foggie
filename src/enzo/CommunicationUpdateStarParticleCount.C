@@ -55,10 +55,36 @@ int CommunicationUpdateStarParticleCount(HierarchyEntry *Grids[],
       *PartialStarParticleCount = new int[NumberOfGrids];
   int *buffer = new int[2*NumberOfGrids];
   int *rbuffer = new int[2*NumberOfGrids];
- 
+
+  /* Fast path: skip the expensive per-grid allreduce when no new star
+     particles have been created anywhere.  Check locally first (free),
+     then confirm globally with a single-integer allreduce. */
+
+  int local_new_stars = 0;
+  for (grid = 0; grid < NumberOfGrids; grid++)
+    if (Grids[grid]->GridData->ReturnProcessorNumber() == MyProcessorNumber)
+      local_new_stars += Grids[grid]->GridData->ReturnNumberOfStarParticles()
+                       - TotalStarParticleCountPrevious[grid];
+
+  int global_new_stars = local_new_stars;
+#ifdef USE_MPI
+  MPI_Allreduce(&local_new_stars, &global_new_stars, 1,
+                MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+#endif
+  if (global_new_stars == 0) {
+    delete [] TotalParticleCount;
+    delete [] PartialParticleCount;
+    delete [] TotalStarParticleCount;
+    delete [] PartialStarParticleCount;
+    delete [] buffer;
+    delete [] rbuffer;
+    LCAPERF_STOP("UpdateStarParticleCount");
+    return SUCCESS;
+  }
+
   /* Set ParticleCount to zero and record number of particles for grids
      on this processor. */
- 
+
   for (grid = 0; grid < NumberOfGrids; grid++) {
     TotalParticleCount[grid] = 0;
     TotalStarParticleCount[grid] = 0;
