@@ -74,14 +74,17 @@ int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
   for (i = 0; i < NumberOfProcessors; i++)
     ProcessorComputeTime[i] = 0;
  
-  /* Compute work for each grid. */
+  /* Compute work for each grid.  Particle weight is conservative (10 cells
+     per particle) to avoid over-aggressive redistribution; the physically
+     motivated value is ~100 but that caused MPI errors at high grid counts.
+     Tune ParticleWorkWeight if load imbalance remains significant. */
 
+  const float ParticleWorkWeight = 10.0;
   for (i = 0; i < NumberOfGrids; i++) {
     proc = GridHierarchyPointer[i]->GridData->ReturnProcessorNumber();
     GridHierarchyPointer[i]->GridData->CollectGridInformation
       (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles);
-    //    ComputeTime[i] = GridMemory; // roughly speaking
-    ComputeTime[i] = float(NumberOfCells);
+    ComputeTime[i] = float(NumberOfCells) + float(Particles) * ParticleWorkWeight;
     ProcessorComputeTime[proc] += ComputeTime[i];
     NewProcessorNumber[i] = proc;
   }
