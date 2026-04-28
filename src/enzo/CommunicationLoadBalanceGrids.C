@@ -74,17 +74,18 @@ int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
   for (i = 0; i < NumberOfProcessors; i++)
     ProcessorComputeTime[i] = 0;
  
-  /* Compute work for each grid.  Particle weight is conservative (10 cells
-     per particle) to avoid over-aggressive redistribution; the physically
-     motivated value is ~100 but that caused MPI errors at high grid counts.
-     Tune ParticleWorkWeight if load imbalance remains significant. */
+  /* Compute work for each grid.  Weight star particles only (not dark
+     matter) so coarse-level grids with large DM counts are unaffected.
+     StarParticleHandler/SolveHydro timer ratio gives ~3400 cells per star
+     particle; 1000 is conservative to keep redistribution incremental. */
 
-  const float ParticleWorkWeight = 10.0;
+  const float StarParticleWorkWeight = 1000.0;
   for (i = 0; i < NumberOfGrids; i++) {
     proc = GridHierarchyPointer[i]->GridData->ReturnProcessorNumber();
     GridHierarchyPointer[i]->GridData->CollectGridInformation
       (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles);
-    ComputeTime[i] = float(NumberOfCells) + float(Particles) * ParticleWorkWeight;
+    int StarParticles = GridHierarchyPointer[i]->GridData->ReturnNumberOfStars();
+    ComputeTime[i] = float(NumberOfCells) + float(StarParticles) * StarParticleWorkWeight;
     ProcessorComputeTime[proc] += ComputeTime[i];
     NewProcessorNumber[i] = proc;
   }

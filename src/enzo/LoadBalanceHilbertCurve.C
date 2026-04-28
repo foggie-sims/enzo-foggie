@@ -122,16 +122,16 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
 
   //qsort(HilbertData, NumberOfGrids, sizeof(hilbert_data), compare_hkey);
   std::sort(HilbertData, HilbertData+NumberOfGrids, cmp_hkey());
-  /* Weight particles relative to cells based on measured timer ratios:
-     StarParticleHandler ~41s for ~20M particles vs SolveHydroEquations
-     ~26s for ~1.16B cells gives ~100 cells-equivalent per particle. */
-  const int ParticleWorkWeight = 100;
+  /* Weight star particles only (not dark matter) so coarse-level grids
+     with large DM counts are unaffected.  StarParticleHandler/SolveHydro
+     timer ratio gives ~3400 cells per star particle; 1000 is conservative. */
+  const long long StarParticleWorkWeight = 1000;
   TotalWork = 0;
   for (i = 0; i < NumberOfGrids; i++) {
-    GridHierarchyPointer[HilbertData[i].grid_num]->GridData->
-      CollectGridInformation(GridMemory, GridVolume, NumberOfCells,
-			     AxialRatio, CellsTotal, NumberOfParticles);
-    GridWork[i] = CellsTotal + NumberOfParticles * ParticleWorkWeight;
+    grid *g = GridHierarchyPointer[HilbertData[i].grid_num]->GridData;
+    g->CollectGridInformation(GridMemory, GridVolume, NumberOfCells,
+			      AxialRatio, CellsTotal, NumberOfParticles);
+    GridWork[i] = CellsTotal + (long long)g->ReturnNumberOfStars() * StarParticleWorkWeight;
     TotalWork += GridWork[i];
   }
 
@@ -419,13 +419,13 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
 
   //qsort(HilbertData, NumberOfGrids, sizeof(hilbert_data), compare_hkey);
   std::sort(HilbertData, HilbertData+NumberOfGrids, cmp_hkey());
-  const int ParticleWorkWeight = 100;
+  const long long StarParticleWorkWeight = 1000;
   TotalWork = 0;
   for (i = 0; i < NumberOfGrids; i++) {
-    GridPointers[HilbertData[i].grid_num]->
-      CollectGridInformation(GridMemory, GridVolume, NumberOfCells,
-			     AxialRatio, CellsTotal, NumberOfParticles);
-    GridWork[i] = CellsTotal + NumberOfParticles * ParticleWorkWeight;
+    grid *g = GridPointers[HilbertData[i].grid_num];
+    g->CollectGridInformation(GridMemory, GridVolume, NumberOfCells,
+			      AxialRatio, CellsTotal, NumberOfParticles);
+    GridWork[i] = CellsTotal + (long long)g->ReturnNumberOfStars() * StarParticleWorkWeight;
     TotalWork += GridWork[i];
   }
 
