@@ -122,13 +122,17 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
 
   //qsort(HilbertData, NumberOfGrids, sizeof(hilbert_data), compare_hkey);
   std::sort(HilbertData, HilbertData+NumberOfGrids, cmp_hkey());
+  /* Weight particles relative to cells based on measured timer ratios:
+     StarParticleHandler ~41s for ~20M particles vs SolveHydroEquations
+     ~26s for ~1.16B cells gives ~100 cells-equivalent per particle. */
+  const int ParticleWorkWeight = 100;
   TotalWork = 0;
   for (i = 0; i < NumberOfGrids; i++) {
     GridHierarchyPointer[HilbertData[i].grid_num]->GridData->
-      CollectGridInformation(GridMemory, GridVolume, NumberOfCells, 
+      CollectGridInformation(GridMemory, GridVolume, NumberOfCells,
 			     AxialRatio, CellsTotal, NumberOfParticles);
-    GridWork[i] = CellsTotal;
-    TotalWork += CellsTotal;
+    GridWork[i] = CellsTotal + NumberOfParticles * ParticleWorkWeight;
+    TotalWork += GridWork[i];
   }
 
   /* Partition into nearly equal workloads */
@@ -415,13 +419,14 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
 
   //qsort(HilbertData, NumberOfGrids, sizeof(hilbert_data), compare_hkey);
   std::sort(HilbertData, HilbertData+NumberOfGrids, cmp_hkey());
+  const int ParticleWorkWeight = 100;
   TotalWork = 0;
   for (i = 0; i < NumberOfGrids; i++) {
     GridPointers[HilbertData[i].grid_num]->
-      CollectGridInformation(GridMemory, GridVolume, NumberOfCells, 
+      CollectGridInformation(GridMemory, GridVolume, NumberOfCells,
 			     AxialRatio, CellsTotal, NumberOfParticles);
-    GridWork[i] = CellsTotal;
-    TotalWork += CellsTotal;
+    GridWork[i] = CellsTotal + NumberOfParticles * ParticleWorkWeight;
+    TotalWork += GridWork[i];
   }
 
   /* Partition into nearly equal workloads */

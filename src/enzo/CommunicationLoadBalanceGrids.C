@@ -74,14 +74,17 @@ int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
   for (i = 0; i < NumberOfProcessors; i++)
     ProcessorComputeTime[i] = 0;
  
-  /* Compute work for each grid. */
- 
+  /* Compute work for each grid.  Particles are weighted relative to cells
+     based on measured timer ratios: StarParticleHandler ~41s for ~20M
+     particles vs SolveHydroEquations ~26s for ~1.16B cells gives ~100
+     cells-equivalent per particle. */
+
+  const float ParticleWorkWeight = 100.0;
   for (i = 0; i < NumberOfGrids; i++) {
     proc = GridHierarchyPointer[i]->GridData->ReturnProcessorNumber();
     GridHierarchyPointer[i]->GridData->CollectGridInformation
       (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles);
-    //    ComputeTime[i] = GridMemory; // roughly speaking
-    ComputeTime[i] = float(NumberOfCells);
+    ComputeTime[i] = float(NumberOfCells) + float(Particles) * ParticleWorkWeight;
     ProcessorComputeTime[proc] += ComputeTime[i];
     NewProcessorNumber[i] = proc;
   }
