@@ -57,13 +57,13 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
 
   /* Initialize */
   
-  int *GridWork = new int[NumberOfGrids];
+  long long *GridWork = new long long[NumberOfGrids];
   int *NewProcessorNumber = new int[NumberOfGrids];
   hilbert_data *HilbertData = new hilbert_data[NumberOfGrids];
   int *BlockDivisions = new int[NumberOfProcessors];
-  int *ProcessorWork = new int[NumberOfProcessors];
+  long long *ProcessorWork = new long long[NumberOfProcessors];
 
-  int TotalWork, WorkThisProcessor, WorkPerProcessor, WorkLeft;
+  long long TotalWork, WorkThisProcessor, WorkPerProcessor, WorkLeft;
   int i, dim, grid_num, Rank, block_num, Dims[MAX_DIMENSION];
   FLOAT GridCenter[MAX_DIMENSION];
   FLOAT LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
@@ -359,12 +359,12 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
   /* Initialize */
   
   NewProcessorNumber = new int[NumberOfGrids];
-  int *GridWork = new int[NumberOfGrids];
+  long long *GridWork = new long long[NumberOfGrids];
   hilbert_data *HilbertData = new hilbert_data[NumberOfGrids];
   int *BlockDivisions = new int[NumberOfProcessors];
-  int *ProcessorWork = new int[NumberOfProcessors];
+  long long *ProcessorWork = new long long[NumberOfProcessors];
 
-  int TotalWork, WorkThisProcessor, WorkPerProcessor, WorkLeft;
+  long long TotalWork, WorkThisProcessor, WorkPerProcessor, WorkLeft;
   int i, dim, grid_num, Rank, block_num, Dims[MAX_DIMENSION];
   FLOAT GridCenter[MAX_DIMENSION];
   FLOAT LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
