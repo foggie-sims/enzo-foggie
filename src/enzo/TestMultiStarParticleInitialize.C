@@ -22,6 +22,16 @@
 /      TestMultiStarParticleStarVelocity  -- velocity for all particles in km/s (default 0 0 0)
 /      TestMultiStarParticleStarMetallicityFraction -- metallicity fraction (default 0)
 /
+/    Spherical atmosphere parameters (all ignored unless UseSphProfile = 1):
+/      TestMultiStarParticleUseSphProfile      -- enable spherical profile (default 0)
+/      TestMultiStarParticleSphProfileRadius   -- transition radius between inner uniform
+/                                                 region and outer power-law profile,
+/                                                 in code units (default 0.3)
+/      TestMultiStarParticleSphProfileAlpha    -- power-law slope for the outer density
+/                                                 profile: rho(r) = rho_0*(r_0/r)^alpha
+/                                                 (default 2.0); temperature adjusts to
+/                                                 maintain constant pressure
+/
 /  RETURNS: SUCCESS or FAIL
 /
 ************************************************************************/
@@ -100,6 +110,10 @@ int TestMultiStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &T
   FLOAT TestMultiStarParticleStarVelocity[3] = {0.0, 0.0, 0.0};
   float TestMultiStarParticleStarMetallicityFraction = 0.0;
 
+  int   TestMultiStarParticleUseSphProfile    = 0;
+  FLOAT TestMultiStarParticleSphProfileRadius = 0.3;
+  float TestMultiStarParticleSphProfileAlpha  = 2.0;
+
   int TestProblemUseMetallicityField = 1;
   float TestProblemInitialMetallicityFraction = 2e-3; // 0.1 Zsun
 
@@ -137,6 +151,13 @@ int TestMultiStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &T
                   &TestMultiStarParticleStarVelocity[2]);
     ret += sscanf(line, "TestMultiStarParticleStarMetallicityFraction = %"FSYM,
                   &TestMultiStarParticleStarMetallicityFraction);
+
+    ret += sscanf(line, "TestMultiStarParticleUseSphProfile = %"ISYM,
+                  &TestMultiStarParticleUseSphProfile);
+    ret += sscanf(line, "TestMultiStarParticleSphProfileRadius = %"PSYM,
+                  &TestMultiStarParticleSphProfileRadius);
+    ret += sscanf(line, "TestMultiStarParticleSphProfileAlpha = %"FSYM,
+                  &TestMultiStarParticleSphProfileAlpha);
 
     ret += sscanf(line, "TestProblemUseMetallicityField  = %"ISYM, &TestProblemData.UseMetallicityField);
     ret += sscanf(line, "TestProblemInitialMetallicityFraction  = %"FSYM, &TestProblemData.MetallicityField_Fraction);
@@ -180,6 +201,12 @@ int TestMultiStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &T
   if (TestMultiStarParticleSphereRadius <= 0.0)
     ENZO_FAIL("Error in TestMultiStarParticleInitialize: TestMultiStarParticleSphereRadius must be > 0");
 
+  if (TestMultiStarParticleUseSphProfile && TestMultiStarParticleSphProfileRadius <= 0.0)
+    ENZO_FAIL("Error in TestMultiStarParticleInitialize: TestMultiStarParticleSphProfileRadius must be > 0");
+
+  if (TestMultiStarParticleUseSphProfile && TestMultiStarParticleSphProfileAlpha <= 0.0)
+    ENZO_FAIL("Error in TestMultiStarParticleInitialize: TestMultiStarParticleSphProfileAlpha must be > 0");
+
   /* add gas velocity to internal energy to find total energy */
 
   float TotalEnergy = TestMultiStarParticleEnergy;
@@ -202,6 +229,11 @@ int TestMultiStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &T
                                           TestMultiStarParticleStarMass,
                                           TestMultiStarParticleStarVelocity,
                                           TestMultiStarParticleStarMetallicityFraction,
+                                          TestMultiStarParticleUseSphProfile,
+                                          TestMultiStarParticleSphProfileRadius,
+                                          TestMultiStarParticleSphProfileAlpha,
+                                          TestMultiStarParticleDensity,
+                                          TestMultiStarParticleEnergy,
                                           Initialdt) == FAIL)
     ENZO_FAIL("Error in TestMultiStarParticleInitializeGrid.\n");
 
@@ -271,6 +303,14 @@ int TestMultiStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &T
             TestMultiStarParticleSphereRadius);
     fprintf(Outfptr, "MetallicityField_Fraction = %"FSYM"\n",
             TestProblemData.MetallicityField_Fraction);
+    fprintf(Outfptr, "TestMultiStarParticleUseSphProfile = %"ISYM"\n",
+            TestMultiStarParticleUseSphProfile);
+    if (TestMultiStarParticleUseSphProfile) {
+      fprintf(Outfptr, "TestMultiStarParticleSphProfileRadius = %"PSYM"\n",
+              TestMultiStarParticleSphProfileRadius);
+      fprintf(Outfptr, "TestMultiStarParticleSphProfileAlpha = %"FSYM"\n",
+              TestMultiStarParticleSphProfileAlpha);
+    }
   }
 
   fprintf(stderr, "TestMultiStarParticleDensity = %"FSYM"\n",
@@ -283,6 +323,14 @@ int TestMultiStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &T
           TestMultiStarParticleSphereRadius);
   fprintf(stderr, "MetallicityField_Fraction = %"FSYM"\n",
           TestProblemData.MetallicityField_Fraction);
+  fprintf(stderr, "TestMultiStarParticleUseSphProfile = %"ISYM"\n",
+          TestMultiStarParticleUseSphProfile);
+  if (TestMultiStarParticleUseSphProfile) {
+    fprintf(stderr, "TestMultiStarParticleSphProfileRadius = %"PSYM"\n",
+            TestMultiStarParticleSphProfileRadius);
+    fprintf(stderr, "TestMultiStarParticleSphProfileAlpha = %"FSYM"\n",
+            TestMultiStarParticleSphProfileAlpha);
+  }
 
   return SUCCESS;
 }

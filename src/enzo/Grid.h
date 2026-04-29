@@ -2143,6 +2143,11 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
                                           float StarMass,
                                           FLOAT StarVelocity[],
                                           float StarMetallicity,
+                                          int UseSphProfile,
+                                          FLOAT SphProfileRadius,
+                                          float SphProfileAlpha,
+                                          float InnerDensity,
+                                          float InnerEnergy,
                                           float *Initialdt);
 
 /* Gravity Test: initialize grid. */

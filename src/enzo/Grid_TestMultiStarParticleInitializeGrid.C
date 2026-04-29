@@ -24,6 +24,14 @@
 /      Spacing = SphereRadius / n_shells
 /    The actual particle count and derived spacing are printed at runtime.
 /
+/    If UseSphProfile is set, the gas density and temperature outside
+/    SphProfileRadius follow a power-law profile:
+/      rho(r) = InnerDensity * (SphProfileRadius / r)^SphProfileAlpha
+/    with the internal energy adjusted to maintain constant pressure:
+/      epsilon(r) = InnerEnergy * (r / SphProfileRadius)^SphProfileAlpha
+/    Inside SphProfileRadius the fields are left at the uniform values
+/    set by InitializeUniformGrid.
+/
 /  RETURNS: FAIL or SUCCESS
 /
 ************************************************************************/
@@ -51,6 +59,11 @@ int grid::TestMultiStarParticleInitializeGrid(int NParticles,
                                               float StarMass,
                                               FLOAT StarVelocity[],
                                               float StarMetallicity,
+                                              int UseSphProfile,
+                                              FLOAT SphProfileRadius,
+                                              float SphProfileAlpha,
+                                              float InnerDensity,
+                                              float InnerEnergy,
                                               float *Initialdt)
 {
   int i, j, dim;
@@ -187,6 +200,46 @@ int grid::TestMultiStarParticleInitializeGrid(int NParticles,
   }
 
   delete[] N_per_shell;
+
+  /* Apply spherical atmosphere profile outside SphProfileRadius. */
+
+  if (UseSphProfile) {
+
+    int DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum;
+    IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum);
+
+    int k_idx, j_idx, i_idx, index;
+    float delx, dely, delz, r, ratio;
+
+    for (k_idx = GridStartIndex[2]; k_idx <= GridEndIndex[2]; k_idx++) {
+      delz = (GridRank > 2) ?
+        (float)(CellLeftEdge[2][k_idx] + 0.5*CellWidth[2][k_idx] - Center[2]) : 0.0;
+      for (j_idx = GridStartIndex[1]; j_idx <= GridEndIndex[1]; j_idx++) {
+        dely = (GridRank > 1) ?
+          (float)(CellLeftEdge[1][j_idx] + 0.5*CellWidth[1][j_idx] - Center[1]) : 0.0;
+        for (i_idx = GridStartIndex[0]; i_idx <= GridEndIndex[0]; i_idx++) {
+          delx = (float)(CellLeftEdge[0][i_idx] + 0.5*CellWidth[0][i_idx] - Center[0]);
+          r = sqrt(delx*delx + dely*dely + delz*delz);
+
+          index = (k_idx * GridDimension[1] + j_idx) * GridDimension[0] + i_idx;
+          if (r > (float)SphProfileRadius) {
+            ratio = r / (float)SphProfileRadius;
+            float density   = InnerDensity * pow(ratio, -SphProfileAlpha);
+            float internalE = InnerEnergy  * pow(ratio,  SphProfileAlpha);
+            float vx = BaryonField[Vel1Num][index];
+            float vy = (GridRank > 1) ? BaryonField[Vel2Num][index] : 0.0f;
+            float vz = (GridRank > 2) ? BaryonField[Vel3Num][index] : 0.0f;
+            float totalE = internalE + 0.5f * (vx*vx + vy*vy + vz*vz);
+
+            BaryonField[DensNum][index] = density;
+            BaryonField[TENum][index]   = totalE;
+            if (DualEnergyFormalism)
+              BaryonField[GENum][index] = internalE;
+          }
+        }
+      }
+    }
+  }
 
   return SUCCESS;
 }
