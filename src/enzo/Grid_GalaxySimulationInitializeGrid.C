@@ -626,7 +626,7 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
 
   if (UseDustDensityField) {
     if (UseMetallicityField)
-      BaryonField[DustNum][n] = InitialDustToMetalRatio * BaryonField[MetalNum][n];
+      BaryonField[DustNum][n] = InitialDustToGasRatio * BaryonField[0][n];
     else
       BaryonField[DustNum][n] = tiny_number;
   }

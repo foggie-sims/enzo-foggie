@@ -325,11 +325,10 @@ int grid::InitializeUniformGrid(float UniformDensity,
       }
     } // if(TestProblemData.UseMetallicityField)
 
-    // dust density field: initialize as ratio of metallicity
+    // dust density field: initialize as fraction of gas density
     if (UseDustDensityField) {
       if (TestProblemData.UseMetallicityField)
-        BaryonField[DustNum][i] = InitialDustToMetalRatio *
-          TestProblemData.MetallicityField_Fraction * UniformDensity;
+        BaryonField[DustNum][i] = InitialDustToGasRatio * UniformDensity;
       else
         BaryonField[DustNum][i] = tiny_number;
     }

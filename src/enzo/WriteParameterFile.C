@@ -996,8 +996,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
           MultiMetals);
   fprintf(fptr, "UseDustDensityField                   = %"ISYM"\n",
           UseDustDensityField);
-  fprintf(fptr, "InitialDustToMetalRatio               = %"FSYM"\n\n",
-          InitialDustToMetalRatio);
+  fprintf(fptr, "InitialDustToGasRatio                 = %"FSYM"\n\n",
+          InitialDustToGasRatio);
   fprintf(fptr, "IsotropicConduction                   = %"ISYM"\n", IsotropicConduction);
   fprintf(fptr, "AnisotropicConduction                 = %"ISYM"\n", AnisotropicConduction);
   fprintf(fptr, "IsotropicConductionSpitzerFraction    = %"FSYM"\n", IsotropicConductionSpitzerFraction);

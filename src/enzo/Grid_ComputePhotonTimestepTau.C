@@ -98,10 +98,12 @@ float grid::ComputePhotonTimestepTau(float DensityUnits, float LengthUnits,
     nbins = grackle_data->NumberOfTemperatureBins;
     dlogtem = (logtem9 - logtem0) / float(nbins-1);
 #ifdef GRACKLE_NEW_RATE_API
-    grackle_k1 = grunstable_ratequery_get_ptr(
-      &grackle_rates, grunstable_ratequery_id("k1"));
-    grackle_k2 = grunstable_ratequery_get_ptr(
-      &grackle_rates, grunstable_ratequery_id("k2"));
+    grackle_k1 = new double[nbins];
+    grackle_k2 = new double[nbins];
+    grunstable_ratequery_get_f64(&grackle_rates,
+      grunstable_ratequery_id(&grackle_rates, "k1"), grackle_k1);
+    grunstable_ratequery_get_f64(&grackle_rates,
+      grunstable_ratequery_id(&grackle_rates, "k2"), grackle_k2);
 #endif
   } else
 #endif
@@ -183,6 +185,12 @@ float grid::ComputePhotonTimestepTau(float DensityUnits, float LengthUnits,
     } // ENDFOR j
   
   delete [] temperature;
+#ifdef USE_GRACKLE
+#ifdef GRACKLE_NEW_RATE_API
+  delete [] grackle_k1;
+  delete [] grackle_k2;
+#endif
+#endif
 
   return dt;
 }

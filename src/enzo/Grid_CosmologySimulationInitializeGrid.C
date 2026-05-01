@@ -561,12 +561,11 @@ int grid::CosmologySimulationInitializeGrid(
     }
   } // ENDIF UseMetallicityField
 
-  // If using dust density, initialize as ratio of metallicity field
+  // If using dust density, initialize as fraction of gas density
   if (UseDustDensityField && ReadData) {
     if (UseMetallicityField)
       for (i = 0; i < size; i++)
-        BaryonField[DustNum][i] = InitialDustToMetalRatio *
-          CosmologySimulationInitialFractionMetal * BaryonField[0][i];
+        BaryonField[DustNum][i] = InitialDustToGasRatio * BaryonField[0][i];
     else
       for (i = 0; i < size; i++)
         BaryonField[DustNum][i] = tiny_number;
