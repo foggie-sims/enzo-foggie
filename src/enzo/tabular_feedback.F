@@ -775,6 +775,7 @@ c      Locals
 c 
       INTG_PREC z_ub, a1_ub, a2_ub ! table index right bounds (for interp)
       R_PREC age1, age2            ! time integration bounds
+      R_PREC tab_age_start_log, dtab_age_log  ! for finding age indices
       R_PREC rate1, rate2, t1, t2 
 c 
 c      Set time integration bounds
@@ -783,30 +784,32 @@ c
       if (age .lt. 0) age1 = 0
       age2 = age1 + dt
 c 
-c      Yield table will need to be interpolated in age & metal frac.
-c      Find index to the right (above) of the target values
-c 
+c     Yield table will need to be interpolated in age & metal frac.
+c     Find index to the right (above) of the target value
+c     Metallicity indices are not regular but are few in number (~8)
       z_ub = 1_IKIND
       do while (tab_metal(z_ub) .lt. metal 
      &          .and. z_ub .lt. ntab_metal)
          z_ub = z_ub + 1_IKIND
       enddo
-      a1_ub = 1_IKIND
-      do while (tab_age(a1_ub) .lt. age1 
-     &                  .and. a1_ub .lt. ntab_age)
-         a1_ub = a1_ub + 1_IKIND
-      enddo
-      a2_ub = 1_IKIND
-      do while (tab_age(a2_ub) .lt. age2
-     &            .and. a2_ub .lt. ntab_age)
-         a2_ub = a2_ub + 1_IKIND
-      enddo
+c     Ages are many but are regularly spaced in log space.
+c     Indicies can be found algebraically. The min and max 
+c     expressions return the lower bound so we add 1 to find
+c     the upper bound. This way I don't have to rewrite any of
+c     the following logic. 
+      tab_age_start_log = log10(tab_age(1))
+      dtab_age_log = log10(tab_age(2)) - tab_age_start_log
+      a1_ub = min(ntab_age-1,
+     &  max(1, int((log10(age1)-tab_age_start_log)/dtab_age_log, IKIND)+1))+1
+      a2_ub = min(ntab_age-1,
+     &  max(1, int((log10(age2)-tab_age_start_log)/dtab_age_log, IKIND)+1))+1
 c 
 c      If particle falls outside of age table, exit
 c 
       if (a1_ub .eq. ntab_age+1) then
          goto 5
       endif
+c ###### END EDIT ######
 c 
 c      Otherwise, find yield
 c 
@@ -965,7 +968,7 @@ c
 c 
 c      Yield table will need to be interpolated in age & metal frac.
 c      Find index to the right (above) of the target values
-c 
+c     TODO change to algebra because its faster
       z_ub = 1_IKIND
       do while (tab_metal(z_ub) .lt. metal 
      &          .and. z_ub .lt. ntab_metal)
