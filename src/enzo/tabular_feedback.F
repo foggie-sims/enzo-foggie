@@ -793,23 +793,22 @@ c     Metallicity indices are not regular but are few in number (~8)
          z_ub = z_ub + 1_IKIND
       enddo
 c     Ages are many but are regularly spaced in log space.
-c     Indicies can be found algebraically. The min and max 
-c     expressions return the lower bound so we add 1 to find
+c     Indicies can be found algebraically. The max 
+c     expression return the lower bound so we add 1 to find
 c     the upper bound. This way I don't have to rewrite any of
 c     the following logic. 
       tab_age_start_log = log10(tab_age(1))
       dtab_age_log = log10(tab_age(2)) - tab_age_start_log
-      a1_ub = min(ntab_age-1,
-     &  max(1, int((log10(age1)-tab_age_start_log)/dtab_age_log, IKIND)+1))+1
-      a2_ub = min(ntab_age-1,
-     &  max(1, int((log10(age2)-tab_age_start_log)/dtab_age_log, IKIND)+1))+1
+      a1_ub = max( 1,
+     & int((log10(age1)-tab_age_start_log)/dtab_age_log, IKIND)+1 )+1
+      a2_ub = max( 1,
+     & int((log10(age2)-tab_age_start_log)/dtab_age_log, IKIND)+1 )+1
 c 
 c      If particle falls outside of age table, exit
 c 
-      if (a1_ub .eq. ntab_age+1) then
+      if (a1_ub .gt. ntab_age) then
          goto 5
       endif
-c ###### END EDIT ######
 c 
 c      Otherwise, find yield
 c 
