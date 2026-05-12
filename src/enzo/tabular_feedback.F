@@ -798,11 +798,13 @@ c     expression return the lower bound so we add 1 to find
 c     the upper bound. This way I don't have to rewrite any of
 c     the following logic. 
       dtab_age_log = log10(tab_age(3)) - log10(tab_age(2))
-      a1_ub = max( 1,
-     & int((log10(age1))/dtab_age_log, IKIND)+1 )+1
-      a2_ub = max( 1,
-     & int((log10(age2))/dtab_age_log, IKIND)+1 )+1
-      write(*,*) '    a1_ub = ', a1_ub, 'a2_ub = ', a2_ub
+      a1_ub = int((log10(age1))/dtab_age_log, IKIND)+1
+      a2_ub = int((log10(age2))/dtab_age_log, IKIND)+1
+c     Correct for log10(0)=-inf case
+      if (age1 .le. 0) a1_ub = 1_IKIND
+      if (age2 .le. 0) a2_ub = 1_IKIND
+      write(*,*) '    dtab_age_log, age1, age2:', dtab_age_log, age1, age2
+      write(*,*) '    a1_ub, a2_ub:', a1_ub, a2_ub
 c 
 c      If particle falls outside of age table, exit
 c 
