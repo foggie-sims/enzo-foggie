@@ -775,7 +775,7 @@ c      Locals
 c 
       INTG_PREC z_ub, a1_ub, a2_ub ! table index right bounds (for interp)
       R_PREC age1, age2            ! time integration bounds
-      R_PREC dtab_age_log          ! for finding age indices
+      R_PREC age_start_log, dage_log  ! for finding age indices
       R_PREC rate1, rate2, t1, t2 
 c 
 c      Set time integration bounds
@@ -793,18 +793,18 @@ c     Metallicity indices are not regular but are few in number (~8)
          z_ub = z_ub + 1_IKIND
       enddo
 c     Ages are many but are regularly spaced in log space so the
-c     indicies can be found algebraically. First index is zero. The max 
-c     expression return the lower bound so we add 1 to find
+c     indicies can be found algebraically.
+c     First index is zero so our line equation starts at index 2.
+c     The expression return the lower bound so we add 1 to find
 c     the upper bound. This way I don't have to rewrite any of
 c     the following logic. 
-      dtab_age_log = log10(tab_age(3)) - log10(tab_age(2))
-      a1_ub = int((log10(age1))/dtab_age_log, IKIND)+1
-      a2_ub = int((log10(age2))/dtab_age_log, IKIND)+1
+      age_start_log = log10(tab_age(2))
+      dage_log = log10(tab_age(3)) - log10(tab_age(2))
+      a1_ub = int((log10(age1)-age_start_log)/dage_log + 2, IKIND)+1
+      a2_ub = int((log10(age2)-age_start_log)/dage_log + 2, IKIND)+1
 c     Correct for log10(0)=-inf case
       if (age1 .le. 0) a1_ub = 1_IKIND
       if (age2 .le. 0) a2_ub = 1_IKIND
-      write(*,*) '    dtab_age_log, age1, age2:', dtab_age_log, age1, age2
-      write(*,*) '    a1_ub, a2_ub:', a1_ub, a2_ub
 c 
 c      If particle falls outside of age table, exit
 c 
