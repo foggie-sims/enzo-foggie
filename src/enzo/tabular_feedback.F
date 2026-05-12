@@ -778,11 +778,15 @@ c
       R_PREC age_start_log, dage_log  ! for finding age indices
       R_PREC rate1, rate2, t1, t2 
 c 
-c      Set time integration bounds
+c     Set time integration bounds
 c 
       age1 = age
       if (age .lt. 0) age1 = 0
       age2 = age1 + dt
+c
+c     Set yield to 0 in case we exit
+c
+      yield = 0
 c 
 c     Yield table will need to be interpolated in age & metal frac.
 c     Find index to the right (above) of the target value
@@ -812,10 +816,7 @@ c
          goto 5
       endif
 c 
-c      Otherwise, find yield
-c 
-      yield = 0
-c 
+c      Otherwise, find yield.
 c      Case 1: both age (age1) & age+dt (age2) are in the same table "cell"
 c 
       if (a2_ub - a1_ub .eq. 0) then
