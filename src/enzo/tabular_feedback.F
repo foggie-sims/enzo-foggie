@@ -804,11 +804,16 @@ c     the upper bound. This way I don't have to rewrite any of
 c     the following logic. 
       age_start_log = log10(tab_age(2))
       dage_log = log10(tab_age(3)) - log10(tab_age(2))
-      a1_ub = int((log10(age1)-age_start_log)/dage_log + 2, IKIND)+1
-      a2_ub = int((log10(age2)-age_start_log)/dage_log + 2, IKIND)+1
-c     Correct for log10(0)=-inf case
-      if (age1 .le. 0) a1_ub = 1_IKIND
-      if (age2 .le. 0) a2_ub = 1_IKIND
+      if (age1 .le. tab_age(2)) then 
+            a1_ub = 1_IKIND
+      else
+            a1_ub = int((log10(age1)-age_start_log)/dage_log+2, IKIND)+1
+      endif
+      if (age2 .le. tab_age(2)) then
+            a2_ub = 1_IKIND
+      else 
+            a2_ub = int((log10(age2)-age_start_log)/dage_log+2, IKIND)+1
+      endif
 c 
 c      If particle falls outside of age table, exit
 c 
