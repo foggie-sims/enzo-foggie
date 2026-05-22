@@ -54,6 +54,7 @@ int grid::GrackleWrapper()
 #ifdef TRANSFER
   dt_cool = (grackle_data->radiative_transfer_intermediate_step == TRUE) ? dtPhoton : dtFixed;
 #endif
+
   
   /* Compute the size of the fields. */
  
@@ -293,7 +294,7 @@ int grid::GrackleWrapper()
   static const float age_bins[11] = {0,5e6,1e7,1.5e7,2e7,2.5e7,3e7,3.5e7,4e7,4.5e7,5e7}; //Age bins for SB99 tables. To do: check units, currently years
 
   float years_to_seconds = 3.15576e7f; //Seconds in a year
-  float max_age = 5e7f/years_to_seconds * TimeUnits; //Max age of 50 My in code units
+  float MassUnits = DensityUnits * POW(LengthUnits,3);
 
   //Cheap implementation of lookup tables for SB99. Should do full interpolation in tabular_feedback, but this will give a quick proof of concept.
   //I've generated the full tables and have the framework for reading them in following the tabular_feedback scheme, but will leave as this for now.
@@ -318,6 +319,8 @@ int grid::GrackleWrapper()
     if (this->ParticleType[i] == PARTICLE_TYPE_STAR) {
       float age = (this->Time - this->ParticleAttribute[0][i]) * TimeUnits / years_to_seconds; //Convert to yr
       if (age < 5e7) { //To do: Double check units are being handled correctly throughout
+          //fprintf(stdout, "CWT: Interpolating for star particle with age %"FSYM" yr?\n",age);
+
           //To do: This stuff shouldn't be hardcoded like this, but I'm assuming we will replace this all with actually reading the tables
           int aa = search_lower_bound((float*)age_bins, age, 0, 11, 11); 
           float t_age=0.5f;
@@ -352,49 +355,73 @@ int grid::GrackleWrapper()
           float k_diss_H2_sb99_interp = (1-t_age) * (1-t_z) * kdiss_H2_sb99[zz][aa] + t_age * (1-t_z) * kdiss_H2_sb99[zz][aa+1] + (1-t_age) * t_z * kdiss_H2_sb99[zz+1][aa] + t_age * t_z * kdiss_H2_sb99[zz+1][aa+1];
           float k_det_HM_sb99_interp = (1-t_age) * (1-t_z) * kdet_HM_sb99[zz][aa] + t_age * (1-t_z) * kdet_HM_sb99[zz][aa+1] + (1-t_age) * t_z * kdet_HM_sb99[zz+1][aa] + t_age * t_z * kdet_HM_sb99[zz+1][aa+1];
 
-          k_diss_H2 += k_diss_H2_sb99_interp * this->ParticleMass[i];
-          k_det_HM += k_det_HM_sb99_interp * this->ParticleMass[i];
+          float dx = this->CellWidth[0][0];
+          float ParticleMass_Msun = this->ParticleMass[i] * dx * dx * dx * MassUnits / (1.989e33); //Convert from code mass to Msun
+          //fprintf(stdout, "CWT: Interpolating for star particle with mass %"FSYM" Msun?\n",ParticleMass_Msun);
+
+          k_diss_H2 += k_diss_H2_sb99_interp * ParticleMass_Msun; //Convert from code mass to Msun
+          k_det_HM += k_det_HM_sb99_interp * ParticleMass_Msun; //Convert from code mass to Msun
+
+//ParticleMassCode = StarMass * SolarMass * POW(LengthUnits * CellWidth[0][0], -3.0) / DensityUnits;
+
+
       }
     }
   }
-  k_diss_H2 = k_diss_H2 / (LengthUnits * LengthUnits); //Convert from cm^2 to code units
-  k_det_HM  = k_det_HM  / (LengthUnits * LengthUnits); //Convert from cm^2 to code units
+  k_diss_H2 = k_diss_H2 * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
+  k_det_HM  = k_det_HM  * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units
   float grid_dx = this->GridRightEdge[0]-this->GridLeftEdge[0];
   float grid_dy = this->GridRightEdge[1]-this->GridLeftEdge[1];
   float grid_dz = this->GridRightEdge[2]-this->GridLeftEdge[2];
-
   //This is the most tunable part of this code, as calculating the r^2 for each cell will get expensive
   //Currently estimating as half the average extent of the grid which isn't great
   //To do: Account for any local extinction from unresolved sources around stars?
-  float dilRad = 0.5 * (grid_dx + grid_dy + grid_dz)/3.0; //Get Half the average extent of the grid
-  k_diss_H2 = k_diss_H2  / (4.0 * 3.14159 * dilRad * dilRad);
-  k_det_HM = k_det_HM / (4.0 * 3.14159 * dilRad * dilRad);
+  float dilutionRadius = 0.5 * (grid_dx + grid_dy + grid_dz)/3.0; //Get Half the average extent of the grid
+  //float dilutionRadius = 4.848e-6 * pc_cm / (double) LengthUnits;  // 1 AU //Try an extreme case
+  float dilRad2 = dilutionRadius * dilutionRadius;
+  k_diss_H2 = k_diss_H2  / (4.0 * 3.14159 * dilRad2);
+  k_det_HM = k_det_HM    / (4.0 * 3.14159 * dilRad2);
 
-  float *k_diss_H2_grid = new float[size];
-  float *k_det_HM_grid = new float[size];
-
+  float *k_diss_H2_grid  = new float[size];
+  float *k_det_HM_grid  = new float[size];
   for (int i = 0; i < size; i++){
       k_diss_H2_grid[i] = k_diss_H2;
       k_det_HM_grid[i] = k_det_HM;
   }
-
+  fprintf(stdout, "CWT: Setting My Fields...\n");
+  fprintf(stdout, "CWT: k_diss_H2 = %"FSYM" Hz?\n", k_diss_H2_grid[0] / TimeUnits);
+  fprintf(stdout, "CWT: k_det_HM  = %"FSYM" Hz?\n", k_det_HM_grid[0] / TimeUnits);
 
   my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
   my_fields.RT_HM_detachment_rate =  k_det_HM_grid;  //Feeds in Britton's Grackle Branch (foggie-sf) only
 
   // Need to set the other fields to the same 0 array for now
-  float *EmptyRTArray = new float[size];
+  float *EmptyRtArray0  = new float[size];
+  float *EmptyRtArray1  = new float[size];
+  float *EmptyRtArray2  = new float[size];
+  float *EmptyRtArray3  = new float[size];
+
+  for (int i = 0; i < size; i++){
+      EmptyRtArray0[i] = 0;
+      EmptyRtArray1[i] = 0;
+      EmptyRtArray2[i] = 0;
+      EmptyRtArray3[i] = 0;
+  }
+
+  float *EmptyRTArray  = new float[size];
+
   for (int i = 0; i < size; i++){
       EmptyRTArray[i] = 0;
   }
-  my_fields.RT_HI_ionization_rate   = EmptyRTArray;
-  my_fields.RT_HeI_ionization_rate  = EmptyRTArray;
-  my_fields.RT_HeII_ionization_rate = EmptyRTArray;
-  my_fields.RT_heating_rate = EmptyRTArray;
+
+  my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
+  my_fields.RT_HeI_ionization_rate  = EmptyRtArray1;
+  my_fields.RT_HeII_ionization_rate = EmptyRtArray2;
+  my_fields.RT_heating_rate = EmptyRtArray3;
+  
   /*                                              */
 
   /* Call the chemistry solver. */
-
   if (solve_chemistry(&grackle_units, &my_fields, (double) dt_cool) == FAIL){
     fprintf(stderr, "Error in Grackle solve_chemistry.\n");
     return FAIL;
@@ -436,6 +463,14 @@ int grid::GrackleWrapper()
   delete [] g_grid_dimension;
   delete [] g_grid_start;
   delete [] g_grid_end;
+
+  delete[] k_diss_H2_grid;
+  delete[] k_det_HM_grid;
+  delete[] EmptyRtArray0;
+  delete[] EmptyRtArray1;
+  delete[] EmptyRtArray2;
+  delete[] EmptyRtArray3;
+
 
   LCAPERF_STOP("grid_GrackleWrapper");
 
