@@ -1843,6 +1843,20 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
         for (int di = -distRadEff; di <= distRadEff; di++)
           if (ABS(dk) + ABS(dj) + ABS(di) <= distStepEff) distCellsEff++;
 
+    // Guard against unallocated metal source fields: MetalIINum/MetalIaNum may be
+    // -1 (field not registered) or the BaryonField pointer may be NULL (field
+    // registered but not yet allocated on a newly-created AMR grid after
+    // RebuildHierarchy).  Fall back to MetalNum as a safe dummy and disable
+    // source tracking so the Fortran routine won't write to those fields.
+    int trackMetalSourcesEff =
+      (MetalIINum >= 0 && BaryonField[MetalIINum] != NULL &&
+       MetalIaNum >= 0 && BaryonField[MetalIaNum] != NULL)
+      ? StarFeedbackTrackMetalSources : 0;
+    float *metalIIField = (MetalIINum >= 0 && BaryonField[MetalIINum] != NULL)
+                          ? BaryonField[MetalIINum] : BaryonField[MetalNum];
+    float *metalIaField = (MetalIaNum >= 0 && BaryonField[MetalIaNum] != NULL)
+                          ? BaryonField[MetalIaNum] : BaryonField[MetalNum];
+
     FORTRAN_NAME(star_feedback6)(
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], mu_field,
@@ -1866,7 +1880,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        &StarFeedbackSNePerTimestepLimit, &StarMakerExplosionDelayTime, &StarFeedbackMomentumMultiplier,
        &StarFeedbackCapVelocityKick, &WriteFeedbackLogFiles, &StarFeedbackUseTabularYields, ParticleInitialMass,
        &StarFeedbackTabularSNIIEnergy, &StarFeedbackTabularSNIaEnergy,
-       &StarFeedbackTrackMetalSources, BaryonField[MetalIINum], BaryonField[MetalIaNum],
+       &trackMetalSourcesEff, metalIIField, metalIaField,
        &FBTable.n_met, &FBTable.n_age, FBTable.ini_met, FBTable.pop_age, 
        FBTable.mass_yield, FBTable.metm_yield, FBTable.event_rate, &StarFeedbackStochasticSNe,
        &StarFeedbackPreSNFeedback, &StarFeedbackPreSNMomentum, &pSNFBTable.n_met, &pSNFBTable.n_age, pSNFBTable.ini_met, pSNFBTable.pop_age, 
