@@ -115,7 +115,7 @@ c     Loop over particles
 c
 c      write(6,*) 'star_feedback2: start'
       do n=1, npart
-         if (tcp(n) .gt. 0 .and. mp(n) .gt.0 .and. type(n) .eq. 2) then
+         if (tcp(n) .gt. 0 .and. mp(n) .gt. 0 .and. type(n) .eq. 2) then
 c
 c         Compute index of the cell that the star particle
 c           resides in.
