@@ -2115,22 +2115,11 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ENZO_FAIL("Cannot select GlobalDir AND LocalDir!\n");
   }
 
-  char *cwd_buffer = new char[MAX_LINE_LENGTH];
-  size_t cwd_buffer_len = MAX_LINE_LENGTH;
-
   if ( (MetaData.GlobalDir == NULL) && (MetaData.LocalDir == NULL) ) {
-    /*if(getcwd(cwd_buffer, cwd_buffer_len) == NULL) {
-      fprintf(stderr, "GETCWD call FAILED\n");
-    }
+      MetaData.GlobalDir = new char[MAX_LINE_LENGTH];
+      strcpy(MetaData.GlobalDir, ".");
     if (MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr,"CWD %s\n", cwd_buffer);
-    */
-    /* No one seems to want GlobalDir to default to abspath(CWD).  I'm leaving
-       the code here in case you do. MJT */
-    strcpy(cwd_buffer, ".");
-    MetaData.GlobalDir = cwd_buffer;
-    if (MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr,"Global Dir set to %s\n", cwd_buffer);
+      fprintf(stderr,"Global Dir set to %s\n", MetaData.GlobalDir);
   }
 
 #ifdef USE_UUID
