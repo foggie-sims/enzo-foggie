@@ -612,6 +612,7 @@ OBJS_CONFIG_LIB = \
 	Grid_ReturnFluxDims.o \
 	Grid_ReturnGridInfo.o \
     	Grid_ReturnNumberOfActiveParticlesOfThisType.o \
+        Grid_ReturnNumberOfParticlesOfThisType.o \
 	Grid_ReturnNumberOfStarParticles.o \
 	Grid_ReturnParticleEntry.o \
 	Grid_ReturnStarStatistics.o \

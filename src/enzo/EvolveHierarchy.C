@@ -282,9 +282,16 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
   } else {
 
-  /* Do the first grid regeneration. */
+  /* Do the first grid regeneration after checking for evolving refine regions. */
 
     if(CheckpointRestart == FALSE) {
+      if ((RefineRegionTimeType == 1) || (RefineRegionTimeType == 0)
+        || (MustRefineRegionTimeType == 1) || (MustRefineRegionTimeType == 0)
+        || (CoolingRefineRegionTimeType == 1) || (CoolingRefineRegionTimeType == 0)
+        || (MultiRefineRegionTimeType == 1) || (MultiRefineRegionTimeType == 0)) {
+        if (SetEvolveRefineRegion(MetaData.Time) == FAIL) 
+	        ENZO_FAIL("Error in SetEvolveRefineRegion during initial grid regeneration.");
+      }
       RebuildHierarchy(&MetaData, LevelArray, 0);
     }
 
