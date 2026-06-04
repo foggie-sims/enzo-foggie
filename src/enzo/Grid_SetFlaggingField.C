@@ -41,8 +41,10 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
     /* If we are using MultiRefineRegions, identify which types of refinement
      are permitted in this grid based on which MultiRefineRegions it overlaps
 	 with */
-    if (NumberOfStaticMultiRefineRegions+NumberOfEnabledMultiRefineRegions == 0){
-        LocalCellFlaggingMethod = CellFlaggingMethod;
+    if (NumberOfStaticMultiRefineRegions+NumberOfEnabledMultiRefineTracks == 0){
+		for (i=0; i<MAX_FLAGGING_METHODS); i++){
+        	LocalCellFlaggingMethod[i] = CellFlaggingMethod[i];
+		}
     }
 	else{
 		/* reset these variables to their original values in case FindMultiRefineRegions 
@@ -50,7 +52,7 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 		MetallicityRefinementMinLevel = GlobalMetallicityRefinementMinLevel;
 		ShockwaveRefinementMaxLevel = GlobalShockwaveRefinementMaxLevel;
 		
-		this->FindMultiRefineRegions();
+		this->FindMultiRefineRegions(level);
 	}
 
   /* For must-refine particles, restrict refinement to where they

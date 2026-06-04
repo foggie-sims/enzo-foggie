@@ -1000,7 +1000,7 @@ gradient force to gravitational force for one-zone collapse test. */
 
 /* Identify which MultiRefineRegions (if any) this grid overlaps with, and 
    therefore the minimum and maximum allowed levels for various cell flagging
-   methods. Set LocalCellFlaggingMethod accorindgly */
+   methods. Set LocalCellFlaggingMethod accordingly */
    int FindMultiRefineRegions(int level);
 
 /* Identify new subgrids for this grid (and prove Fermat's last theorem too)

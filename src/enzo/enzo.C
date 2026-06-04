@@ -937,6 +937,7 @@ void my_exit(int status)
       }
       delete [] MRRTracks[trind].TimeEntries;
       delete [] MRRTracks[trind].RefTypes;
+      //delete MRRTracks[trind]
     }
     delete [] MRRTracks;
   }
