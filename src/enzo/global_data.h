@@ -192,6 +192,10 @@ EXTERN int MetallicityRefinementMinLevel;
 EXTERN float MetallicityRefinementMinMetallicity;
 EXTERN float MetallicityRefinementMinDensity;
 
+/* thresholds for FlagGridCellsToBeRefinedByTemperature */
+EXTERN float MinimumTemperatureForRefinement;
+EXTERN float TemperatureRefinementStoppingMassMsun;
+
 /* Velocity to limit timesteps */
 
 EXTERN float TimestepSafetyVelocity;

@@ -287,6 +287,16 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 	  return FAIL;
 	}
 	break;
+
+      case 21:
+	NumberOfFlaggedCells = this->FlagCellsToBeRefinedByTemperature();
+	if (NumberOfFlaggedCells < 0) {
+	  fprintf(stderr, "Error in grid->FlagCellsToBeRefinedByTemperature.\n");
+	  return FAIL;
+	}
+	break;
+
+
 	
 	/* ==== METHOD 100: UNDO REFINEMENT IN SOME REGIONS ==== */
 	
