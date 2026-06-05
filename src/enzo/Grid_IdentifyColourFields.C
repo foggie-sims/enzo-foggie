@@ -30,6 +30,22 @@ int grid::IdentifyColourFields(int &SNColourNum, int &MetalNum,
 			       int &MetalIaNum, int &MetalIINum,
 			       int &MetalAGBNum, int& MetalNSMNum,
 			       int &MBHColourNum,
+			       int &Galaxy1ColourNum, int &Galaxy2ColourNum)
+{
+  int DustDensityNum;
+
+  return this->IdentifyColourFields(SNColourNum, MetalNum,
+				    MetalIaNum, MetalIINum,
+				    MetalAGBNum, MetalNSMNum,
+				    MBHColourNum,
+				    Galaxy1ColourNum, Galaxy2ColourNum,
+				    DustDensityNum);
+}
+
+int grid::IdentifyColourFields(int &SNColourNum, int &MetalNum,
+			       int &MetalIaNum, int &MetalIINum,
+			       int &MetalAGBNum, int& MetalNSMNum,
+			       int &MBHColourNum,
 			       int &Galaxy1ColourNum, int &Galaxy2ColourNum,
 			       int &DustDensityNum)
 {
@@ -59,4 +75,3 @@ int grid::IdentifyColourFields(int &SNColourNum, int &MetalNum,
 
   return SUCCESS;
 }
-
