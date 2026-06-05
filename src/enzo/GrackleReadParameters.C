@@ -160,8 +160,7 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
                   &grackle_data->dust_model);
     ret += sscanf(line, "solver_method = %d",
                   &grackle_data->solver_method);
-    ret += sscanf(line, "use_sne_field = %d",
-                  &grackle_data->use_sne_field);
+    /* use_sne_field is mapped from the Enzo flag UseSNeRateField below. */
     ret += sscanf(line, "use_tau_dest_field = %d",
                   &grackle_data->use_tau_dest_field);
     ret += sscanf(line, "dust_destruction_eff = %lf",
@@ -180,6 +179,27 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
                   &grackle_data->dust_condensation_eff);
     ret += sscanf(line, "sne_metal_yield = %lf",
                   &grackle_data->sne_metal_yield);
+
+    /* Species-resolved dust tracking (Mg-silicate + Fe-silicate + carbonaceous
+       and 5-element gas tracking). Requires dust_model = 1.
+       grackle_data->dust_species_track is mapped from the Enzo flag
+       UseDustSpeciesTrack below. REF: Trayford+2026 MNRAS 545, staf2040. */
+    ret += sscanf(line, "dust_growth_sticking_coeff = %lf",
+                  &grackle_data->dust_growth_sticking_coeff);
+    ret += sscanf(line, "dust_growth_tauref_silicate = %lf",
+                  &grackle_data->dust_growth_tauref_silicate);
+    ret += sscanf(line, "dust_growth_tauref_carbon = %lf",
+                  &grackle_data->dust_growth_tauref_carbon);
+    ret += sscanf(line, "dust_growth_clumping_factor_max = %lf",
+                  &grackle_data->dust_growth_clumping_factor_max);
+    ret += sscanf(line, "dust_growth_clumping_nH_min = %lf",
+                  &grackle_data->dust_growth_clumping_nH_min);
+    ret += sscanf(line, "dust_growth_clumping_nH_max = %lf",
+                  &grackle_data->dust_growth_clumping_nH_max);
+    ret += sscanf(line, "dust_sputter_tauref = %lf",
+                  &grackle_data->dust_sputter_tauref);
+    ret += sscanf(line, "dust_silicate_mg_fraction = %lf",
+                  &grackle_data->dust_silicate_mg_fraction);
 
     /* If the dummy char space was used, then make another. */
     if (*dummy != 0) {
@@ -228,6 +248,8 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
   grackle_data->UVbackground_redshift_fullon   = (double) CoolData.RadiationRedshiftFullOn;
   grackle_data->UVbackground_redshift_drop     = (double) CoolData.RadiationRedshiftDropOff;
   grackle_data->use_radiative_transfer         = (Eint32) RadiativeTransfer;
+  grackle_data->dust_species_track             = (Eint32) UseDustSpeciesTrack;
+  grackle_data->use_sne_field                  = (Eint32) UseSNeRateField;
   // grackle_data->radiative_transfer_coupled_rate_solver set in RadiativeTransferReadParameters
   // grackle_data->radiative_transfer_hydrogen_only set in RadiativeTransferReadParameters
 
@@ -236,6 +258,17 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
   if ( (grackle_data->photoelectric_heating == 2) ||
        (grackle_data->use_isrf_field)){
     ENZO_FAIL("Photoelectric heating model 2, and ISRF field, in Grackle is not yet implemented.\n");
+  }
+
+  /* Species-resolved dust tracking requires the bulk dust_density field
+     and dust_model = 1. */
+  if (UseDustSpeciesTrack) {
+    if (!UseDustDensityField) {
+      ENZO_FAIL("UseDustSpeciesTrack = 1 requires UseDustDensityField = 1.\n");
+    }
+    if (grackle_data->dust_model != 1) {
+      ENZO_FAIL("UseDustSpeciesTrack = 1 requires dust_model = 1.\n");
+    }
   }
 
   // if ( grackle_data->use_dust_density_field ){

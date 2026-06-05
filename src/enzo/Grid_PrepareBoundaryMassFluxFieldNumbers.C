@@ -102,6 +102,29 @@ int grid::PrepareBoundaryMassFluxFieldNumbers(){
   if (MBHColourNum     != -1) BoundaryMassFluxFieldNumbers[count++] = MBHColourNum;
   if (Galaxy1ColourNum != -1) BoundaryMassFluxFieldNumbers[count++] = Galaxy1ColourNum;
   if (Galaxy2ColourNum != -1) BoundaryMassFluxFieldNumbers[count++] = Galaxy2ColourNum;
+  if (DustDensityNum   != -1) BoundaryMassFluxFieldNumbers[count++] = DustDensityNum;
+
+  /* Species-resolved dust tracking: 5 gas-phase elements + 4 dust species. */
+  if (UseDustSpeciesTrack) {
+    int MetalCNum  = FindField(MetalDensityCarbon,     FieldType, NumberOfBaryonFields);
+    int MetalONum  = FindField(MetalDensityOxygen,     FieldType, NumberOfBaryonFields);
+    int MetalMgNum = FindField(MetalDensityMagnesium,  FieldType, NumberOfBaryonFields);
+    int MetalSiNum = FindField(MetalDensitySilicon,    FieldType, NumberOfBaryonFields);
+    int MetalFeNum = FindField(MetalDensityIron,       FieldType, NumberOfBaryonFields);
+    int DustSilNum = FindField(DustDensitySilicate,    FieldType, NumberOfBaryonFields);
+    int DustMgNum  = FindField(DustDensityMgSilicate,  FieldType, NumberOfBaryonFields);
+    int DustFeNum  = FindField(DustDensityFeSilicate,  FieldType, NumberOfBaryonFields);
+    int DustCNum   = FindField(DustDensityCarbonaceous,FieldType, NumberOfBaryonFields);
+    if (MetalCNum  != -1) BoundaryMassFluxFieldNumbers[count++] = MetalCNum;
+    if (MetalONum  != -1) BoundaryMassFluxFieldNumbers[count++] = MetalONum;
+    if (MetalMgNum != -1) BoundaryMassFluxFieldNumbers[count++] = MetalMgNum;
+    if (MetalSiNum != -1) BoundaryMassFluxFieldNumbers[count++] = MetalSiNum;
+    if (MetalFeNum != -1) BoundaryMassFluxFieldNumbers[count++] = MetalFeNum;
+    if (DustSilNum != -1) BoundaryMassFluxFieldNumbers[count++] = DustSilNum;
+    if (DustMgNum  != -1) BoundaryMassFluxFieldNumbers[count++] = DustMgNum;
+    if (DustFeNum  != -1) BoundaryMassFluxFieldNumbers[count++] = DustFeNum;
+    if (DustCNum   != -1) BoundaryMassFluxFieldNumbers[count++] = DustCNum;
+  }
 
   return SUCCESS;
 }

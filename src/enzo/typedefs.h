@@ -201,7 +201,28 @@ const field_type
   /* Dust density field */
   DustDensity = 114,
 
-  FieldUndefined  = 115;
+  /* dust_species_track = 1: 5-element gas-phase metal tracking
+     (subsets of Metallicity). REF: Trayford+2026 MNRAS 545, staf2040. */
+  MetalDensityCarbon    = 115,
+  MetalDensityOxygen    = 116,
+  MetalDensityMagnesium = 117,
+  MetalDensitySilicon   = 118,
+  MetalDensityIron      = 119,
+
+  /* dust_species_track = 1: three-species dust (Mg-silicate + Fe-silicate +
+     carbonaceous). DustDensitySilicate is maintained by Grackle as the
+     Mg-silicate + Fe-silicate sum for compatibility. */
+  DustDensitySilicate     = 120,
+  DustDensityMgSilicate   = 121,
+  DustDensityFeSilicate   = 122,
+  DustDensityCarbonaceous = 123,
+
+  /* Per-cell count of supernova events that occurred during the current
+     timestep. Populated by star_feedback2; consumed by Grackle when
+     use_sne_field = 1 (Li+ 2019 dust destruction). NOT a density. */
+  SNeRate                 = 124,
+
+  FieldUndefined  = 125;
 
 /*
 enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
@@ -214,7 +235,7 @@ enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
                  FieldUndefined};
 */
 
-#define FieldTypeIsDensity(A) ((((A) >= TotalEnergy && (A) <= Velocity3) || ((A) >= kphHI && (A) <= kdissH2I) || ((A) == kdissH2II) || ((A) == kphHM) || ((A) >= RadiationFreq0 && (A) <= RaySegments) || ((A) >= Bfield1 && (A) <= AccelerationField3)) ? FALSE : TRUE)
+#define FieldTypeIsDensity(A) ((((A) >= TotalEnergy && (A) <= Velocity3) || ((A) >= kphHI && (A) <= kdissH2I) || ((A) == kdissH2II) || ((A) == kphHM) || ((A) >= RadiationFreq0 && (A) <= RaySegments) || ((A) >= Bfield1 && (A) <= AccelerationField3) || ((A) == SNeRate)) ? FALSE : TRUE)
 #define FieldTypeIsRadiation(A) ((((A) >= kphHI && (A) <= kdissH2I) || ((A) == kdissH2II) || ((A) == kphHM) || ((A) >= RadiationFreq0 && (A) <= RadiationFreq9)) ? TRUE : FALSE)
 #define FieldTypeNoInterpolate(A) (((((A) >= Mach) && ((A) <= PreShockDensity)) || ((A) == GravPotential) || ((A) == RaySegments)) ? TRUE : FALSE)
 

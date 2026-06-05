@@ -445,6 +445,35 @@ EXTERN int MultiMetals;
 EXTERN int UseDustDensityField;
 EXTERN float InitialDustToGasRatio;
 
+/* Per-cell SN-event count field (BaryonField with FieldType SNeRate).
+   Populated each timestep by star_feedback2; consumed by Grackle when
+   use_sne_field = 1 (Li+ 2019 dust destruction). Units: SNe per cell
+   per dt. */
+EXTERN int UseSNeRateField;
+
+/* Species-resolved dust tracking (dust_species_track = 1 in Grackle).
+   When enabled, allocates 5 gas-phase element fields (C, O, Mg, Si, Fe) as
+   subsets of Metallicity, plus 3 dust species fields (Mg-silicate,
+   Fe-silicate, carbonaceous) and a compatibility silicate sum field. */
+EXTERN int UseDustSpeciesTrack;
+
+/* Canonical MW diffuse-ISM split of bulk dust into species, used to seed
+   the dust species fields from InitialDustToGasRatio. Draine 2003 /
+   COLIBRE equal-molecule Mg2SiO4/Fe2SiO4. */
+EXTERN float InitialDustSilicateFraction;       // silicate / dust_total
+EXTERN float InitialDustMgSilicateFraction;     // mg_sil   / silicate
+EXTERN float InitialDustFeSilicateFraction;     // fe_sil   / silicate
+EXTERN float InitialDustCarbonaceousFraction;   // carb     / dust_total
+
+/* Solar mass fractions of the five tracked elements relative to the total
+   solar metal mass, used to seed gas-phase element fields from the
+   metallicity field. Defaults derived from Grackle's atomic data. */
+EXTERN float InitialMetalCarbonFraction;
+EXTERN float InitialMetalOxygenFraction;
+EXTERN float InitialMetalMagnesiumFraction;
+EXTERN float InitialMetalSiliconFraction;
+EXTERN float InitialMetalIronFraction;
+
 /* Cosmic Ray Model
  * 0: Off - default
  * 1: On, (two fluid model)

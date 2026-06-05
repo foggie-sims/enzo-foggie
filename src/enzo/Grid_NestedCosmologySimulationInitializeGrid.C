@@ -120,7 +120,9 @@ int grid::NestedCosmologySimulationInitializeGrid(
   int idim, ndim, dim, i, j, vel, OneComponentPerFile, level;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
     DINum, DIINum, HDINum, MetalNum, MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum,
-    DustNum;
+    DustNum, SNeRateNum;
+  int MetalCNum, MetalONum, MetalMgNum, MetalSiNum, MetalFeNum,
+    DustSilNum, DustMgNum, DustFeNum, DustCNum;
 
   int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
 
@@ -410,6 +412,19 @@ int grid::NestedCosmologySimulationInitializeGrid(
     }
     if (UseDustDensityField)
       FieldType[DustNum = NumberOfBaryonFields++] = DustDensity;
+    if (UseSNeRateField)
+      FieldType[SNeRateNum = NumberOfBaryonFields++] = SNeRate;
+    if (UseDustSpeciesTrack) {
+      FieldType[MetalCNum  = NumberOfBaryonFields++] = MetalDensityCarbon;
+      FieldType[MetalONum  = NumberOfBaryonFields++] = MetalDensityOxygen;
+      FieldType[MetalMgNum = NumberOfBaryonFields++] = MetalDensityMagnesium;
+      FieldType[MetalSiNum = NumberOfBaryonFields++] = MetalDensitySilicon;
+      FieldType[MetalFeNum = NumberOfBaryonFields++] = MetalDensityIron;
+      FieldType[DustSilNum = NumberOfBaryonFields++] = DustDensitySilicate;
+      FieldType[DustMgNum  = NumberOfBaryonFields++] = DustDensityMgSilicate;
+      FieldType[DustFeNum  = NumberOfBaryonFields++] = DustDensityFeSilicate;
+      FieldType[DustCNum   = NumberOfBaryonFields++] = DustDensityCarbonaceous;
+    }
     if (WritePotential)
       FieldType[NumberOfBaryonFields++] = GravPotential;
     if(STARMAKE_METHOD(COLORED_POP3_STAR)){
@@ -666,14 +681,57 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	}
       } // ENDIF UseMetallicityField
 
-      // If using dust density, initialize as fraction of gas density
+      // Dust initialized as a fraction of metal density (not gas density) so
+      // the initial dust budget is self-consistent with the metals available
+      // to form it. See the matching block in
+      // Grid_CosmologySimulationInitializeGrid.C for the full reasoning.
       if (UseDustDensityField && ReadData) {
         if (UseMetallicityField)
           for (i = 0; i < size; i++)
-            BaryonField[DustNum][i] = InitialDustToGasRatio * BaryonField[0][i];
+            BaryonField[DustNum][i] = InitialDustToGasRatio * BaryonField[MetalNum][i];
         else
           for (i = 0; i < size; i++)
             BaryonField[DustNum][i] = tiny_number;
+      }
+
+      // Startup-only zero of the SN-event count field; the per-cycle
+      // reset happens at the top of star_feedback2.
+      if (UseSNeRateField && ReadData)
+        for (i = 0; i < size; i++)
+          BaryonField[SNeRateNum][i] = 0.0;
+
+      /* Species-resolved dust tracking: seed dust species from bulk dust_density
+         and gas-phase element fields from metal_density. */
+      if (UseDustSpeciesTrack && ReadData) {
+        if (UseMetallicityField) {
+          float fsil_mg = InitialDustSilicateFraction * InitialDustMgSilicateFraction;
+          float fsil_fe = InitialDustSilicateFraction * InitialDustFeSilicateFraction;
+          for (i = 0; i < size; i++) {
+            BaryonField[DustMgNum][i]  = fsil_mg * BaryonField[DustNum][i];
+            BaryonField[DustFeNum][i]  = fsil_fe * BaryonField[DustNum][i];
+            BaryonField[DustSilNum][i] = BaryonField[DustMgNum][i] +
+                                         BaryonField[DustFeNum][i];
+            BaryonField[DustCNum][i]   = InitialDustCarbonaceousFraction *
+                                         BaryonField[DustNum][i];
+            BaryonField[MetalCNum][i]  = InitialMetalCarbonFraction    * BaryonField[MetalNum][i];
+            BaryonField[MetalONum][i]  = InitialMetalOxygenFraction    * BaryonField[MetalNum][i];
+            BaryonField[MetalMgNum][i] = InitialMetalMagnesiumFraction * BaryonField[MetalNum][i];
+            BaryonField[MetalSiNum][i] = InitialMetalSiliconFraction   * BaryonField[MetalNum][i];
+            BaryonField[MetalFeNum][i] = InitialMetalIronFraction      * BaryonField[MetalNum][i];
+          }
+        } else {
+          for (i = 0; i < size; i++) {
+            BaryonField[DustMgNum][i]  = tiny_number;
+            BaryonField[DustFeNum][i]  = tiny_number;
+            BaryonField[DustSilNum][i] = tiny_number;
+            BaryonField[DustCNum][i]   = tiny_number;
+            BaryonField[MetalCNum][i]  = tiny_number;
+            BaryonField[MetalONum][i]  = tiny_number;
+            BaryonField[MetalMgNum][i] = tiny_number;
+            BaryonField[MetalSiNum][i] = tiny_number;
+            BaryonField[MetalFeNum][i] = tiny_number;
+          }
+        }
       }
 
 	/*  If using tracer fluids, set the field to something very small (tiny_number).

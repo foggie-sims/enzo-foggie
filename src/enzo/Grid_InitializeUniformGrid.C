@@ -36,7 +36,9 @@ int grid::InitializeUniformGrid(float UniformDensity,
 
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
     DINum, DIINum, HDINum, MetalNum, MetalIaNum, B1Num, B2Num, B3Num, PhiNum, CRNum,
-    MetalIINum, MetalAGBNum, MetalNSMNum, DustNum;
+    MetalIINum, MetalAGBNum, MetalNSMNum, DustNum, SNeRateNum;
+  int MetalCNum, MetalONum, MetalMgNum, MetalSiNum, MetalFeNum,
+    DustSilNum, DustMgNum, DustFeNum, DustCNum;
 
   int CINum, CIINum, OINum, OIINum, SiINum, SiIINum, SiIIINum, CHINum, CH2INum, 
     CH3IINum, C2INum, COINum, HCOIINum, OHINum, H2OINum, O2INum;
@@ -123,6 +125,19 @@ int grid::InitializeUniformGrid(float UniformDensity,
 
   if (UseDustDensityField)
     FieldType[DustNum = NumberOfBaryonFields++] = DustDensity;
+  if (UseSNeRateField)
+    FieldType[SNeRateNum = NumberOfBaryonFields++] = SNeRate;
+  if (UseDustSpeciesTrack) {
+    FieldType[MetalCNum  = NumberOfBaryonFields++] = MetalDensityCarbon;
+    FieldType[MetalONum  = NumberOfBaryonFields++] = MetalDensityOxygen;
+    FieldType[MetalMgNum = NumberOfBaryonFields++] = MetalDensityMagnesium;
+    FieldType[MetalSiNum = NumberOfBaryonFields++] = MetalDensitySilicon;
+    FieldType[MetalFeNum = NumberOfBaryonFields++] = MetalDensityIron;
+    FieldType[DustSilNum = NumberOfBaryonFields++] = DustDensitySilicate;
+    FieldType[DustMgNum  = NumberOfBaryonFields++] = DustDensityMgSilicate;
+    FieldType[DustFeNum  = NumberOfBaryonFields++] = DustDensityFeSilicate;
+    FieldType[DustCNum   = NumberOfBaryonFields++] = DustDensityCarbonaceous;
+  }
 
   // Simon glover's chemistry models (there are several)
   //
@@ -331,6 +346,41 @@ int grid::InitializeUniformGrid(float UniformDensity,
         BaryonField[DustNum][i] = InitialDustToGasRatio * UniformDensity;
       else
         BaryonField[DustNum][i] = tiny_number;
+    }
+
+    // Startup-only zero of the SN-event count field; the per-cycle
+    // reset happens at the top of star_feedback2.
+    if (UseSNeRateField)
+      BaryonField[SNeRateNum][i] = 0.0;
+
+    /* Species-resolved dust tracking: seed dust species from bulk dust_density
+       and gas-phase element fields from metal_density. */
+    if (UseDustSpeciesTrack) {
+      if (TestProblemData.UseMetallicityField) {
+        float fsil_mg = InitialDustSilicateFraction * InitialDustMgSilicateFraction;
+        float fsil_fe = InitialDustSilicateFraction * InitialDustFeSilicateFraction;
+        BaryonField[DustMgNum][i]  = fsil_mg * BaryonField[DustNum][i];
+        BaryonField[DustFeNum][i]  = fsil_fe * BaryonField[DustNum][i];
+        BaryonField[DustSilNum][i] = BaryonField[DustMgNum][i] +
+                                     BaryonField[DustFeNum][i];
+        BaryonField[DustCNum][i]   = InitialDustCarbonaceousFraction *
+                                     BaryonField[DustNum][i];
+        BaryonField[MetalCNum][i]  = InitialMetalCarbonFraction    * BaryonField[MetalNum][i];
+        BaryonField[MetalONum][i]  = InitialMetalOxygenFraction    * BaryonField[MetalNum][i];
+        BaryonField[MetalMgNum][i] = InitialMetalMagnesiumFraction * BaryonField[MetalNum][i];
+        BaryonField[MetalSiNum][i] = InitialMetalSiliconFraction   * BaryonField[MetalNum][i];
+        BaryonField[MetalFeNum][i] = InitialMetalIronFraction      * BaryonField[MetalNum][i];
+      } else {
+        BaryonField[DustMgNum][i]  = tiny_number;
+        BaryonField[DustFeNum][i]  = tiny_number;
+        BaryonField[DustSilNum][i] = tiny_number;
+        BaryonField[DustCNum][i]   = tiny_number;
+        BaryonField[MetalCNum][i]  = tiny_number;
+        BaryonField[MetalONum][i]  = tiny_number;
+        BaryonField[MetalMgNum][i] = tiny_number;
+        BaryonField[MetalSiNum][i] = tiny_number;
+        BaryonField[MetalFeNum][i] = tiny_number;
+      }
     }
 
         // simon glover chemistry stuff

@@ -302,7 +302,45 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     else
       my_fields.dust_density = NULL;
 
-    my_fields.sne_rate  = NULL;
+    /* Species-resolved dust tracking (dust_species_track = 1). */
+    my_fields.metal_density_carbon      = NULL;
+    my_fields.metal_density_oxygen      = NULL;
+    my_fields.metal_density_magnesium   = NULL;
+    my_fields.metal_density_silicon     = NULL;
+    my_fields.metal_density_iron        = NULL;
+    my_fields.dust_density_silicate     = NULL;
+    my_fields.dust_density_mg_silicate  = NULL;
+    my_fields.dust_density_fe_silicate  = NULL;
+    my_fields.dust_density_carbonaceous = NULL;
+    if (UseDustSpeciesTrack) {
+      int MetalCNum  = FindField(MetalDensityCarbon,     FieldType, NumberOfBaryonFields);
+      int MetalONum  = FindField(MetalDensityOxygen,     FieldType, NumberOfBaryonFields);
+      int MetalMgNum = FindField(MetalDensityMagnesium,  FieldType, NumberOfBaryonFields);
+      int MetalSiNum = FindField(MetalDensitySilicon,    FieldType, NumberOfBaryonFields);
+      int MetalFeNum = FindField(MetalDensityIron,       FieldType, NumberOfBaryonFields);
+      int DustSilNum = FindField(DustDensitySilicate,    FieldType, NumberOfBaryonFields);
+      int DustMgNum  = FindField(DustDensityMgSilicate,  FieldType, NumberOfBaryonFields);
+      int DustFeNum  = FindField(DustDensityFeSilicate,  FieldType, NumberOfBaryonFields);
+      int DustCNum   = FindField(DustDensityCarbonaceous,FieldType, NumberOfBaryonFields);
+      if (MetalCNum  != -1) my_fields.metal_density_carbon      = BaryonField[MetalCNum];
+      if (MetalONum  != -1) my_fields.metal_density_oxygen      = BaryonField[MetalONum];
+      if (MetalMgNum != -1) my_fields.metal_density_magnesium   = BaryonField[MetalMgNum];
+      if (MetalSiNum != -1) my_fields.metal_density_silicon     = BaryonField[MetalSiNum];
+      if (MetalFeNum != -1) my_fields.metal_density_iron        = BaryonField[MetalFeNum];
+      if (DustSilNum != -1) my_fields.dust_density_silicate     = BaryonField[DustSilNum];
+      if (DustMgNum  != -1) my_fields.dust_density_mg_silicate  = BaryonField[DustMgNum];
+      if (DustFeNum  != -1) my_fields.dust_density_fe_silicate  = BaryonField[DustFeNum];
+      if (DustCNum   != -1) my_fields.dust_density_carbonaceous = BaryonField[DustCNum];
+    }
+
+    if (UseSNeRateField) {
+      int SNeRateNum = FindField(SNeRate, FieldType, NumberOfBaryonFields);
+      if (SNeRateNum == -1)
+        ENZO_FAIL("UseSNeRateField = 1 but SNeRate field is missing.\n");
+      my_fields.sne_rate = BaryonField[SNeRateNum];
+    } else {
+      my_fields.sne_rate = NULL;
+    }
     my_fields.tau_dest  = NULL;
 
     my_fields.volumetric_heating_rate  = volumetric_heating_rate;

@@ -139,6 +139,28 @@ int grid::ReturnOldHydroRKPointers(float **Prim, bool ReturnMassFractions)
 
   if (SNColourNum      != -1) Prim[nfield++] = OldBaryonField[SNColourNum];
   if (DustDensityNum   != -1) Prim[nfield++] = OldBaryonField[DustDensityNum];
+
+  /* Species-resolved dust tracking: 5 gas-phase elements + 4 dust species. */
+  if (UseDustSpeciesTrack) {
+    int MetalCNum  = FindField(MetalDensityCarbon,     FieldType, NumberOfBaryonFields);
+    int MetalONum  = FindField(MetalDensityOxygen,     FieldType, NumberOfBaryonFields);
+    int MetalMgNum = FindField(MetalDensityMagnesium,  FieldType, NumberOfBaryonFields);
+    int MetalSiNum = FindField(MetalDensitySilicon,    FieldType, NumberOfBaryonFields);
+    int MetalFeNum = FindField(MetalDensityIron,       FieldType, NumberOfBaryonFields);
+    int DustSilNum = FindField(DustDensitySilicate,    FieldType, NumberOfBaryonFields);
+    int DustMgNum  = FindField(DustDensityMgSilicate,  FieldType, NumberOfBaryonFields);
+    int DustFeNum  = FindField(DustDensityFeSilicate,  FieldType, NumberOfBaryonFields);
+    int DustCNum   = FindField(DustDensityCarbonaceous,FieldType, NumberOfBaryonFields);
+    if (MetalCNum  != -1) Prim[nfield++] = OldBaryonField[MetalCNum];
+    if (MetalONum  != -1) Prim[nfield++] = OldBaryonField[MetalONum];
+    if (MetalMgNum != -1) Prim[nfield++] = OldBaryonField[MetalMgNum];
+    if (MetalSiNum != -1) Prim[nfield++] = OldBaryonField[MetalSiNum];
+    if (MetalFeNum != -1) Prim[nfield++] = OldBaryonField[MetalFeNum];
+    if (DustSilNum != -1) Prim[nfield++] = OldBaryonField[DustSilNum];
+    if (DustMgNum  != -1) Prim[nfield++] = OldBaryonField[DustMgNum];
+    if (DustFeNum  != -1) Prim[nfield++] = OldBaryonField[DustFeNum];
+    if (DustCNum   != -1) Prim[nfield++] = OldBaryonField[DustCNum];
+  }
   /*   //##### These fields are currently not being used and only causing interpolation problems
   if (MBHColourNum     != -1) Prim[nfield++] = OldBaryonField[MBHColourNum];
   if (Galaxy1ColourNum != -1) Prim[nfield++] = OldBaryonField[Galaxy1ColourNum];

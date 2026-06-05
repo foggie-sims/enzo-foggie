@@ -65,6 +65,18 @@ int GrackleWriteParameters(FILE *fptr)
   fprintf(fptr, "dust_condensation_eff       = %lf\n", grackle_data->dust_condensation_eff);
   fprintf(fptr, "sne_metal_yield             = %lf\n", grackle_data->sne_metal_yield);
 
+  /* Species-resolved dust tracking (Trayford+2026 MNRAS 545, staf2040).
+     dust_species_track is mapped from the Enzo flag UseDustSpeciesTrack,
+     written by WriteParameterFile. */
+  fprintf(fptr, "dust_growth_sticking_coeff  = %lf\n", grackle_data->dust_growth_sticking_coeff);
+  fprintf(fptr, "dust_growth_tauref_silicate = %lf\n", grackle_data->dust_growth_tauref_silicate);
+  fprintf(fptr, "dust_growth_tauref_carbon   = %lf\n", grackle_data->dust_growth_tauref_carbon);
+  fprintf(fptr, "dust_growth_clumping_factor_max = %lf\n", grackle_data->dust_growth_clumping_factor_max);
+  fprintf(fptr, "dust_growth_clumping_nH_min = %lf\n", grackle_data->dust_growth_clumping_nH_min);
+  fprintf(fptr, "dust_growth_clumping_nH_max = %lf\n", grackle_data->dust_growth_clumping_nH_max);
+  fprintf(fptr, "dust_sputter_tauref         = %lf\n", grackle_data->dust_sputter_tauref);
+  fprintf(fptr, "dust_silicate_mg_fraction   = %lf\n", grackle_data->dust_silicate_mg_fraction);
+
 #endif
 
   return SUCCESS;

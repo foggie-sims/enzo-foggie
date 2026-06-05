@@ -129,6 +129,16 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *MetalAGBName = "MetalAGB_Density";
   char *MetalNSMName = "MetalNSM_Density";
   char *DustDensityName = "Dust_Density";
+  char *SNeRateName     = "SNe_Rate";
+  char *MetalDensityCarbonName     = "Metal_Density_Carbon";
+  char *MetalDensityOxygenName     = "Metal_Density_Oxygen";
+  char *MetalDensityMagnesiumName  = "Metal_Density_Magnesium";
+  char *MetalDensitySiliconName    = "Metal_Density_Silicon";
+  char *MetalDensityIronName       = "Metal_Density_Iron";
+  char *DustDensitySilicateName    = "Dust_Density_Silicate";
+  char *DustDensityMgSilicateName  = "Dust_Density_MgSilicate";
+  char *DustDensityFeSilicateName  = "Dust_Density_FeSilicate";
+  char *DustDensityCarbonaceousName= "Dust_Density_Carbonaceous";
   char *GPotName  = "Grav_Potential";
   char *ForbidName  = "ForbiddenRefinement";
   char *MachName   = "Mach";
@@ -816,6 +826,19 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   }
   if (UseDustDensityField)
     DataLabel[i++] = DustDensityName;
+  if (UseSNeRateField)
+    DataLabel[i++] = SNeRateName;
+  if (UseDustSpeciesTrack) {
+    DataLabel[i++] = MetalDensityCarbonName;
+    DataLabel[i++] = MetalDensityOxygenName;
+    DataLabel[i++] = MetalDensityMagnesiumName;
+    DataLabel[i++] = MetalDensitySiliconName;
+    DataLabel[i++] = MetalDensityIronName;
+    DataLabel[i++] = DustDensitySilicateName;
+    DataLabel[i++] = DustDensityMgSilicateName;
+    DataLabel[i++] = DustDensityFeSilicateName;
+    DataLabel[i++] = DustDensityCarbonaceousName;
+  }
   if(STARMAKE_METHOD(COLORED_POP3_STAR)){
     DataLabel[i++] = ForbidName;
   }
