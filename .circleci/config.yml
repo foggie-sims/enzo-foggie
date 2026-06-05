@@ -189,7 +189,7 @@ commands:
 jobs:
   test-suite:
     docker:
-      - image: cimg/python:3.12
+      - image: cimg/python:3.11
 
     resource_class: large
     working_directory: ~/enzo-dev
@@ -200,13 +200,13 @@ jobs:
 
       - restore_cache:
           name: "Restore dependencies cache."
-          key: dependencies-v6
+          key: dependencies-v7
 
       - install-dependencies
 
       - save_cache:
           name: "Save dependencies cache"
-          key: dependencies-v6
+          key: dependencies-v7
           paths:
             - ~/.cache/pip
             - ~/venv
@@ -240,7 +240,7 @@ jobs:
 
   test-compile-options:
     docker:
-      - image: cimg/python:3.12
+      - image: cimg/python:3.11
 
     resource_class: large
     working_directory: ~/enzo-dev
@@ -251,13 +251,13 @@ jobs:
 
       - restore_cache:
           name: "Restore dependencies cache."
-          key: dependencies-v6
+          key: dependencies-v7
 
       - install-dependencies
 
       - save_cache:
           name: "Save dependencies cache"
-          key: dependencies-v6
+          key: dependencies-v7
           paths:
             - ~/.cache/pip
             - ~/venv
@@ -271,7 +271,7 @@ jobs:
 
   docs-build:
     docker:
-      - image: cimg/python:3.12
+      - image: cimg/python:3.11
 
     working_directory: ~/enzo-dev
 
