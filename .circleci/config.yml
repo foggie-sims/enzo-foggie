@@ -13,7 +13,7 @@ commands:
             echo 'export HYPRE=2.20.0' >> $BASH_ENV
             source $BASH_ENV
             # get tags from the main and PR repository (for the current gold standard)
-            git fetch --tags https://github.com/enzo-project/enzo-dev
+            git fetch --tags https://github.com/foggie-sims/enzo-foggie
             if [ -n "$CIRCLE_PR_REPONAME" ]; then
               git fetch --tags https://github.com/$CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME
             fi
@@ -189,7 +189,7 @@ commands:
 jobs:
   test-suite:
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.12
 
     resource_class: large
     working_directory: ~/enzo-dev
@@ -200,13 +200,13 @@ jobs:
 
       - restore_cache:
           name: "Restore dependencies cache."
-          key: dependencies-v5
+          key: dependencies-v6
 
       - install-dependencies
 
       - save_cache:
           name: "Save dependencies cache"
-          key: dependencies-v5
+          key: dependencies-v6
           paths:
             - ~/.cache/pip
             - ~/venv
@@ -217,16 +217,16 @@ jobs:
 
       - restore_cache:
           name: "Restore test answers."
-          key: test-answers-v16a
+          key: foggie-test-answers-v1
 
       - build-and-test:
-          tag: gold-standard-v16
+          tag: foggie-gold-standard-v1
           skipfile: ~/enzo_test/push_suite
           flags: --answer-store
 
       - save_cache:
           name: "Save test answers cache."
-          key: test-answers-v16a
+          key: foggie-test-answers-v1
           paths:
             - ~/enzo_test/push_suite
 
@@ -240,7 +240,7 @@ jobs:
 
   test-compile-options:
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.12
 
     resource_class: large
     working_directory: ~/enzo-dev
@@ -251,13 +251,13 @@ jobs:
 
       - restore_cache:
           name: "Restore dependencies cache."
-          key: dependencies-v5
+          key: dependencies-v6
 
       - install-dependencies
 
       - save_cache:
           name: "Save dependencies cache"
-          key: dependencies-v5
+          key: dependencies-v6
           paths:
             - ~/.cache/pip
             - ~/venv
@@ -271,7 +271,7 @@ jobs:
 
   docs-build:
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.12
 
     working_directory: ~/enzo-dev
 
