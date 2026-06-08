@@ -536,14 +536,6 @@ EXTERN FLOAT StaticRefineRegionLeftEdge[MAX_STATIC_REGIONS][MAX_DIMENSION];
 EXTERN FLOAT StaticRefineRegionRightEdge[MAX_STATIC_REGIONS][MAX_DIMENSION];
 EXTERN int   StaticRefineRegionLevel[MAX_STATIC_REGIONS];
 
-/* Evolving refinement region. */
-EXTERN char *RefineRegionFile;
-EXTERN int RefineRegionTimeType; // 0=time 1=redshift
-EXTERN int EvolveRefineRegionNtimes;
-EXTERN FLOAT EvolveRefineRegionTime[MAX_REFINE_REGIONS]; // time bins
-EXTERN FLOAT EvolveRefineRegionLeftEdge[MAX_REFINE_REGIONS][3]; // left corners
-EXTERN FLOAT EvolveRefineRegionRightEdge[MAX_REFINE_REGIONS][3]; // right corners
-
 /* Evolving MultiRefine region*/
 EXTERN char *MultiRefineRegionFile;
 EXTERN int MultiRefineRegionTimeType; // 0=time 1=redshift

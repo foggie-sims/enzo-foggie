@@ -77,7 +77,7 @@ int grid::SetMinimumStarMass(){
   } else{ // code time
     /* Find the index of the first entry that is later than the current time */
     for(timestep=0; timestep<NumberOfMultiRefineTimeEntries; timestep++){
-	    if( ctime < EvolveRefineRegionTime[timestep] ){
+	    if( ctime < EvolveMultiRefineRegionTime[timestep] ){
 	      break;
       }
     }

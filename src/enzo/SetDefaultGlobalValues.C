@@ -287,17 +287,6 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
     }
   }
 
-  /* For evolving refinement regions. */
-  RefineRegionFile = NULL;
-  RefineRegionTimeType = -1; /* 0=time bins 1=redshift bins*/
-  for (i = 0; i < MAX_REFINE_REGIONS; i++) {
-    EvolveRefineRegionTime[i] = FLOAT_UNDEFINED;
-    for (j = 0; j < MAX_DIMENSION; j++) {
-      EvolveRefineRegionLeftEdge[i][j]  = FLOAT_UNDEFINED;
-      EvolveRefineRegionRightEdge[i][j] = FLOAT_UNDEFINED;
-    }
-  }
-
   /* For evolving MultiRefine regions. */
   MultiRefineRegionFile = NULL;
   MultiRefineRegionTimeType = -1; /* 0=time bins 1=redshift bins*/
