@@ -130,6 +130,7 @@ class grid
   float *ParticleMass;                     // pointer to mass array
   PINT  *ParticleNumber;                   // unique identifier
   int   *ParticleType;                     // type of particle
+  int    ParticleTypeCount[NUM_PARTICLE_TYPES];  // count of each particle type
   float *ParticleAttribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
   float *ParticleInitialMass;              // Only allocated if StarMakerStoreInitialMass = 1
 
@@ -1523,7 +1524,8 @@ gradient force to gravitational force for one-zone collapse test. */
 /* Particles: return number of particles. */
 
    int ReturnNumberOfParticles() {return NumberOfParticles;};
-  int ReturnNumberOfActiveParticles() {return NumberOfActiveParticles;};
+   int ReturnNumberOfParticlesOfThisType(int ParticleIDToFind);
+   int ReturnNumberOfActiveParticles() {return NumberOfActiveParticles;};
    int ReturnNumberOfActiveParticlesOfThisType(int ActiveParticleIDToFind);
    ActiveParticleList<ActiveParticleType>& ReturnActiveParticles() {return Act\
 iveParticles;};
@@ -1533,7 +1535,9 @@ iveParticles;};
 /* Particles: set number of particles. */
 
    void SetNumberOfParticles(int num) {NumberOfParticles = num;};
-  void SetNumberOfActiveParticles(int num) {NumberOfActiveParticles = num;};
+   void SetParticleTypeCounts(int type, int count)
+    { ParticleTypeCount[type] = count; };  // TODO create ParticleTypeCount array
+   void SetNumberOfActiveParticles(int num) {NumberOfActiveParticles = num;};
    void SetActiveParticleTypeCounts(int type, int count)
     { ActiveParticleTypeCount[type] = count; };
 

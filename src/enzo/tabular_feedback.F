@@ -853,43 +853,53 @@ c      Locals
 c 
       INTG_PREC z_ub, a1_ub, a2_ub ! table index right bounds (for interp)
       R_PREC age1, age2            ! time integration bounds
+      R_PREC age_start_log, dage_log  ! for finding age indices
       R_PREC rate1, rate2, t1, t2 
 c 
-c      Set time integration bounds
+c     Set time integration bounds
 c 
       age1 = age
       if (age .lt. 0) age1 = 0
       age2 = age1 + dt
+c
+c     Set yield to 0 in case we exit
+c
+      yield = 0
 c 
-c      Yield table will need to be interpolated in age & metal frac.
-c      Find index to the right (above) of the target values
-c 
+c     Yield table will need to be interpolated in age & metal frac.
+c     Find index to the right (above) of the target value
+c     Metallicity indices are not regular but are few in number (~8)
       z_ub = 1_IKIND
       do while (tab_metal(z_ub) .lt. metal 
      &          .and. z_ub .lt. ntab_metal)
          z_ub = z_ub + 1_IKIND
       enddo
-      a1_ub = 1_IKIND
-      do while (tab_age(a1_ub) .lt. age1 
-     &                  .and. a1_ub .lt. ntab_age)
-         a1_ub = a1_ub + 1_IKIND
-      enddo
-      a2_ub = 1_IKIND
-      do while (tab_age(a2_ub) .lt. age2
-     &            .and. a2_ub .lt. ntab_age)
-         a2_ub = a2_ub + 1_IKIND
-      enddo
+c     Ages are many but are regularly spaced in *log* space so the
+c     indicies can be found algebraically.
+c     First index is zero so our line equation starts at index 2.
+c     The expression returns the lower bound so we add 1 to find
+c     the upper bound. This way I don't have to rewrite any of
+c     the following logic. 
+      age_start_log = log10(tab_age(2))
+      dage_log = log10(tab_age(3)) - log10(tab_age(2))
+      if (age1 .le. tab_age(2)) then 
+            a1_ub = 1_IKIND
+      else
+            a1_ub = int((log10(age1)-age_start_log)/dage_log+2, IKIND)+1
+      endif
+      if (age2 .le. tab_age(2)) then
+            a2_ub = 1_IKIND
+      else 
+            a2_ub = int((log10(age2)-age_start_log)/dage_log+2, IKIND)+1
+      endif
 c 
 c      If particle falls outside of age table, exit
 c 
-      if (a1_ub .eq. ntab_age+1) then
+      if (a1_ub .gt. ntab_age) then
          goto 5
       endif
 c 
-c      Otherwise, find yield
-c 
-      yield = 0
-c 
+c      Otherwise, find yield.
 c      Case 1: both age (age1) & age+dt (age2) are in the same table "cell"
 c 
       if (a2_ub - a1_ub .eq. 0) then
@@ -1033,6 +1043,7 @@ c      Locals
 c 
       INTG_PREC z_ub, a1_ub, a2_ub ! table index right bounds (for interp)
       R_PREC age1, age2            ! time integration bounds
+      R_PREC age_start, dage       ! for finding age indices
       R_PREC rate1, rate2, t1, t2 
 c 
 c      Set time integration bounds
@@ -1041,34 +1052,33 @@ c
       if (age .lt. 0) age1 = 0
       age2 = age1 + dt
 c 
-c      Yield table will need to be interpolated in age & metal frac.
-c      Find index to the right (above) of the target values
+c     Set yield to 0 in case we exit
 c 
+      yield = 0
+c 
+c     Yield table will need to be interpolated in age & metal frac.
+c     Find index to the right (above) of the target value
+c     Metallicity indices are not regular but are few in number (~8)
       z_ub = 1_IKIND
       do while (tab_metal(z_ub) .lt. metal 
      &          .and. z_ub .lt. ntab_metal)
          z_ub = z_ub + 1_IKIND
       enddo
-      a1_ub = 1_IKIND
-      do while (tab_age(a1_ub) .lt. age1 
-     &                  .and. a1_ub .lt. ntab_age)
-         a1_ub = a1_ub + 1_IKIND
-      enddo
-      a2_ub = 1_IKIND
-      do while (tab_age(a2_ub) .lt. age2
-     &            .and. a2_ub .lt. ntab_age)
-         a2_ub = a2_ub + 1_IKIND
-      enddo
+c     Ages are many but are regularly spaced in *linear* space so the
+c     indicies can be found algebraically.
+c     The expression return the lower bound so we add 1 to find
+c     the upper bound. This way I don't have to rewrite any of
+c     the following logic. 
+      age_start = tab_age(1)
+      dage = tab_age(2) - tab_age(1)
+      a1_ub = int((age1-age_start)/dage + 1, IKIND)+1
+      a2_ub = int((age2-age_start)/dage + 1, IKIND)+1
 c 
 c      If particle falls outside of age table, exit
 c 
       if (a1_ub .eq. ntab_age+1) then
          goto 5
       endif
-c 
-c      Otherwise, find yield
-c 
-      yield = 0
 c 
 c      Case 1: both age (age1) & age+dt (age2) are in the same table "cell"
 c 

@@ -209,20 +209,55 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 
     fprintf(fptr, "NumberOfParticles   = %"ISYM"\n", NumberOfParticles);
     fprintf(fptr, "NumberOfActiveParticles = %"ISYM"\n", NumberOfActiveParticles);
-        // Now write out which kind of active particles we have in this grid.
+    // Now write out which kind of (active) particles we have in this grid.
     fprintf(fptr, "PresentParticleTypes = ");
-    if (NumberOfParticles)
-      fprintf(fptr, "DarkMatter ");
+    // List types of standard particles
+
+    if (NumberOfParticles) {
+      for (int i = 0; i < NUM_PARTICLE_TYPES; i++) {
+        if (i == PARTICLE_TYPE_GAS && ParticleTypeCount[i] > 0)
+          fprintf(fptr, "Gas ");
+        else if (i == PARTICLE_TYPE_DARK_MATTER && ParticleTypeCount[i] > 0)
+          fprintf(fptr, "DarkMatter ");
+        else if (i == PARTICLE_TYPE_STAR && ParticleTypeCount[i] > 0)
+          fprintf(fptr, "Star ");
+        else if (i == PARTICLE_TYPE_TRACER && ParticleTypeCount[i] > 0)
+          fprintf(fptr, "Tracer ");
+        else if (i == PARTICLE_TYPE_MUST_REFINE && ParticleTypeCount[i] > 0)
+          fprintf(fptr, "MustRefine ");
+        else if (i == PARTICLE_TYPE_SINGLE_STAR && ParticleTypeCount[i] > 0)
+          fprintf(fptr, "SingleStar ");
+        else if (i == PARTICLE_TYPE_BLACK_HOLE && ParticleTypeCount[i] > 0)
+          fprintf(fptr, "BlackHole ");
+        else if (i == PARTICLE_TYPE_CLUSTER && ParticleTypeCount[i] > 0)
+          fprintf(fptr, "Cluster ");
+        else if (i == PARTICLE_TYPE_MBH && ParticleTypeCount[i] > 0)
+          fprintf(fptr, "MBH ");
+        else if (i == PARTICLE_TYPE_COLOR_STAR && ParticleTypeCount[i] > 0)
+          fprintf(fptr, "ColorStar ");
+        else if (i == PARTICLE_TYPE_SIMPLE_SOURCE && ParticleTypeCount[i] > 0)
+          fprintf(fptr, "SimpleSource ");
+        else if (i == PARTICLE_TYPE_RAD && ParticleTypeCount[i] > 0)
+          fprintf(fptr, "Rad ");
+      }
+    }
+    // List types of active particles
     for (int i = 0; i<EnabledActiveParticlesCount; i++){
       if (ActiveParticleTypeCount[i] > 0) {
         fprintf(fptr, "%s ", EnabledActiveParticles[i]->particle_name.c_str());
       }
     }
     fprintf(fptr, "\n");
+
     // And their counts
     fprintf(fptr, "ParticleTypeCounts = ");
-    if (NumberOfParticles)
-      fprintf(fptr, "%"ISYM" ", NumberOfParticles);
+    if (NumberOfParticles) {
+      for (int i = 0; i < NUM_PARTICLE_TYPES; i++) {
+        if (ParticleTypeCount[i] > 0) {
+          fprintf(fptr, "%"ISYM" ", ParticleTypeCount[i]);
+        }
+      }
+    }
     for (int i = 0; i<EnabledActiveParticlesCount; i++){
       if (ActiveParticleTypeCount[i] > 0) {
         fprintf(fptr, "%"ISYM" ", ActiveParticleTypeCount[i]);

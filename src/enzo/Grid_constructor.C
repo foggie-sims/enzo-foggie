@@ -133,6 +133,8 @@ grid::grid()
   GravityBoundaryType           = GravityUndefined;
   for (i = 0; i < MAX_NUMBER_OF_PARTICLE_ATTRIBUTES; i++)
     ParticleAttribute[i] = NULL;
+  for (i=0; i<NUM_PARTICLE_TYPES; i++)
+    ParticleTypeCount[i] = 0;
 
   BoundaryFluxes                = NULL;
  

@@ -996,6 +996,9 @@ SYGMA parameters such as the IMF, nucleosynthetic yield tables, Type II SNe mass
 and Type Ia SNe delay time distribution can be set by modifying the ``params`` dictionary
 at the top of ``chemical_feedback.py``. Additional parameters supported by SYGMA can also
 be added to this dictionary; see the `SYGMA documentation <https://nugrid.github.io/NuPyCEE/SPHINX/build/html/sygma.html>`_.
+Be advised that Enzo expects the table to contain population ages that are evenly spaced
+in log space. You should therefore not change the type of timestepping used for generating
+the table (though you are free to change the number of intervals used).
 
 The script for combining pre-SN feedback yield tables for stellar winds from Starburst99 
 is provided as a Jupyter notebook in ``input/combine_pySB_hdf5.ipynb``. You will need numpy and h5py
