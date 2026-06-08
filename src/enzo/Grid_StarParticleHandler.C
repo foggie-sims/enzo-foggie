@@ -1830,11 +1830,14 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       }
     }
     
+    k_diss_H2I_grid_sum = 0.0; //Grid properties
+    k_det_HM_grid_sum = 0.0;
     FORTRAN_NAME(star_feedback6)(
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], mu_field,
           BaryonField[TENum], BaryonField[GENum], BaryonField[Vel1Num],
           BaryonField[Vel2Num], BaryonField[Vel3Num], BaryonField[MetalNum],
+          &k_diss_H2I_grid_sum,&k_det_HM_grid_sum, //CT "RT" Implementation
        &DualEnergyFormalism, &MetallicityField, &MultiMetals, &HydroMethod,
        &dtFixed, &CellWidthTemp,
           &Time, &zred, &MyProcessorNumber,
@@ -1856,9 +1859,29 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        &FBTable.n_met, &FBTable.n_age, FBTable.ini_met, FBTable.pop_age, 
        FBTable.mass_yield, FBTable.metm_yield, FBTable.event_rate, &StarFeedbackStochasticSNe,
        &StarFeedbackPreSNFeedback, &StarFeedbackPreSNMomentum, &pSNFBTable.n_met, &pSNFBTable.n_age, pSNFBTable.ini_met, pSNFBTable.pop_age, 
-       pSNFBTable.mass_yield, pSNFBTable.metm_yield, pSNFBTable.mom_rate);
+       pSNFBTable.mass_yield, pSNFBTable.metm_yield, pSNFBTable.mom_rate,pSNFBTable.kdiss_H2,pSNFBTable.kdet_HM);
 
     delete [] mu_field;
+     
+    float dx = this->CellWidth[0][0];
+    float cell_volume = dx*dx*dx; //Need to convert from mass density to mass
+    float dilutionRadius = 0.5 * (grid_dx + grid_dy + grid_dz)/3.0; //Get Half the average extent of the grid
+    //float dilutionRadius = 4.848e-6 * pc_cm / (double) LengthUnits;  // 1 AU //Try an extreme case
+    float dilRad2 = dilutionRadius * dilutionRadius;
+    float MassUnits = DensityUnits * POW(LengthUnits,3);
+    float mass_conversion = MassUnits / SolarMass; //Convert from code mass to SolarMass
+    float unit_conversion = TimeUnits / (LengthUnits * LengthUnits);; //Convert to code units
+    float conversion_factor = unit_conversion * mass_conversion * cell_volume / (4.0 * 3.14159 * dilRad2); //Convert from density, and dilute assuming average distance from star
+
+    //k_diss_H2 returned as "cm**2 / s per cell volume * minit/Msun"
+    k_diss_H2I_grid_sum = k_diss_H2I_grid_sum * conversion_factor;
+    k_det_HM_grid_sum = k_det_HM_grid_sum * conversion_factor;
+    //for (int i = 0; i < size; i++){
+    //   BaryonField[kdissH2INum][i] = k_diss_H2I_grid_sum;
+    //   BaryonField[kphHMNum][i]    = k_det_HM_grid_sum;
+       
+    //}
+
  
   } // end: if MECH_STAR
 

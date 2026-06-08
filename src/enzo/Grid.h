@@ -94,6 +94,9 @@ class grid
   int   SubgridsAreStatic;             // 
   int   ID;                            // Grid ID Number
   int   sfSeed;
+  float k_diss_H2I_grid_sum;           // For Basic RT implementation
+  float k_det_HM_grid_sum;
+
 //
 //  Baryon grid data
 //

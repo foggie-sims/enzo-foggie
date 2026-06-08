@@ -283,6 +283,8 @@ int grid::GrackleWrapper()
   }
 #endif // TRANSFER
 
+
+
   /* Estimate local radiation field from new Stars */
   //Simplest Alternative:
   //Sum all the mass of all young star particles on the grid
@@ -290,6 +292,7 @@ int grid::GrackleWrapper()
   //Convert to RT_H2_dissociation_rate and add to grackle fields
 
   //Sum all mass of young star particles on grid
+  /*
   static const float metallicity_bins[6] = {0.0, 0.0004, 0.002, 0.006, 0.014, 0.02}; //Metallicity bins for SB99 tables
   static const float age_bins[11] = {0,5e6,1e7,1.5e7,2e7,2.5e7,3e7,3.5e7,4e7,4.5e7,5e7}; //Age bins for SB99 tables. To do: check units, currently years
 
@@ -381,12 +384,13 @@ int grid::GrackleWrapper()
   float dilRad2 = dilutionRadius * dilutionRadius;
   k_diss_H2 = k_diss_H2  / (4.0 * 3.14159 * dilRad2);
   k_det_HM = k_det_HM    / (4.0 * 3.14159 * dilRad2);
-
+  
+  */
   float *k_diss_H2_grid  = new float[size];
   float *k_det_HM_grid  = new float[size];
   for (int i = 0; i < size; i++){
-      k_diss_H2_grid[i] = k_diss_H2;
-      k_det_HM_grid[i] = k_det_HM;
+      k_diss_H2_grid[i] = k_diss_H2I_grid_sum; //From Grid Property written in StarParticleHandler
+      k_det_HM_grid[i] = k_det_HM_grid_sum; 
   }
   fprintf(stdout, "CWT: Setting My Fields...\n");
   fprintf(stdout, "CWT: k_diss_H2 = %"FSYM" Hz?\n", k_diss_H2_grid[0] / TimeUnits);

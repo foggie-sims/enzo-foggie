@@ -161,6 +161,17 @@ int grid::ReadGrid(FILE *fptr, int GridID, char DataFilename[],
             ENZO_FAIL("Error reading SubgridsAreStatic.");
     }
 
+    /* Read grid RT Sums - CWT*/
+    if (fscanf(fptr, "k_diss_H2I_grid_sum = %"GOUTSYM"\n", k_diss_H2I_grid_sum) != 1) {
+            ENZO_FAIL("Error reading k_diss_H2I_grid_sum.");
+    }
+
+    if (fscanf(fptr, "k_det_HM_grid_sum = %"GOUTSYM"\n", k_det_HM_grid_sum) != 1) {
+            ENZO_FAIL("Error reading k_det_HM_grid_sum.");
+    }
+
+
+
     /* Read baryon field quantities. */
  
     if (fscanf(fptr, "NumberOfBaryonFields = %"ISYM"\n",

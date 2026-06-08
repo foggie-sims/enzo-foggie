@@ -331,116 +331,16 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
   //Sum all the mass of all young star particles on the grid
   //Get an estimate of the LW photon production from fitting Starbust99 results (w/o loading in a table)
   //Convert to RT_H2_dissociation_rate and add to grackle fields
-
-  //Sum all mass of young star particles on grid
-  static const float metallicity_bins[6] = {0.0, 0.0004, 0.002, 0.006, 0.014, 0.02}; //Metallicity bins for SB99 tables
-  static const float age_bins[11] = {0,5e6,1e7,1.5e7,2e7,2.5e7,3e7,3.5e7,4e7,4.5e7,5e7}; //Age bins for SB99 tables. To do: check units, currently years
-
-  float years_to_seconds = 3.15576e7f; //Seconds in a year
-  float MassUnits = DensityUnits * POW(LengthUnits,3);
-
-  //Cheap implementation of lookup tables for SB99. Should do full interpolation in tabular_feedback, but this will give a quick proof of concept.
-  //I've generated the full tables and have the framework for reading them in following the tabular_feedback scheme, but will leave as this for now.
-  //H2 photodissociation rates from Lyman-Werner photons in units of cm^2/s per Msun of stars. To convert to RT units, need to multiply by young_star_mass and divide by LengthUnits^2
-  //Each row corresponds to a different metallicity bin, each column corresponds to a different age bin.
-  static const float kdiss_H2_sb99[5][10] = {{8.616753475461946e+28, 3.0609842295148783e+28, 1.7793259544275774e+28, 1.5579481975570319e+28, 7.336999024747869e+27, 6.16771377021248e+27, 4.934612144598924e+27, 4.672521186828272e+27, 4.4146802267792734e+27, 4.083479510828315e+27},
-      {9.721982223039793e+28, 4.304822507060031e+28, 1.8644395112296062e+28, 1.0619152696364634e+28, 7.848321220290816e+27, 5.642701209907671e+27, 4.4481784324738383e+27, 3.5499680262354453e+27, 2.8571716506680415e+27, 2.3976026941788822e+27},
-      {1.0573363485793936e+29, 3.774233520528279e+28, 1.4727367324254517e+28, 8.13310248001581e+27, 5.741325336346668e+27, 4.0256979767777485e+27, 3.126377653994177e+27, 2.3896288079559745e+27, 1.8599668891094716e+27, 1.612425486113449e+27},
-      {1.0891678985339411e+29, 3.2456721710048436e+28, 1.1576683096773793e+28, 6.311547803801093e+27, 4.382626900327114e+27, 2.9285407981848826e+27, 2.2622327737699204e+27, 1.6952595798785602e+27, 1.2641920083191978e+27, 1.0863416172338696e+27},
-      {1.0801135857923557e+29, 2.8455249259730975e+28, 9.102459204349159e+27, 4.668747480690447e+27, 2.889872536333432e+27, 2.0071649538074096e+27, 1.3899321088430588e+27, 9.873410563441971e+26, 7.167294859311428e+26, 5.888193311217845e+26}};
-
-  //H- photodetachment rates in units of cm^2/s per Msun of stars. To convert to RT units, need to multiply by young_star_mass and divide by LengthUnits^2
-  static const float kdet_HM_sb99[5][10] = {{3.8241226738957066e+30, 1.2691075221881906e+30, 6.320187615663541e+29, 4.589734608406248e+29, 2.0886091048841194e+29, 1.7686502309462676e+29, 1.449086479665172e+29, 1.3742786972477078e+29, 1.3156335472850541e+29, 1.248175564829444e+29},
-      {5.355080973335116e+30, 1.506101136754258e+30, 7.367051989107666e+29, 4.94826722391895e+29, 4.3672645585508546e+29, 3.646219930630708e+29, 3.2993246094530356e+29, 3.349240499947722e+29, 2.81035243418751e+29, 2.3917918242342782e+29},
-      {4.975427798636371e+30, 2.11430381110695e+30, 1.0134575716416472e+30, 7.015201614220793e+29, 6.536613088761112e+29, 5.45449846075009e+29, 4.6504715263353755e+29, 4.8418816203992866e+29, 4.325479957866995e+29, 3.2547242824127256e+29},
-      {4.5062467799254436e+30, 2.7441414260306114e+30, 1.5135046492296408e+30, 9.762287625447108e+29, 7.833203390009536e+29, 6.784162146506757e+29, 5.1530282236800166e+29, 5.319482714958312e+29, 5.128378151096622e+29, 3.811304647568074e+29},
-      {4.367128430849667e+30, 2.7899493363546306e+30, 1.438774324771867e+30, 8.63880338912953e+29, 6.441637068851158e+29, 5.4212026702962396e+29, 5.100041216387224e+29, 4.6203283682706974e+29, 4.27653791399001e+29, 3.507518956008909e+29}};
-
-  float k_diss_H2 = 0; //Photodissociation rate for H2 from LW band
-  float k_det_HM = 0; //Photodetachment rate for H- from photons above 0.755 eV
-  for (i = 0; i < this->NumberOfParticles; i++) {
-    if (this->ParticleType[i] == PARTICLE_TYPE_STAR) {
-      float age = (this->Time - this->ParticleAttribute[0][i]) * TimeUnits / years_to_seconds; //Convert to yr
-      if (age < 5e7) { //To do: Double check units are being handled correctly throughout
-          //To do: This stuff shouldn't be hardcoded like this, but I'm assuming we will replace this all with actually reading the tables
-          int aa = search_lower_bound((float*)age_bins, age, 0, 11, 11); 
-          float t_age=0.5f;
-          if (aa>=10){
-            aa=9;
-            t_age = 1;
-          }
-          else if (aa<0){
-            aa=0;
-            t_age=0;
-          }
-          else{
-              t_age = (age - age_bins[aa]) / (age_bins[aa+1] - age_bins[aa]);
-          }
-
-          float metallicity = this->ParticleAttribute[2][i];
-          int zz = search_lower_bound((float*)metallicity_bins, metallicity, 0, 6, 6);
-
-          float t_z=0.5f;
-          if (zz>=5){
-            zz=4;
-            t_z = 1;
-          }
-          else if (zz<0){
-            zz=0;
-            t_z=0;
-          }
-          else{
-              t_z = (metallicity - metallicity_bins[zz]) / (metallicity_bins[zz+1] - metallicity_bins[zz]);
-          }
-
-          float k_diss_H2_sb99_interp = (1-t_age) * (1-t_z) * kdiss_H2_sb99[zz][aa] + t_age * (1-t_z) * kdiss_H2_sb99[zz][aa+1] + (1-t_age) * t_z * kdiss_H2_sb99[zz+1][aa] + t_age * t_z * kdiss_H2_sb99[zz+1][aa+1];
-          float k_det_HM_sb99_interp = (1-t_age) * (1-t_z) * kdet_HM_sb99[zz][aa] + t_age * (1-t_z) * kdet_HM_sb99[zz][aa+1] + (1-t_age) * t_z * kdet_HM_sb99[zz+1][aa] + t_age * t_z * kdet_HM_sb99[zz+1][aa+1];
-
-          float dx = this->CellWidth[0][0];
-          float ParticleMass_Msun = this->ParticleMass[i] * dx * dx * dx * MassUnits / (1.989e33); //Convert from code mass to Msun
-         // fprintf(stdout, "CWT: Interpolating for star particle with mass %"FSYM" Msun?\n",ParticleMass_Msun);
-
-          k_diss_H2 += k_diss_H2_sb99_interp * ParticleMass_Msun; //Convert from code mass to Msun
-          k_det_HM += k_det_HM_sb99_interp * ParticleMass_Msun; //Convert from code mass to Msun
-
-
-      }
-    }
-  }
-  k_diss_H2 = k_diss_H2 * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
-  k_det_HM  = k_det_HM  * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units
-  float grid_dx = this->GridRightEdge[0]-this->GridLeftEdge[0];
-  float grid_dy = this->GridRightEdge[1]-this->GridLeftEdge[1];
-  float grid_dz = this->GridRightEdge[2]-this->GridLeftEdge[2];
-  //This is the most tunable part of this code, as calculating the r^2 for each cell will get expensive
-  //Currently estimating as half the average extent of the grid which isn't great
-  //To do: Account for any local extinction from unresolved sources around stars?
-  float dilutionRadius = 0.5 * (grid_dx + grid_dy + grid_dz)/3.0; //Get Half the average extent of the grid
-  //float dilutionRadius = 4.848e-6 * pc_cm / (double) LengthUnits;  // 1 AU //Try an extreme case first
-  float dilRad2 = dilutionRadius * dilutionRadius;
-  k_diss_H2 = k_diss_H2  / (4.0 * 3.14159 * dilRad2);
-  k_det_HM = k_det_HM    / (4.0 * 3.14159 * dilRad2);
-
-  //float *k_diss_H2_grid = new float[size];
-  //float *k_det_HM_grid = new float[size];
-
-  //for (int i = 0; i < size; i++){
-  //    k_diss_H2_grid[i] = k_diss_H2;
-  //    k_det_HM_grid[i] = k_det_HM;
-  //}
-
   float *k_diss_H2_grid  = new float[size];
   float *k_det_HM_grid  = new float[size];
   for (int i = 0; i < size; i++){
-      k_diss_H2_grid[i] = k_diss_H2;
-      k_det_HM_grid[i] = k_det_HM;
+      k_diss_H2_grid[i] = k_diss_H2I_grid_sum; //From Grid Property written in StarParticleHandler
+      k_det_HM_grid[i] = k_det_HM_grid_sum; 
   }
-  fprintf(stdout, "CWT: Setting My Fields in Grid_ComputeCoolingTime...\n");
+  my_fields.RT_H2_dissociation_rate =  k_diss_H2I_grid_sum;//Already in units of seconds (from table)
+  my_fields.RT_HM_detachment_rate =  k_det_HM_grid_sum;  //Feeds in Britton's Grackle Branch (foggie-sf) only
 
-  my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
-  my_fields.RT_HM_detachment_rate =  k_det_HM_grid;  //Feeds in Britton's Grackle Branch (foggie-sf) only
-
-
+  // Need to set the other fields to the same 0 array for now
   float *EmptyRtArray0  = new float[size];
   float *EmptyRtArray1  = new float[size];
   float *EmptyRtArray2  = new float[size];
@@ -463,6 +363,7 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
   my_fields.RT_HeI_ionization_rate  = EmptyRtArray1;
   my_fields.RT_HeII_ionization_rate = EmptyRtArray2;
   my_fields.RT_heating_rate = EmptyRtArray3;
+  
   /*                                              */
 
 

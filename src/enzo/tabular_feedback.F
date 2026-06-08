@@ -71,7 +71,7 @@ c
 c
       dt_yr = dt*t1/yr_s
 c 
-c      Metal yields are are rates (per year) per initial population mass
+c      Metal yields are rates (per year) per initial population mass
 c      Note that the initial mass is expressed as a mass density
        call integrate_yields_pSN(metal_yield, metal_frac, age, dt_yr,
      &            metal_table, metal_array, age_array,
@@ -117,6 +117,84 @@ c
       momentum_yield = momentum_yield * mass_init / (vunits/1e5_RKIND) ! convert from km/s to code units
       end subroutine
 c
+c  ===============================================
+c  
+c      Return integrated Lyman-Werner Luminosity from pre-SN feedback
+c 
+      subroutine pSN_LW(integrated_counts,
+     &                    mass_init, metal_frac, age, 
+     &                    dt, t1,
+     &                    lw_table, metal_array, age_array,
+     &                    metal_size, age_size)
+c 
+      implicit none
+#include "fortran_types.def"
+c 
+c      Arguments
+c 
+      R_PREC integrated_counts !Table is in units of cm^2/s per Msun
+      R_PREC mass_init, metal_frac, age
+      R_PREC dt, t1
+      INTG_PREC metal_size, age_size
+      R_PREC lw_table(age_size, metal_size)
+      R_PREC metal_array(metal_size), age_array(age_size)
+c 
+c      Locals
+c 
+      R_PREC dt_yr
+c
+      dt_yr = dt*t1/yr_s
+c 
+c      Integrated counts is in 1/s per initial population mass
+c      Note that the initial mass is expressed as a mass density
+       call integrate_yields_pSN(integrated_counts, metal_frac, age, dt_yr,
+     &            lw_table, metal_array, age_array,
+     &            metal_size, age_size)
+
+c 
+      integrated_counts = integrated_counts * mass_init / dt_yr !Convert back to a count (cm^2/s) per unit volume
+      end subroutine
+c
+c  ===============================================
+c  
+c      Return integrated H-minus photodetatchment rate from SB99 Tables
+c 
+c 
+      subroutine pSN_HM(integrated_counts,
+     &                    mass_init, metal_frac, age, 
+     &                    dt, t1,
+     &                    hm_table, metal_array, age_array,
+     &                    metal_size, age_size)
+c 
+      implicit none
+#include "fortran_types.def"
+c
+c     Arguments
+c
+      R_PREC integrated_counts
+      R_PREC mass_init, metal_frac, age
+      R_PREC dt, t1
+      INTG_PREC metal_size, age_size
+      R_PREC hm_table(age_size, metal_size)
+      R_PREC metal_array(metal_size), age_array(age_size)
+c 
+c     Locals
+c 
+      R_PREC dt_yr
+c
+      dt_yr = dt*t1/yr_s
+c 
+c      Integrated counts is in 1/s per initial population mass
+c      Note that the initial mass is expressed as a mass density
+      call integrate_yields_pSN(integrated_counts, metal_frac, age, dt_yr,
+     &            hm_table, metal_array, age_array,
+     &            metal_size, age_size)
+c 
+      integrated_counts = integrated_counts * mass_init / dt_yr !Convert back to a count (cm**2/s) per unit volume
+      end subroutine
+c
+c  ===============================================
+c  
 c ===============================================
 c 
 c     Return mass density in code units yielded by

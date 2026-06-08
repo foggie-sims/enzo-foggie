@@ -45,6 +45,10 @@ grid::grid()
 
   SubgridFluxStorage = NULL;
   NumberOfSubgrids = 1;
+
+  /* Grid Sum RT Values - CWT */
+  k_diss_H2I_grid_sum = 0.;
+  k_det_HM_grid_sum = 0.;
  
   /* clear MAX_DIMENSION vectors */
  

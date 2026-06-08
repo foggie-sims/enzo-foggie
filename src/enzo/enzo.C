@@ -924,6 +924,10 @@ void my_exit(int status)
     delete [] pSNFBTable.mass_yield;
     delete [] pSNFBTable.metm_yield;
     delete [] pSNFBTable.mom_rate;
+
+    //And RT Fields
+    delete [] pSNFBTable.kdiss_H2;
+    delete [] pSNFBTable.kdet_HM;
   }
 
   if (status == EXIT_SUCCESS) {
