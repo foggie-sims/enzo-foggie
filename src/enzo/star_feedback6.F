@@ -672,9 +672,9 @@ c     Clamp feedback center so feedback region [ic-distrad, ic+distrad]
 c     stays within the allocated array, regardless of floating-point
 c     rounding in the position-to-index conversion above or parameter values.
 c
-            ic = max(distrad+1_IKIND, min(nx-distrad, ic))
-            jc = max(distrad+1_IKIND, min(ny-distrad, jc))
-            kc = max(distrad+1_IKIND, min(nz-distrad, kc))
+            ic = max(fbuff+1_IKIND, min(nx-fbuff, ic))
+            jc = max(fbuff+1_IKIND, min(ny-fbuff, jc))
+            kc = max(fbuff+1_IKIND, min(nz-fbuff, kc))
 c
 c     Put nsn, meject, mzeject, and weighted particle velocity values on grid at this location
 c     Weight average velocity for SNe by number of SNe going off in each particle
