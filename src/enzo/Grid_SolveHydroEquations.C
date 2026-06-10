@@ -172,11 +172,12 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
     /* Add "real" colour fields (metallicity, etc.) as colour variables. */
 
     int SNColourNum, MetalNum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum,
-      MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum; 
+      MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum, DustDensityNum;
 
     if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum,
                 MetalAGBNum, MetalNSMNum,
-                MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum) == FAIL)
+                MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum,
+                DustDensityNum) == FAIL)
       ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
 
     if (MetalNum != -1) {
@@ -193,6 +194,31 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
     if (MBHColourNum     != -1) colnum[NumberOfColours++] = MBHColourNum;
     if (Galaxy1ColourNum != -1) colnum[NumberOfColours++] = Galaxy1ColourNum;
     if (Galaxy2ColourNum != -1) colnum[NumberOfColours++] = Galaxy2ColourNum;
+    if (DustDensityNum   != -1) colnum[NumberOfColours++] = DustDensityNum;
+
+    /* Species-resolved dust tracking: 5 gas-phase elements + 3 dust species.
+       The bulk and silicate dust sums are not carried (advection is linear,
+       so advecting the species is equivalent). */
+    if (UseDustSpeciesTrack) {
+      int MetalCNum_  = FindField(MetalDensityCarbon,     FieldType, NumberOfBaryonFields);
+      int MetalONum_  = FindField(MetalDensityOxygen,     FieldType, NumberOfBaryonFields);
+      int MetalMgNum_ = FindField(MetalDensityMagnesium,  FieldType, NumberOfBaryonFields);
+      int MetalSiNum_ = FindField(MetalDensitySilicon,    FieldType, NumberOfBaryonFields);
+      int MetalFeNum_ = FindField(MetalDensityIron,       FieldType, NumberOfBaryonFields);
+      int DustMgNum_  = FindField(DustDensityMgSilicate,  FieldType, NumberOfBaryonFields);
+      int DustFeNum_  = FindField(DustDensityFeSilicate,  FieldType, NumberOfBaryonFields);
+      int DustCNum_   = FindField(DustDensityCarbonaceous,FieldType, NumberOfBaryonFields);
+      if (MetalCNum_  != -1) colnum[NumberOfColours++] = MetalCNum_;
+      if (MetalONum_  != -1) colnum[NumberOfColours++] = MetalONum_;
+      if (MetalMgNum_ != -1) colnum[NumberOfColours++] = MetalMgNum_;
+      if (MetalSiNum_ != -1) colnum[NumberOfColours++] = MetalSiNum_;
+      if (MetalFeNum_ != -1) colnum[NumberOfColours++] = MetalFeNum_;
+      if (DustMgNum_  != -1) colnum[NumberOfColours++] = DustMgNum_;
+      if (DustFeNum_  != -1) colnum[NumberOfColours++] = DustFeNum_;
+      if (DustCNum_   != -1) colnum[NumberOfColours++] = DustCNum_;
+    }
+    //if (MetalAGBNum      != -1) colnum[NumberOfColours++] = MetalAGBNum;
+    //if (MetalNSMNum      != -1) colnum[NumberOfColours++] = MetalNSMNum;
 
 
     /* Add Simon Glover's chemistry species as color fields */

@@ -645,6 +645,16 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   StarFeedbackTrackMetalSources    = FALSE;
   StarMakerUseJeansMass            = TRUE;
   MultiMetals                      = FALSE;
+  UseDustDensityField              = FALSE;
+  InitialDustToGasRatio            = 0.009387;
+  UseSNeRateField                  = FALSE;
+  UseDustSpeciesTrack              = FALSE;
+  /* Canonical MW diffuse-ISM dust split (Draine 2003) and
+     COLIBRE equal-molecule Mg2SiO4/Fe2SiO4 seed split. */
+  InitialDustSilicateFraction      = 0.65;
+  InitialDustMgSilicateFraction    = 0.408428;
+  InitialDustFeSilicateFraction    = 0.591572;
+  InitialDustCarbonaceousFraction  = 0.35;
   NumberOfParticleAttributes       = INT_UNDEFINED;
   ParticleTypeInFile               = TRUE;
   ReadGhostZones                   = FALSE;

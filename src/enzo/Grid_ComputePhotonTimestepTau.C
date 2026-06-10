@@ -89,11 +89,22 @@ float grid::ComputePhotonTimestepTau(float DensityUnits, float LengthUnits,
   a6inv = a3inv * a3inv;
 
 #ifdef USE_GRACKLE
+#ifdef GRACKLE_NEW_RATE_API
+  double *grackle_k1 = NULL, *grackle_k2 = NULL;
+#endif
   if (grackle_data->use_grackle == TRUE) {
     logtem0 = log(grackle_data->TemperatureStart);
     logtem9 = log(grackle_data->TemperatureEnd);
     nbins = grackle_data->NumberOfTemperatureBins;
     dlogtem = (logtem9 - logtem0) / float(nbins-1);
+#ifdef GRACKLE_NEW_RATE_API
+    grackle_k1 = new double[nbins];
+    grackle_k2 = new double[nbins];
+    grunstable_ratequery_get_f64(&grackle_rates,
+      grunstable_ratequery_id(&grackle_rates, "k1"), grackle_k1);
+    grunstable_ratequery_get_f64(&grackle_rates,
+      grunstable_ratequery_id(&grackle_rates, "k2"), grackle_k2);
+#endif
   } else
 #endif
   {
@@ -128,10 +139,17 @@ float grid::ComputePhotonTimestepTau(float DensityUnits, float LengthUnits,
 
 #ifdef USE_GRACKLE
 	  if (grackle_data->use_grackle == TRUE) {
-	    kr1 = grackle_rates.k1[tidx] + (logtem - t1) * 
+#ifdef GRACKLE_NEW_RATE_API
+	    kr1 = grackle_k1[tidx] + (logtem - t1) *
+	      (grackle_k1[tidx+1] - grackle_k1[tidx]) / tdef;
+	    kr2 = grackle_k2[tidx] + (logtem - t1) *
+	      (grackle_k2[tidx+1] - grackle_k2[tidx]) / tdef;
+#else
+	    kr1 = grackle_rates.k1[tidx] + (logtem - t1) *
 	      (grackle_rates.k1[tidx+1] - grackle_rates.k1[tidx]) / tdef;
-	    kr2 = grackle_rates.k2[tidx] + (logtem - t1) * 
+	    kr2 = grackle_rates.k2[tidx] + (logtem - t1) *
 	      (grackle_rates.k2[tidx+1] - grackle_rates.k2[tidx]) / tdef;
+#endif
 	  } else
 #endif
 	  {
@@ -167,6 +185,12 @@ float grid::ComputePhotonTimestepTau(float DensityUnits, float LengthUnits,
     } // ENDFOR j
   
   delete [] temperature;
+#ifdef USE_GRACKLE
+#ifdef GRACKLE_NEW_RATE_API
+  delete [] grackle_k1;
+  delete [] grackle_k2;
+#endif
+#endif
 
   return dt;
 }

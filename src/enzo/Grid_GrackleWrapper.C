@@ -246,8 +246,74 @@ int grid::GrackleWrapper()
 
   my_fields.metal_density   = MetalPointer;
 
+  /* Dust density field — passed in same code density units as gas density */
+  int DustDensityNum = FindField(DustDensity, FieldType, NumberOfBaryonFields);
+  if (DustDensityNum != -1)
+    my_fields.dust_density = BaryonField[DustDensityNum];
+  else
+    my_fields.dust_density = NULL;
+
+  /* Species-resolved dust tracking (dust_species_track = 1): 5 gas-phase
+     element fields (subsets of metal_density) and 3 dust species fields.
+     The bulk dust density and the silicate sum are not carried as baryon
+     fields; Grackle only reads them as the current sum of the species and
+     re-derives them on output (make_consistent Phase E), so they are
+     reconstructed here in scratch buffers and discarded after the solve. */
+  float *TotalDust = NULL, *TotalSilicate = NULL;
+  my_fields.metal_density_carbon      = NULL;
+  my_fields.metal_density_oxygen      = NULL;
+  my_fields.metal_density_magnesium   = NULL;
+  my_fields.metal_density_silicon     = NULL;
+  my_fields.metal_density_iron        = NULL;
+  my_fields.dust_density_silicate     = NULL;
+  my_fields.dust_density_mg_silicate  = NULL;
+  my_fields.dust_density_fe_silicate  = NULL;
+  my_fields.dust_density_carbonaceous = NULL;
+  if (UseDustSpeciesTrack) {
+    int MetalCNum  = FindField(MetalDensityCarbon,     FieldType, NumberOfBaryonFields);
+    int MetalONum  = FindField(MetalDensityOxygen,     FieldType, NumberOfBaryonFields);
+    int MetalMgNum = FindField(MetalDensityMagnesium,  FieldType, NumberOfBaryonFields);
+    int MetalSiNum = FindField(MetalDensitySilicon,    FieldType, NumberOfBaryonFields);
+    int MetalFeNum = FindField(MetalDensityIron,       FieldType, NumberOfBaryonFields);
+    int DustMgNum  = FindField(DustDensityMgSilicate,  FieldType, NumberOfBaryonFields);
+    int DustFeNum  = FindField(DustDensityFeSilicate,  FieldType, NumberOfBaryonFields);
+    int DustCNum   = FindField(DustDensityCarbonaceous,FieldType, NumberOfBaryonFields);
+    if (DustMgNum == -1 || DustFeNum == -1 || DustCNum == -1)
+      ENZO_FAIL("UseDustSpeciesTrack = 1 but a dust species field is missing.\n");
+    if (MetalCNum  != -1) my_fields.metal_density_carbon      = BaryonField[MetalCNum];
+    if (MetalONum  != -1) my_fields.metal_density_oxygen      = BaryonField[MetalONum];
+    if (MetalMgNum != -1) my_fields.metal_density_magnesium   = BaryonField[MetalMgNum];
+    if (MetalSiNum != -1) my_fields.metal_density_silicon     = BaryonField[MetalSiNum];
+    if (MetalFeNum != -1) my_fields.metal_density_iron        = BaryonField[MetalFeNum];
+    my_fields.dust_density_mg_silicate  = BaryonField[DustMgNum];
+    my_fields.dust_density_fe_silicate  = BaryonField[DustFeNum];
+    my_fields.dust_density_carbonaceous = BaryonField[DustCNum];
+    TotalDust     = new float[size];
+    TotalSilicate = new float[size];
+    for (i = 0; i < size; i++) {
+      TotalSilicate[i] = BaryonField[DustMgNum][i] + BaryonField[DustFeNum][i];
+      TotalDust[i]     = TotalSilicate[i] + BaryonField[DustCNum][i];
+    }
+    my_fields.dust_density          = TotalDust;
+    my_fields.dust_density_silicate = TotalSilicate;
+  }
+
   my_fields.volumetric_heating_rate = volumetric_heating_rate;
   my_fields.specific_heating_rate   = specific_heating_rate;
+
+  /* Per-cell SN rate field (use_sne_field = 1). The
+     field is populated by star_feedback2 each timestep as SNe-per-cell. */
+  if (UseSNeRateField) {
+    int SNeRateNum = FindField(SNeRate, FieldType, NumberOfBaryonFields);
+    if (SNeRateNum == -1)
+      ENZO_FAIL("UseSNeRateField = 1 but SNeRate field is missing.\n");
+    my_fields.sne_rate = BaryonField[SNeRateNum];
+  } else {
+    my_fields.sne_rate = NULL;
+  }
+
+  /* Per-cell dust destruction timescale field (use_tau_dest_field = 1) — NULL if not used */
+  my_fields.tau_dest  = NULL;
 
 #ifdef TRANSFER
   /* Find RT fields */
@@ -284,6 +350,8 @@ int grid::GrackleWrapper()
 
   if (solve_chemistry(&grackle_units, &my_fields, (double) dt_cool) == FAIL){
     fprintf(stderr, "Error in Grackle solve_chemistry.\n");
+    delete [] TotalDust;
+    delete [] TotalSilicate;
     return FAIL;
   }
 
@@ -320,6 +388,8 @@ int grid::GrackleWrapper()
 
 
   delete [] TotalMetals;
+  delete [] TotalDust;
+  delete [] TotalSilicate;
   delete [] g_grid_dimension;
   delete [] g_grid_start;
   delete [] g_grid_end;
