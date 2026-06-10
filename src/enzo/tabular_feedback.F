@@ -147,12 +147,13 @@ c
 c 
 c      Integrated counts is in 1/s per initial population mass
 c      Note that the initial mass is expressed as a mass density
-       call integrate_yields_pSN(integrated_counts, metal_frac, age, dt_yr,
+       call integrate_yields_pSN(integrated_counts,
+     &            metal_frac, age, dt_yr,
      &            lw_table, metal_array, age_array,
      &            metal_size, age_size)
 
-c 
-      integrated_counts = integrated_counts * mass_init / dt_yr !Convert back to a count (cm^2/s) per unit volume
+c     Convert back to a count (cm**2/s) per unit volume
+      integrated_counts = integrated_counts * mass_init / dt_yr
       end subroutine
 c
 c  ===============================================
@@ -186,11 +187,13 @@ c
 c 
 c      Integrated counts is in 1/s per initial population mass
 c      Note that the initial mass is expressed as a mass density
-      call integrate_yields_pSN(integrated_counts, metal_frac, age, dt_yr,
+      call integrate_yields_pSN(integrated_counts,
+     &            metal_frac, age, dt_yr,
      &            hm_table, metal_array, age_array,
      &            metal_size, age_size)
 c 
-      integrated_counts = integrated_counts * mass_init / dt_yr !Convert back to a count (cm**2/s) per unit volume
+c     Convert back to a count (cm**2/s) per unit volume
+      integrated_counts = integrated_counts * mass_init / dt_yr 
       end subroutine
 c
 c  ===============================================

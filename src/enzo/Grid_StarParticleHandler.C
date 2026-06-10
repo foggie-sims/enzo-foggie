@@ -366,7 +366,7 @@ extern "C" void FORTRAN_NAME(star_feedback3mom)(int *nx, int *ny, int *nz,
 
 extern "C" void FORTRAN_NAME(star_feedback6)(int *nx, int *ny, int *nz,
 						float *d, float *mu, float *te, float *ge, float *u, float *v,
-		       float *w, float *metal,
+		       float *w, float *metal, float *kdissH2, float *kdetHM,
 	     int *idual, int *imetal, int *imulti_metals, hydro_method *imethod, 
 		       float *dt, float *dx, FLOAT *t, float *z, int *procnum,
              float *d1, float *x1, float *v1, float *t1,
@@ -381,7 +381,7 @@ extern "C" void FORTRAN_NAME(star_feedback6)(int *nx, int *ny, int *nz,
              float *metalSNIa, int *ntabZ, int *ntabAge, double *tabZ, double *tabAge, 
              double *tabMass, double *tabMetal, double *tabEvents, int *stochastic,
              int *preSN, int *preSNmom, int *pSNntabZ, int *pSNntabAge, double *pSNtabZ, 
-             double *pSNtabAge, double *pSNtabMass, double *pSNtabMetal, double *pSNtabMom);
+             double *pSNtabAge, double *pSNtabMass, double *pSNtabMetal, double *pSNtabMom, double *pSNtabLW, double *pSNtabHM);
 
 extern "C" void FORTRAN_NAME(star_feedback3)(int *nx, int *ny, int *nz,
              float *d, float *dm, float *te, float *ge, float *u, float *v,
@@ -1830,14 +1830,14 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       }
     }
     
-    k_diss_H2I_grid_sum = 0.0; //Grid properties
-    k_det_HM_grid_sum = 0.0;
+    k_diss_H2I_grid_sum = 0.0f; //Grid properties
+    k_det_HM_grid_sum = 0.0f;
     FORTRAN_NAME(star_feedback6)(
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], mu_field,
           BaryonField[TENum], BaryonField[GENum], BaryonField[Vel1Num],
           BaryonField[Vel2Num], BaryonField[Vel3Num], BaryonField[MetalNum],
-          &k_diss_H2I_grid_sum,&k_det_HM_grid_sum, //CT "RT" Implementation
+          &k_diss_H2I_grid_sum,&k_det_HM_grid_sum,
        &DualEnergyFormalism, &MetallicityField, &MultiMetals, &HydroMethod,
        &dtFixed, &CellWidthTemp,
           &Time, &zred, &MyProcessorNumber,
@@ -1864,6 +1864,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     delete [] mu_field;
      
     float dx = this->CellWidth[0][0];
+    float grid_dx = this->GridRightEdge[0]-this->GridLeftEdge[0];
+    float grid_dy = this->GridRightEdge[1]-this->GridLeftEdge[1];
+    float grid_dz = this->GridRightEdge[2]-this->GridLeftEdge[2];
     float cell_volume = dx*dx*dx; //Need to convert from mass density to mass
     float dilutionRadius = 0.5 * (grid_dx + grid_dy + grid_dz)/3.0; //Get Half the average extent of the grid
     //float dilutionRadius = 4.848e-6 * pc_cm / (double) LengthUnits;  // 1 AU //Try an extreme case

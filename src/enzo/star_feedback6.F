@@ -125,7 +125,7 @@ c
       R_PREC    u(nx,ny,nz), v(nx,ny,nz), w(nx,ny,nz)
       R_PREC    ge(nx,ny,nz)
       R_PREC    metal(nx,ny,nz)
-      R_PREC    kdissH2, kdetHM !Summed rates for H2 dissociation and HM detachment in each cell
+      R_PREC    kdissH2, kdetHM
       R_PREC    mu(nx,ny,nz)
       R_PREC    dt, dx, z
       R_PREC    dunits, x1, vunits, t1, nsn_timestep, m_eject_frac
@@ -184,8 +184,7 @@ c
      &     vp_grid(nx,ny,nz), wp_grid(nx,ny,nz)
       R_PREC pSNmass_grid(nx,ny,nz), pSNmetal_grid(nx,ny,nz),
      &      pSNmom_grid(nx,ny,nz), pSNup_grid(nx,ny,nz),
-     &      pSNvp_grid(nx,ny,nz), pSNwp_grid(nx,ny,nz),
-c     &      pSNlw_grid(nx,ny,nz)
+     &      pSNvp_grid(nx,ny,nz), pSNwp_grid(nx,ny,nz)
       R_PREC up_avg, vp_avg, wp_avg, up_avg_w, vp_avg_w, wp_avg_w
       R_PREC wind_mass, wind_metal, wind_mom, lw_counts, hm_counts
       R_PREC ke_b_wind(3,3,3)
@@ -329,10 +328,10 @@ c
      &                          age, dt, t1, pSNtabMetal, pSNtabZ,
      &                          pSNtabAge, pSNntabZ, pSNntabAge)
                call pSN_LW(lw_counts, minit(n), metalf(n),
-     &                          age, dt, t1, vunits, pSNtabLW, pSNtabZ,
+     &                          age, dt, t1, pSNtabLW, pSNtabZ,
      &                          pSNtabAge, pSNntabZ, pSNntabAge)
                call pSN_HM(hm_counts, minit(n), metalf(n),
-     &                          age, dt, t1, vunits, pSNtabHM, pSNtabZ,
+     &                          age, dt, t1, pSNtabHM, pSNtabZ,
      &                          pSNtabAge, pSNntabZ, pSNntabAge)
                if (preSNmom .eq. 1_IKIND) then
                   call pSN_mom(wind_mom, minit(n), metalf(n), age,
@@ -710,11 +709,7 @@ c
                pSNwp_grid(ic,jc,kc) = pSNwp_grid(ic,jc,kc) + 
      &                                wp(n)*wind_mass
                kdissH2 = kdissH2 + lw_counts !cm**2 / s per cell volume
-               !pSNlw_grid(ic,jc,kc) = pSNlw_grid(ic,jc,kc) + 
-     !&                                  lw_counts !cm**2/s per cell volume
                kdetHM = kdetHM + hm_counts !cm**2 / s per cell volume
-               !pSNhm_grid(ic,jc,kc) = pSNhm_grid(ic,jc,kc) + 
-     !&                                  hm_counts !cm**2/s per cell volume
             endif
 c
 c     Put particle feedback data in log. If not using pre-SN feedback,
@@ -1319,7 +1314,7 @@ c
      &             pSNmom_grid(ic,jc,kc)*(dunits*(dx*x1)**3._RKIND)*
      &             vunits/SolarMass/1e5_RKIND,
      &             add_therm_w*dunits*
-     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
+     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
      &             kdissH2*(dunits*(x1*dx)**3._RKIND)/SolarMass,
      &             kdetHM*(dunits*(x1*dx)**3._RKIND)/SolarMass
                endif
@@ -1796,7 +1791,7 @@ c
       R_PREC    kdissH2(nx,ny,nz), kdetHM(nx,ny,nz)
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz), te(nx,ny,nz)
       R_PREC    mass_per_cell, mom_per_cell
-      R_PREC    metal_per_cell,
+      R_PREC    metal_per_cell
       R_PREC    dunits, x1, vunits, dx, mult
       R_PREC    p_start, p_end
 c

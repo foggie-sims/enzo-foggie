@@ -333,12 +333,12 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
   //Convert to RT_H2_dissociation_rate and add to grackle fields
   float *k_diss_H2_grid  = new float[size];
   float *k_det_HM_grid  = new float[size];
-  for (int i = 0; i < size; i++){
+  for ( i = 0; i < size; i++){
       k_diss_H2_grid[i] = k_diss_H2I_grid_sum; //From Grid Property written in StarParticleHandler
       k_det_HM_grid[i] = k_det_HM_grid_sum; 
   }
-  my_fields.RT_H2_dissociation_rate =  k_diss_H2I_grid_sum;//Already in units of seconds (from table)
-  my_fields.RT_HM_detachment_rate =  k_det_HM_grid_sum;  //Feeds in Britton's Grackle Branch (foggie-sf) only
+  my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
+  my_fields.RT_HM_detachment_rate =  k_det_HM_grid;  //Feeds in Britton's Grackle Branch (foggie-sf) only
 
   // Need to set the other fields to the same 0 array for now
   float *EmptyRtArray0  = new float[size];
@@ -346,18 +346,18 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
   float *EmptyRtArray2  = new float[size];
   float *EmptyRtArray3  = new float[size];
 
-  for (int i = 0; i < size; i++){
+  for ( i = 0; i < size; i++){
       EmptyRtArray0[i] = 0;
       EmptyRtArray1[i] = 0;
       EmptyRtArray2[i] = 0;
       EmptyRtArray3[i] = 0;
   }
 
-  float *EmptyRTArray  = new float[size];
+  // float *EmptyRTArray  = new float[size];
 
-  for (int i = 0; i < size; i++){
-      EmptyRTArray[i] = 0;
-  }
+  //for ( i = 0; i < size; i++){
+  //    EmptyRTArray[i] = 0;
+  //}
 
   my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
   my_fields.RT_HeI_ionization_rate  = EmptyRtArray1;
