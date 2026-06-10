@@ -155,7 +155,12 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
     ret += sscanf(line, "use_dust_density_field = %d",
                   &grackle_data->use_dust_density_field);
 
-    /* New dust physics parameters (newchemcpp Grackle) */
+    /* New dust physics parameters (newchemcpp Grackle). Fixed microphysics constants
+       ride on the Grackle defaults defined in grackle_chemistry_data_fields.def, 
+       that file is the single source of truth for their values.
+       dust_silicate_mg_fraction is mapped from Enzo's
+       InitialDustMgSilicateFraction below so the Mg/Fe silicate split
+       used by feedback seeding and by Grackle can never disagree. */
     ret += sscanf(line, "dust_model = %d",
                   &grackle_data->dust_model);
     ret += sscanf(line, "solver_method = %d",
@@ -167,12 +172,6 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
                   &grackle_data->dust_destruction_eff);
     ret += sscanf(line, "sne_coeff = %lf",
                   &grackle_data->sne_coeff);
-    ret += sscanf(line, "sne_shockspeed = %lf",
-                  &grackle_data->sne_shockspeed);
-    ret += sscanf(line, "dust_grainsize = %lf",
-                  &grackle_data->dust_grainsize);
-    ret += sscanf(line, "dust_growth_densref = %lf",
-                  &grackle_data->dust_growth_densref);
     ret += sscanf(line, "dust_growth_tauref = %lf",
                   &grackle_data->dust_growth_tauref);
     ret += sscanf(line, "dust_condensation_eff = %lf",
@@ -184,22 +183,12 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
        and 5-element gas tracking). Requires dust_model = 1.
        grackle_data->dust_species_track is mapped from the Enzo flag
        UseDustSpeciesTrack below. REF: Trayford+2026 MNRAS 545, staf2040. */
-    ret += sscanf(line, "dust_growth_sticking_coeff = %lf",
-                  &grackle_data->dust_growth_sticking_coeff);
-    ret += sscanf(line, "dust_growth_tauref_silicate = %lf",
-                  &grackle_data->dust_growth_tauref_silicate);
-    ret += sscanf(line, "dust_growth_tauref_carbon = %lf",
-                  &grackle_data->dust_growth_tauref_carbon);
     ret += sscanf(line, "dust_growth_clumping_factor_max = %lf",
                   &grackle_data->dust_growth_clumping_factor_max);
     ret += sscanf(line, "dust_growth_clumping_nH_min = %lf",
                   &grackle_data->dust_growth_clumping_nH_min);
     ret += sscanf(line, "dust_growth_clumping_nH_max = %lf",
                   &grackle_data->dust_growth_clumping_nH_max);
-    ret += sscanf(line, "dust_sputter_tauref = %lf",
-                  &grackle_data->dust_sputter_tauref);
-    ret += sscanf(line, "dust_silicate_mg_fraction = %lf",
-                  &grackle_data->dust_silicate_mg_fraction);
 
     /* If the dummy char space was used, then make another. */
     if (*dummy != 0) {
@@ -250,6 +239,9 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
   grackle_data->use_radiative_transfer         = (Eint32) RadiativeTransfer;
   grackle_data->dust_species_track             = (Eint32) UseDustSpeciesTrack;
   grackle_data->use_sne_field                  = (Eint32) UseSNeRateField;
+  /* Single knob for the Mg/Fe silicate split: Grackle's fallback split must
+     match the split Enzo uses to seed dust species in ICs and feedback. */
+  grackle_data->dust_silicate_mg_fraction      = (double) InitialDustMgSilicateFraction;
   // grackle_data->radiative_transfer_coupled_rate_solver set in RadiativeTransferReadParameters
   // grackle_data->radiative_transfer_hydrogen_only set in RadiativeTransferReadParameters
 
