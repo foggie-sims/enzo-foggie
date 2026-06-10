@@ -155,7 +155,7 @@ c
 c  Locals
 c
       INTG_PREC n, ic, jc, kc, ip, jp, kp,
-     &     i, j, k, cellstep, stepk, stepj
+     &     i, j, k, cellstep, stepk, stepj, fbuff
       R_PREC mform, energy, energy_ii, energy_ia,
      &     m_eject, meject_ii, meject_ia, yield, minitial, xv1, xv2,
      &     mass_per_cell,
@@ -172,7 +172,7 @@ c
       R_PREC energy_per_cell(2*distrad+1,2*distrad+1,2*distrad+1)
       R_PREC energy_per_cell1(2*distrad+1,2*distrad+1,2*distrad+1)
       R_PREC Z_avg, n_avg, Z_floor,
-     &	  realmass, mu_cell, fbuff, add_therm
+     &	  realmass, mu_cell, add_therm
       R_PREC n_cell, Z_cell
       R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum,
      &     mass_term, vel_mag, delta_ge, add_ge
