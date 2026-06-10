@@ -345,18 +345,20 @@ number of supernovae per particle in each timestep cannot be between zero and on
 If ``StarFeedbackSNePerTimestepLimit`` is greater than one, it will limit 
 the stochastic supernovae case in the same way.
 
-For each grid cell in which supernovae are occuring ("explosion cell"), the total momentum that 
-will be injected into the 27 cells in a 3x3x3 cube surrounding the cell 
-depends on whether or not the Sedov blast wave for the explosion would 
-be resolved, which is determined by comparing the ejected mass to the swept-up 
-mass in each cell surrounding the explosion cell. 
+For each grid cell in which supernovae are occuring ("explosion cell"), the total momentum that
+will be injected into the cells surrounding the explosion cell
+depends on whether or not the Sedov blast wave for the explosion would
+be resolved, which is determined by comparing the ejected mass to the swept-up
+mass in each cell surrounding the explosion cell.
 
-The ejected mass per cell is given by dM\ :sub:`ej` = M\ :sub:`ej`/N\ :sub:`cells`, 
-where M\ :sub:`ej` is the total ejected mass at this time step from all particles 
-in the explosion cell and N\ :sub:`cells` 
-is the number of cells among which the feedback is distributed. Currently, 
-N\ :sub:`cells` = 27 and allowing different values using the parameters 
-``StarFeedbackDistRadius`` and ``StarFeebackDistCellStep`` is NOT implemented.
+The injection region is controlled by ``StarFeedbackDistRadius`` and
+``StarFeedbackDistCellStep``; see :ref:`distributed_feedback` for details.
+By default, both parameters are unset (value 0), which causes this method to
+fall back to a 3x3x3 cube (N\ :sub:`cells` = 27).
+
+The ejected mass per cell is given by dM\ :sub:`ej` = M\ :sub:`ej`/N\ :sub:`cells`,
+where M\ :sub:`ej` is the total ejected mass at this time step from all particles
+in the explosion cell and N\ :sub:`cells` is the number of cells in the injection region.
 
 For each cell surrounding the explosion cell, the swept-up 
 mass is given by:
@@ -529,6 +531,32 @@ recommended to run this feedback scheme using the floors and ceilings
 (:ref:`general_hydrodynamics_parameters`)
 options ``RestrictTemperature = 1`` and ``RestrictVelocity = 1`` if using continuous
 supernovae.
+
+Here is an overview of all available parameters for this feedback method:
+
+::
+
+   StarParticleFeedback                     = 64   // mechanical feedback
+   StarFeedbackMomentumMultiplier        = 1       // Increase to > 1 to increase strength of feedback
+   StarFeedbackUseTabularYields          = 1       // Turns on tabular feedback, required for stochastic SNe
+   StarFeedbackTabularFilename           = /path/to/sygma_feedback_table_1000.h5    // Path to table for tabular feedback
+   StarFeedbackTabularSNIIEnergy         = 1e+51       // Any values other than 1e+51 are currently unsupported
+   StarFeedbackTabularSNIaEnergy         = 1e+51       // Any values other than 1e+51 are currently unsupported
+   StarFeedbackTrackMetalSources         = 1           // Turns on tracking metals from Type II and Type Ia independently
+   StarFeedbackStochasticSNe             = 1           // Turns on stochastic supernovae, requires tabular yields to be turned on
+   StarFeedbackSNePerTimestepLimit       = 1e-06       // If not using stochastic supernovae, restrict the minimum number of SNe per particle per timestep
+   StarFeedbackPreSNFeedback             = 1           // Turns on pre-SN mass and metal injection
+   StarFeedbackPreSNMomentum             = 1           // Turns on pre-SN momentum injection
+   StarFeedbackPreSNFilename             = /path/to/preSN_feedback_SB99.hdf5        // Path to table used for pre-SN feedback, required for either mass and metal inj or momentum inj
+   StarFeedbackCapVelocityKick           = 1           // Caps the velocity increment from injected momentum at 1000 km/s, highly recommended to be turned on
+   WriteFeedbackLogFiles                 = 0           // Turn on to write log files. These files get very big very fast so only turn on for short periods if necessary
+   StarFeedbackDistRadius                = 1           // Radius (in number of cells) of injection zone
+   StarFeedbackDistCellStep              = 3           // Shape of injection zone, see distributed feedback documentation
+    
+   ApplyBoundsToBaryonFields             = 1           // Turns on limits so feedback does not get out of hand, highly recommended
+   RestrictDensity                       = 0           // No limit on density required
+   RestrictVelocity                      = 1           // Limits velocity magnitudes to less than 3000 km/s everywhere on grid
+   RestrictTemperature                   = 1           // Limits temperatures to less than 1e9 K everywhere on grid
 
 
 .. _method_7:
@@ -769,6 +797,28 @@ They can be turned on by setting ``H2StarMakerWriteLogFiles = 1``.
 star maker, so do not set StarParticleFeedback = 2048. Instead the user
 should select one of the feedback schemes associated with the other
 star makers (StarParticleFeedback = 4 comes to mind).
+
+Here is an overview of all parameters used for this star formation method:
+
+::
+
+   StarParticleCreation                     = 2048 // H2-regulated SF
+   StarMakerMinimumMass                     = 10.    // This must be small to get star formation going at zero metallicity. Can be changed after first stars form
+   H2StarMakerH2FractionMethod        = 1      // This uses numerical method through Grackle, if = 0 then it uses analytic method
+   H2StarMakerEfficiency              = 0.02   // Default, but feel free to change if needed
+   H2StarMakerNumberDensityThreshold  = 0
+   H2StarMakerMinimumH2FractionForStarFormation = 0
+   H2StarMakerStochastic              = 0
+   H2StarMakerUseSobolevColumn        = 1
+   H2StarMakerSigmaOverR              = 0.0333333
+   H2StarMakerAssumeColdWarmPressureBalance = 1
+   H2StarMakerH2DissociationFlux_MW   = 1
+   H2StarMakerH2FloorInColdGas        = 0
+   H2StarMakerColdGasTemperature      = 10000
+   H2StarMakerUseLocalDensityMax      = 1      // This is absolutely necessary!
+   H2StarMakerWriteStarLogFiles       = 1      // This makes log files, can turn off if unneeded
+   StarFormationOncePerRootGridTimeStep  = 1   // This is absolutely necessary!
+   
 
 .. _method_14:
 
