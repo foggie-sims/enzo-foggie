@@ -715,11 +715,11 @@ int grid::NestedCosmologySimulationInitializeGrid(
             BaryonField[DustFeNum][i]  = fsil_fe * dustseed;
             BaryonField[DustCNum][i]   = InitialDustCarbonaceousFraction *
                                          dustseed;
-            BaryonField[MetalCNum][i]  = InitialMetalCarbonFraction    * BaryonField[MetalNum][i];
-            BaryonField[MetalONum][i]  = InitialMetalOxygenFraction    * BaryonField[MetalNum][i];
-            BaryonField[MetalMgNum][i] = InitialMetalMagnesiumFraction * BaryonField[MetalNum][i];
-            BaryonField[MetalSiNum][i] = InitialMetalSiliconFraction   * BaryonField[MetalNum][i];
-            BaryonField[MetalFeNum][i] = InitialMetalIronFraction      * BaryonField[MetalNum][i];
+            BaryonField[MetalCNum][i]  = SOLAR_METAL_FRACTION_C    * BaryonField[MetalNum][i];
+            BaryonField[MetalONum][i]  = SOLAR_METAL_FRACTION_O    * BaryonField[MetalNum][i];
+            BaryonField[MetalMgNum][i] = SOLAR_METAL_FRACTION_MG * BaryonField[MetalNum][i];
+            BaryonField[MetalSiNum][i] = SOLAR_METAL_FRACTION_SI   * BaryonField[MetalNum][i];
+            BaryonField[MetalFeNum][i] = SOLAR_METAL_FRACTION_FE      * BaryonField[MetalNum][i];
           }
         } else {
           for (i = 0; i < size; i++) {

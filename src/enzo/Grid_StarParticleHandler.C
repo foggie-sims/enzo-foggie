@@ -1770,6 +1770,14 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           DustTotalScratch[i] = DustSilScratch[i] + DustCPtr[i];
         }
 
+      /* Addressable copies of the solar metal mass fractions for the
+         Fortran interface. */
+      float SolarMetalFracC  = SOLAR_METAL_FRACTION_C;
+      float SolarMetalFracO  = SOLAR_METAL_FRACTION_O;
+      float SolarMetalFracMg = SOLAR_METAL_FRACTION_MG;
+      float SolarMetalFracSi = SOLAR_METAL_FRACTION_SI;
+      float SolarMetalFracFe = SOLAR_METAL_FRACTION_FE;
+
       FORTRAN_NAME(star_feedback2)(
        GridDimension, GridDimension+1, GridDimension+2,
           BaryonField[DensNum], DustPointer, dmfield,
@@ -1796,9 +1804,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        &UseDustSpeciesTrack,
        MetalCPtr, MetalOPtr, MetalMgPtr, MetalSiPtr, MetalFePtr,
        DustSilPtr, DustMgPtr, DustFePtr, DustCPtr,
-       &InitialMetalCarbonFraction, &InitialMetalOxygenFraction,
-       &InitialMetalMagnesiumFraction, &InitialMetalSiliconFraction,
-       &InitialMetalIronFraction,
+       &SolarMetalFracC, &SolarMetalFracO,
+       &SolarMetalFracMg, &SolarMetalFracSi,
+       &SolarMetalFracFe,
        &InitialDustSilicateFraction, &InitialDustMgSilicateFraction,
        &InitialDustFeSilicateFraction,
        &InitialDustCarbonaceousFraction,

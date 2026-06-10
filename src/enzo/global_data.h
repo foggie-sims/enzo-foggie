@@ -454,7 +454,7 @@ EXTERN int UseSNeRateField;
 /* Species-resolved dust tracking (dust_species_track = 1 in Grackle).
    When enabled, allocates 5 gas-phase element fields (C, O, Mg, Si, Fe) as
    subsets of Metallicity, plus 3 dust species fields (Mg-silicate,
-   Fe-silicate, carbonaceous) and a compatibility silicate sum field. */
+   Fe-silicate, carbonaceous). */
 EXTERN int UseDustSpeciesTrack;
 
 /* Canonical MW diffuse-ISM split of bulk dust into species, used to seed
@@ -466,13 +466,16 @@ EXTERN float InitialDustFeSilicateFraction;     // fe_sil   / silicate
 EXTERN float InitialDustCarbonaceousFraction;   // carb     / dust_total
 
 /* Solar mass fractions of the five tracked elements relative to the total
-   solar metal mass, used to seed gas-phase element fields from the
-   metallicity field. Defaults derived from Grackle's atomic data. */
-EXTERN float InitialMetalCarbonFraction;
-EXTERN float InitialMetalOxygenFraction;
-EXTERN float InitialMetalMagnesiumFraction;
-EXTERN float InitialMetalSiliconFraction;
-EXTERN float InitialMetalIronFraction;
+   solar metal mass, used to seed the gas-phase element fields from the
+   metallicity field and to apportion stellar metal ejecta. Fixed at solar
+   to keep the model simple (values from gracklepy
+   utilities.convenience.solar_metal_mass_fractions(); the five elements
+   account for ~76% of solar metal mass). */
+#define SOLAR_METAL_FRACTION_C  0.1585
+#define SOLAR_METAL_FRACTION_O  0.4222
+#define SOLAR_METAL_FRACTION_MG 0.0454
+#define SOLAR_METAL_FRACTION_SI 0.0525
+#define SOLAR_METAL_FRACTION_FE 0.0848
 
 /* Cosmic Ray Model
  * 0: Off - default

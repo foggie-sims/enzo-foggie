@@ -663,11 +663,11 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
       BaryonField[DustFeNum][n]  = fsil_fe * dustseed;
       BaryonField[DustCNum][n]   = InitialDustCarbonaceousFraction *
                                    dustseed;
-      BaryonField[MetalCNum][n]  = InitialMetalCarbonFraction    * BaryonField[MetalNum][n];
-      BaryonField[MetalONum][n]  = InitialMetalOxygenFraction    * BaryonField[MetalNum][n];
-      BaryonField[MetalMgNum][n] = InitialMetalMagnesiumFraction * BaryonField[MetalNum][n];
-      BaryonField[MetalSiNum][n] = InitialMetalSiliconFraction   * BaryonField[MetalNum][n];
-      BaryonField[MetalFeNum][n] = InitialMetalIronFraction      * BaryonField[MetalNum][n];
+      BaryonField[MetalCNum][n]  = SOLAR_METAL_FRACTION_C    * BaryonField[MetalNum][n];
+      BaryonField[MetalONum][n]  = SOLAR_METAL_FRACTION_O    * BaryonField[MetalNum][n];
+      BaryonField[MetalMgNum][n] = SOLAR_METAL_FRACTION_MG * BaryonField[MetalNum][n];
+      BaryonField[MetalSiNum][n] = SOLAR_METAL_FRACTION_SI   * BaryonField[MetalNum][n];
+      BaryonField[MetalFeNum][n] = SOLAR_METAL_FRACTION_FE      * BaryonField[MetalNum][n];
     } else {
       BaryonField[DustMgNum][n]  = tiny_number;
       BaryonField[DustFeNum][n]  = tiny_number;

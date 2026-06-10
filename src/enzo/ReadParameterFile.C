@@ -1190,11 +1190,6 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "InitialDustMgSilicateFraction = %"FSYM, &InitialDustMgSilicateFraction);
     ret += sscanf(line, "InitialDustFeSilicateFraction = %"FSYM, &InitialDustFeSilicateFraction);
     ret += sscanf(line, "InitialDustCarbonaceousFraction = %"FSYM, &InitialDustCarbonaceousFraction);
-    ret += sscanf(line, "InitialMetalCarbonFraction = %"FSYM, &InitialMetalCarbonFraction);
-    ret += sscanf(line, "InitialMetalOxygenFraction = %"FSYM, &InitialMetalOxygenFraction);
-    ret += sscanf(line, "InitialMetalMagnesiumFraction = %"FSYM, &InitialMetalMagnesiumFraction);
-    ret += sscanf(line, "InitialMetalSiliconFraction = %"FSYM, &InitialMetalSiliconFraction);
-    ret += sscanf(line, "InitialMetalIronFraction = %"FSYM, &InitialMetalIronFraction);
     ret += sscanf(line, "IsotropicConduction = %"ISYM, &IsotropicConduction);
     ret += sscanf(line, "AnisotropicConduction = %"ISYM, &AnisotropicConduction);
     ret += sscanf(line, "IsotropicConductionSpitzerFraction = %"FSYM, &IsotropicConductionSpitzerFraction);

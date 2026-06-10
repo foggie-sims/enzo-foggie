@@ -1008,18 +1008,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
           InitialDustMgSilicateFraction);
   fprintf(fptr, "InitialDustFeSilicateFraction         = %"FSYM"\n",
           InitialDustFeSilicateFraction);
-  fprintf(fptr, "InitialDustCarbonaceousFraction       = %"FSYM"\n",
+  fprintf(fptr, "InitialDustCarbonaceousFraction       = %"FSYM"\n\n",
           InitialDustCarbonaceousFraction);
-  fprintf(fptr, "InitialMetalCarbonFraction            = %"FSYM"\n",
-          InitialMetalCarbonFraction);
-  fprintf(fptr, "InitialMetalOxygenFraction            = %"FSYM"\n",
-          InitialMetalOxygenFraction);
-  fprintf(fptr, "InitialMetalMagnesiumFraction         = %"FSYM"\n",
-          InitialMetalMagnesiumFraction);
-  fprintf(fptr, "InitialMetalSiliconFraction           = %"FSYM"\n",
-          InitialMetalSiliconFraction);
-  fprintf(fptr, "InitialMetalIronFraction              = %"FSYM"\n\n",
-          InitialMetalIronFraction);
   fprintf(fptr, "IsotropicConduction                   = %"ISYM"\n", IsotropicConduction);
   fprintf(fptr, "AnisotropicConduction                 = %"ISYM"\n", AnisotropicConduction);
   fprintf(fptr, "IsotropicConductionSpitzerFraction    = %"FSYM"\n", IsotropicConductionSpitzerFraction);

@@ -655,14 +655,6 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   InitialDustMgSilicateFraction    = 0.408428;
   InitialDustFeSilicateFraction    = 0.591572;
   InitialDustCarbonaceousFraction  = 0.35;
-  /* Solar mass fractions of C, O, Mg, Si, Fe relative to total solar
-     metal mass, derived from Grackle's atomic data tables. The five
-     tracked elements account for ~76% of solar metal mass. */
-  InitialMetalCarbonFraction       = 0.1585;
-  InitialMetalOxygenFraction       = 0.4222;
-  InitialMetalMagnesiumFraction    = 0.0454;
-  InitialMetalSiliconFraction      = 0.0525;
-  InitialMetalIronFraction         = 0.0848;
   NumberOfParticleAttributes       = INT_UNDEFINED;
   ParticleTypeInFile               = TRUE;
   ReadGhostZones                   = FALSE;
