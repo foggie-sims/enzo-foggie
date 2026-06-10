@@ -132,7 +132,7 @@ jobs:
 
       - name: Upload compilation output
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: compile-output
           path: src/enzo/out.compile
@@ -249,7 +249,7 @@ jobs:
 
       - name: Upload compilation output
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-suite-compile-output
           path: src/enzo/out.compile
