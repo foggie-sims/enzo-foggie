@@ -7,7 +7,7 @@ on:
     branches: [master, main]
 
 env:
-  HOME: ~
+  HOME: /home/runner/work
   LD_LIBRARY_PATH: ${HOME}/local/lib:${LD_LIBRARY_PATH}
   ENZOTEST_DIR: ${HOME}/enzo_test
   ANSWER_NAME: push_suite
