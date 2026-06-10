@@ -7,6 +7,7 @@ on:
     branches: [master, main]
 
 env:
+  HOME: ~
   LD_LIBRARY_PATH: ${HOME}/local/lib:${LD_LIBRARY_PATH}
   ENZOTEST_DIR: ${HOME}/enzo_test
   ANSWER_NAME: push_suite
@@ -231,7 +232,6 @@ jobs:
             make clean
             make -j 6
             cd ../../run
-            echo $ENZOTEST_DIR
             python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --answer-store
           fi
 
