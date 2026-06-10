@@ -7,8 +7,8 @@ on:
     branches: [master, main]
 
 env:
-  LD_LIBRARY_PATH: $HOME/local/lib:$LD_LIBRARY_PATH
-  ENZOTEST_DIR: $HOME/enzo_test
+  LD_LIBRARY_PATH: ${HOME}/local/lib:${LD_LIBRARY_PATH}
+  ENZOTEST_DIR: ${HOME}/enzo_test
   ANSWER_NAME: push_suite
   HYPRE: 2.20.0
 
@@ -18,12 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -33,7 +33,7 @@ jobs:
           git tag tip
 
       - name: Restore dependencies cache
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cache/pip
@@ -48,8 +48,8 @@ jobs:
 
       - name: Set up Python virtual environment
         run: |
-          python3 -m venv $HOME/venv
-          source $HOME/venv/bin/activate
+          python3 -m venv ${HOME}/venv
+          source ${HOME}/venv/bin/activate
           pip install --upgrade pip
           pip install --upgrade wheel
           pip install --upgrade setuptools
@@ -63,20 +63,20 @@ jobs:
 
       - name: Install HYPRE
         run: |
-          mkdir -p $HOME/local
-          if [ ! -f $HOME/local/lib/libHYPRE.a ]; then
-            cd $HOME
+          mkdir -p ${HOME}/local
+          if [ ! -f ${HOME}/local/lib/libHYPRE.a ]; then
+            cd ${HOME}
             wget https://github.com/hypre-space/hypre/archive/refs/tags/v${HYPRE}.tar.gz
             tar xvfz v${HYPRE}.tar.gz
             cd hypre-${HYPRE}/src
-            ./configure --with-MPI --with-MPI-include=/usr/include/mpi --with-MPI-libs=mpi --with-MPI-lib-dirs=/usr/lib --prefix=$HOME/local
+            ./configure --with-MPI --with-MPI-include=/usr/include/mpi --with-MPI-libs=mpi --with-MPI-lib-dirs=/usr/lib --prefix=${HOME}/local
             make install
           fi
 
       - name: Install Grackle
         run: |
-          git clone -b main https://github.com/grackle-project/grackle $HOME/grackle
-          cd $HOME/grackle
+          git clone -b main https://github.com/grackle-project/grackle ${HOME}/grackle
+          cd ${HOME}/grackle
           ./configure
           cd src/clib
           make machine-linux-gnu
@@ -85,7 +85,7 @@ jobs:
 
       - name: Test compilation configurations
         run: |
-          source $HOME/venv/bin/activate
+          source ${HOME}/venv/bin/activate
           ./configure
           cd src/enzo
           make machine-ubuntu
@@ -132,7 +132,7 @@ jobs:
 
       - name: Upload compilation output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: compile-output
           path: src/enzo/out.compile
@@ -143,12 +143,12 @@ jobs:
     timeout-minutes: 1200
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -158,7 +158,7 @@ jobs:
           git tag tip
 
       - name: Restore dependencies cache
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cache/pip
@@ -173,8 +173,8 @@ jobs:
 
       - name: Set up Python virtual environment
         run: |
-          python3 -m venv $HOME/venv
-          source $HOME/venv/bin/activate
+          python3 -m venv ${HOME}/venv
+          source ${HOME}/venv/bin/activate
           pip install --upgrade pip
           pip install --upgrade wheel
           pip install --upgrade setuptools
@@ -188,20 +188,20 @@ jobs:
 
       - name: Install HYPRE
         run: |
-          mkdir -p $HOME/local
-          if [ ! -f $HOME/local/lib/libHYPRE.a ]; then
-            cd $HOME
+          mkdir -p ${HOME}/local
+          if [ ! -f ${HOME}/local/lib/libHYPRE.a ]; then
+            cd ${HOME}
             wget https://github.com/hypre-space/hypre/archive/refs/tags/v${HYPRE}.tar.gz
             tar xvfz v${HYPRE}.tar.gz
             cd hypre-${HYPRE}/src
-            ./configure --with-MPI --with-MPI-include=/usr/include/mpi --with-MPI-libs=mpi --with-MPI-lib-dirs=/usr/lib --prefix=$HOME/local
+            ./configure --with-MPI --with-MPI-include=/usr/include/mpi --with-MPI-libs=mpi --with-MPI-lib-dirs=/usr/lib --prefix=${HOME}/local
             make install
           fi
 
       - name: Install Grackle
         run: |
-          git clone -b main https://github.com/grackle-project/grackle $HOME/grackle
-          cd $HOME/grackle
+          git clone -b main https://github.com/grackle-project/grackle ${HOME}/grackle
+          cd ${HOME}/grackle
           ./configure
           cd src/clib
           make machine-linux-gnu
@@ -210,19 +210,19 @@ jobs:
 
       - name: Download test data
         run: |
-          source $HOME/venv/bin/activate
+          source ${HOME}/venv/bin/activate
           girder-cli --api-url https://girder.hub.yt/api/v1 download 5af9ef42ec1bd30001fcd001 $GITHUB_WORKSPACE/run/CosmologySimulation
 
       - name: Restore test answers cache
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: ~/enzo_test/push_suite
           key: foggie-test-answers-v1
 
       - name: Build and test (gold standard)
         run: |
-          source $HOME/venv/bin/activate
-          if [ ! -e $HOME/enzo_test/push_suite ]; then
+          source ${HOME}/venv/bin/activate
+          if [ ! -e ${HOME}/enzo_test/push_suite ]; then
             git checkout foggie-gold-standard-v1
             ./configure
             cd src/enzo
@@ -236,7 +236,7 @@ jobs:
 
       - name: Build and test (tip)
         run: |
-          source $HOME/venv/bin/activate
+          source ${HOME}/venv/bin/activate
           git checkout tip
           ./configure
           cd src/enzo
@@ -249,7 +249,7 @@ jobs:
 
       - name: Upload compilation output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-suite-compile-output
           path: src/enzo/out.compile
@@ -259,10 +259,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -273,8 +273,8 @@ jobs:
 
       - name: Set up Python virtual environment
         run: |
-          python3 -m venv $HOME/venv
-          source $HOME/venv/bin/activate
+          python3 -m venv ${HOME}/venv
+          source ${HOME}/venv/bin/activate
           pip install --upgrade pip
           pip install --upgrade wheel
           pip install --upgrade setuptools
@@ -282,6 +282,6 @@ jobs:
 
       - name: Build documentation
         run: |
-          source $HOME/venv/bin/activate
+          source ${HOME}/venv/bin/activate
           cd doc/manual/source
           python -m sphinx -M html "." "_build" -W
