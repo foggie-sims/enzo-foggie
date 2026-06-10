@@ -122,7 +122,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
     DINum, DIINum, HDINum, MetalNum, MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum,
     DustNum, SNeRateNum;
   int MetalCNum, MetalONum, MetalMgNum, MetalSiNum, MetalFeNum,
-    DustSilNum, DustMgNum, DustFeNum, DustCNum;
+    DustMgNum, DustFeNum, DustCNum;
 
   int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
 
@@ -410,7 +410,9 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	FieldType[ExtraField[1] = NumberOfBaryonFields++] = ExtraType1;
       }
     }
-    if (UseDustDensityField)
+    /* With UseDustSpeciesTrack the bulk dust density (and the silicate sum)
+       are not carried as fields; they are derived from the species on demand. */
+    if (UseDustDensityField && !UseDustSpeciesTrack)
       FieldType[DustNum = NumberOfBaryonFields++] = DustDensity;
     if (UseSNeRateField)
       FieldType[SNeRateNum = NumberOfBaryonFields++] = SNeRate;
@@ -420,7 +422,6 @@ int grid::NestedCosmologySimulationInitializeGrid(
       FieldType[MetalMgNum = NumberOfBaryonFields++] = MetalDensityMagnesium;
       FieldType[MetalSiNum = NumberOfBaryonFields++] = MetalDensitySilicon;
       FieldType[MetalFeNum = NumberOfBaryonFields++] = MetalDensityIron;
-      FieldType[DustSilNum = NumberOfBaryonFields++] = DustDensitySilicate;
       FieldType[DustMgNum  = NumberOfBaryonFields++] = DustDensityMgSilicate;
       FieldType[DustFeNum  = NumberOfBaryonFields++] = DustDensityFeSilicate;
       FieldType[DustCNum   = NumberOfBaryonFields++] = DustDensityCarbonaceous;
@@ -685,7 +686,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
       // the initial dust budget is self-consistent with the metals available
       // to form it. See the matching block in
       // Grid_CosmologySimulationInitializeGrid.C for the full reasoning.
-      if (UseDustDensityField && ReadData) {
+      if (UseDustDensityField && !UseDustSpeciesTrack && ReadData) {
         if (UseMetallicityField)
           for (i = 0; i < size; i++)
             BaryonField[DustNum][i] = InitialDustToGasRatio * BaryonField[MetalNum][i];
@@ -700,19 +701,20 @@ int grid::NestedCosmologySimulationInitializeGrid(
         for (i = 0; i < size; i++)
           BaryonField[SNeRateNum][i] = 0.0;
 
-      /* Species-resolved dust tracking: seed dust species from bulk dust_density
-         and gas-phase element fields from metal_density. */
+      /* Species-resolved dust tracking: seed dust species from the bulk dust
+         budget (InitialDustToGasRatio * metal_density, computed per cell; the
+         bulk field itself is not carried) and gas-phase element fields from
+         metal_density. */
       if (UseDustSpeciesTrack && ReadData) {
         if (UseMetallicityField) {
           float fsil_mg = InitialDustSilicateFraction * InitialDustMgSilicateFraction;
           float fsil_fe = InitialDustSilicateFraction * InitialDustFeSilicateFraction;
           for (i = 0; i < size; i++) {
-            BaryonField[DustMgNum][i]  = fsil_mg * BaryonField[DustNum][i];
-            BaryonField[DustFeNum][i]  = fsil_fe * BaryonField[DustNum][i];
-            BaryonField[DustSilNum][i] = BaryonField[DustMgNum][i] +
-                                         BaryonField[DustFeNum][i];
+            float dustseed = InitialDustToGasRatio * BaryonField[MetalNum][i];
+            BaryonField[DustMgNum][i]  = fsil_mg * dustseed;
+            BaryonField[DustFeNum][i]  = fsil_fe * dustseed;
             BaryonField[DustCNum][i]   = InitialDustCarbonaceousFraction *
-                                         BaryonField[DustNum][i];
+                                         dustseed;
             BaryonField[MetalCNum][i]  = InitialMetalCarbonFraction    * BaryonField[MetalNum][i];
             BaryonField[MetalONum][i]  = InitialMetalOxygenFraction    * BaryonField[MetalNum][i];
             BaryonField[MetalMgNum][i] = InitialMetalMagnesiumFraction * BaryonField[MetalNum][i];
@@ -723,7 +725,6 @@ int grid::NestedCosmologySimulationInitializeGrid(
           for (i = 0; i < size; i++) {
             BaryonField[DustMgNum][i]  = tiny_number;
             BaryonField[DustFeNum][i]  = tiny_number;
-            BaryonField[DustSilNum][i] = tiny_number;
             BaryonField[DustCNum][i]   = tiny_number;
             BaryonField[MetalCNum][i]  = tiny_number;
             BaryonField[MetalONum][i]  = tiny_number;

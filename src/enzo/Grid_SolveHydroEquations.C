@@ -196,14 +196,15 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
     if (Galaxy2ColourNum != -1) colnum[NumberOfColours++] = Galaxy2ColourNum;
     if (DustDensityNum   != -1) colnum[NumberOfColours++] = DustDensityNum;
 
-    /* Species-resolved dust tracking: 5 gas-phase elements + 4 dust species. */
+    /* Species-resolved dust tracking: 5 gas-phase elements + 3 dust species.
+       The bulk and silicate dust sums are not carried (advection is linear,
+       so advecting the species is equivalent). */
     if (UseDustSpeciesTrack) {
       int MetalCNum_  = FindField(MetalDensityCarbon,     FieldType, NumberOfBaryonFields);
       int MetalONum_  = FindField(MetalDensityOxygen,     FieldType, NumberOfBaryonFields);
       int MetalMgNum_ = FindField(MetalDensityMagnesium,  FieldType, NumberOfBaryonFields);
       int MetalSiNum_ = FindField(MetalDensitySilicon,    FieldType, NumberOfBaryonFields);
       int MetalFeNum_ = FindField(MetalDensityIron,       FieldType, NumberOfBaryonFields);
-      int DustSilNum_ = FindField(DustDensitySilicate,    FieldType, NumberOfBaryonFields);
       int DustMgNum_  = FindField(DustDensityMgSilicate,  FieldType, NumberOfBaryonFields);
       int DustFeNum_  = FindField(DustDensityFeSilicate,  FieldType, NumberOfBaryonFields);
       int DustCNum_   = FindField(DustDensityCarbonaceous,FieldType, NumberOfBaryonFields);
@@ -212,7 +213,6 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
       if (MetalMgNum_ != -1) colnum[NumberOfColours++] = MetalMgNum_;
       if (MetalSiNum_ != -1) colnum[NumberOfColours++] = MetalSiNum_;
       if (MetalFeNum_ != -1) colnum[NumberOfColours++] = MetalFeNum_;
-      if (DustSilNum_ != -1) colnum[NumberOfColours++] = DustSilNum_;
       if (DustMgNum_  != -1) colnum[NumberOfColours++] = DustMgNum_;
       if (DustFeNum_  != -1) colnum[NumberOfColours++] = DustFeNum_;
       if (DustCNum_   != -1) colnum[NumberOfColours++] = DustCNum_;

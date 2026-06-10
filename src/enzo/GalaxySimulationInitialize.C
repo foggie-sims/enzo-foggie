@@ -84,7 +84,6 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *MetalDensityMagnesiumName  = "Metal_Density_Magnesium";
   char *MetalDensitySiliconName    = "Metal_Density_Silicon";
   char *MetalDensityIronName       = "Metal_Density_Iron";
-  char *DustDensitySilicateName    = "Dust_Density_Silicate";
   char *DustDensityMgSilicateName  = "Dust_Density_MgSilicate";
   char *DustDensityFeSilicateName  = "Dust_Density_FeSilicate";
   char *DustDensityCarbonaceousName= "Dust_Density_Carbonaceous";
@@ -593,7 +592,9 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
       DataLabel[count++] = MetalNSMName;
    }
  }
- if (UseDustDensityField)
+ /* With UseDustSpeciesTrack the bulk dust density (and the silicate sum)
+    are not carried as fields; they are derived from the species on demand. */
+ if (UseDustDensityField && !UseDustSpeciesTrack)
    DataLabel[count++] = DustDensityName;
  if (UseSNeRateField)
    DataLabel[count++] = SNeRateName;
@@ -603,7 +604,6 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
    DataLabel[count++] = MetalDensityMagnesiumName;
    DataLabel[count++] = MetalDensitySiliconName;
    DataLabel[count++] = MetalDensityIronName;
-   DataLabel[count++] = DustDensitySilicateName;
    DataLabel[count++] = DustDensityMgSilicateName;
    DataLabel[count++] = DustDensityFeSilicateName;
    DataLabel[count++] = DustDensityCarbonaceousName;

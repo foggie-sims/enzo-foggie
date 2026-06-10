@@ -191,7 +191,7 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
   int dim, i, j, k, m, field, disk, size, MetalNum, MetalIaNum, vel;
   int MetalIINum, MetalAGBNum, MetalNSMNum, DustNum, SNeRateNum;
   int MetalCNum, MetalONum, MetalMgNum, MetalSiNum, MetalFeNum,
-    DustSilNum, DustMgNum, DustFeNum, DustCNum;
+    DustMgNum, DustFeNum, DustCNum;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum,
     H2IINum, DINum, DIINum, HDINum, B1Num, B2Num, B3Num, PhiNum;
   double DiskDensity, DiskVelocityMag;
@@ -286,7 +286,9 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
     FieldType[MetalAGBNum = NumberOfBaryonFields++] = MetalAGBDensity;
     FieldType[MetalNSMNum = NumberOfBaryonFields++] = MetalNSMDensity;
   }
-  if (UseDustDensityField)
+  /* With UseDustSpeciesTrack the bulk dust density (and the silicate sum)
+     are not carried as fields; they are derived from the species on demand. */
+  if (UseDustDensityField && !UseDustSpeciesTrack)
     FieldType[DustNum = NumberOfBaryonFields++] = DustDensity;
   if (UseSNeRateField)
     FieldType[SNeRateNum = NumberOfBaryonFields++] = SNeRate;
@@ -296,7 +298,6 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
     FieldType[MetalMgNum = NumberOfBaryonFields++] = MetalDensityMagnesium;
     FieldType[MetalSiNum = NumberOfBaryonFields++] = MetalDensitySilicon;
     FieldType[MetalFeNum = NumberOfBaryonFields++] = MetalDensityIron;
-    FieldType[DustSilNum = NumberOfBaryonFields++] = DustDensitySilicate;
     FieldType[DustMgNum  = NumberOfBaryonFields++] = DustDensityMgSilicate;
     FieldType[DustFeNum  = NumberOfBaryonFields++] = DustDensityFeSilicate;
     FieldType[DustCNum   = NumberOfBaryonFields++] = DustDensityCarbonaceous;
@@ -639,7 +640,7 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
     BaryonField[MetalNSMNum][n] = tiny_number;
   }
 
-  if (UseDustDensityField) {
+  if (UseDustDensityField && !UseDustSpeciesTrack) {
     if (UseMetallicityField)
       BaryonField[DustNum][n] = InitialDustToGasRatio * BaryonField[0][n];
     else
@@ -649,18 +650,19 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
   if (UseSNeRateField)
     BaryonField[SNeRateNum][n] = 0.0;
 
-  /* Species-resolved dust tracking: seed dust species from bulk dust_density
-     and gas-phase element fields from metal_density. */
+  /* Species-resolved dust tracking: seed dust species from the bulk dust
+     budget (InitialDustToGasRatio * gas density, computed per cell; the
+     bulk field itself is not carried) and gas-phase element fields from
+     metal_density. */
   if (UseDustSpeciesTrack) {
     if (UseMetallicityField) {
       float fsil_mg = InitialDustSilicateFraction * InitialDustMgSilicateFraction;
       float fsil_fe = InitialDustSilicateFraction * InitialDustFeSilicateFraction;
-      BaryonField[DustMgNum][n]  = fsil_mg * BaryonField[DustNum][n];
-      BaryonField[DustFeNum][n]  = fsil_fe * BaryonField[DustNum][n];
-      BaryonField[DustSilNum][n] = BaryonField[DustMgNum][n] +
-                                   BaryonField[DustFeNum][n];
+      float dustseed = InitialDustToGasRatio * BaryonField[0][n];
+      BaryonField[DustMgNum][n]  = fsil_mg * dustseed;
+      BaryonField[DustFeNum][n]  = fsil_fe * dustseed;
       BaryonField[DustCNum][n]   = InitialDustCarbonaceousFraction *
-                                   BaryonField[DustNum][n];
+                                   dustseed;
       BaryonField[MetalCNum][n]  = InitialMetalCarbonFraction    * BaryonField[MetalNum][n];
       BaryonField[MetalONum][n]  = InitialMetalOxygenFraction    * BaryonField[MetalNum][n];
       BaryonField[MetalMgNum][n] = InitialMetalMagnesiumFraction * BaryonField[MetalNum][n];
@@ -669,7 +671,6 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
     } else {
       BaryonField[DustMgNum][n]  = tiny_number;
       BaryonField[DustFeNum][n]  = tiny_number;
-      BaryonField[DustSilNum][n] = tiny_number;
       BaryonField[DustCNum][n]   = tiny_number;
       BaryonField[MetalCNum][n]  = tiny_number;
       BaryonField[MetalONum][n]  = tiny_number;

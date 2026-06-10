@@ -210,19 +210,20 @@ const field_type
   MetalDensityIron      = 119,
 
   /* dust_species_track = 1: three-species dust (Mg-silicate + Fe-silicate +
-     carbonaceous). DustDensitySilicate is maintained by Grackle as the
-     Mg-silicate + Fe-silicate sum for compatibility. */
-  DustDensitySilicate     = 120,
-  DustDensityMgSilicate   = 121,
-  DustDensityFeSilicate   = 122,
-  DustDensityCarbonaceous = 123,
+     carbonaceous). These species are the authoritative dust state; the bulk
+     DustDensity and the silicate sum are not carried as baryon fields and
+     are reconstructed in scratch buffers at the Grackle/cooling/feedback
+     call sites. */
+  DustDensityMgSilicate   = 120,
+  DustDensityFeSilicate   = 121,
+  DustDensityCarbonaceous = 122,
 
   /* Per-cell count of supernova events that occurred during the current
      timestep. Populated by star_feedback2; consumed by Grackle when
      use_sne_field = 1 (Li+ 2019 dust destruction). NOT a density. */
-  SNeRate                 = 124,
+  SNeRate                 = 123,
 
-  FieldUndefined  = 125;
+  FieldUndefined  = 124;
 
 /*
 enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,

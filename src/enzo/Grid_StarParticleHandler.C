@@ -798,16 +798,22 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       MetalPointer = BaryonField[SNColourNum];
   } // ENDELSE both metal types
 
-  if (UseDustDensityField && DustDensityNum == -1)
+  if (UseDustDensityField && !UseDustSpeciesTrack && DustDensityNum == -1)
     ENZO_FAIL("UseDustDensityField = 1 but DustDensity field is missing.\n");
 
-  int ActiveDustField = (UseDustDensityField && DustDensityNum != -1);
+  /* With UseDustSpeciesTrack the bulk dust density (and the silicate sum)
+     are not carried as baryon fields; scratch buffers holding the species
+     sums are passed to the star maker/feedback routines instead, and the
+     species fields remain the authoritative state. */
+  int ActiveDustField = (UseDustDensityField &&
+                         (DustDensityNum != -1 || UseDustSpeciesTrack));
   float *DustPointer = (DustDensityNum != -1) ?
     BaryonField[DustDensityNum] : BaryonField[DensNum];
 
   int MetalCNum = -1, MetalONum = -1, MetalMgNum = -1,
       MetalSiNum = -1, MetalFeNum = -1;
-  int DustSilNum = -1, DustMgNum = -1, DustFeNum = -1, DustCNum = -1;
+  int DustMgNum = -1, DustFeNum = -1, DustCNum = -1;
+  float *DustTotalScratch = NULL, *DustSilScratch = NULL;
 
   if (UseDustSpeciesTrack) {
     MetalCNum  = FindField(MetalDensityCarbon,     FieldType, NumberOfBaryonFields);
@@ -815,16 +821,18 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     MetalMgNum = FindField(MetalDensityMagnesium,  FieldType, NumberOfBaryonFields);
     MetalSiNum = FindField(MetalDensitySilicon,    FieldType, NumberOfBaryonFields);
     MetalFeNum = FindField(MetalDensityIron,       FieldType, NumberOfBaryonFields);
-    DustSilNum = FindField(DustDensitySilicate,    FieldType, NumberOfBaryonFields);
     DustMgNum  = FindField(DustDensityMgSilicate,  FieldType, NumberOfBaryonFields);
     DustFeNum  = FindField(DustDensityFeSilicate,  FieldType, NumberOfBaryonFields);
     DustCNum   = FindField(DustDensityCarbonaceous, FieldType, NumberOfBaryonFields);
 
-    if (!ActiveDustField || MetalCNum == -1 || MetalONum == -1 ||
+    if (MetalCNum == -1 || MetalONum == -1 ||
         MetalMgNum == -1 || MetalSiNum == -1 || MetalFeNum == -1 ||
-        DustSilNum == -1 || DustMgNum == -1 || DustFeNum == -1 ||
-        DustCNum == -1)
+        DustMgNum == -1 || DustFeNum == -1 || DustCNum == -1)
       ENZO_FAIL("UseDustSpeciesTrack = 1 but a required dust/species field is missing.\n");
+
+    DustTotalScratch = new float[size];
+    DustSilScratch   = new float[size];
+    DustPointer = DustTotalScratch;
   }
 
   float *MetalCPtr  = (MetalCNum  != -1) ? BaryonField[MetalCNum]  : BaryonField[DensNum];
@@ -832,10 +840,19 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
   float *MetalMgPtr = (MetalMgNum != -1) ? BaryonField[MetalMgNum] : BaryonField[DensNum];
   float *MetalSiPtr = (MetalSiNum != -1) ? BaryonField[MetalSiNum] : BaryonField[DensNum];
   float *MetalFePtr = (MetalFeNum != -1) ? BaryonField[MetalFeNum] : BaryonField[DensNum];
-  float *DustSilPtr = (DustSilNum != -1) ? BaryonField[DustSilNum] : BaryonField[DensNum];
+  float *DustSilPtr = (UseDustSpeciesTrack) ? DustSilScratch : BaryonField[DensNum];
   float *DustMgPtr  = (DustMgNum  != -1) ? BaryonField[DustMgNum]  : BaryonField[DensNum];
   float *DustFePtr  = (DustFeNum  != -1) ? BaryonField[DustFeNum]  : BaryonField[DensNum];
   float *DustCPtr   = (DustCNum   != -1) ? BaryonField[DustCNum]   : BaryonField[DensNum];
+
+  /* The scratch totals are refilled immediately before each Fortran call
+     that reads them, because earlier calls (e.g. star_maker2 scaling the
+     species fields at star formation) invalidate the sums. */
+  if (UseDustSpeciesTrack)
+    for (i = 0; i < size; i++) {
+      DustSilScratch[i]   = DustMgPtr[i] + DustFePtr[i];
+      DustTotalScratch[i] = DustSilScratch[i] + DustCPtr[i];
+    }
 
   int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
 
@@ -1744,6 +1761,15 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
         (float) grackle_data->dust_condensation_eff;
 #endif
 
+      /* Refill the scratch dust totals: star_maker2 above scales the
+         species fields in star-forming cells, and star_feedback2 reads
+         the bulk total (olddust) to apportion newly condensed dust. */
+      if (UseDustSpeciesTrack)
+        for (i = 0; i < size; i++) {
+          DustSilScratch[i]   = DustMgPtr[i] + DustFePtr[i];
+          DustTotalScratch[i] = DustSilScratch[i] + DustCPtr[i];
+        }
+
       FORTRAN_NAME(star_feedback2)(
        GridDimension, GridDimension+1, GridDimension+2,
           BaryonField[DensNum], DustPointer, dmfield,
@@ -2372,11 +2398,13 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
   }
  
   /* Clean up. */
- 
+
   delete [] h2field;
   delete [] TotalMetals;
   delete [] temperature;
   delete [] dmfield;
+  delete [] DustTotalScratch;
+  delete [] DustSilScratch;
   delete [] BaryonField[NumberOfBaryonFields];   // refinement flag field
   BaryonField[NumberOfBaryonFields] = NULL;
  

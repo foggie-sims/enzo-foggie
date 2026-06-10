@@ -144,14 +144,14 @@ int grid::ReturnHydroRKPointers(float **Prim, bool ReturnMassFractions)
   if (SNColourNum      != -1) Prim[nfield++] = BaryonField[SNColourNum];
   if (DustDensityNum   != -1) Prim[nfield++] = BaryonField[DustDensityNum];
 
-  /* Species-resolved dust tracking: 5 gas-phase elements + 4 dust species. */
+  /* Species-resolved dust tracking: 5 gas-phase elements + 3 dust species
+     (the bulk and silicate dust sums are not carried as fields). */
   if (UseDustSpeciesTrack) {
     int MetalCNum  = FindField(MetalDensityCarbon,     FieldType, NumberOfBaryonFields);
     int MetalONum  = FindField(MetalDensityOxygen,     FieldType, NumberOfBaryonFields);
     int MetalMgNum = FindField(MetalDensityMagnesium,  FieldType, NumberOfBaryonFields);
     int MetalSiNum = FindField(MetalDensitySilicon,    FieldType, NumberOfBaryonFields);
     int MetalFeNum = FindField(MetalDensityIron,       FieldType, NumberOfBaryonFields);
-    int DustSilNum = FindField(DustDensitySilicate,    FieldType, NumberOfBaryonFields);
     int DustMgNum  = FindField(DustDensityMgSilicate,  FieldType, NumberOfBaryonFields);
     int DustFeNum  = FindField(DustDensityFeSilicate,  FieldType, NumberOfBaryonFields);
     int DustCNum   = FindField(DustDensityCarbonaceous,FieldType, NumberOfBaryonFields);
@@ -160,7 +160,6 @@ int grid::ReturnHydroRKPointers(float **Prim, bool ReturnMassFractions)
     if (MetalMgNum != -1) Prim[nfield++] = BaryonField[MetalMgNum];
     if (MetalSiNum != -1) Prim[nfield++] = BaryonField[MetalSiNum];
     if (MetalFeNum != -1) Prim[nfield++] = BaryonField[MetalFeNum];
-    if (DustSilNum != -1) Prim[nfield++] = BaryonField[DustSilNum];
     if (DustMgNum  != -1) Prim[nfield++] = BaryonField[DustMgNum];
     if (DustFeNum  != -1) Prim[nfield++] = BaryonField[DustFeNum];
     if (DustCNum   != -1) Prim[nfield++] = BaryonField[DustCNum];
