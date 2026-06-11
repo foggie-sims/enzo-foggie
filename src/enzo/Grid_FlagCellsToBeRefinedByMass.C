@@ -32,10 +32,11 @@ int grid::FlagCellsToBeRefinedByMass(int level, int method, int RestrictFlag)
   if (MyProcessorNumber != ProcessorNumber)
     return SUCCESS;
  
-  /* error check */
-
+  /* Note that we are using the simulation-wide CellFlaggingMethod array and its
+     indices here so that we can access the correct MinimumMassForRefinement etc */
   int ThisFlaggingMethod = CellFlaggingMethod[method];
- 
+
+    /* error check */
   if (FlaggingField == NULL) {
     fprintf(stderr, "Flagging Field is undefined.\n");
     return -1;

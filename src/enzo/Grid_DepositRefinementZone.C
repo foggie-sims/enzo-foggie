@@ -87,6 +87,8 @@ int grid::DepositRefinementZone(int level, FLOAT* ParticlePosition,
   if (ParticleMassFlaggingField == NULL)
     ENZO_FAIL("Particle Mass Flagging Field is undefined!");
 
+  /* Note that we are using the simulation-wide CellFlaggingMethod array and its
+     indices here so that we can access the correct MinimumMassForRefinement etc */
   for (method = 0; method < MAX_FLAGGING_METHODS; method++) {
     if (CellFlaggingMethod[method] == 4)
       ParticleMassMethod = method;
