@@ -8,7 +8,7 @@
 /
 /  PURPOSE: Checks to see if grid is inside of a multirefine region and,
 /           if so, sets minimum star particle mass to minimum for that 
-/           region.
+/           region if it is lower than minimum for timestep.
 /  RETURNS: Success or Fail
 /
 ************************************************************************/
