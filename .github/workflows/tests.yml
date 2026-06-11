@@ -1,0 +1,288 @@
+name: Enzo Tests
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+env:
+  HOME: /home/runner/work
+  LD_LIBRARY_PATH: /home/runner/work/local/lib:${LD_LIBRARY_PATH}
+  ENZOTEST_DIR: /home/runner/work/enzo_test
+  ANSWER_NAME: push_suite
+  HYPRE: 2.20.0
+
+jobs:
+  test-compile-options:
+    name: Test Compile Options
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Fetch tags
+        run: |
+          git fetch --tags https://github.com/foggie-sims/enzo-foggie
+          git tag tip
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/pip
+            ~/venv
+            ~/local
+          key: dependencies-v7
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y csh libhdf5-serial-dev libopenmpi-dev openmpi-bin gfortran libtool-bin xutils-dev
+
+      - name: Set up Python virtual environment
+        run: |
+          python3 -m venv ${HOME}/venv
+          source ${HOME}/venv/bin/activate
+          pip install --upgrade pip
+          pip install --upgrade wheel
+          pip install --upgrade setuptools
+          pip install Cython numpy h5py fastcache flake8 nose3 girder-client matplotlib pytest gitpython
+          git clone https://github.com/yt-project/yt
+          cd yt
+          git checkout main
+          pip install -e .
+          cd ..
+          pip install yt_astro_analysis
+
+      - name: Install HYPRE
+        run: |
+          mkdir -p ${HOME}/local
+          if [ ! -f ${HOME}/local/lib/libHYPRE.a ]; then
+            cd ${HOME}
+            wget https://github.com/hypre-space/hypre/archive/refs/tags/v${HYPRE}.tar.gz
+            tar xvfz v${HYPRE}.tar.gz
+            cd hypre-${HYPRE}/src
+            ./configure --with-MPI --with-MPI-include=/usr/include/mpi --with-MPI-libs=mpi --with-MPI-lib-dirs=/usr/lib --prefix=${HOME}/local
+            make install
+          fi
+
+      - name: Install Grackle
+        run: |
+          git clone -b main https://github.com/grackle-project/grackle ${HOME}/grackle
+          cd ${HOME}/grackle
+          ./configure
+          cd src/clib
+          make machine-linux-gnu
+          make
+          make install
+
+      - name: Test compilation configurations
+        run: |
+          source ${HOME}/venv/bin/activate
+          ./configure
+          cd src/enzo
+          make machine-ubuntu
+          # test various baryon/particle precisions
+          for prec in 32 64
+          do for part in 32 128
+          do
+          # skip the test-suite configuration
+          if [[ $prec == 64 && $part == 64 ]]; then
+          continue
+          fi
+          make precision-$prec
+          make particles-$part
+          make clean
+          make -j 6 || (make show-config ; exit 1)
+          done ; done
+          # return this to default
+          make precision-64
+          make particles-64
+          # test various integer/particle-id precisions
+          for inte in 64
+          do for pids in 64
+          do
+          # skip the test-suite configuration
+          if [[ $inte == 32 && $pids == 32 ]]; then
+          continue
+          fi
+          make integers-$inte
+          make particle-id-$pids
+          make clean
+          make -j 6 || (make show-config ; exit 1)
+          done ; done
+          make integers-64
+          make particle-id-64
+          # test without mpi
+          make use-mpi-no
+          make clean
+          make -j 6 || (make show-config ; exit 1)
+          make use-mpi-yes
+          # test ray-tracing
+          make photon-no
+          make clean
+          make -j 6 || (make show-config ; exit 1)
+
+      - name: Upload compilation output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: compile-output
+          path: src/enzo/out.compile
+
+  test-suite:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 1200
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Fetch tags
+        run: |
+          git fetch --tags https://github.com/foggie-sims/enzo-foggie
+          git tag tip
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/pip
+            ~/venv
+            ~/local
+          key: dependencies-v7
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y csh libhdf5-serial-dev libopenmpi-dev openmpi-bin gfortran libtool-bin xutils-dev
+
+      - name: Set up Python virtual environment
+        run: |
+          python3 -m venv ${HOME}/venv
+          source ${HOME}/venv/bin/activate
+          pip install --upgrade pip
+          pip install --upgrade wheel
+          pip install --upgrade setuptools
+          pip install Cython numpy h5py fastcache flake8 nose3 girder-client matplotlib pytest gitpython
+          git clone https://github.com/yt-project/yt
+          cd yt
+          git checkout main
+          pip install -e .
+          cd ..
+          pip install yt_astro_analysis
+
+      - name: Install HYPRE
+        run: |
+          mkdir -p ${HOME}/local
+          if [ ! -f ${HOME}/local/lib/libHYPRE.a ]; then
+            cd ${HOME}
+            wget https://github.com/hypre-space/hypre/archive/refs/tags/v${HYPRE}.tar.gz
+            tar xvfz v${HYPRE}.tar.gz
+            cd hypre-${HYPRE}/src
+            ./configure --with-MPI --with-MPI-include=/usr/include/mpi --with-MPI-libs=mpi --with-MPI-lib-dirs=/usr/lib --prefix=${HOME}/local
+            make install
+          fi
+
+      - name: Install Grackle
+        run: |
+          git clone -b main https://github.com/grackle-project/grackle ${HOME}/grackle
+          cd ${HOME}/grackle
+          ./configure
+          cd src/clib
+          make machine-linux-gnu
+          make
+          make install
+
+      - name: Download test data
+        run: |
+          source ${HOME}/venv/bin/activate
+          girder-cli --api-url https://girder.hub.yt/api/v1 download 5af9ef42ec1bd30001fcd001 $GITHUB_WORKSPACE/run/CosmologySimulation
+
+      - name: Restore test answers cache
+        uses: actions/cache@v5
+        with:
+          path: ~/enzo_test/push_suite
+          key: foggie-test-answers-v1
+
+      - name: Build and test (gold standard)
+        run: |
+          source ${HOME}/venv/bin/activate
+          if [ ! -e ${HOME}/enzo_test/push_suite ]; then
+            git checkout foggie-gold-standard-v1
+            ./configure
+            cd src/enzo
+            make machine-ubuntu
+            make load-config-test-suite
+            make clean
+            make -j 6
+            cd ../../run
+            python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --answer-store
+          fi
+
+      - name: Build and test (tip)
+        run: |
+          source ${HOME}/venv/bin/activate
+          git checkout tip
+          ./configure
+          cd src/enzo
+          make machine-ubuntu
+          make load-config-test-suite
+          make clean
+          make -j 6
+          cd ../../run
+          python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --clobber
+
+      - name: Upload compilation output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-suite-compile-output
+          path: src/enzo/out.compile
+
+  docs-build:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dvipng texlive-latex-extra
+
+      - name: Set up Python virtual environment
+        run: |
+          python3 -m venv ${HOME}/venv
+          source ${HOME}/venv/bin/activate
+          pip install --upgrade pip
+          pip install --upgrade wheel
+          pip install --upgrade setuptools
+          pip install sphinx
+
+      - name: Build documentation
+        run: |
+          source ${HOME}/venv/bin/activate
+          cd doc/manual/source
+          python -m sphinx -M html "." "_build" -W

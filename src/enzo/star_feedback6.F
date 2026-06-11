@@ -205,25 +205,6 @@ c
          ERROR_MESSAGE
       endif
 c
-c     Ensure supernova energies are 1e51
-c
-      if (ergSNII .ne. 1e51_RKIND) then
-         write(6,*) "Mechanical feedback (StarParticleFeedback = 64)" //
-     &      " does not support supernova energies other than" //
-     &      " 1e51 ergs."
-         write(6,*) "If you want to use this feedback, set " //
-     &      "StarFeedbackTabularSNIIEnergy = 1.e51 (its default value)."
-         ERROR_MESSAGE
-      endif
-      if (ergSNIa .ne. 1e51_RKIND) then
-         write(6,*) "Mechanical feedback (StarParticleFeedback = 64)" //
-     &      " does not support supernova energies other than" //
-     &      " 1e51 ergs."
-         write(6,*) "If you want to use this feedback, set " //
-     &      "StarFeedbackTabularSNIaEnergy = 1.e51 (its default value)."
-         ERROR_MESSAGE
-      endif
-c
 c     Initialize feedback and debug logs
 c
       if (feedback_log .eq. 1_IKIND) then
