@@ -990,10 +990,10 @@ EXTERN char LocalPath[MAX_LINE_LENGTH];
 EXTERN char GlobalPath[MAX_LINE_LENGTH];
 #endif
 
-#ifdef USE_PYTHON
 EXTERN int NumberOfPythonCalls;
 EXTERN int NumberOfPythonTopGridCalls;
 EXTERN int NumberOfPythonSubcycleCalls;
+#ifdef USE_PYTHON
 EXTERN PyObject *grid_dictionary;
 EXTERN PyObject *old_grid_dictionary;
 EXTERN PyObject *hierarchy_information;
@@ -1001,6 +1001,24 @@ EXTERN PyObject *yt_parameter_file;
 EXTERN PyObject *conversion_factors;
 EXTERN PyObject *my_processor;
 #endif
+
+#ifdef USE_LIBYT
+#include <vector>
+EXTERN char libyt_script_name[512];
+EXTERN char libyt_fig_basename[512];
+EXTERN int CycleSkipLibytCall;
+EXTERN int CycleLastLibytCall;
+EXTERN float dtLibytCall;
+EXTERN float TimeLastLibytCall;
+EXTERN void *param_libyt;
+EXTERN void *param_yt;
+EXTERN std::vector<void*> libyt_generated_data;
+EXTERN int libyt_field_lookup[FieldUndefined];
+EXTERN int NumberOfLibytCalls;
+EXTERN int NumberOfLibytTopGridCalls;
+EXTERN int NumberOfLibytSubcycleCalls;
+#endif
+
 /* Multi-species rate equation flag and associated data. */
 
 EXTERN int MetalCooling;

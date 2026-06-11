@@ -20,6 +20,10 @@ For more information on yt, see the `yt website <http://yt-project.org>`_,
 where you will find mailing lists, documentation, API documentation, a cookbook
 and even a gallery of images.
 
+We can also run `yt <http://yt-project.org>`_ during :ref:`in_situ_python_analysis`.
+This allows us to run yt analysis scripts and other Python codes without the step of writing data to a hard disk.
+Currently, this is only available when simulation fields are all in CPU.
+
 HDF5 Tools
 ----------
 
