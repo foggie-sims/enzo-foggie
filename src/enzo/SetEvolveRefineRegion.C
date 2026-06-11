@@ -97,7 +97,7 @@ int SetEvolveRefineRegion (FLOAT time)
     } // for(i=0; i<NumberOfMultiRefineTracks; i++)
   } // if we're using code time
 
-  /* Interpolate current position and minimum star particle mass for each MultiRefineRegion at the current time.
+  /* Interpolate current position for each MultiRefineRegion at the current time.
      Store these values, permitted refinement methods, and minimum and maximum levels for each refinement type. Note
      that minimum and maximum levels for closest time entry with a lower time than current simulation time will be
      used (i.e., these will not be interpolated) */
@@ -110,10 +110,6 @@ int SetEvolveRefineRegion (FLOAT time)
     if (MRRTracks[region].Enabled == 1){ // don't need to store information for tracks that aren't enabled
       timestep = closest_ind[region];
       if(timestep == MRRTracks[region].NTimeEntries-1){ // if we're at the last specified time entry, no need to interpolate
-        MultiRefineRegionMinimumStarMass[enbctr+NumberOfStaticMultiRefineRegions] = MRRTracks[region].TimeEntry[timestep].MinStarMass;
-        if (debug1 && MyProcessorNumber == ROOT_PROCESSOR){
-          fprintf(stderr,"SetEvolveRefineRegion: I set MultiRefineRegionMinimumStarMass[%"ISYM"] to %"FSYM" for timestep %"ISYM"\n.",region+NumberOfStaticMultiRefineRegions,MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions],timestep);
-        }
         for (i = 0; i < MAX_DIMENSION; i++){
           MultiRefineRegionLeftEdge[enbctr+NumberOfStaticMultiRefineRegions][i] = MRRTracks[region].TimeEntry[timestep].Pos[i];
           MultiRefineRegionRightEdge[enbctr+NumberOfStaticMultiRefineRegions][i] = MRRTracks[region].TimeEntry[timestep].Pos[i+3];
@@ -124,13 +120,6 @@ int SetEvolveRefineRegion (FLOAT time)
           MultiRefineRegionMaximumLevel[enbctr+NumberOfStaticMultiRefineRegions][i] = MRRTracks[region].TimeEntries[timestep].MaxLevels[i];
         }
       } else { // if we're not at the last time, we need to interpolate
-        MultiRefineRegionMinimumStarMass[enbctr+NumberOfStaticMultiRefineRegions] = MRRTracks[region].TimeEntry[timestep].MinStarMass
-          + (time - MRRTracks[region].TimeEntry[timestep].Time)
-          * (MRRTracks[region].TimeEntry[timestep+1].MinStarMass-MRRTracks[region].TimeEntry[timestep].MinStarMass)
-          / (MRRTracks[region].TimeEntry[timestep+1].Time - MRRTracks[region].TimeEntry[timestep].Time);
-        if (debug1 && MyProcessorNumber == ROOT_PROCESSOR){
-          fprintf(stderr,"SetEvolveRefineRegion: I set MultiRefineRegionMinimumStarMass[%"ISYM"] to %"FSYM" for inbtwn timestep %"ISYM".\n",region+NumberOfStaticMultiRefineRegions,MultiRefineRegionMinimumStarMass[region+NumberOfStaticMultiRefineRegions],timestep);
-        }
         for (i = 0; i < MAX_DIMENSION; i++){
           MultiRefineRegionLeftEdge[enbctr+NumberOfStaticMultiRefineRegions][i] = MRRTracks[region].TimeEntry[timestep].Pos[i]
             + (time - MRRTracks[region].TimeEntry[timestep].Time)
@@ -151,11 +140,10 @@ int SetEvolveRefineRegion (FLOAT time)
       }  // if we're not at the final timestep
       
       if (debug1 && MyProcessorNumber == ROOT_PROCESSOR){
-        fprintf(stdout, "SetEvolveRefineRegion: EvolveMultiRefineRegion: %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"ISYM" %"ISYM" %"FSYM"\n",
+        fprintf(stdout, "SetEvolveRefineRegion: EvolveMultiRefineRegion: %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM"\n",
           MultiRefineRegionLeftEdge[enbctr+NumberOfStaticMultiRefineRegions][0], MultiRefineRegionLeftEdge[enbctr+NumberOfStaticMultiRefineRegions][1],
           MultiRefineRegionLeftEdge[enbctr+NumberOfStaticMultiRefineRegions][2], MultiRefineRegionRightEdge[enbctr+NumberOfStaticMultiRefineRegions][0],
-          MultiRefineRegionRightEdge[enbctr+NumberOfStaticMultiRefineRegions][1], MultiRefineRegionRightEdge[enbctr+NumberOfStaticMultiRefineRegions][2],
-          MultiRefineRegionMinimumStarMass[enbctr+NumberOfStaticMultiRefineRegions]);
+          MultiRefineRegionRightEdge[enbctr+NumberOfStaticMultiRefineRegions][1], MultiRefineRegionRightEdge[enbctr+NumberOfStaticMultiRefineRegions][2]);
         for (i=0; i<MRRTracks[region].NRefTypes; i++){
           fprintf(stdout, "                                                %"ISYM": %"ISYM" %"ISYM"\n", 
           MultiRefineRegionFlaggingMethod[enbctr+NumberOfStaticMultiRefineRegions][i],MultiRefineRegionMinimumLevel[enbctr+NumberOfStaticMultiRefineRegions][i],

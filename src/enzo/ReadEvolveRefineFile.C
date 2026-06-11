@@ -73,10 +73,10 @@ int ReadEvolveRefineFile(void)
             }
             if (CMind == INT_UNDEFINED){
               if (TotalNumberOfFlaggingMethods >= MAX_FLAGGING_METHODS){
-                fprintf(stderr, 'ReadEvolveRefineFile: Too many cell flagging methods requested. Increase MAX_FLAGGING_METHODS in macros_and_parameters.h.')
+                fprintf(stderr, 'ReadEvolveRefineFile: Too many cell flagging methods requested. Increase MAX_FLAGGING_METHODS in macros_and_parameters.h.');
               }
               else{
-                ListOfFlaggingMethods[TotalNumberOfFlaggingMethods] = MultiRefineRegionFlaggingMethod[i][j];
+                ListOfFlaggingMethodsInUse[TotalNumberOfFlaggingMethods] = MultiRefineRegionFlaggingMethod[i][j];
                 TotalNumberOfFlaggingMethods++;
               }
             }
@@ -183,7 +183,7 @@ int ReadEvolveRefineFile(void)
           }
 
           if(MRRTracks[i].NRefTypes>MAX_FLAGGING_METHODS){
-            fprintf(stderr;"Too many flagging methods requested for %s in %s.\nIncrease MAX_FLAGGING_METHODS in macros_and_parameters.h.\n",trkname,MultiRefineRegionFile);
+            fprintf(stderr,"Too many flagging methods requested for %s in %s.\nIncrease MAX_FLAGGING_METHODS in macros_and_parameters.h.\n",trkname,MultiRefineRegionFile);
             return FAIL;
           }
 
@@ -204,7 +204,7 @@ int ReadEvolveRefineFile(void)
           }
 
           if(MRRTracks[i].NTimeEntries>MAX_TIME_ENTRIES){
-            fprintf(stderr;"Too many time entries requested for %s in %s.\nIncrease MAX_TIME_ENTRIES in macros_and_parameters.h!\n",trkname,MultiRefineRegionFile);
+            fprintf(stderr,"Too many time entries requested for %s in %s.\nIncrease MAX_TIME_ENTRIES in macros_and_parameters.h!\n",trkname,MultiRefineRegionFile);
             return FAIL;
           }
         } // if (MyProcessorNumber == ROOT_PROCESSOR)
@@ -251,11 +251,11 @@ int ReadEvolveRefineFile(void)
               if (CMind == INT_UNDEFINED){
                 if (TotalNumberOfFlaggingMethods >= MAX_FLAGGING_METHODS){
                   fprintf(stderr, 'ReadEvolveRefineFile: Too many cell flagging methods requested; %'ISYM' in addition to: ',MRRTracks[i].RefTypes[j]);
-                  WriteListOfInts(stderr,MAX_FLAGGING_METHODS,ListOfFlaggingMethods);
+                  WriteListOfInts(stderr,MAX_FLAGGING_METHODS,ListOfFlaggingMethodsInUse);
                   fprintf(stderr, 'Please increase MAX_FLAGGING_METHODS in macros_and_parameters.h.\n');
                 }
                 else{
-                  ListOfFlaggingMethods[TotalNumberOfFlaggingMethods] = MRRTracks[i].RefTypes[j];
+                  ListOfFlaggingMethodsInUse[TotalNumberOfFlaggingMethods] = MRRTracks[i].RefTypes[j];
                   TotalNumberOfFlaggingMethods++;
                 }
               }
@@ -345,12 +345,12 @@ int ReadEvolveRefineFile(void)
             }
 
             if(MRRTracks[i].TimeEntries[j].MinStarMass>1.0e+20){
-              fprintf(stderr;"Unreasonably high minimum star particle mass requested for %s in %s in %s.\n",tmename,trkname,MultiRefineRegionFile);
+              fprintf(stderr,"Unreasonably high minimum star particle mass requested for %s in %s in %s.\n",tmename,trkname,MultiRefineRegionFile);
               return FAIL;
             }
 
             if(MRRTracks[i].TimeEntries[j].MinStarMass<0.0){
-              fprintf(stderr;"Negative minimum star particle mass requested for %s in %s in %s.\n",tmename,trkname,MultiRefineRegionFile);
+              fprintf(stderr,"Negative minimum star particle mass requested for %s in %s in %s.\n",tmename,trkname,MultiRefineRegionFile);
               return FAIL;
             }
 
