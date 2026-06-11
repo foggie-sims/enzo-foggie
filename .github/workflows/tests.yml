@@ -8,8 +8,8 @@ on:
 
 env:
   HOME: /home/runner/work
-  LD_LIBRARY_PATH: ${HOME}/local/lib:${LD_LIBRARY_PATH}
-  ENZOTEST_DIR: ${HOME}/enzo_test
+  LD_LIBRARY_PATH: /home/runner/work/local/lib:${LD_LIBRARY_PATH}
+  ENZOTEST_DIR: /home/runner/work/enzo_test
   ANSWER_NAME: push_suite
   HYPRE: 2.20.0
 
