@@ -78,11 +78,9 @@ jobs:
         run: |
           git clone -b main https://github.com/grackle-project/grackle ${HOME}/grackle
           cd ${HOME}/grackle
-          ./configure
-          cd src/clib
-          make machine-linux-gnu
-          make
-          make install
+          cmake -DCMAKE_INSTALL_PREFIX=$(HOME)/local -B build
+          cmake --build build
+          cmake --install build
 
       - name: Test compilation configurations
         run: |
@@ -179,12 +177,6 @@ jobs:
           pip install --upgrade pip
           pip install --upgrade wheel
           pip install --upgrade setuptools
-          pip install Cython numpy h5py fastcache flake8 nose3 girder-client matplotlib pytest gitpython
-          git clone https://github.com/yt-project/yt
-          cd yt
-          git checkout main
-          pip install -e .
-          cd ..
           pip install yt_astro_analysis
 
       - name: Install HYPRE
