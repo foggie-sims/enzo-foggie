@@ -192,6 +192,16 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
       fscanf(fptr, "PPMSteepeningParameter = %*"ISYM"\n", NULL);
     }
 
+        /* Read grid RT Sums - CWT*/
+    if (fscanf(fptr, "k_diss_H2I_grid_sum = %"GOUTSYM"\n", k_diss_H2I_grid_sum) != 1) {
+            printf("Error reading k_diss_H2I_grid_sum."); //Don't kill if not present
+    }
+
+    if (fscanf(fptr, "k_det_HM_grid_sum = %"GOUTSYM"\n", k_det_HM_grid_sum) != 1) {
+            printf("Error reading k_det_HM_grid_sum.");
+    }
+ 
+
     /* 3) Read particle info */
  
     if (fscanf(fptr, "NumberOfParticles = %"ISYM"\n", &NumberOfParticles) != 1) {
