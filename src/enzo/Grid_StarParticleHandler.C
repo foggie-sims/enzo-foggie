@@ -1873,8 +1873,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     float dilRad2 = dilutionRadius * dilutionRadius;
     float MassUnits = DensityUnits * POW(LengthUnits,3);
     float mass_conversion = MassUnits / SolarMass; //Convert from code mass to SolarMass
-    float unit_conversion = TimeUnits / (LengthUnits * LengthUnits);; //Convert to code units
-    float conversion_factor = unit_conversion * mass_conversion * cell_volume / (4.0 * 3.14159 * dilRad2); //Convert from density, and dilute assuming average distance from star
+    float unit_conversion = TimeUnits / (LengthUnits * LengthUnits); //Convert to code units
+    //float conversion_factor = unit_conversion * mass_conversion * cell_volume / (4.0 * 3.14159 * dilRad2); //Convert from density, and dilute assuming average distance from star
+    float conversion_factor = TimeUnits / (LengthUnits*LengthUnits) * MassUnits / SolarMass * dx*dx*dx / (4.0*3.14159*dilutionRadius*dilutionRadius);
 
     //k_diss_H2 returned as "cm**2 / s per cell volume * minit/Msun"
     k_diss_H2I_grid_sum = k_diss_H2I_grid_sum * conversion_factor;
