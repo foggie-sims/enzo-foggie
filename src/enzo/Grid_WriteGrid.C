@@ -153,10 +153,6 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
  
     fprintf(fptr, "NumberOfBaryonFields = %"ISYM"\n", NumberOfBaryonFields);
  
-    fprintf(fptr, "k_diss_H2I_grid_sum = %"GOUTSYM"\n", k_diss_H2I_grid_sum);
-
-    fprintf(fptr, "k_det_HM_grid_sum = %"GOUTSYM"\n", k_det_HM_grid_sum);
-
 
   }
  
