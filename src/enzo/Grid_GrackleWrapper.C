@@ -359,7 +359,7 @@ int grid::GrackleWrapper()
           float k_det_HM_sb99_interp = (1-t_age) * (1-t_z) * kdet_HM_sb99[zz][aa] + t_age * (1-t_z) * kdet_HM_sb99[zz][aa+1] + (1-t_age) * t_z * kdet_HM_sb99[zz+1][aa] + t_age * t_z * kdet_HM_sb99[zz+1][aa+1];
 
           float dx = this->CellWidth[0][0];
-          float ParticleMass_Msun = this->ParticleMass[i] * dx * dx * dx * MassUnits / (1.989e33); //Convert from code mass to Msun
+          float ParticleMass_Msun = this->ParticleMass[i] * dx * dx * dx *  / (1.989e33); //Convert from code mass to Msun
           //fprintf(stdout, "CWT: Interpolating for star particle with mass %"FSYM" Msun?\n",ParticleMass_Msun);
 
           k_diss_H2 += k_diss_H2_sb99_interp * ParticleMass_Msun; //Convert from code mass to Msun
@@ -392,9 +392,12 @@ int grid::GrackleWrapper()
       k_diss_H2_grid[i] = k_diss_H2I_grid_sum; //From Grid Property written in StarParticleHandler
       k_det_HM_grid[i] = k_det_HM_grid_sum; 
   }
-  fprintf(stdout, "CWT: Setting My Fields...\n");
-  fprintf(stdout, "CWT: k_diss_H2 = %"FSYM" Hz?\n", k_diss_H2_grid[0] / TimeUnits);
-  fprintf(stdout, "CWT: k_det_HM  = %"FSYM" Hz?\n", k_det_HM_grid[0] / TimeUnits);
+
+  if (k_diss_H2I_grid_sum>0){
+      fprintf(stdout, "CWT: Setting My Fields...\n");
+      fprintf(stdout, "CWT: k_diss_H2 = %"ESYM" Hz?\n", k_diss_H2_grid[0]);
+      fprintf(stdout, "CWT: k_det_HM  = %"ESYM" Hz?\n", k_det_HM_grid[0]);
+  }
 
   my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
   my_fields.RT_HM_detachment_rate =  k_det_HM_grid;  //Feeds in Britton's Grackle Branch (foggie-sf) only
