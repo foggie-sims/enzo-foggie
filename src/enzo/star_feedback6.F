@@ -843,7 +843,6 @@ c
                !lw_counts_per_cell_w = pSNlw_grid(ic,jc,kc) !Per Cell Volume
                !hw_counts_per_cell_w = pSNhm_grid(ic,jc,kc) !Per Cell Volume
                call add_preSN_feedback(u1, v1, w1, d1, ge1, te1, metal1,
-     &                        kdissH2,kdetHM,
      &                        3_IKIND, 3_IKIND, 3_IKIND,
      &                        2_IKIND, 2_IKIND, 2_IKIND,
      &                        imetal, imulti_metals, idual,
@@ -955,7 +954,6 @@ c
                !lw_counts_per_cell_w = pSNlw_grid(ic,jc,kc) !Per Cell Volume
                !hm_counts_per_cell_w = pSNhm_grid(ic,jc,kc) !Per Cell Volume
                call add_preSN_feedback(u, v, w, d, ge, te, metal,
-     &                       kdissH2,kdetHM,
      &                        nx, ny, nz, ic, jc, kc,
      &                        imetal, imulti_metals, idual,
      &                        kick_cap, preSNmom,
@@ -1788,7 +1786,6 @@ c
       INTG_PREC nx, ny, nz, ic, jc, kc, idual, dist
       INTG_PREC imetal, imulti_metals, kick_cap, preSNmom
       R_PREC    d(nx, ny, nz), metal(nx,ny,nz), ge(nx,ny,nz)
-      R_PREC    kdissH2(nx,ny,nz), kdetHM(nx,ny,nz)
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz), te(nx,ny,nz)
       R_PREC    mass_per_cell, mom_per_cell
       R_PREC    metal_per_cell
