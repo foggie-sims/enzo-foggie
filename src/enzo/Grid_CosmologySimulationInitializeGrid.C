@@ -131,6 +131,8 @@ int grid::CosmologySimulationInitializeGrid(
 #endif
   int MachNum, PSTempNum, PSDenNum;
   int kphHINum, kphHeINum, kphHeIINum, kdissH2INum, PhotoGammaNum;
+  //CWT
+  int kphHMNum;
  
   int ExtraField[2];
   int ForbidNum, iTE, iCRD;
