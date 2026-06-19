@@ -192,13 +192,25 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
       fscanf(fptr, "PPMSteepeningParameter = %*"ISYM"\n", NULL);
     }
 
-        /* Read grid RT Sums - CWT*/
-    if (fscanf(fptr, "k_diss_H2I_grid_sum = %"GOUTSYM"\n", &k_diss_H2I_grid_sum) != 1) {
-            printf("Error reading k_diss_H2I_grid_sum."); //Don't kill if not present
+    long pos;
+    char linebuf[256];
+    /* k_diss_H2I_grid_sum - optional */
+    pos = ftell(fptr);
+    if (fgets(linebuf, sizeof(linebuf), fptr) != NULL) {
+        if (sscanf(linebuf, "k_diss_H2I_grid_sum = %"FSYM, &k_diss_H2I_grid_sum) != 1) {
+            // Line didn't match — put the pointer back so required reads still work
+            fseek(fptr, pos, SEEK_SET);
+            printf("Warning: k_diss_H2I_grid_sum not present.\n");
+        }
     }
 
-    if (fscanf(fptr, "k_det_HM_grid_sum = %"GOUTSYM"\n", &k_det_HM_grid_sum) != 1) {
-            printf("Error reading k_det_HM_grid_sum.");
+    /* k_det_HM_grid_sum - optional */
+    pos = ftell(fptr);
+    if (fgets(linebuf, sizeof(linebuf), fptr) != NULL) {
+        if (sscanf(linebuf, "k_det_HM_grid_sum = %"FSYM, &k_det_HM_grid_sum) != 1) {
+            fseek(fptr, pos, SEEK_SET);
+            printf("Warning: k_det_HM_grid_sum not present.\n");
+        }
     }
  
 

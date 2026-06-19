@@ -207,8 +207,8 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 
     }
 
-    fprintf(fptr, "k_diss_H2I_grid_sum = %"GOUTSYM"\n", k_diss_H2I_grid_sum);
-    fprintf(fptr, "k_det_HM_grid_sum = %"GOUTSYM"\n", k_det_HM_grid_sum);
+    fprintf(fptr, "k_diss_H2I_grid_sum = %"FSYM"\n", k_diss_H2I_grid_sum);
+    fprintf(fptr, "k_det_HM_grid_sum = %"FSYM"\n", k_det_HM_grid_sum);
 
 
     fprintf(fptr, "NumberOfParticles   = %"ISYM"\n", NumberOfParticles);
