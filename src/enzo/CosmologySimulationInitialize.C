@@ -158,7 +158,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *kphHIName = "kphHI";
   char *kphHeIName = "kphHeI";
   char *kphHeIIName = "kphHeII";
-  char *kdissH2IName = "kdissH2I";
+ // char *kdissH2IName = "kdissH2I";
   char *PhotoGammaName = "PhotoGamma";
 #endif
 #ifdef EMISSIVITY
