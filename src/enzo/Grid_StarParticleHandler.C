@@ -746,6 +746,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
   float *h2field = NULL;
   int kdissH2INum, kphHINum;
+  //CWT
+  int kpHMNum;
   if (STARMAKE_METHOD(POP3_STAR) || STARMAKE_METHOD(H2REG_STAR)) {
     h2field = new float[size];
     for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
