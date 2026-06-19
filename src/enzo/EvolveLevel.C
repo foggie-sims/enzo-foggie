@@ -693,6 +693,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       Grids[grid1]->GridData->StarParticleHandler
 	(Grids[grid1]->NextGridNextLevel, level ,dtLevelAbove, TopGridTimeStep);
 
+      fprintf(stdout, "CWT: in Evolve Level k_diss_H2 = %"ESYM" per code time?\n", Grids[grid1]->k_diss_H2I_grid_sum);
+
       Grids[grid1]->GridData->ActiveParticleHandler
         (Grids[grid1]->NextGridNextLevel, level ,dtLevelAbove,
          NumberOfNewActiveParticles[grid1]);
