@@ -1880,11 +1880,12 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     //k_diss_H2 returned as "cm**2 / s per cell volume * minit/Msun"
     k_diss_H2I_grid_sum = k_diss_H2I_grid_sum * conversion_factor;
     k_det_HM_grid_sum = k_det_HM_grid_sum * conversion_factor;
-    //for (int i = 0; i < size; i++){
-    //   BaryonField[kdissH2INum][i] = k_diss_H2I_grid_sum;
-    //   BaryonField[kphHMNum][i]    = k_det_HM_grid_sum;
-       
-    //}
+    kdissH2INum = FindField(kdissH2I, FieldType, NumberOfBaryonFields);     
+    kphHMNum = FindField(kphHM, FieldType, NumberOfBaryonFields); 
+    for (int i = 0; i < size; i++){
+       BaryonField[kdissH2INum][i] = k_diss_H2I_grid_sum;
+       BaryonField[kphHMNum][i]    = k_det_HM_grid_sum;   
+    }
 
  
   } // end: if MECH_STAR

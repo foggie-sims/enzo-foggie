@@ -331,14 +331,10 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
   //Sum all the mass of all young star particles on the grid
   //Get an estimate of the LW photon production from fitting Starbust99 results (w/o loading in a table)
   //Convert to RT_H2_dissociation_rate and add to grackle fields
-  float *k_diss_H2_grid  = new float[size];
-  float *k_det_HM_grid  = new float[size];
-  for ( i = 0; i < size; i++){
-      k_diss_H2_grid[i] = k_diss_H2I_grid_sum; //From Grid Property written in StarParticleHandler
-      k_det_HM_grid[i] = k_det_HM_grid_sum; 
-  }
-  my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
-  my_fields.RT_HM_detachment_rate =  k_det_HM_grid;  //Feeds in Britton's Grackle Branch (foggie-sf) only
+  kdissH2INum = FindField(kdissH2I, FieldType, NumberOfBaryonFields);     
+  kphHMNum = FindField(kphHM, FieldType, NumberOfBaryonFields); 
+  my_fields.RT_H2_dissociation_rate =  BaryonField[kdissH2INum];//Already in units of seconds (from table)
+  my_fields.RT_HM_detachment_rate =  BaryonField[kphHMNum];  //Feeds in Britton's Grackle Branch (foggie-sf) only
 
   // Need to set the other fields to the same 0 array for now
   float *EmptyRtArray0  = new float[size];

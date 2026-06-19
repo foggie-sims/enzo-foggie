@@ -386,6 +386,8 @@ int grid::GrackleWrapper()
   k_det_HM = k_det_HM    / (4.0 * 3.14159 * dilRad2);
   
   */
+
+  /* Version From Grid Attributes
   float *k_diss_H2_grid  = new float[size];
   float *k_det_HM_grid  = new float[size];
   for (int i = 0; i < size; i++){
@@ -401,6 +403,17 @@ int grid::GrackleWrapper()
 
   my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
   my_fields.RT_HM_detachment_rate =  k_det_HM_grid;  //Feeds in Britton's Grackle Branch (foggie-sf) only
+  */
+
+  kdissH2INum = FindField(kdissH2I, FieldType, NumberOfBaryonFields);     
+  kphHMNum = FindField(kphHM, FieldType, NumberOfBaryonFields); 
+  my_fields.RT_H2_dissociation_rate =  BaryonField[kdissH2INum];//Already in units of seconds (from table)
+  my_fields.RT_HM_detachment_rate =  BaryonField[kphHMNum];  //Feeds in Britton's Grackle Branch (foggie-sf) only
+  if (BaryonField[kdissH2INum][0]>0){
+      fprintf(stdout, "CWT: In GrackleWrapper k_diss_H2 = %"ESYM" CodeTime^-1\n", BaryonField[kdissH2INum][0]);
+      fprintf(stdout, "CWT: In GrackleWrapper k_det_HM  = %"ESYM" CodeTime^-1\n", BaryonField[kphHMNum][0]);
+  }
+
 
   // Need to set the other fields to the same 0 array for now
   float *EmptyRtArray0  = new float[size];
