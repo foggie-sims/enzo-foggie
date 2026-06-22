@@ -292,7 +292,7 @@ int grid::GrackleWrapper()
   //Convert to RT_H2_dissociation_rate and add to grackle fields
 
   //Sum all mass of young star particles on grid
-  /*
+  
   static const float metallicity_bins[6] = {0.0, 0.0004, 0.002, 0.006, 0.014, 0.02}; //Metallicity bins for SB99 tables
   static const float age_bins[11] = {0,5e6,1e7,1.5e7,2e7,2.5e7,3e7,3.5e7,4e7,4.5e7,5e7}; //Age bins for SB99 tables. To do: check units, currently years
 
@@ -316,19 +316,29 @@ int grid::GrackleWrapper()
       {4.5062467799254436e+30, 2.7441414260306114e+30, 1.5135046492296408e+30, 9.762287625447108e+29, 7.833203390009536e+29, 6.784162146506757e+29, 5.1530282236800166e+29, 5.319482714958312e+29, 5.128378151096622e+29, 3.811304647568074e+29},
       {4.367128430849667e+30, 2.7899493363546306e+30, 1.438774324771867e+30, 8.63880338912953e+29, 6.441637068851158e+29, 5.4212026702962396e+29, 5.100041216387224e+29, 4.6203283682706974e+29, 4.27653791399001e+29, 3.507518956008909e+29}};
 
-  float k_diss_H2 = 0; //Photodissociation rate for H2 from LW band
-  float k_det_HM = 0; //Photodetachment rate for H- from photons above 0.755 eV
+
+  //n_metal_bins = pSNFBTable.n_met
+  //n_age_bins = pSNFTable.n_age
+  //metallicity bins = pSNFBTable.ini_met?
+  //age bins = pSNFBTable.pop_age
+  //kdiss_H2_sb99 = pSNFBTable.kdiss_H2
+  //kdet_HM = pSNFBTable.kdet_HM
+
+  //float k_diss_H2 = 0; //Photodissociation rate for H2 from LW band
+  //float k_det_HM = 0; //Photodetachment rate for H- from photons above 0.755 eV
+  k_diss_H2I_grid_sum = 0; //Grid Attribute
+  k_det_HM_grid_sum = 0; //Grid Attribute - Calculated Here and used in CoolingRate
   for (i = 0; i < this->NumberOfParticles; i++) {
     if (this->ParticleType[i] == PARTICLE_TYPE_STAR) {
       float age = (this->Time - this->ParticleAttribute[0][i]) * TimeUnits / years_to_seconds; //Convert to yr
       if (age < 5e7) { //To do: Double check units are being handled correctly throughout
           //fprintf(stdout, "CWT: Interpolating for star particle with age %"FSYM" yr?\n",age);
 
-          //To do: This stuff shouldn't be hardcoded like this, but I'm assuming we will replace this all with actually reading the tables
-          int aa = search_lower_bound((float*)age_bins, age, 0, 11, 11); 
+          //int aa = search_lower_bound((float*)age_bins, age, 0, 11, 11); 
+          int aa = search_lower_bound((float*)pSNFTable.pop_age, age, 0, pSNFTable.n_age+1, pSNFTable.n_age+1);  //+1?
           float t_age=0.5f;
-          if (aa>=10){
-            aa=9;
+          if (aa>=pSNFTable.n_age){
+            aa=pSNFTable.n_age-1;
             t_age = 1;
           }
           else if (aa<0){
@@ -336,15 +346,17 @@ int grid::GrackleWrapper()
             t_age=0;
           }
           else{
-              t_age = (age - age_bins[aa]) / (age_bins[aa+1] - age_bins[aa]);
+              //t_age = (age - age_bins[aa]) / (age_bins[aa+1] - age_bins[aa]);
+              t_age = (age - pSNFTable.pop_age[aa]) / (pSNFTable.pop_age[aa+1] - pSNFTable.pop_age[aa]);
           }
 
           float metallicity = this->ParticleAttribute[2][i];
-          int zz = search_lower_bound((float*)metallicity_bins, metallicity, 0, 6, 6);
+         // int zz = search_lower_bound((float*)metallicity_bins, metallicity, 0, 6, 6);
+          int zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met+1, pSNFBTable.n_met+1);
 
           float t_z=0.5f;
-          if (zz>=5){
-            zz=4;
+          if (zz>=pSNFBTable.n_met){
+            zz=pSNFBTable.n_met-1;
             t_z = 1;
           }
           else if (zz<0){
@@ -352,18 +364,25 @@ int grid::GrackleWrapper()
             t_z=0;
           }
           else{
-              t_z = (metallicity - metallicity_bins[zz]) / (metallicity_bins[zz+1] - metallicity_bins[zz]);
+              t_z = (metallicity - pSNFBTable.ini_met[zz]) / (pSNFBTable.ini_met[zz+1] - pSNFBTable.ini_met[zz]);
+              t_z = (metallicity - pSNFBTable.ini_met[zz]) / (pSNFBTable.ini_met[zz+1] - pSNFBTable.ini_met[zz]);
           }
 
-          float k_diss_H2_sb99_interp = (1-t_age) * (1-t_z) * kdiss_H2_sb99[zz][aa] + t_age * (1-t_z) * kdiss_H2_sb99[zz][aa+1] + (1-t_age) * t_z * kdiss_H2_sb99[zz+1][aa] + t_age * t_z * kdiss_H2_sb99[zz+1][aa+1];
-          float k_det_HM_sb99_interp = (1-t_age) * (1-t_z) * kdet_HM_sb99[zz][aa] + t_age * (1-t_z) * kdet_HM_sb99[zz][aa+1] + (1-t_age) * t_z * kdet_HM_sb99[zz+1][aa] + t_age * t_z * kdet_HM_sb99[zz+1][aa+1];
+          //float k_diss_H2_sb99_interp = (1-t_age) * (1-t_z) * kdiss_H2_sb99[zz][aa] + t_age * (1-t_z) * kdiss_H2_sb99[zz][aa+1] + (1-t_age) * t_z * kdiss_H2_sb99[zz+1][aa] + t_age * t_z * kdiss_H2_sb99[zz+1][aa+1];
+          //float k_det_HM_sb99_interp = (1-t_age) * (1-t_z) * kdet_HM_sb99[zz][aa] + t_age * (1-t_z) * kdet_HM_sb99[zz][aa+1] + (1-t_age) * t_z * kdet_HM_sb99[zz+1][aa] + t_age * t_z * kdet_HM_sb99[zz+1][aa+1];
+
+          /* In Units Hz/cm^2 per Solar Mass*/
+          float k_diss_H2_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kdiss_H2[zz][aa] + t_age * (1-t_z) * pSNFBTable.kdiss_H2[zz][aa+1] + (1-t_age) * t_z * pSNFBTable.kdiss_H2[zz+1][aa] + t_age * t_z * pSNFBTable.kdiss_H2[zz+1][aa+1];
+          float k_det_HM_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kdet_HM[zz][aa] + t_age * (1-t_z) * pSNFBTable.kdet_HM[zz][aa+1] + (1-t_age) * t_z * pSNFBTable.kdet_HM[zz+1][aa] + t_age * t_z * pSNFBTable.kdet_HM[zz+1][aa+1];
+
 
           float dx = this->CellWidth[0][0];
-          float ParticleMass_Msun = this->ParticleMass[i] * dx * dx * dx *  / (1.989e33); //Convert from code mass to Msun
+          //float ParticleMass_Msun = this->ParticleMass[i] * dx * dx * dx *  / (1.989e33);
+          float ParticleMass_Msun = this->ParticleMass[i] * dx * dx * dx *  MassUnits / SolarMass; //Convert from code mass to Msun
           //fprintf(stdout, "CWT: Interpolating for star particle with mass %"FSYM" Msun?\n",ParticleMass_Msun);
 
-          k_diss_H2 += k_diss_H2_sb99_interp * ParticleMass_Msun; //Convert from code mass to Msun
-          k_det_HM += k_det_HM_sb99_interp * ParticleMass_Msun; //Convert from code mass to Msun
+          k_diss_H2I_grid_sum += k_diss_H2_sb99_interp * ParticleMass_Msun;
+          k_det_HM_grid_sum += k_det_HM_sb99_interp * ParticleMass_Msun;
 
 //ParticleMassCode = StarMass * SolarMass * POW(LengthUnits * CellWidth[0][0], -3.0) / DensityUnits;
 
@@ -371,8 +390,10 @@ int grid::GrackleWrapper()
       }
     }
   }
-  k_diss_H2 = k_diss_H2 * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
-  k_det_HM  = k_det_HM  * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units
+  //k_diss_H2 = k_diss_H2 * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
+  //k_det_HM  = k_det_HM  * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units
+  k_diss_H2I_grid_sum = k_diss_H2I_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
+  k_det_HM_grid_sum  = k_det_HM_grid_sum  * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units
   float grid_dx = this->GridRightEdge[0]-this->GridLeftEdge[0];
   float grid_dy = this->GridRightEdge[1]-this->GridLeftEdge[1];
   float grid_dz = this->GridRightEdge[2]-this->GridLeftEdge[2];
@@ -382,12 +403,11 @@ int grid::GrackleWrapper()
   float dilutionRadius = 0.5 * (grid_dx + grid_dy + grid_dz)/3.0; //Get Half the average extent of the grid
   //float dilutionRadius = 4.848e-6 * pc_cm / (double) LengthUnits;  // 1 AU //Try an extreme case
   float dilRad2 = dilutionRadius * dilutionRadius;
-  k_diss_H2 = k_diss_H2  / (4.0 * 3.14159 * dilRad2);
-  k_det_HM = k_det_HM    / (4.0 * 3.14159 * dilRad2);
+  k_diss_H2I_grid_sum = k_diss_H2I_grid_sum  / (4.0 * 3.14159 * dilRad2);
+  k_det_HM_grid_sum   = k_det_HM_grid_sum    / (4.0 * 3.14159 * dilRad2);
   
-  */
 
-  /* Version From Grid Attributes
+  /* Version From Grid Attributes */
   float *k_diss_H2_grid  = new float[size];
   float *k_det_HM_grid  = new float[size];
   for (int i = 0; i < size; i++){
@@ -403,8 +423,9 @@ int grid::GrackleWrapper()
 
   my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
   my_fields.RT_HM_detachment_rate =  k_det_HM_grid;  //Feeds in Britton's Grackle Branch (foggie-sf) only
-  */
+  
 
+  /* Version With BaryonFields
   kdissH2INum = FindField(kdissH2I, FieldType, NumberOfBaryonFields);     
   kphHMNum = FindField(kphHM, FieldType, NumberOfBaryonFields); 
   my_fields.RT_H2_dissociation_rate =  BaryonField[kdissH2INum];//Already in units of seconds (from table)
@@ -413,6 +434,7 @@ int grid::GrackleWrapper()
       fprintf(stdout, "CWT: In GrackleWrapper k_diss_H2 = %"ESYM" CodeTime^-1\n", BaryonField[kdissH2INum][0]);
       fprintf(stdout, "CWT: In GrackleWrapper k_det_HM  = %"ESYM" CodeTime^-1\n", BaryonField[kphHMNum][0]);
   }
+  */
 
 
   // Need to set the other fields to the same 0 array for now
@@ -484,8 +506,8 @@ int grid::GrackleWrapper()
   delete [] g_grid_start;
   delete [] g_grid_end;
 
-  //delete[] k_diss_H2_grid;
-  //delete[] k_det_HM_grid;
+  delete[] k_diss_H2_grid;
+  delete[] k_det_HM_grid;
   delete[] EmptyRtArray0;
   delete[] EmptyRtArray1;
   delete[] EmptyRtArray2;

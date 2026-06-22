@@ -327,9 +327,9 @@ c
                call pSN_metal(wind_metal, minit(n), metalf(n),
      &                          age, dt, t1, pSNtabMetal, pSNtabZ,
      &                          pSNtabAge, pSNntabZ, pSNntabAge)
-               call pSN_LW(lw_counts, minit(n), metalf(n),
-     &                          age, dt, t1, pSNtabLW, pSNtabZ,
-     &                          pSNtabAge, pSNntabZ, pSNntabAge)
+c               call pSN_LW(lw_counts, minit(n), metalf(n),
+c     &                          age, dt, t1, pSNtabLW, pSNtabZ,
+c     &                          pSNtabAge, pSNntabZ, pSNntabAge)
                call pSN_HM(hm_counts, minit(n), metalf(n),
      &                          age, dt, t1, pSNtabHM, pSNtabZ,
      &                          pSNtabAge, pSNntabZ, pSNntabAge)
@@ -708,8 +708,8 @@ c
      &                                vp(n)*wind_mass
                pSNwp_grid(ic,jc,kc) = pSNwp_grid(ic,jc,kc) + 
      &                                wp(n)*wind_mass
-               kdissH2 = kdissH2 + lw_counts !cm**2 / s per cell volume
-               kdetHM = kdetHM + hm_counts !cm**2 / s per cell volume
+c               kdissH2 = kdissH2 + lw_counts !cm**2 / s per cell volume
+c               kdetHM = kdetHM + hm_counts !cm**2 / s per cell volume
             endif
 c
 c     Put particle feedback data in log. If not using pre-SN feedback,
@@ -729,9 +729,9 @@ c
      &             wind_metal*(dunits*(x1*dx)**3._RKIND)/
      &             SolarMass,
      &             wind_mom*(dunits*(x1*dx)**3._RKIND)/
-     &             SolarMass*(vunits/1e5_RKIND),
-     &             lw_counts*(dunits*(x1*dx)**3._RKIND)/SolarMass,
-     &             hm_counts*(dunits*(x1*dx)**3._RKIND)/SolarMass
+     &             SolarMass*(vunits/1e5_RKIND)
+c     &             lw_counts*(dunits*(x1*dx)**3._RKIND)/SolarMass,
+c     &             hm_counts*(dunits*(x1*dx)**3._RKIND)/SolarMass
                endif
 c
  10         continue

@@ -1832,8 +1832,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       }
     }
     
-    k_diss_H2I_grid_sum = 0.0f; //Grid properties
-    k_det_HM_grid_sum = 0.0f;
+    //k_diss_H2I_grid_sum = 0.0f; //Handled in GrackleWrapper completely for grid attributes
+    //k_det_HM_grid_sum = 0.0f;
     FORTRAN_NAME(star_feedback6)(
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], mu_field,
@@ -1864,7 +1864,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        pSNFBTable.mass_yield, pSNFBTable.metm_yield, pSNFBTable.mom_rate,pSNFBTable.kdiss_H2,pSNFBTable.kdet_HM);
 
     delete [] mu_field;
-     
+   
+    /* CWT- RT Calculations handled in GrackleWrapper Completely for GridAttributes Now
     float dx = this->CellWidth[0][0];
     float grid_dx = this->GridRightEdge[0]-this->GridLeftEdge[0];
     float grid_dy = this->GridRightEdge[1]-this->GridLeftEdge[1];
@@ -1888,6 +1889,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        BaryonField[kdissH2INum][i] = k_diss_H2I_grid_sum;
        BaryonField[kphHMNum][i]    = k_det_HM_grid_sum;   
     }
+    */
 
  
   } // end: if MECH_STAR

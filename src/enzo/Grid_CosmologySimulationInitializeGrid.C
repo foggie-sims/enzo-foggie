@@ -132,7 +132,7 @@ int grid::CosmologySimulationInitializeGrid(
   int MachNum, PSTempNum, PSDenNum;
   int kphHINum, kphHeINum, kphHeIINum, kdissH2INum, PhotoGammaNum;
   //CWT
-  int kphHMNum;
+  //int kphHMNum;
  
   int ExtraField[2];
   int ForbidNum, iTE, iCRD;
@@ -261,8 +261,8 @@ int grid::CosmologySimulationInitializeGrid(
 
 
 //CWT Cheap "RT" - If we want to carry this field around
-FieldType[ kdissH2INum = NumberOfBaryonFields++] = kdissH2I;
-FieldType[ kphHMNum = NumberOfBaryonFields++] = kphHM;
+//FieldType[ kdissH2INum = NumberOfBaryonFields++] = kdissH2I;
+//FieldType[ kphHMNum = NumberOfBaryonFields++] = kphHM;
 
 #ifdef TRANSFER
     if (RadiativeTransferFLD > 1) {
