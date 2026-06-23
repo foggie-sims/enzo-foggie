@@ -324,48 +324,36 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     }
 #endif // TRANSFER
 
-  //CWT 05072026
-  /* Estimate local radiation field from new Stars */
-  //Currently copied from what I put in Grid_GrackleWrapper.C to see if this works, but not very efficient!
-  //Simplest Alternative:
-  //Sum all the mass of all young star particles on the grid
-  //Get an estimate of the LW photon production from fitting Starbust99 results (w/o loading in a table)
-  //Convert to RT_H2_dissociation_rate and add to grackle fields
-  /* Version From Grid Attributes */
-  float *k_diss_H2_grid  = new float[size];
-  float *k_det_HM_grid  = new float[size];
-  for (int i = 0; i < size; i++){
+  if (UseLocalStellarRadiation) {
+    //CWT: Use GridAttribute defined each timestep in Grid_GrackleWrapper.C
+    float *k_diss_H2_grid  = new float[size];
+    float *k_det_HM_grid  = new float[size];
+    for (int i = 0; i < size; i++){
       k_diss_H2_grid[i] = k_diss_H2I_grid_sum; //From Grid Property written in StarParticleHandler
       k_det_HM_grid[i] = k_det_HM_grid_sum; 
-  }
+    }
   
-  my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
-  my_fields.RT_HM_detachment_rate =  k_det_HM_grid;  //Feeds in Britton's Grackle Branch (foggie-sf) only
+    my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
+    my_fields.RT_HM_detachment_rate =  k_det_HM_grid;  //Feeds in Britton's Grackle Branch (foggie-sf) only
   
-  // Need to set the other fields to the same 0 array for now
-  float *EmptyRtArray0  = new float[size];
-  float *EmptyRtArray1  = new float[size];
-  float *EmptyRtArray2  = new float[size];
-  float *EmptyRtArray3  = new float[size];
+    // Need to set the other fields to the same 0 array for now
+    float *EmptyRtArray0  = new float[size];
+    //float *EmptyRtArray1  = new float[size];
+    //float *EmptyRtArray2  = new float[size];
+    //float *EmptyRtArray3  = new float[size];
 
-  for ( i = 0; i < size; i++){
+    for ( i = 0; i < size; i++){
       EmptyRtArray0[i] = 0;
-      EmptyRtArray1[i] = 0;
-      EmptyRtArray2[i] = 0;
-      EmptyRtArray3[i] = 0;
-  }
+      //EmptyRtArray1[i] = 0;
+      //EmptyRtArray2[i] = 0;
+      //EmptyRtArray3[i] = 0;
+    }
 
-  // float *EmptyRTArray  = new float[size];
-
-  //for ( i = 0; i < size; i++){
-  //    EmptyRTArray[i] = 0;
-  //}
-
-  my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
-  my_fields.RT_HeI_ionization_rate  = EmptyRtArray1;
-  my_fields.RT_HeII_ionization_rate = EmptyRtArray2;
-  my_fields.RT_heating_rate = EmptyRtArray3;
-  
+    my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
+    my_fields.RT_HeI_ionization_rate  = EmptyRtArray0;
+    my_fields.RT_HeII_ionization_rate = EmptyRtArray0;
+    my_fields.RT_heating_rate = EmptyRtArray0;
+  } //UseLocalStellarRadiation
   /*                                              */
 
 

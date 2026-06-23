@@ -1272,4 +1272,7 @@ EXTERN int SetTracerFluidFieldsOnStart;
 EXTERN int UseTracerFluidWithStarFormation;
 EXTERN int UseTracerFluidWithStellarFeedback;
 
+/* Local Radiation Rates - CWT */
+EXTERN int UseLocalStellarRadiation;
+
 #endif

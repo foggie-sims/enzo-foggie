@@ -1119,6 +1119,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   UseTracerFluidWithStarFormation = 0;
   UseTracerFluidWithStellarFeedback = 0;
 
+  /* Local Radiation Rates - CWT */
+  UseLocalStellarRadiation = 0;
 
   return SUCCESS;
 }

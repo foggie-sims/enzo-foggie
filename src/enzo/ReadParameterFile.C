@@ -1001,6 +1001,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       StarFeedbackPreSNFilename = dummy;
     ret += sscanf(line, "WriteFeedbackLogFiles = %"ISYM,
 		  &WriteFeedbackLogFiles);
+    ret += sscanf(line, "UseLocalStellarRadiation = %"ISYM, //CWT
+        &UseLocalStellarRadiation);
     ret += sscanf(line, "StarEnergyToStellarUV = %"FSYM, &StarEnergyToStellarUV);
     ret += sscanf(line, "StarEnergyToQuasarUV = %"FSYM, &StarEnergyToQuasarUV);
     ret += sscanf(line, "StarFeedbackKineticFraction = %"FSYM,
@@ -2200,7 +2202,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   }
 
 
-  if (StarFeedbackPreSNFeedback) {
+  if (StarFeedbackPreSNFeedback || UseLocalStellarRadiation) {
 
     if (!StarMakerStoreInitialMass)
       ENZO_FAIL("StarFeedbackPreSNFeedback requires StarMakerStoreInitialMass to be enabled.");

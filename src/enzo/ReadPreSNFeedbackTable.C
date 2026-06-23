@@ -205,42 +205,44 @@ int ReadPreSNFeedbackTable(char *name)
       return FAIL;
     }
 
-    /* Read H2 Photodissociation Fields */
-    pSNFBTable.kdiss_H2 = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-    dset_id = H5Dopen(file_id, "/SB99_models/h2_photodissociation_rate");
-    if (dset_id == h5_error) {
-      fprintf(stderr,"Can't open /SB99_models/h2_photodissociation_rate in %s.\n", name);
-      return FAIL;
-    }
-    status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
-                      H5S_ALL, H5P_DEFAULT, pSNFBTable.kdiss_H2);
-    if (status == h5_error) {
-      fprintf(stderr, "Failed to read /SB99_models/h2_photodissociation_rate in %s.\n",name);
-      return FAIL;
-    }
-    status = H5Dclose(dset_id);
-    if (status == h5_error) {
-      fprintf(stderr,"Failed to close /SB99_models/h2_photodissociation_rate in %s.\n",name);
-      return FAIL;
-    }
+    if (UseLocalStellarRadiation) {
+        /* Read H2 Photodissociation Fields */
+        pSNFBTable.kdiss_H2 = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+        dset_id = H5Dopen(file_id, "/SB99_models/h2_photodissociation_rate");
+        if (dset_id == h5_error) {
+          fprintf(stderr,"Can't open /SB99_models/h2_photodissociation_rate in %s.\n", name);
+          return FAIL;
+        }
+        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
+                          H5S_ALL, H5P_DEFAULT, pSNFBTable.kdiss_H2);
+        if (status == h5_error) {
+          fprintf(stderr, "Failed to read /SB99_models/h2_photodissociation_rate in %s.\n",name);
+          return FAIL;
+        }
+        status = H5Dclose(dset_id);
+        if (status == h5_error) {
+          fprintf(stderr,"Failed to close /SB99_models/h2_photodissociation_rate in %s.\n",name);
+          return FAIL;
+        }
 
-    /* Read HM Photodetatchment Fields */
-    pSNFBTable.kdet_HM = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-    dset_id = H5Dopen(file_id, "/SB99_models/hm_photodetatchment_rate");
-    if (dset_id == h5_error) {
-      fprintf(stderr,"Can't open /SB99_models/hm_photodetatchment_rate in %s.\n", name);
-      return FAIL;
-    }
-    status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
-                      H5S_ALL, H5P_DEFAULT, pSNFBTable.kdet_HM);
-    if (status == h5_error) {
-      fprintf(stderr, "Failed to read /SB99_models/hm_photodetatchment_rate in %s.\n",name);
-      return FAIL;
-    }
-    status = H5Dclose(dset_id);
-    if (status == h5_error) {
-      fprintf(stderr,"Failed to close /SB99_models/hm_photodetatchment_rate in %s.\n",name);
-      return FAIL;
+        /* Read HM Photodetatchment Fields */
+        pSNFBTable.kdet_HM = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+        dset_id = H5Dopen(file_id, "/SB99_models/hm_photodetatchment_rate");
+        if (dset_id == h5_error) {
+          fprintf(stderr,"Can't open /SB99_models/hm_photodetatchment_rate in %s.\n", name);
+          return FAIL;
+        }
+        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
+                          H5S_ALL, H5P_DEFAULT, pSNFBTable.kdet_HM);
+        if (status == h5_error) {
+          fprintf(stderr, "Failed to read /SB99_models/hm_photodetatchment_rate in %s.\n",name);
+          return FAIL;
+        }
+        status = H5Dclose(dset_id);
+        if (status == h5_error) {
+          fprintf(stderr,"Failed to close /SB99_models/hm_photodetatchment_rate in %s.\n",name);
+          return FAIL;
+        }
     }
 
     /* Close file */
