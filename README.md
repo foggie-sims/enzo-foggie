@@ -117,3 +117,22 @@ list of the people who have recently contributed, in alphabetical order:
    * Hao Xu                 haoxu.physics@gmail.com
    * Alvaro Zamora          alvarozamora@stanford.edu  
    * Fen Zhao               fenzhao@stanford.edu
+
+
+## Personal Notes
+
+***Installation***
+git clone https://github.com/enzo-project/enzo-dev.git
+cd enzo-dev
+./configure
+cd src/enzo
+make machine-msu-main
+
+
+make opt-high
+make particle-id-32
+make integers-32
+make grackle-yes
+
+make clean
+make -j 8
