@@ -453,12 +453,14 @@ int grid::GrackleWrapper()
   delete [] g_grid_start;
   delete [] g_grid_end;
 
-  delete[] k_diss_H2_grid;
-  delete[] k_det_HM_grid;
-  delete[] EmptyRtArray0;
-  delete[] EmptyRtArray1;
-  delete[] EmptyRtArray2;
-  delete[] EmptyRtArray3;
+    if (UseLocalStellarRadiation){
+      delete[] k_diss_H2_grid;
+      delete[] k_det_HM_grid;
+      delete[] EmptyRtArray0;
+      //delete[] EmptyRtArray1;
+      //delete[] EmptyRtArray2;
+      //delete[] EmptyRtArray3;
+    }
 
 
   LCAPERF_STOP("grid_GrackleWrapper");
