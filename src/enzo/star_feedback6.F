@@ -330,9 +330,9 @@ c
 c               call pSN_LW(lw_counts, minit(n), metalf(n),
 c     &                          age, dt, t1, pSNtabLW, pSNtabZ,
 c     &                          pSNtabAge, pSNntabZ, pSNntabAge)
-               call pSN_HM(hm_counts, minit(n), metalf(n),
-     &                          age, dt, t1, pSNtabHM, pSNtabZ,
-     &                          pSNtabAge, pSNntabZ, pSNntabAge)
+c               call pSN_HM(hm_counts, minit(n), metalf(n),
+c     &                          age, dt, t1, pSNtabHM, pSNtabZ,
+c     &                          pSNtabAge, pSNntabZ, pSNntabAge)
                if (preSNmom .eq. 1_IKIND) then
                   call pSN_mom(wind_mom, minit(n), metalf(n), age,
      &                          dt, t1, vunits, pSNtabMom, pSNtabZ,
@@ -730,8 +730,6 @@ c
      &             SolarMass,
      &             wind_mom*(dunits*(x1*dx)**3._RKIND)/
      &             SolarMass*(vunits/1e5_RKIND)
-c     &             lw_counts*(dunits*(x1*dx)**3._RKIND)/SolarMass,
-c     &             hm_counts*(dunits*(x1*dx)**3._RKIND)/SolarMass
                endif
 c
  10         continue
