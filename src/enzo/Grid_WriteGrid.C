@@ -153,7 +153,6 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
  
     fprintf(fptr, "NumberOfBaryonFields = %"ISYM"\n", NumberOfBaryonFields);
  
-
   }
  
   char *name = new char[MAX_LINE_LENGTH];

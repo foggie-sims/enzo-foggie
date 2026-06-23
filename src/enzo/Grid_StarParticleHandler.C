@@ -366,7 +366,7 @@ extern "C" void FORTRAN_NAME(star_feedback3mom)(int *nx, int *ny, int *nz,
 
 extern "C" void FORTRAN_NAME(star_feedback6)(int *nx, int *ny, int *nz,
 						float *d, float *mu, float *te, float *ge, float *u, float *v,
-		       float *w, float *metal, float *kdissH2, float *kdetHM,
+		       float *w, float *metal,
 	     int *idual, int *imetal, int *imulti_metals, hydro_method *imethod, 
 		       float *dt, float *dx, FLOAT *t, float *z, int *procnum,
              float *d1, float *x1, float *v1, float *t1,
@@ -381,7 +381,7 @@ extern "C" void FORTRAN_NAME(star_feedback6)(int *nx, int *ny, int *nz,
              float *metalSNIa, int *ntabZ, int *ntabAge, double *tabZ, double *tabAge, 
              double *tabMass, double *tabMetal, double *tabEvents, int *stochastic,
              int *preSN, int *preSNmom, int *pSNntabZ, int *pSNntabAge, double *pSNtabZ, 
-             double *pSNtabAge, double *pSNtabMass, double *pSNtabMetal, double *pSNtabMom, double *pSNtabLW, double *pSNtabHM);
+             double *pSNtabAge, double *pSNtabMass, double *pSNtabMetal, double *pSNtabMom);
 
 extern "C" void FORTRAN_NAME(star_feedback3)(int *nx, int *ny, int *nz,
              float *d, float *dm, float *te, float *ge, float *u, float *v,
@@ -746,8 +746,6 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
   float *h2field = NULL;
   int kdissH2INum, kphHINum;
-  //CWT
-  int kphHMNum;
   if (STARMAKE_METHOD(POP3_STAR) || STARMAKE_METHOD(H2REG_STAR)) {
     h2field = new float[size];
     for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
@@ -1832,14 +1830,11 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       }
     }
     
-    //k_diss_H2I_grid_sum = 0.0f; //Handled in GrackleWrapper completely for grid attributes
-    //k_det_HM_grid_sum = 0.0f;
     FORTRAN_NAME(star_feedback6)(
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], mu_field,
           BaryonField[TENum], BaryonField[GENum], BaryonField[Vel1Num],
           BaryonField[Vel2Num], BaryonField[Vel3Num], BaryonField[MetalNum],
-          &k_diss_H2I_grid_sum,&k_det_HM_grid_sum,
        &DualEnergyFormalism, &MetallicityField, &MultiMetals, &HydroMethod,
        &dtFixed, &CellWidthTemp,
           &Time, &zred, &MyProcessorNumber,
@@ -1861,36 +1856,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        &FBTable.n_met, &FBTable.n_age, FBTable.ini_met, FBTable.pop_age, 
        FBTable.mass_yield, FBTable.metm_yield, FBTable.event_rate, &StarFeedbackStochasticSNe,
        &StarFeedbackPreSNFeedback, &StarFeedbackPreSNMomentum, &pSNFBTable.n_met, &pSNFBTable.n_age, pSNFBTable.ini_met, pSNFBTable.pop_age, 
-       pSNFBTable.mass_yield, pSNFBTable.metm_yield, pSNFBTable.mom_rate,pSNFBTable.kdiss_H2,pSNFBTable.kdet_HM);
+       pSNFBTable.mass_yield, pSNFBTable.metm_yield, pSNFBTable.mom_rate);
 
     delete [] mu_field;
-   
-    /* CWT- RT Calculations handled in GrackleWrapper Completely for GridAttributes Now
-    float dx = this->CellWidth[0][0];
-    float grid_dx = this->GridRightEdge[0]-this->GridLeftEdge[0];
-    float grid_dy = this->GridRightEdge[1]-this->GridLeftEdge[1];
-    float grid_dz = this->GridRightEdge[2]-this->GridLeftEdge[2];
-    float cell_volume = dx*dx*dx; //Need to convert from mass density to mass
-    float dilutionRadius = 0.5 * (grid_dx + grid_dy + grid_dz)/3.0; //Get Half the average extent of the grid
-    //float dilutionRadius = 4.848e-6 * pc_cm / (double) LengthUnits;  // 1 AU //Try an extreme case
-    float dilRad2 = dilutionRadius * dilutionRadius;
-    float MassUnits = DensityUnits * POW(LengthUnits,3);
-    float mass_conversion = MassUnits / SolarMass; //Convert from code mass to SolarMass
-    float unit_conversion = TimeUnits / (LengthUnits * LengthUnits); //Convert to code units
-    //float conversion_factor = unit_conversion * mass_conversion * cell_volume / (4.0 * 3.14159 * dilRad2); //Convert from density, and dilute assuming average distance from star
-    float conversion_factor = TimeUnits / (LengthUnits*LengthUnits) * MassUnits / SolarMass * dx*dx*dx / (4.0*3.14159*dilutionRadius*dilutionRadius);
-
-    //k_diss_H2 returned as "cm**2 / s per cell volume * minit/Msun"
-    k_diss_H2I_grid_sum = k_diss_H2I_grid_sum * conversion_factor;
-    k_det_HM_grid_sum = k_det_HM_grid_sum * conversion_factor;
-    kdissH2INum = FindField(kdissH2I, FieldType, NumberOfBaryonFields);     
-    kphHMNum = FindField(kphHM, FieldType, NumberOfBaryonFields); 
-    for (int i = 0; i < size; i++){
-       BaryonField[kdissH2INum][i] = k_diss_H2I_grid_sum;
-       BaryonField[kphHMNum][i]    = k_det_HM_grid_sum;   
-    }
-    */
-
  
   } // end: if MECH_STAR
 

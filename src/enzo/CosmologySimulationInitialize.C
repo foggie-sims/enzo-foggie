@@ -149,10 +149,6 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *TracerFluidO7Name = "TracerFluid07";
   char *TracerFluidO8Name = "TracerFluid08";
 
-
-//CWT "RT" Implemenation
-//  char *kdissH2IName = "kdissH2I";
-//  char *kphHMName = "kphHM";
 #ifdef TRANSFER
   char *RadName = "Grey_Radiation_Energy";
   char *kphHIName = "kphHI";
@@ -770,10 +766,6 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   DataLabel[i++] = Vel2Name;
   DataLabel[i++] = Vel3Name;
   */
-
-//CWT RT If we want to carry these around as BaryonFields
-//DataLabel[i++] = kdissH2IName;
-//DataLabel[i++] = kphHMName;
 #ifdef TRANSFER
   if (RadiativeTransferFLD > 1) {
     DataLabel[i++] = RadName;

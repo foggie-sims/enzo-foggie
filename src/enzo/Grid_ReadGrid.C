@@ -161,7 +161,6 @@ int grid::ReadGrid(FILE *fptr, int GridID, char DataFilename[],
             ENZO_FAIL("Error reading SubgridsAreStatic.");
     }
 
-
     /* Read baryon field quantities. */
  
     if (fscanf(fptr, "NumberOfBaryonFields = %"ISYM"\n",

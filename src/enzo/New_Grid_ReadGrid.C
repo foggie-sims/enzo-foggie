@@ -192,28 +192,6 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
       fscanf(fptr, "PPMSteepeningParameter = %*"ISYM"\n", NULL);
     }
 
-    /*
-    long pos;
-    
-    pos = ftell(fptr);
-    if (fgets(linebuf, sizeof(linebuf), fptr) != NULL) {
-        if (sscanf(linebuf, "k_diss_H2I_grid_sum = %"FSYM, &k_diss_H2I_grid_sum) != 1) {
-            // Line didn't match — put the pointer back so required reads still work
-            fseek(fptr, pos, SEEK_SET);
-            printf("Warning: k_diss_H2I_grid_sum not present.\n");
-        }
-    }
-
-    pos = ftell(fptr);
-    if (fgets(linebuf, sizeof(linebuf), fptr) != NULL) {
-        if (sscanf(linebuf, "k_det_HM_grid_sum = %"FSYM, &k_det_HM_grid_sum) != 1) {
-            fseek(fptr, pos, SEEK_SET);
-            printf("Warning: k_det_HM_grid_sum not present.\n");
-        }
-    }
-    */
- 
-
     /* 3) Read particle info */
  
     if (fscanf(fptr, "NumberOfParticles = %"ISYM"\n", &NumberOfParticles) != 1) {

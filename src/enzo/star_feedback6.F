@@ -8,7 +8,7 @@ c/////////////////////  SUBROUTINE STAR_FEEDBACK6 \\\\\\\\\\\\\\\\\\\\\\\
 c
       subroutine star_feedback6(nx, ny, nz,
      &               d, mu, te, ge, u, v, w,
-     &               metal,kdissH2,kdetHM,
+     &               metal,
      &               idual, imetal, imulti_metals, imethod, 
      &               dt, dx, t, z, procnum,
      &               dunits, x1, vunits, t1, m_eject_frac, yield,
@@ -23,7 +23,7 @@ c
      &               tabZ, tabAge, tabMass, tabMetal, tabEvents,
      &               stochastic, preSN, preSNmom, pSNntabZ, pSNntabAge,
      &               pSNtabZ, pSNtabAge, pSNtabMass, pSNtabMetal,
-     &               pSNtabMom,pSNtabLW, pSNtabHM)
+     &               pSNtabMom)
 c
 c  RELEASES "STAR" PARTICLE MOMENTUM, MASS AND METALS
 c
@@ -103,8 +103,6 @@ c    pSNtabAge - age indices for pre-SN FB table
 c    pSNtabMass - table of pre-SN wind mass injection rates
 c    pSNtabMetal - table of pre-SN wind metal injection rates
 c    pSNtabMom  - table of pre-SN wind + Lbol momentum injection rates
-c    pSNtabLW  - table of pre-SN Integrated Lyman-Werner Band Counts
-c    pSNtabHM  - table of pre-SN Integrated H-minus photodetachment rates
 c
 c  OUTPUTS:
 c    d,u,v,w,ge,e - modified field
@@ -125,7 +123,6 @@ c
       R_PREC    u(nx,ny,nz), v(nx,ny,nz), w(nx,ny,nz)
       R_PREC    ge(nx,ny,nz)
       R_PREC    metal(nx,ny,nz)
-      R_PREC    kdissH2, kdetHM
       R_PREC    mu(nx,ny,nz)
       R_PREC    dt, dx, z
       R_PREC    dunits, x1, vunits, t1, nsn_timestep, m_eject_frac
@@ -149,8 +146,6 @@ c
       R_PREC    pSNtabMass(pSNntabAge, pSNntabZ)
       R_PREC    pSNtabMetal(pSNntabAge, pSNntabZ)
       R_PREC    pSNtabMom(pSNntabAge, pSNntabZ)
-      R_PREC    pSNtabLW(pSNntabAge, pSNntabZ)
-      R_PREC    pSNtabHM(pSNntabAge, pSNntabZ)
 c
 c  Locals
 c
@@ -186,7 +181,7 @@ c
      &      pSNmom_grid(nx,ny,nz), pSNup_grid(nx,ny,nz),
      &      pSNvp_grid(nx,ny,nz), pSNwp_grid(nx,ny,nz)
       R_PREC up_avg, vp_avg, wp_avg, up_avg_w, vp_avg_w, wp_avg_w
-      R_PREC wind_mass, wind_metal, wind_mom, lw_counts, hm_counts
+      R_PREC wind_mass, wind_metal, wind_mom
       R_PREC ke_b_wind(3,3,3)
       R_PREC mass_b_wind, kin_energy_b_wind, mom_b_wind,
      &       mass_per_cell_w, mom_per_cell_w, metal_per_cell_w,
@@ -274,8 +269,6 @@ c
                   pSNup_grid(i,j,k) = 0._RKIND
                   pSNvp_grid(i,j,k) = 0._RKIND
                   pSNwp_grid(i,j,k) = 0._RKIND
-c                  pSNlw_grid(i,j,k) = 0._RKIND
-c                  pSNhw_grid(i,j,k) = 0._RKIND
                endif
             enddo
          enddo
@@ -327,12 +320,6 @@ c
                call pSN_metal(wind_metal, minit(n), metalf(n),
      &                          age, dt, t1, pSNtabMetal, pSNtabZ,
      &                          pSNtabAge, pSNntabZ, pSNntabAge)
-c               call pSN_LW(lw_counts, minit(n), metalf(n),
-c     &                          age, dt, t1, pSNtabLW, pSNtabZ,
-c     &                          pSNtabAge, pSNntabZ, pSNntabAge)
-c               call pSN_HM(hm_counts, minit(n), metalf(n),
-c     &                          age, dt, t1, pSNtabHM, pSNtabZ,
-c     &                          pSNtabAge, pSNntabZ, pSNntabAge)
                if (preSNmom .eq. 1_IKIND) then
                   call pSN_mom(wind_mom, minit(n), metalf(n), age,
      &                          dt, t1, vunits, pSNtabMom, pSNtabZ,
@@ -344,8 +331,6 @@ c     &                          pSNtabAge, pSNntabZ, pSNntabAge)
                wind_mass = 0._RKIND
                wind_metal = 0._RKIND
                wind_mom = 0._RKIND
-               lw_counts = 0._RKIND
-               hm_counts = 0._RKIND
             endif
 c
 c     If using tabulated yields, the ejected mass, energy, and metals come from
@@ -708,8 +693,6 @@ c
      &                                vp(n)*wind_mass
                pSNwp_grid(ic,jc,kc) = pSNwp_grid(ic,jc,kc) + 
      &                                wp(n)*wind_mass
-c               kdissH2 = kdissH2 + lw_counts !cm**2 / s per cell volume
-c               kdetHM = kdetHM + hm_counts !cm**2 / s per cell volume
             endif
 c
 c     Put particle feedback data in log. If not using pre-SN feedback,
@@ -838,16 +821,13 @@ c
                mom_per_cell_w = pSNmom_grid(ic,jc,kc)
      &                              /(distcells-1_IKIND)
                metal_per_cell_w = pSNmetal_grid(ic,jc,kc)/distcells
-               !lw_counts_per_cell_w = pSNlw_grid(ic,jc,kc) !Per Cell Volume
-               !hw_counts_per_cell_w = pSNhm_grid(ic,jc,kc) !Per Cell Volume
-               call add_preSN_feedback(u1, v1, w1, d1, ge1, te1, metal1,
+               call add_preSN_feedback(u1, v1, w1, d1, ge1, te1, metal1, 
      &                        3_IKIND, 3_IKIND, 3_IKIND,
      &                        2_IKIND, 2_IKIND, 2_IKIND,
      &                        imetal, imulti_metals, idual,
      &                        kick_cap, preSNmom,
      &                        mass_per_cell_w, mom_per_cell_w,
-     &                        metal_per_cell_w,
-     &                         dx, x1, dunits, vunits)
+     &                        metal_per_cell_w, dx, x1, dunits, vunits)
 c
 c     Calculate mass and energy in dummy fields
 c
@@ -868,7 +848,7 @@ c
 c     Now deposit the momentum, mass, and metals onto the actual grid.
 c
                call add_preSN_feedback(u, v, w, d, ge, te, metal,
-     &                        nx, ny, nz, ic, jc, kc,
+     &                         nx, ny, nz, ic, jc, kc,
      &                        imetal, imulti_metals, idual,
      &                        kick_cap, preSNmom,
      &                        mass_per_cell_w, mom_per_cell_w,
@@ -949,10 +929,8 @@ c
 #endif
                mass_per_cell_w = pSNmass_grid(ic,jc,kc)/distcells
                metal_per_cell_w = pSNmetal_grid(ic,jc,kc)/distcells
-               !lw_counts_per_cell_w = pSNlw_grid(ic,jc,kc) !Per Cell Volume
-               !hm_counts_per_cell_w = pSNhm_grid(ic,jc,kc) !Per Cell Volume
                call add_preSN_feedback(u, v, w, d, ge, te, metal,
-     &                        nx, ny, nz, ic, jc, kc,
+     &                         nx, ny, nz, ic, jc, kc,
      &                        imetal, imulti_metals, idual,
      &                        kick_cap, preSNmom,
      &                        mass_per_cell_w, 0._RKIND,
@@ -1310,9 +1288,7 @@ c
      &             pSNmom_grid(ic,jc,kc)*(dunits*(dx*x1)**3._RKIND)*
      &             vunits/SolarMass/1e5_RKIND,
      &             add_therm_w*dunits*
-     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
-     &             kdissH2*(dunits*(x1*dx)**3._RKIND)/SolarMass,
-     &             kdetHM*(dunits*(x1*dx)**3._RKIND)/SolarMass
+     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
                endif
 c
  100           continue
@@ -1918,16 +1894,6 @@ c
                d(ic+i,jc+j,kc+k) = d(ic+i,jc+j,kc+k)
      &                       + delta_mass
 c     
-c     Add LW Counts to the H2 dissociation rate 
-c     Currently don't do an kernel injection
-               !if (i .eq. 0_IKIND .and. j .eq. 0_IKIND .and. k .eq. 0_IKIND) then
-                  !lw_counts(ic+i,jc+j,kc+k) = lw_counts(ic+i,jc+j,kc+k)
-                  !           + lw_counts_per_cell
-                  !hm_counts(ic+i,jc+j,kc+k) = hm_counts(ic+i,jc+j,kc+k)
-                  !           + hm_counts_per_cell
-               !   lw_counts = lw_counts + lw_counts_per_cell
-               !   hm_counts = hm_counts + hm_counts_per_cell
-               !endif
 c     End loop over cells in particle-frame
 c     
             enddo
