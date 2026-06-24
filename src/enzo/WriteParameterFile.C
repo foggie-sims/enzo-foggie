@@ -940,7 +940,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
     StarFeedbackCapVelocityKick);
   fprintf(fptr, "WriteFeedbackLogFiles                 = %"ISYM"\n",
           WriteFeedbackLogFiles);
-  fprintf(fptr, "UseLocalStellarRadiation                 = %"ISYM"\n",
+  fprintf(fptr, "UseLocalStellarRadiation              = %"ISYM"\n",
           UseLocalStellarRadiation); //CWT
   fprintf(fptr, "StarEnergyToStellarUV                 = %"GSYM"\n",
           StarEnergyToStellarUV);
