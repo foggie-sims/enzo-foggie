@@ -2734,7 +2734,7 @@ The parameters below are currently considered in ``StarFeedback`` method 6.
 See :ref:`method_6`.
 
 ``StarFeedbackMomentumMultiplier`` (external)
-    This parameter is used to multiply the strength of the injected momentum. Default value is 1.0.
+    This parameter is used to multiply the strength of the injected momentum. If set to 0.0, thermal energy will instead be injected at a rate of 1e51 ergs per supernova. Default value is 1.0.
 ``StarFeedbackSNePerTimestepLimit`` (external)
     This parameter is used to limit how many supernovae must occur per cell per time step in order for feedback to be injected. Default value is 1e-3.
 ``StarFeedbackStochasticSNe`` (external)
