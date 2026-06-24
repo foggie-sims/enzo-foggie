@@ -283,7 +283,9 @@ int grid::GrackleWrapper()
   }
 #endif // TRANSFER
 
-
+  float *k_diss_H2_grid = NULL;
+  float *k_det_HM_grid = NULL;
+  float *EmptyRtArray0 = NULL;
   if (UseLocalStellarRadiation){
     /* Estimate local radiation field from new Stars */
     //Sum all the mass of all young star particles on the grid
@@ -324,6 +326,11 @@ int grid::GrackleWrapper()
           float metallicity = this->ParticleAttribute[2][i];
          // int zz = search_lower_bound((float*)metallicity_bins, metallicity, 0, 6, 6);
           int zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met+1, pSNFBTable.n_met+1);
+
+          //fprintf(stdout, "Age %"ESYM", ", age);
+          //fprintf(stdout, "aa %"ISYM",", aa);
+          //fprintf(stdout, "Z %"ESYM", ", metallicity);
+          //fprintf(stdout, "zz %"ISYM"\n", zz);
 
           float t_z=0.5f;
           if (zz>=pSNFBTable.n_met){
@@ -372,8 +379,8 @@ int grid::GrackleWrapper()
     k_det_HM_grid_sum   = k_det_HM_grid_sum    / (4.0 * 3.14159 * dilRad2);
   
     /* Define Grid */
-    float *k_diss_H2_grid  = new float[size];
-    float *k_det_HM_grid  = new float[size];
+    k_diss_H2_grid  = new float[size];
+    k_det_HM_grid  = new float[size];
     for (int i = 0; i < size; i++){
       k_diss_H2_grid[i] = k_diss_H2I_grid_sum; //From Grid Property written in StarParticleHandler
       k_det_HM_grid[i] = k_det_HM_grid_sum; 
@@ -382,16 +389,17 @@ int grid::GrackleWrapper()
     if (k_diss_H2I_grid_sum>0){
       fprintf(stdout, "Grid %"ISYM",", this->ID);
       fprintf(stdout, "Time %"ESYM",", this->Time);
-      fprintf(stdout, ", k_diss_H2 = %"ESYM" 1/CodeTime,", k_diss_H2_grid[0]);
-      fprintf(stdout, ",k_det_HM  = %"ESYM" 1/CodeTime\n", k_det_HM_grid[0]);
+      fprintf(stdout, " k_diss_H2 = %"ESYM" 1/CodeTime,", k_diss_H2_grid[0]);
+      fprintf(stdout, " k_det_HM  = %"ESYM" 1/CodeTime\n", k_det_HM_grid[0]);
     }
 
     my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
+#ifdef HM_GRACKLE
     my_fields.RT_HM_detachment_rate =  k_det_HM_grid;  //Feeds in Britton's Grackle Branch (foggie-sf) only
-  
+#endif
 
     // Need to set the other fields to the same 0 array for now
-    float *EmptyRtArray0  = new float[size];
+    EmptyRtArray0  = new float[size];
     //float *EmptyRtArray1  = new float[size];
     //float *EmptyRtArray2  = new float[size];
     //float *EmptyRtArray3  = new float[size];

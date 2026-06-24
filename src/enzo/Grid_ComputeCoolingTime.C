@@ -324,20 +324,25 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     }
 #endif // TRANSFER
 
+  float *k_diss_H2_grid = NULL;
+  float *k_det_HM_grid = NULL;
+  float *EmptyRtArray0 = NULL;
+
   if (UseLocalStellarRadiation) {
     //CWT: Use GridAttribute defined each timestep in Grid_GrackleWrapper.C
-    float *k_diss_H2_grid  = new float[size];
-    float *k_det_HM_grid  = new float[size];
-    for (int i = 0; i < size; i++){
+    k_diss_H2_grid  = new float[size];
+    k_det_HM_grid  = new float[size];
+    for (i = 0; i < size; i++){
       k_diss_H2_grid[i] = k_diss_H2I_grid_sum; //From Grid Property written in StarParticleHandler
       k_det_HM_grid[i] = k_det_HM_grid_sum; 
     }
   
     my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
+#ifdef HM_GRACKLE
     my_fields.RT_HM_detachment_rate =  k_det_HM_grid;  //Feeds in Britton's Grackle Branch (foggie-sf) only
-  
+#endif
     // Need to set the other fields to the same 0 array for now
-    float *EmptyRtArray0  = new float[size];
+    EmptyRtArray0  = new float[size];
     //float *EmptyRtArray1  = new float[size];
     //float *EmptyRtArray2  = new float[size];
     //float *EmptyRtArray3  = new float[size];
