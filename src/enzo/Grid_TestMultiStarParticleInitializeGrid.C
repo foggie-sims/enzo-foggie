@@ -99,7 +99,7 @@ int grid::TestMultiStarParticleInitializeGrid(int NParticles,
   int actual_N = 1;  /* center particle */
   while (actual_N < NParticles) {
     n_shells++;
-    int N_k = (int)(4.0 * M_PI * n_shells * n_shells + 0.5);
+    int N_k = (int)(4.0 * pi * n_shells * n_shells + 0.5);
     if (N_k < 1) N_k = 1;
     actual_N += N_k;
   }
@@ -114,7 +114,7 @@ int grid::TestMultiStarParticleInitializeGrid(int NParticles,
   int *N_per_shell = new int[n_shells];
   for (i = 0; i < n_shells; i++) {
     int k = i + 1;
-    N_per_shell[i] = (int)(4.0 * M_PI * k * k + 0.5);
+    N_per_shell[i] = (int)(4.0 * pi * k * k + 0.5);
     if (N_per_shell[i] < 1) N_per_shell[i] = 1;
   }
 
@@ -169,7 +169,7 @@ int grid::TestMultiStarParticleInitializeGrid(int NParticles,
 
     for (j = 0; j < N_shell; j++) {
       double phi   = acos(1.0 - 2.0 * (j + 0.5) / (double)N_shell);
-      double theta = 2.0 * M_PI * (double)j / golden_ratio;
+      double theta = 2.0 * pi * (double)j / golden_ratio;
 
       FLOAT dx = r * sin(phi) * cos(theta);
       FLOAT dy = r * sin(phi) * sin(theta);
