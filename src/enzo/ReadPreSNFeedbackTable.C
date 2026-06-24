@@ -259,8 +259,10 @@ int ReadPreSNFeedbackTable(char *name)
     pSNFBTable.metm_yield = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     pSNFBTable.mom_rate = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     //RT Fields
-    pSNFBTable.kdiss_H2 = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-    pSNFBTable.kdet_HM = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+    if (UseLocalStellarRadiation) {
+        pSNFBTable.kdiss_H2 = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+        pSNFBTable.kdet_HM = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+    }
 
   } // end not root
 
@@ -271,8 +273,10 @@ int ReadPreSNFeedbackTable(char *name)
   MPI_Bcast(pSNFBTable.mass_yield, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
   MPI_Bcast(pSNFBTable.metm_yield, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
   MPI_Bcast(pSNFBTable.mom_rate, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
-  MPI_Bcast(pSNFBTable.kdiss_H2, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
-  MPI_Bcast(pSNFBTable.kdet_HM, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+  if (UseLocalStellarRadiation) {
+    MPI_Bcast(pSNFBTable.kdiss_H2, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+    MPI_Bcast(pSNFBTable.kdet_HM, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+  }
 #endif
   
   return SUCCESS;
