@@ -2223,9 +2223,10 @@ General Star Formation
     * ``TopGridRank``.  Implemented for ``StarParticleCreation`` method = 0
     or 1 with ``StarParticleFeedback`` method = 1, and for
     ``StarParticleFeedback`` method = 64 (Kimm & Cen momentum feedback).
-    For method = 64, a value of 0 defaults to a maximum step of 3
-    (equivalent to ``StarFeedbackDistCellStep = 3``), which together with
-    the default ``StarFeedbackDistRadius`` includes all 27 cells of a
+    For method = 64, any value less than StarFeedbackDistRadius
+    defaults ``StarFeedbackDistCellStep = StarFeedbackDistRadius``, except for
+    a value of 0, which defaults to a value of 3 instead. Together with
+    the default value of ``StarFeedbackDistRadius``, this includes all 27 cells of a
     3x3x3 cube.  See :ref:`distributed_feedback` for an illustration.
     Default: 0.
 

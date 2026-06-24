@@ -1831,18 +1831,6 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       }
     }
     
-    // Resolve feedback injection region parameters. Default (value 0) falls
-    // back to a 3x3x3 cube (distrad=1, diststep=3). Compute distcells here
-    // since ReadParameterFile only calculates StarFeedbackDistTotalCells for
-    // NORMAL_STAR/UNIGRID_STAR methods, not MECH_STAR.
-    int distRadEff  = (StarFeedbackDistRadius  > 0) ? StarFeedbackDistRadius  : 1;
-    int distStepEff = (StarFeedbackDistCellStep > 0) ? StarFeedbackDistCellStep : 3;
-    int distCellsEff = 0;
-    for (int dk = -distRadEff; dk <= distRadEff; dk++)
-      for (int dj = -distRadEff; dj <= distRadEff; dj++)
-        for (int di = -distRadEff; di <= distRadEff; di++)
-          if (ABS(dk) + ABS(dj) + ABS(di) <= distStepEff) distCellsEff++;
-
     FORTRAN_NAME(star_feedback6)(
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], mu_field,
@@ -1854,7 +1842,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        &DensityUnits, &LengthUnits, &VelocityUnits, &TimeUnits,
           &StarMassEjectionFraction,
           &StarMetalYield,
-       &distRadEff, &distStepEff, &distCellsEff,
+       &StarFeedbackDistRadius, &StarFeedbackDistCellStep, &StarFeedbackDistTotalCells,
        &NumberOfParticles,
           CellLeftEdge[0], CellLeftEdge[1], CellLeftEdge[2], &GhostZones,
        ParticlePosition[0], ParticlePosition[1],
