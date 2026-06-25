@@ -26,7 +26,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libhdf5-serial-dev gfortran openmpi-bin libopenmpi-dev
+          sudo apt-get install -y csh libhdf5-serial-dev libopenmpi-dev openmpi-bin gfortran libtool-bin xutils-dev
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -47,12 +47,6 @@ jobs:
             ~/venv
             ~/local
           key: dependencies-v8
-
-      - name: Install system dependencies
-        if: steps.restore-deps.outputs.cache-hit != 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y csh libhdf5-serial-dev libopenmpi-dev openmpi-bin gfortran libtool-bin xutils-dev
 
       - name: Set up Python virtual environment
         if: steps.restore-deps.outputs.cache-hit != 'true'
@@ -153,7 +147,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libhdf5-serial-dev gfortran openmpi-bin libopenmpi-dev
+          sudo apt-get install -y csh libhdf5-serial-dev libopenmpi-dev openmpi-bin gfortran libtool-bin xutils-dev
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -174,12 +168,6 @@ jobs:
             ~/venv
             ~/local
           key: dependencies-v8
-
-      - name: Install system dependencies
-        if: steps.restore-deps.outputs.cache-hit != 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y csh libhdf5-serial-dev libopenmpi-dev openmpi-bin gfortran libtool-bin xutils-dev
 
       - name: Set up Python virtual environment
         if: steps.restore-deps.outputs.cache-hit != 'true'
@@ -265,11 +253,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libhdf5-serial-dev gfortran openmpi-bin libopenmpi-dev
 
       - name: Set up Python
         uses: actions/setup-python@v6
