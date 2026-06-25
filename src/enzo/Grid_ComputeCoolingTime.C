@@ -333,13 +333,13 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     k_diss_H2_grid  = new float[size];
     k_det_HM_grid  = new float[size];
     for (i = 0; i < size; i++){
-      k_diss_H2_grid[i] = k_diss_H2I_grid_sum; //From Grid Property written in StarParticleHandler
+      k_diss_H2_grid[i] = k_diss_H2I_grid_sum;
       k_det_HM_grid[i] = k_det_HM_grid_sum; 
     }
   
-    my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;//Already in units of seconds (from table)
+    my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;
 #ifdef HM_GRACKLE
-    my_fields.RT_HM_detachment_rate =  k_det_HM_grid;  //Feeds in Britton's Grackle Branch (foggie-sf) only
+    my_fields.RT_HM_detachment_rate =  k_det_HM_grid; //Feeds in Britton's Grackle Branch (foggie-sf) only
 #endif
     // Need to set the other fields to the same 0 array for now
     EmptyRtArray0  = new float[size];
