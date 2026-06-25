@@ -46,7 +46,7 @@ jobs:
             ~/.cache/pip
             ~/venv
             ~/local
-          key: dependencies-v8
+          key: dependencies-v1
 
       - name: Set up Python virtual environment
         if: steps.restore-deps.outputs.cache-hit != 'true'
@@ -167,7 +167,7 @@ jobs:
             ~/.cache/pip
             ~/venv
             ~/local
-          key: dependencies-v8
+          key: dependencies-v1
 
       - name: Set up Python virtual environment
         if: steps.restore-deps.outputs.cache-hit != 'true'
