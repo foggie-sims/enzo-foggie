@@ -207,12 +207,26 @@ jobs:
           girder-cli --api-url https://girder.hub.yt/api/v1 download 5af9ef42ec1bd30001fcd001 $GITHUB_WORKSPACE/run/CosmologySimulation
 
       - name: Restore test answers cache
+        id: restore-answers
         uses: actions/cache@v5
         with:
-          path: ~/enzo_test/push_suite
+          path: ${HOME}/enzo_test/push_suite
           key: foggie-test-answers-v1
 
+      - name: Debug ENZOTEST_DIR contents
+        if: always()
+        run: |
+          echo "::debug::Listing ${ENZOTEST_DIR}"
+          if [ -d "${ENZOTEST_DIR}" ]; then
+            find "${ENZOTEST_DIR}" -maxdepth 2 -print0 | while IFS= read -r -d '' p; do
+              echo "::debug::${p}"
+            done
+          else
+            echo "::debug::ENZOTEST_DIR not found: ${ENZOTEST_DIR}"
+          fi
+
       - name: Build and test (gold standard)
+        if: steps.restore-answers.outputs.cache-hit != 'true'
         run: |
           source ${HOME}/venv/bin/activate
           if [ ! -e ${HOME}/enzo_test/push_suite ]; then
