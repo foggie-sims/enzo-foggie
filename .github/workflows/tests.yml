@@ -23,6 +23,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libhdf5-serial-dev gfortran openmpi-bin libopenmpi-dev
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -145,6 +150,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libhdf5-serial-dev gfortran openmpi-bin libopenmpi-dev
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -255,6 +265,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libhdf5-serial-dev gfortran openmpi-bin libopenmpi-dev
 
       - name: Set up Python
         uses: actions/setup-python@v6
