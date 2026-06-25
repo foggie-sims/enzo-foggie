@@ -35,7 +35,7 @@ jobs:
 
       - name: Fetch tags
         run: |
-          git fetch --tags https://github.com/foggie-sims/enzo-foggie
+          git fetch --tags --force https://github.com/foggie-sims/enzo-foggie
           git tag tip
 
       - name: Restore dependencies cache
@@ -156,7 +156,7 @@ jobs:
 
       - name: Fetch tags
         run: |
-          git fetch --tags https://github.com/foggie-sims/enzo-foggie
+          git fetch --tags --force https://github.com/foggie-sims/enzo-foggie
           git tag tip
 
       - name: Restore dependencies cache
