@@ -326,7 +326,7 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
   float *k_det_HM_grid = NULL;
   float *k_diss_CO_grid = NULL;
   float *k_ion_CI_grid = NULL;
-  float *k_ion_OI_grid = NULL:
+  float *k_ion_OI_grid = NULL;
   float *EmptyRtArray = NULL;
 
   if (UseLocalStellarRadiation) {
