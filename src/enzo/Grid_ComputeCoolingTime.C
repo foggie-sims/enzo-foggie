@@ -50,8 +50,6 @@ int GadgetCoolingTime(float *d, float *e, float *ge,
 		      float *fh, float *utem, float *uxyz, 
 		      float *uaye, float *urho, float *utim,
 		      float *gamma);
-int search_lower_bound(float *arr, float value, int low, int high, 
-		       int total);
 
 extern "C" void FORTRAN_NAME(cool_multi_time)(
 	float *d, float *e, float *ge, float *u, float *v, float *w, float *de,
@@ -326,38 +324,45 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
 
   float *k_diss_H2_grid = NULL;
   float *k_det_HM_grid = NULL;
-  float *EmptyRtArray0 = NULL;
+  float *k_diss_CO_grid = NULL;
+  float *k_ion_CI_grid = NULL;
+  float *k_ion_OI_grid = NULL:
+  float *EmptyRtArray = NULL;
 
   if (UseLocalStellarRadiation) {
     //CWT: Use GridAttribute defined each timestep in Grid_GrackleWrapper.C
     k_diss_H2_grid  = new float[size];
     k_det_HM_grid  = new float[size];
+    k_diss_CO_grid  = new float[size];
+    k_ion_CI_grid  = new float[size];
+    k_ion_OI_grid  = new float[size];
+
     for (i = 0; i < size; i++){
       k_diss_H2_grid[i] = k_diss_H2I_grid_sum;
-      k_det_HM_grid[i] = k_det_HM_grid_sum; 
+      k_det_HM_grid[i] = k_det_HM_grid_sum;
+      k_diss_CO_grid[i] = k_diss_COI_grid_sum;
+      k_ion_CI_grid[i] = k_ion_CI_grid_sum;
+      k_ion_OI_grid[i] = k_ion_OI_grid_sum;
     }
   
     my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;
 #ifdef HM_GRACKLE
     my_fields.RT_HM_detachment_rate =  k_det_HM_grid; //Feeds in Britton's Grackle Branch (foggie-sf) only
+    //The following rates are commented out for now, but will feed into the newchem-cpp branch of grackle when ready
+    //my_fields.RT_CO_dissociation_rate =  k_diss_CO_grid; 
+    //my_fields.RT_CI_ionization_rate   =  k_ion_CI_grid; 
+    //my_fields.RT_OI_ionization_rate   =  k_ion_OI_grid; 
 #endif
     // Need to set the other fields to the same 0 array for now
-    EmptyRtArray0  = new float[size];
-    //float *EmptyRtArray1  = new float[size];
-    //float *EmptyRtArray2  = new float[size];
-    //float *EmptyRtArray3  = new float[size];
-
+    EmptyRtArray  = new float[size];
     for ( i = 0; i < size; i++){
-      EmptyRtArray0[i] = 0;
-      //EmptyRtArray1[i] = 0;
-      //EmptyRtArray2[i] = 0;
-      //EmptyRtArray3[i] = 0;
+      EmptyRtArray[i] = 0;
     }
 
-    my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
-    my_fields.RT_HeI_ionization_rate  = EmptyRtArray0;
-    my_fields.RT_HeII_ionization_rate = EmptyRtArray0;
-    my_fields.RT_heating_rate = EmptyRtArray0;
+    my_fields.RT_HI_ionization_rate   = EmptyRtArray;
+    my_fields.RT_HeI_ionization_rate  = EmptyRtArray;
+    my_fields.RT_HeII_ionization_rate = EmptyRtArray;
+    my_fields.RT_heating_rate = EmptyRtArray;
   } //UseLocalStellarRadiation
   /*                                              */
 
@@ -390,10 +395,10 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     if (UseLocalStellarRadiation){
       delete[] k_diss_H2_grid;
       delete[] k_det_HM_grid;
-      delete[] EmptyRtArray0;
-      //delete[] EmptyRtArray1;
-      //delete[] EmptyRtArray2;
-      //delete[] EmptyRtArray3;
+      delete[] k_diss_CO_grid;
+      delete[] k_ion_CI_grid;
+      delete[] k_ion_OI_grid;
+      delete[] EmptyRtArray;
     }
 
     return SUCCESS;

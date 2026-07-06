@@ -49,7 +49,10 @@ grid::grid()
   /* Grid Sum RT Values - CWT */
   k_diss_H2I_grid_sum = 0.;
   k_det_HM_grid_sum = 0.;
- 
+  k_diss_COI_grid_sum = 0.;
+  k_ion_CI_grid_sum = 0.;
+  k_ion_OI_grid_sum = 0.;
+
   /* clear MAX_DIMENSION vectors */
  
   int i, j;

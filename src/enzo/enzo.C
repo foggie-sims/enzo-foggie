@@ -929,6 +929,9 @@ void my_exit(int status)
     if (UseLocalStellarRadiation){
         delete [] pSNFBTable.kdiss_H2;
         delete [] pSNFBTable.kdet_HM;
+        delete [] pSNFBTable.kdiss_CO;
+        delete [] pSNFBTable.kion_CI;
+        delete [] pSNFBTable.kion_OI;
     }
   }
 

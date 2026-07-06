@@ -285,7 +285,10 @@ int grid::GrackleWrapper()
 
   float *k_diss_H2_grid = NULL;
   float *k_det_HM_grid = NULL;
-  float *EmptyRtArray0 = NULL;
+  float *k_diss_CO_grid = NULL;
+  float *k_ion_CI_grid = NULL;
+  float *k_ion_OI_grid = NULL:
+  float *EmptyRtArray = NULL;
   if (UseLocalStellarRadiation){
     /* Estimate local radiation field from new Stars */
     //Sum all the mass of all young star particles on the grid
@@ -303,6 +306,9 @@ int grid::GrackleWrapper()
 
     k_diss_H2I_grid_sum = 0; //Grid Attribute
     k_det_HM_grid_sum = 0; //Grid Attribute - Calculated here and used in CoolingRate
+    k_diss_COI_grid_sum = 0;
+    k_ion_CI_grid_sum = 0;
+    k_ion_OI_grid_sum = 0;
     for (i = 0; i < this->NumberOfParticles; i++) {
       if (this->ParticleType[i] == PARTICLE_TYPE_STAR) {
         float age = (this->Time - this->ParticleAttribute[0][i]) * TimeUnits / years_to_seconds; //Convert to yr
@@ -353,6 +359,9 @@ int grid::GrackleWrapper()
           /* In Units Hz/cm^2 per Solar Mass*/
           float k_diss_H2_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kdiss_H2[ii0] + t_age * (1-t_z) * pSNFBTable.kdiss_H2[ii1] + (1-t_age) * t_z * pSNFBTable.kdiss_H2[ii2] + t_age * t_z * pSNFBTable.kdiss_H2[ii3];
           float k_det_HM_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kdet_HM[ii0] + t_age * (1-t_z) * pSNFBTable.kdet_HM[ii1] + (1-t_age) * t_z * pSNFBTable.kdet_HM[ii2] + t_age * t_z * pSNFBTable.kdet_HM[ii3];
+          float k_diss_CO_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kdiss_CO[ii0] + t_age * (1-t_z) * pSNFBTable.kdiss_CO[ii1] + (1-t_age) * t_z * pSNFBTable.kdiss_CO[ii2] + t_age * t_z * pSNFBTable.kdiss_CO[ii3];
+          float k_ion_CI_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kion_CI[ii0] + t_age * (1-t_z) * pSNFBTable.kion_CI[ii1] + (1-t_age) * t_z * pSNFBTable.kion_CI[ii2] + t_age * t_z * pSNFBTable.kion_CI[ii3];
+          float k_ion_OI_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kion_OI[ii0] + t_age * (1-t_z) * pSNFBTable.kion_OI[ii1] + (1-t_age) * t_z * pSNFBTable.kion_OI[ii2] + t_age * t_z * pSNFBTable.kion_OI[ii3];
 
 
           float dx = this->CellWidth[0][0];
@@ -360,12 +369,21 @@ int grid::GrackleWrapper()
 
           k_diss_H2I_grid_sum += k_diss_H2_sb99_interp * ParticleMass_Msun;
           k_det_HM_grid_sum += k_det_HM_sb99_interp * ParticleMass_Msun;
+          k_diss_COI_grid_sum += k_diss_CO_sb99_interp * ParticleMass_Msun;
+          k_ion_CI_grid_sum += k_ion_CI_sb99_interp * ParticleMass_Msun;
+          k_ion_OI_grid_sum += k_ion_OI_sb99_interp * ParticleMass_Msun;
+
+
         }
       }
     }
 
     k_diss_H2I_grid_sum = k_diss_H2I_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
     k_det_HM_grid_sum  = k_det_HM_grid_sum  * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units
+    k_diss_COI_grid_sum = k_diss_COI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
+    k_ion_CI_grid_sum = k_ion_CI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
+    k_ion_OI_grid_sum = k_ion_OI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
+
     float grid_dx = this->GridRightEdge[0]-this->GridLeftEdge[0];
     float grid_dy = this->GridRightEdge[1]-this->GridLeftEdge[1];
     float grid_dz = this->GridRightEdge[2]-this->GridLeftEdge[2];
@@ -377,44 +395,57 @@ int grid::GrackleWrapper()
     float dilRad2 = dilutionRadius * dilutionRadius;
     k_diss_H2I_grid_sum = k_diss_H2I_grid_sum  / (4.0 * 3.14159 * dilRad2);
     k_det_HM_grid_sum   = k_det_HM_grid_sum    / (4.0 * 3.14159 * dilRad2);
-  
+    k_diss_COI_grid_sum = k_diss_COI_grid_sum  / (4.0 * 3.14159 * dilRad2);
+    k_ion_CI_grid_sum = k_ion_CI_grid_sum  / (4.0 * 3.14159 * dilRad2);
+    k_ion_OI_grid_sum = k_ion_OI_grid_sum  / (4.0 * 3.14159 * dilRad2);
+
     /* Define Grid */
     k_diss_H2_grid  = new float[size];
     k_det_HM_grid  = new float[size];
+    k_diss_CO_grid  = new float[size];
+    k_ion_CI_grid  = new float[size];
+    k_ion_OI_grid  = new float[size];
+
     for (int i = 0; i < size; i++){
       k_diss_H2_grid[i] = k_diss_H2I_grid_sum;
       k_det_HM_grid[i] = k_det_HM_grid_sum; 
+      k_diss_CO_grid[i] = k_diss_COI_grid_sum;
+      k_ion_CI_grid[i] = k_ion_CI_grid_sum;
+      k_ion_OI_grid[i] = k_ion_OI_grid_sum;
+
     }
 
     if (k_diss_H2I_grid_sum>0){
       fprintf(stdout, "Grid %"ISYM",", this->ID);
       fprintf(stdout, "Time %"ESYM",", this->Time);
       fprintf(stdout, " k_diss_H2 = %"ESYM" 1/CodeTime,", k_diss_H2_grid[0]);
-      fprintf(stdout, " k_det_HM  = %"ESYM" 1/CodeTime\n", k_det_HM_grid[0]);
+      fprintf(stdout, " k_det_HM  = %"ESYM" 1/CodeTime", k_det_HM_grid[0]);
+      fprintf(stdout, " k_diss_CO  = %"ESYM" 1/CodeTime", k_diss_CO_grid[0]);
+      fprintf(stdout, " k_ion_CI  = %"ESYM" 1/CodeTime", k_ion_CI_grid[0]);
+      fprintf(stdout, " k_ion_OI  = %"ESYM" 1/CodeTime\n", k_ion_OI_grid[0]);
+
     }
 
+    //To Do -> Add CO, CI, OI to grackle rates?
     my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;
 #ifdef HM_GRACKLE
-    my_fields.RT_HM_detachment_rate =  k_det_HM_grid; //Feeds in Britton's Grackle Branch (foggie-sf) only
+    my_fields.RT_HM_detachment_rate   =  k_det_HM_grid; //Feeds in Britton's Grackle Branch (foggie-sf) only
+    //The following rates are commented out for now, but will feed into the newchem-cpp branch of grackle when ready
+    //my_fields.RT_CO_dissociation_rate =  k_diss_CO_grid; 
+    //my_fields.RT_CI_ionization_rate   =  k_ion_CI_grid; 
+    //my_fields.RT_OI_ionization_rate   =  k_ion_OI_grid; 
 #endif
 
     // Need to set the other fields to the same 0 array for now
-    EmptyRtArray0  = new float[size];
-    //float *EmptyRtArray1  = new float[size];
-    //float *EmptyRtArray2  = new float[size];
-    //float *EmptyRtArray3  = new float[size];
-
+    EmptyRtArray  = new float[size];
     for (int i = 0; i < size; i++){
-      EmptyRtArray0[i] = 0;
-      //EmptyRtArray1[i] = 0;
-      //EmptyRtArray2[i] = 0;
-      //EmptyRtArray3[i] = 0;
+      EmptyRtArray[i] = 0;
     }
 
-    my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
-    my_fields.RT_HeI_ionization_rate  = EmptyRtArray0;
-    my_fields.RT_HeII_ionization_rate = EmptyRtArray0;
-    my_fields.RT_heating_rate = EmptyRtArray0;
+    my_fields.RT_HI_ionization_rate   = EmptyRtArray;
+    my_fields.RT_HeI_ionization_rate  = EmptyRtArray;
+    my_fields.RT_HeII_ionization_rate = EmptyRtArray;
+    my_fields.RT_heating_rate = EmptyRtArray;
   } // UseLocalStellarRadiation
   /*                                              */
 
@@ -464,10 +495,10 @@ int grid::GrackleWrapper()
     if (UseLocalStellarRadiation){
       delete[] k_diss_H2_grid;
       delete[] k_det_HM_grid;
-      delete[] EmptyRtArray0;
-      //delete[] EmptyRtArray1;
-      //delete[] EmptyRtArray2;
-      //delete[] EmptyRtArray3;
+      delete[] k_diss_CO_grid;
+      delete[] k_ion_CI_grid;
+      delete[] k_ion_OI_grid;
+      delete[] EmptyRtArray;
     }
 
 
