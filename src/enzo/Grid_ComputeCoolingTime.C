@@ -330,7 +330,7 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
   float *EmptyRtArray = NULL;
 
   if (UseLocalStellarRadiation) {
-    //CWT: Use GridAttribute defined each timestep in Grid_GrackleWrapper.C
+    //CWT 06/07/26: Use GridAttribute defined each timestep in Grid_GrackleWrapper.C
     k_diss_H2_grid  = new float[size];
     k_det_HM_grid  = new float[size];
     k_diss_CO_grid  = new float[size];

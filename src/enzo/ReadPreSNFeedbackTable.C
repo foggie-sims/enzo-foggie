@@ -205,7 +205,7 @@ int ReadPreSNFeedbackTable(char *name)
       return FAIL;
     }
 
-    if (UseLocalStellarRadiation) {
+    if (UseLocalStellarRadiation) {  // CWT 06/07/2026
         /* Read H2 Photodissociation Fields */
         pSNFBTable.kdiss_H2 = new double[pSNFBTable.n_met*pSNFBTable.n_age];
         dset_id = H5Dopen(file_id, "/SB99_models/h2_photodissociation_rate");
@@ -316,7 +316,7 @@ int ReadPreSNFeedbackTable(char *name)
     pSNFBTable.mass_yield = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     pSNFBTable.metm_yield = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     pSNFBTable.mom_rate = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-    //RT Fields
+    //Local Radiation Fields - CWT 06/07/2026
     if (UseLocalStellarRadiation) {
         pSNFBTable.kdiss_H2 = new double[pSNFBTable.n_met*pSNFBTable.n_age];
         pSNFBTable.kdet_HM = new double[pSNFBTable.n_met*pSNFBTable.n_age];

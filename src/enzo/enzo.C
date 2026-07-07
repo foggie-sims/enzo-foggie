@@ -925,7 +925,7 @@ void my_exit(int status)
     delete [] pSNFBTable.metm_yield;
     delete [] pSNFBTable.mom_rate;
 
-    //And RT Fields
+    //And Local Radiation Fields - CWT 06/07/26
     if (UseLocalStellarRadiation){
         delete [] pSNFBTable.kdiss_H2;
         delete [] pSNFBTable.kdet_HM;

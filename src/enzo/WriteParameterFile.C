@@ -941,7 +941,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "WriteFeedbackLogFiles                 = %"ISYM"\n",
           WriteFeedbackLogFiles);
   fprintf(fptr, "UseLocalStellarRadiation              = %"ISYM"\n",
-          UseLocalStellarRadiation); //CWT
+          UseLocalStellarRadiation); //CWT 06/07/2026
   fprintf(fptr, "StarEnergyToStellarUV                 = %"GSYM"\n",
           StarEnergyToStellarUV);
   fprintf(fptr, "StarEnergyToQuasarUV                  = %"GSYM"\n",

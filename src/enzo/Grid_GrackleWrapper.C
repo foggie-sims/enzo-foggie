@@ -290,7 +290,7 @@ int grid::GrackleWrapper()
   float *k_ion_OI_grid = NULL;
   float *EmptyRtArray = NULL;
   if (UseLocalStellarRadiation){
-    /* Estimate local radiation field from new Stars */
+    /* Estimate local radiation field from new Stars - CWT 06/07/26 */
     //Sum all the mass of all young star particles on the grid
     //Get an estimate of the LW photon production from fitting results 
     //Convert to RT_H2_dissociation_rate and add to grackle fields
@@ -304,8 +304,8 @@ int grid::GrackleWrapper()
     //kdiss_H2_sb99 = pSNFBTable.kdiss_H2
     //kdet_HM = pSNFBTable.kdet_HM
 
-    k_diss_H2I_grid_sum = 0; //Grid Attribute
-    k_det_HM_grid_sum = 0; //Grid Attribute - Calculated here and used in CoolingRate
+    k_diss_H2I_grid_sum = 0; //Grid Attributes - Calculated here and used in CoolingRate
+    k_det_HM_grid_sum = 0;
     k_diss_COI_grid_sum = 0;
     k_ion_CI_grid_sum = 0;
     k_ion_OI_grid_sum = 0;

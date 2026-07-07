@@ -1001,7 +1001,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       StarFeedbackPreSNFilename = dummy;
     ret += sscanf(line, "WriteFeedbackLogFiles = %"ISYM,
 		  &WriteFeedbackLogFiles);
-    ret += sscanf(line, "UseLocalStellarRadiation = %"ISYM, //CWT
+    ret += sscanf(line, "UseLocalStellarRadiation = %"ISYM, //CWT 06/07/2026
         &UseLocalStellarRadiation);
     ret += sscanf(line, "StarEnergyToStellarUV = %"FSYM, &StarEnergyToStellarUV);
     ret += sscanf(line, "StarEnergyToQuasarUV = %"FSYM, &StarEnergyToQuasarUV);

@@ -202,10 +202,10 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
   grackle_data->UVbackground_redshift_fullon   = (double) CoolData.RadiationRedshiftFullOn;
   grackle_data->UVbackground_redshift_drop     = (double) CoolData.RadiationRedshiftDropOff;
   if (UseLocalStellarRadiation){
-    grackle_data->use_radiative_transfer         = TRUE; //CWT: Cheap fix to avoid turning on the rest of RT, change!
-    grackle_data->radiative_transfer_coupled_rate_solver = FALSE;//(Eint32) RadiativeTransferCoupledRateSolver; //CWT: From RadiativeTransferReadParameters.C
-    grackle_data->radiative_transfer_hydrogen_only       = FALSE;//(Eint32) RadiativeTransferHydrogenOnly; //CWT: From RadiativeTransferReadParameters.C
-    grackle_data->radiative_transfer_intermediate_step = FALSE; //CWT From Grid_MultiSpeciesHandler?
+    grackle_data->use_radiative_transfer         = TRUE; //CWT 06/07/2026
+    grackle_data->radiative_transfer_coupled_rate_solver = FALSE;
+    grackle_data->radiative_transfer_hydrogen_only       = FALSE;
+    grackle_data->radiative_transfer_intermediate_step = FALSE;
   }
   else{
     grackle_data->use_radiative_transfer         = (Eint32) RadiativeTransfer;
