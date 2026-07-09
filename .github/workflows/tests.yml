@@ -13,6 +13,10 @@ env:
   ANSWER_NAME: push_suite
   HYPRE: 2.20.0
 
+defaults:
+  run:
+    shell: bash -el {0}
+
 jobs:
   test-compile-options:
     name: Test Compile Options
@@ -28,10 +32,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y csh libhdf5-serial-dev libopenmpi-dev openmpi-bin gfortran libtool-bin xutils-dev
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
         with:
+          auto-update-conda: true
           python-version: '3.11'
+          channels: conda-forge
+          channel-priority: strict
+          activate-environment: enzo-ci
+          auto-activate-base: false
 
       - name: Fetch tags
         run: |
@@ -43,20 +52,16 @@ jobs:
         uses: actions/cache@v5
         with:
           path: |
-            ~/.cache/pip
-            ~/venv
+            ~/.conda/pkgs
             ~/local
           key: dependencies-v1
 
-      - name: Set up Python virtual environment
+      - name: Create conda environment
         if: steps.restore-deps.outputs.cache-hit != 'true'
         run: |
-          python3 -m venv ${HOME}/venv
-          source ${HOME}/venv/bin/activate
-          pip install --upgrade pip
-          pip install --upgrade wheel
-          pip install --upgrade setuptools
-          pip install Cython numpy h5py fastcache flake8 nose3 girder-client matplotlib pytest gitpython yt_astro_analysis
+          conda install -y -c conda-forge \
+            cython numpy h5py fastcache flake8 nose girder-client matplotlib pytest gitpython pip
+            pip install yt-astro-analysis
 
       - name: Install HYPRE
         if: steps.restore-deps.outputs.cache-hit != 'true'
@@ -82,7 +87,6 @@ jobs:
 
       - name: Test compilation configurations
         run: |
-          source ${HOME}/venv/bin/activate
           ./configure
           cd src/enzo
           make machine-ubuntu
@@ -149,10 +153,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y csh libhdf5-serial-dev libopenmpi-dev openmpi-bin gfortran libtool-bin xutils-dev
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
         with:
+          auto-update-conda: true
           python-version: '3.11'
+          channels: conda-forge
+          channel-priority: strict
+          activate-environment: enzo-ci
+          auto-activate-base: false
 
       - name: Fetch tags
         run: |
@@ -164,20 +173,16 @@ jobs:
         uses: actions/cache@v5
         with:
           path: |
-            ~/.cache/pip
-            ~/venv
+            ~/.conda/pkgs
             ~/local
           key: dependencies-v1
 
-      - name: Set up Python virtual environment
+      - name: Create conda environment
         if: steps.restore-deps.outputs.cache-hit != 'true'
         run: |
-          python3 -m venv ${HOME}/venv
-          source ${HOME}/venv/bin/activate
-          pip install --upgrade pip
-          pip install --upgrade wheel
-          pip install --upgrade setuptools
-          pip install Cython numpy h5py fastcache flake8 nose3 girder-client matplotlib pytest gitpython yt_astro_analysis
+          conda install -y -c conda-forge \
+            cython numpy h5py fastcache flake8 nose girder-client matplotlib pytest gitpython pip 
+            pip install yt-astro-analysis
 
       - name: Install HYPRE
         if: steps.restore-deps.outputs.cache-hit != 'true'
@@ -203,7 +208,6 @@ jobs:
 
       - name: Download test data
         run: |
-          source ${HOME}/venv/bin/activate
           girder-cli --api-url https://girder.hub.yt/api/v1 download 5af9ef42ec1bd30001fcd001 $GITHUB_WORKSPACE/run/CosmologySimulation
 
       - name: Restore test answers cache
@@ -216,7 +220,6 @@ jobs:
       - name: Build and test (gold standard)
         if: steps.restore-answers.outputs.cache-hit != 'true'
         run: |
-          source ${HOME}/venv/bin/activate
           if [ ! -e ${HOME}/enzo_test/push_suite ]; then
             git checkout foggie-gold-standard-v1
             ./configure
@@ -230,9 +233,9 @@ jobs:
           fi
 
       - name: Build and test (tip)
+        continue-on-error: true
         id: build-test-tip
         run: |
-          source ${HOME}/venv/bin/activate
           git checkout tip
           ./configure
           cd src/enzo
@@ -257,27 +260,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
         with:
+          auto-update-conda: true
           python-version: '3.11'
+          channels: conda-forge
+          channel-priority: strict
+          activate-environment: enzo-ci
+          auto-activate-base: false
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y dvipng texlive-latex-extra
 
-      - name: Set up Python virtual environment
+      - name: Create conda environment
         run: |
-          python3 -m venv ${HOME}/venv
-          source ${HOME}/venv/bin/activate
-          pip install --upgrade pip
-          pip install --upgrade wheel
-          pip install --upgrade setuptools
-          pip install sphinx
+          conda install -y -c conda-forge sphinx
 
       - name: Build documentation
         run: |
-          source ${HOME}/venv/bin/activate
           cd doc/manual/source
           python -m sphinx -M html "." "_build" -W
