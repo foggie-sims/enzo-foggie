@@ -153,6 +153,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y csh libhdf5-serial-dev libopenmpi-dev openmpi-bin gfortran libtool-bin xutils-dev
 
+      - name: Fetch tags
+        run: |
+          git fetch --tags --force https://github.com/foggie-sims/enzo-foggie
+          git tag tip
+
+      # Even though Python isn't used for the compile steps, setting this up allows for a uniform set of dependencies
       - name: Set up Miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -162,11 +168,6 @@ jobs:
           channel-priority: strict
           activate-environment: enzo-ci
           auto-activate-base: false
-
-      - name: Fetch tags
-        run: |
-          git fetch --tags --force https://github.com/foggie-sims/enzo-foggie
-          git tag tip
 
       - name: Restore dependencies cache
         id: restore-deps
@@ -246,12 +247,12 @@ jobs:
           cd ../../run
           python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --clobber
 
-      - name: Upload test results on failure
-        if: steps.build-test-tip.outcome == 'failure'
+      - name: Upload compilation output
+        if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: test-results-failure
-          path: ${{ env.ENZOTEST_DIR }}/${{ github.sha }}
+          name: test-suite-compile-output
+          path: src/enzo/out.compile
 
   docs-build:
     name: Build Documentation
