@@ -97,7 +97,7 @@ jobs:
           make precision-$prec
           make particles-$part
           make clean
-          make -j 6 || (make show-config ; exit 1)
+          make -j 4 || (make show-config ; exit 1)
           done ; done
           # return this to default
           make precision-64
@@ -113,19 +113,19 @@ jobs:
           make integers-$inte
           make particle-id-$pids
           make clean
-          make -j 6 || (make show-config ; exit 1)
+          make -j 4 || (make show-config ; exit 1)
           done ; done
           make integers-64
           make particle-id-64
           # test without mpi
           make use-mpi-no
           make clean
-          make -j 6 || (make show-config ; exit 1)
+          make -j 4 || (make show-config ; exit 1)
           make use-mpi-yes
           # test ray-tracing
           make photon-no
           make clean
-          make -j 6 || (make show-config ; exit 1)
+          make -j 4 || (make show-config ; exit 1)
 
       - name: Upload compilation output
         if: always()
@@ -236,7 +236,7 @@ jobs:
             make machine-ubuntu
             make load-config-test-suite
             make clean
-            make -j 6
+            make -j 4
             cd ../../run
             python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --answer-store
           fi
@@ -250,7 +250,7 @@ jobs:
           make machine-ubuntu
           make load-config-test-suite
           make clean
-          make -j 6
+          make -j 4
           cd ../../run
           python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --clobber
 
