@@ -213,18 +213,6 @@ jobs:
           path: ${HOME}/enzo_test/push_suite
           key: foggie-test-answers-v1
 
-      - name: Debug ENZOTEST_DIR contents
-        if: always()
-        run: |
-          echo "::debug::Listing ${ENZOTEST_DIR}"
-          if [ -d "${ENZOTEST_DIR}" ]; then
-            find "${ENZOTEST_DIR}" -maxdepth 2 -print0 | while IFS= read -r -d '' p; do
-              echo "::debug::${p}"
-            done
-          else
-            echo "::debug::ENZOTEST_DIR not found: ${ENZOTEST_DIR}"
-          fi
-
       - name: Build and test (gold standard)
         if: steps.restore-answers.outputs.cache-hit != 'true'
         run: |
@@ -242,6 +230,7 @@ jobs:
           fi
 
       - name: Build and test (tip)
+        id: build-test-tip
         run: |
           source ${HOME}/venv/bin/activate
           git checkout tip
@@ -254,12 +243,12 @@ jobs:
           cd ../../run
           python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --clobber
 
-      - name: Upload compilation output
-        if: always()
+      - name: Upload test results on failure
+        if: steps.build-test-tip.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
-          name: test-suite-compile-output
-          path: src/enzo/out.compile
+          name: test-results-failure
+          path: ${{ env.ENZOTEST_DIR }}/${{ github.sha }}
 
   docs-build:
     name: Build Documentation
