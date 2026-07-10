@@ -2130,11 +2130,25 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
                  float TestStarParticleMetallicity);
 
 /* Double Star Particle test: initialize particle */
-  int TestDoubleStarParticleInitializeGrid(FLOAT TestStarParticleStarMass[2], 
+  int TestDoubleStarParticleInitializeGrid(FLOAT TestStarParticleStarMass[2],
 				     float *Initialdt,
 				     FLOAT TestStarParticleStarVelocity[2][3],
 				     FLOAT TestStarParticleStarPosition[2][3],
                  FLOAT TestStarParticleMetallicity[2]);
+
+/* Multi-Star Particle test: initialize particles on a sphere */
+  int TestMultiStarParticleInitializeGrid(int NParticles,
+                                          FLOAT SphereRadius,
+                                          FLOAT Center[],
+                                          float StarMass,
+                                          FLOAT StarVelocity[],
+                                          float StarMetallicity,
+                                          int UseSphProfile,
+                                          FLOAT SphProfileRadius,
+                                          float SphProfileAlpha,
+                                          float InnerDensity,
+                                          float InnerEnergy,
+                                          float *Initialdt);
 
 /* Gravity Test: initialize grid. */
 
