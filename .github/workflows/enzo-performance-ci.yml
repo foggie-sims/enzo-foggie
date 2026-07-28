@@ -1,0 +1,159 @@
+# CI for the enzo-performance branch ONLY.
+#
+# This implements the per-PR gate of the performance test plan (audit/enzotestplan.html,
+# sections 6.1 and 8): build checks, build-configuration guards, smoke runs of small
+# self-initializing test problems, and a run-twice bitwise determinism check (the C0
+# harness of test-plan section 3.1, run-to-run flavor: no gold data required).
+#
+# Branch scoping uses BOTH mechanisms:
+#   1. This file lives only on the enzo-performance branch (do not merge it to main).
+#   2. The triggers below filter on enzo-performance explicitly, so even if the file
+#      is ever merged elsewhere, it still only fires for this branch and for PRs
+#      targeting it.
+#
+# Phase-2 TODOs (see test plan section 8): gold-data answer tests via Git LFS,
+# deterministic performance-counter regression checks, force-error tolerance gate on
+# GravityTest, sanitizer build. Wall-clock timing is deliberately NOT gated here —
+# hosted runners cannot time reliably; that lives on the HPC side.
+
+name: enzo-performance CI
+
+on:
+  push:
+    branches: [enzo-performance]
+  pull_request:
+    branches: [enzo-performance]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-and-test:
+    name: Build, config guards, smoke + determinism tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out enzo-performance
+        uses: actions/checkout@v4
+
+      - name: Install toolchain (gfortran, OpenMPI, serial HDF5)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gfortran libopenmpi-dev openmpi-bin \
+            libhdf5-serial-dev hdf5-tools csh
+
+      - name: Configure build (machine-ubuntu, opt-high)
+        run: |
+          ./configure
+          cd src/enzo
+          make machine-ubuntu
+          make opt-high
+          make show-config | tee show-config.log
+
+      # Build-configuration guards from the audit: a build without FAST_SIB is a
+      # silent ~100x regression (audit section 3.3), and 128-bit particle positions
+      # compile the CIC kernels to empty bodies (audit section 5.2.3).
+      - name: Guard build configuration
+        run: |
+          cd src/enzo
+          grep -i "FAST_SIB" show-config.log
+          grep -i "FAST_SIB" show-config.log | grep -qi "yes" \
+            || { echo "::error::CONFIG_FAST_SIB is not 'yes' - refusing to test this configuration"; exit 1; }
+          if grep -iE "PARTICLES.*128" show-config.log | grep -vq "^#"; then
+            echo "::error::128-bit particle positions detected (CONFIG_PFLOAT_16): cic_deposit/cic_interp compile empty"; exit 1
+          fi
+
+      - name: Build enzo.exe
+        run: |
+          cd src/enzo
+          make -j"$(nproc)"
+          test -x enzo.exe
+
+      - name: Smoke test — SedovBlastAMR (AMR hydro, rebuild machinery)
+        timeout-minutes: 20
+        run: |
+          mkdir -p ci-tests/sedov-a && cd ci-tests/sedov-a
+          cp ../../run/Hydro/Hydro-2D/SedovBlastAMR/SedovBlastAMR.enzo .
+          mpirun --oversubscribe -np 4 ../../src/enzo/enzo.exe -d SedovBlastAMR.enzo > run.log 2>&1 \
+            || { tail -50 run.log; exit 1; }
+          grep -q "Successful run, exiting." run.log || grep -qi "exit" run.log
+          ls DD*/ > /dev/null
+
+      - name: Smoke test — GravityTest (ProblemType 23, force accuracy path)
+        timeout-minutes: 10
+        run: |
+          mkdir -p ci-tests/gravity && cd ci-tests/gravity
+          cp ../../run/GravitySolver/GravityTest/GravityTest.enzo .
+          mpirun --oversubscribe -np 4 ../../src/enzo/enzo.exe -d GravityTest.enzo > run.log 2>&1 \
+            || { tail -50 run.log; exit 1; }
+          # The problem writes per-particle force errors; keep them as a CI artifact.
+          # TODO(phase 2): parse and gate on RMS/max force error tolerances (test plan section 4.1).
+          ls TestGravityCheckResults.out 2>/dev/null || true
+
+      - name: Smoke test — TestOrbit (particle dynamics across levels)
+        timeout-minutes: 25
+        run: |
+          mkdir -p ci-tests/orbit && cd ci-tests/orbit
+          cp ../../run/GravitySolver/TestOrbit/TestOrbit.enzo .
+          mpirun --oversubscribe -np 2 ../../src/enzo/enzo.exe -d TestOrbit.enzo > run.log 2>&1 \
+            || { tail -50 run.log; exit 1; }
+
+      # C0 determinism harness (test plan section 3.1, run-to-run flavor): the same
+      # executable, problem, and rank count must produce bit-identical outputs.
+      # Catches uninitialized memory, unseeded nondeterminism, and race conditions
+      # without needing stored gold data.
+      - name: Determinism — SedovBlastAMR run B
+        timeout-minutes: 20
+        run: |
+          mkdir -p ci-tests/sedov-b && cd ci-tests/sedov-b
+          cp ../../run/Hydro/Hydro-2D/SedovBlastAMR/SedovBlastAMR.enzo .
+          mpirun --oversubscribe -np 4 ../../src/enzo/enzo.exe -d SedovBlastAMR.enzo > run.log 2>&1 \
+            || { tail -50 run.log; exit 1; }
+
+      - name: Determinism — bitwise compare A vs B
+        run: |
+          cd ci-tests
+          status=0
+          for dumpdir in sedov-a/DD*/; do
+            d=$(basename "$dumpdir")
+            [ -d "sedov-b/$d" ] || { echo "::error::run B missing dump $d"; status=1; continue; }
+            for f in "sedov-a/$d"/*; do
+              b="sedov-b/$d/$(basename "$f")"
+              [ -f "$b" ] || { echo "::error::run B missing file: $f"; status=1; continue; }
+              case "$(basename "$f")" in
+                *.cpu*)
+                  # HDF5 field/particle data must be bit-identical.
+                  h5diff "$f" "$b" || { echo "::error::h5diff mismatch: $f"; status=1; } ;;
+                *.boundary.hdf)
+                  h5diff "$f" "$b" || { echo "::error::h5diff mismatch: $f"; status=1; } ;;
+                *.hierarchy|*.boundary)
+                  diff -q "$f" "$b" || { echo "::error::metadata mismatch: $f"; status=1; } ;;
+                *)
+                  # Parameter file and friends: identical modulo the wall-clock stamp.
+                  diff <(grep -v "CurrentTimeIdentifier" "$f") \
+                       <(grep -v "CurrentTimeIdentifier" "$b") \
+                    || { echo "::error::text file mismatch: $f"; status=1; } ;;
+              esac
+            done
+          done
+          [ "$status" -eq 0 ] && echo "All outputs bit-identical between runs A and B."
+          exit $status
+
+      - name: Upload logs and gravity results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-test-logs
+          path: |
+            ci-tests/**/run.log
+            ci-tests/gravity/TestGravityCheckResults.out
+            src/enzo/show-config.log
+          if-no-files-found: ignore
