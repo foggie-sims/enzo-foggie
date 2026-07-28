@@ -361,7 +361,7 @@ tiers:
         status: in-progress
         prs: []
         tests: []
-        note: "Harness landed in run/foggie_bench/ (make_bench_run.py, compare_runs.py, PBS template, protocol README). Untested until machine access returns; first baseline/candidate pair doubles as the harness shakedown. Gates all Tier-1+ fixes at production scale before they count as validated."
+        note: "Harness landed in run/foggie_bench/. ON HOLD: Aitken down for maintenance (2026-07-28) - bench validation of T1.9 and all subsequent fixes queued until access returns. First baseline/candidate pair doubles as the harness shakedown."
       - id: CI.4
         title: "Force-error tolerance gate parsed from GravityTest results"
         ref: "5.2"
