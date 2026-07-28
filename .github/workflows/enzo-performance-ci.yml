@@ -110,13 +110,19 @@ jobs:
         run: |
           cd ci-tests/gravity
           python3 - <<'EOF'
-          import math, sys
+          import glob, math, sys
+          # Serial runs write TestGravityCheckResults.out; parallel runs write
+          # one per-rank file with a task suffix (.out0000, .out0001, ...).
+          files = sorted(glob.glob("TestGravityCheckResults.out*"))
+          if not files:
+              sys.exit("::error::no TestGravityCheckResults.out* files - gravity test wrote no results")
           rows = []
-          with open("TestGravityCheckResults.out") as f:
-              for line in f:
-                  p = line.split()
-                  if len(p) == 4:
-                      rows.append(tuple(float(x) for x in p))
+          for fn in files:
+              with open(fn) as f:
+                  for line in f:
+                      p = line.split()
+                      if len(p) == 4:
+                          rows.append(tuple(float(x) for x in p))
           # Exercised-path assertions: the deck creates 5000 test particles.
           if len(rows) < 1000:
               sys.exit(f"::error::only {len(rows)} particle rows in TestGravityCheckResults.out - gravity test not exercised")
@@ -269,7 +275,7 @@ jobs:
           name: ci-test-logs
           path: |
             ci-tests/**/run.log
-            ci-tests/gravity/TestGravityCheckResults.out
+            ci-tests/gravity/TestGravityCheckResults.out*
             src/enzo/show-config.log
           if-no-files-found: ignore
 

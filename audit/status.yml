@@ -345,10 +345,10 @@ tiers:
         title: "Sanitizer job (ASan/UBSan) on the short serial decks"
         ref: "A"
         class: C0
-        status: in-progress
+        status: done
         prs: []
-        tests: ["CI: 'sanitizers' job (Make.mach.ubuntu-sanitize build + serial hydro/star decks + report scan)"]
-        note: "Landed; awaiting first green run. Leak checking off until T1.13. Makes T1.13 latent-bug fixes verifiable"
+        tests: ["CI: 'sanitizers' job", "https://github.com/foggie-sims/enzo-foggie/actions/runs/30389867363"]
+        note: "First run green: zero ASan/UBSan reports on the serial hydro and star decks. Leak checking off until T1.13."
       - id: CI.4
         title: "Force-error tolerance gate parsed from GravityTest results"
         ref: "5.2"
