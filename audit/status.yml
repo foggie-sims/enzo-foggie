@@ -354,6 +354,14 @@ tiers:
         prs: []
         tests: ["CI: 'sanitizers' job", "https://github.com/foggie-sims/enzo-foggie/actions/runs/30389867363"]
         note: "First run green: zero ASan/UBSan reports on the serial hydro and star decks. Leak checking off until T1.13."
+      - id: CI.5
+        title: "FOGGIE-bench harness (test plan B3): abbreviated production restart runs + A/B comparator"
+        ref: "7.5"
+        class: C0
+        status: in-progress
+        prs: []
+        tests: []
+        note: "Harness landed in run/foggie_bench/ (make_bench_run.py, compare_runs.py, PBS template, protocol README). Untested until machine access returns; first baseline/candidate pair doubles as the harness shakedown. Gates all Tier-1+ fixes at production scale before they count as validated."
       - id: CI.4
         title: "Force-error tolerance gate parsed from GravityTest results"
         ref: "5.2"

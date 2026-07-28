@@ -21,8 +21,16 @@ name: enzo-performance CI
 on:
   push:
     branches: [enzo-performance]
+    paths-ignore:
+      - 'audit/**'
+      - 'run/foggie_bench/**'
+      - '**.md'
   pull_request:
     branches: [enzo-performance]
+    paths-ignore:
+      - 'audit/**'
+      - 'run/foggie_bench/**'
+      - '**.md'
   workflow_dispatch:
 
 concurrency:
