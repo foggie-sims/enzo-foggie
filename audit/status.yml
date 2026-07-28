@@ -345,15 +345,15 @@ tiers:
         title: "Sanitizer job (ASan/UBSan) on the short serial decks"
         ref: "A"
         class: C0
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
-        note: "Makes T1.13 latent-bug fixes verifiable"
+        tests: ["CI: 'sanitizers' job (Make.mach.ubuntu-sanitize build + serial hydro/star decks + report scan)"]
+        note: "Landed; awaiting first green run. Leak checking off until T1.13. Makes T1.13 latent-bug fixes verifiable"
       - id: CI.4
         title: "Force-error tolerance gate parsed from GravityTest results"
         ref: "5.2"
         class: C0
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
-        note: "Turns the GravityTest smoke run into a real accuracy gate for gravity-touching changes"
+        tests: ["CI: 'Gate - gravity force accuracy' step (rms/max radial error + tangential fraction at r/dx >= 2)"]
+        note: "Landed with provisional tolerances (rms 0.05, max 0.30, tangential 0.05); tighten to measured + margin after baseline runs"

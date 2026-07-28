@@ -98,9 +98,47 @@ jobs:
           cp ../../run/GravitySolver/GravityTest/GravityTest.enzo .
           mpirun --oversubscribe -np 4 ../../src/enzo/enzo.exe -d GravityTest.enzo > run.log 2>&1 \
             || { tail -50 run.log; exit 1; }
-          # The problem writes per-particle force errors; keep them as a CI artifact.
-          # TODO(phase 2): parse and gate on RMS/max force error tolerances (test plan section 4.1).
-          ls TestGravityCheckResults.out 2>/dev/null || true
+
+      # Force-error tolerance gate (test plan section 4.1; ledger CI.4).
+      # TestGravityCheckResults.out has one row per test particle:
+      #   r/dx   f_tangential   f_radial   f_analytic
+      # Errors are only meaningful outside the softened core, so the gate
+      # applies at r/dx >= 2. Thresholds are provisional generous bounds for
+      # the CIC + FFT point-mass response; tighten them to measured + margin
+      # once a few runs establish the baseline (values are always printed).
+      - name: Gate — gravity force accuracy
+        run: |
+          cd ci-tests/gravity
+          python3 - <<'EOF'
+          import math, sys
+          rows = []
+          with open("TestGravityCheckResults.out") as f:
+              for line in f:
+                  p = line.split()
+                  if len(p) == 4:
+                      rows.append(tuple(float(x) for x in p))
+          # Exercised-path assertions: the deck creates 5000 test particles.
+          if len(rows) < 1000:
+              sys.exit(f"::error::only {len(rows)} particle rows in TestGravityCheckResults.out - gravity test not exercised")
+          far = [(r, ft, fr, fa) for (r, ft, fr, fa) in rows if r >= 2.0 and fa != 0.0]
+          if len(far) < 100:
+              sys.exit(f"::error::only {len(far)} particles beyond r/dx=2 - cannot assess force accuracy")
+          rel = [abs(fr - fa) / fa for (_, _, fr, fa) in far]
+          tan = [abs(ft) / fa for (_, ft, _, fa) in far]
+          rms = math.sqrt(sum(e * e for e in rel) / len(rel))
+          mx = max(rel)
+          tmean = sum(tan) / len(tan)
+          print(f"particles total={len(rows)} beyond 2dx={len(far)}")
+          print(f"radial force error: rms={rms:.4f} max={mx:.4f}; mean tangential fraction={tmean:.4f}")
+          RMS_TOL, MAX_TOL, TAN_TOL = 0.05, 0.30, 0.05
+          bad = []
+          if rms > RMS_TOL: bad.append(f"rms {rms:.4f} > {RMS_TOL}")
+          if mx > MAX_TOL: bad.append(f"max {mx:.4f} > {MAX_TOL}")
+          if tmean > TAN_TOL: bad.append(f"tangential {tmean:.4f} > {TAN_TOL}")
+          if bad:
+              sys.exit("::error::gravity force accuracy outside tolerance: " + "; ".join(bad))
+          print("gravity force accuracy within tolerance")
+          EOF
 
       - name: Smoke test — TestOrbit (particle dynamics across levels)
         timeout-minutes: 25
@@ -233,4 +271,81 @@ jobs:
             ci-tests/**/run.log
             ci-tests/gravity/TestGravityCheckResults.out
             src/enzo/show-config.log
+          if-no-files-found: ignore
+
+  # Ledger CI.3: ASan+UBSan build running the short serial decks in parallel
+  # with the main job. ASan (out-of-bounds, use-after-free, double free)
+  # aborts the run on first error -> the run step fails. UBSan runs in
+  # recovering mode so a single run inventories every report; the scan step
+  # fails on any "runtime error:" line. Leak checking is off until the
+  # audit's known allocation-lifetime issues (T1.13) are fixed.
+  sanitizers:
+    name: ASan+UBSan serial decks
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      ASAN_OPTIONS: detect_leaks=0
+      UBSAN_OPTIONS: print_stacktrace=1
+    steps:
+      - name: Check out enzo-performance
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gfortran libopenmpi-dev openmpi-bin libhdf5-serial-dev csh
+
+      - name: Build sanitized enzo.exe
+        run: |
+          ./configure
+          cd src/enzo
+          make machine-ubuntu-sanitize
+          make opt-high
+          make -j"$(nproc)"
+          test -x enzo.exe
+
+      - name: Run SedovBlastAMR (serial, short) under sanitizers
+        timeout-minutes: 30
+        run: |
+          mkdir -p san-tests/sedov && cd san-tests/sedov
+          cp ../../run/Hydro/Hydro-2D/SedovBlastAMR/SedovBlastAMR.enzo .
+          sed -i 's/^StopTime.*/StopTime                  = 0.05/' SedovBlastAMR.enzo
+          mpirun --oversubscribe -np 1 ../../src/enzo/enzo.exe -d SedovBlastAMR.enzo > run.log 2>&1 \
+            || { echo "::error::sanitized SedovBlastAMR run failed (see log tail)"; tail -80 run.log; exit 1; }
+          ls DD*/ > /dev/null
+
+      - name: Run TabularFeedbackTest (serial, short) under sanitizers
+        timeout-minutes: 30
+        run: |
+          mkdir -p san-tests/star && cd san-tests/star
+          cp ../../run/StarParticle/TabularFeedbackTest/TestMechAndTabFeedback.enzo .
+          cp ../../run/StarParticle/TabularFeedbackTest/*.h5 ../../run/StarParticle/TabularFeedbackTest/*.hdf5 . 2>/dev/null || true
+          sed -i 's/^StopTime.*/StopTime               = 10.0/' TestMechAndTabFeedback.enzo
+          mpirun --oversubscribe -np 1 ../../src/enzo/enzo.exe -d TestMechAndTabFeedback.enzo > run.log 2>&1 \
+            || { echo "::error::sanitized TabularFeedbackTest run failed (see log tail)"; tail -80 run.log; exit 1; }
+          ls DD*/ > /dev/null
+
+      - name: Scan for sanitizer reports
+        run: |
+          status=0
+          for log in san-tests/*/run.log; do
+            if grep -n "runtime error:" "$log" | sort -u | head -40; then
+              n=$(grep -c "runtime error:" "$log" || true)
+              [ "$n" -gt 0 ] && { echo "::error::$n UBSan report(s) in $log"; status=1; }
+            fi
+            if grep -q "AddressSanitizer" "$log"; then
+              grep -n -m5 "AddressSanitizer" "$log"
+              echo "::error::ASan report(s) in $log"; status=1
+            fi
+          done
+          [ "$status" -eq 0 ] && echo "No sanitizer reports."
+          exit $status
+
+      - name: Upload sanitizer logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanitizer-logs
+          path: san-tests/**/run.log
           if-no-files-found: ignore
