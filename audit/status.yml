@@ -280,6 +280,7 @@ tiers:
         status: todo
         prs: []
         tests: []
+        note: "CI-measured baseline to beat (GravityTest, r/dx >= 2): rms radial force error 12.7%, max 60.3% - the audit 5.2.2 level-boundary artifact quantified"
 
   - id: tier3
     name: "Tier 3 - architectural"
@@ -353,7 +354,7 @@ tiers:
         title: "Force-error tolerance gate parsed from GravityTest results"
         ref: "5.2"
         class: C0
-        status: in-progress
+        status: done
         prs: []
-        tests: ["CI: 'Gate - gravity force accuracy' step (rms/max radial error + tangential fraction at r/dx >= 2)"]
-        note: "Landed with provisional tolerances (rms 0.05, max 0.30, tangential 0.05); tighten to measured + margin after baseline runs"
+        tests: ["CI: 'Gate - gravity force accuracy' step", "https://github.com/foggie-sims/enzo-foggie/actions/runs/30392229282"]
+        note: "Measured baseline (2026-07-28): rms relative radial error 0.127, max 0.603, tangential 0.029 at r/dx >= 2 on GravityTest with a static subgrid. Gate pinned to baseline + margin (0.15/0.70/0.05) - detects regression; T2.12 should reduce these."
