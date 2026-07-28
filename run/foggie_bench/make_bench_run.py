@@ -51,7 +51,7 @@ def main():
     ap.add_argument("--out", required=True, help="Run directory to create")
     ap.add_argument("--walltime", default="4:00:00")
     ap.add_argument("--queue", default="normal")
-    ap.add_argument("--group", default="s2961")
+    ap.add_argument("--group", default="s3128")
     ap.add_argument("--model", default="rom_ait",
                     help="PBS node model (e.g. rom_ait for Aitken Rome, bro for Pleiades Broadwell)")
     ap.add_argument("--ncpus", type=int, default=128, help="Cores per node")
@@ -63,6 +63,15 @@ def main():
     enzo = os.path.abspath(args.enzo)
     if not os.path.isfile(enzo):
         sys.exit(f"error: enzo.exe not found: {enzo}")
+
+    # The devel queue enforces a 2-hour walltime limit; clamp so the
+    # submission is not rejected.
+    if args.queue == "devel":
+        h = int(args.walltime.split(":")[0])
+        if h >= 2 and args.walltime != "2:00:00":
+            print(f"note: devel queue limit is 2:00:00 - clamping walltime "
+                  f"(was {args.walltime})")
+            args.walltime = "2:00:00"
 
     out = os.path.abspath(args.out)
     if os.path.exists(out):
