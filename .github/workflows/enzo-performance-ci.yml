@@ -159,9 +159,12 @@ jobs:
                 *.hierarchy|*.boundary)
                   diff -q "$f" "$b" || { echo "::error::metadata mismatch: $f"; status=1; } ;;
                 *)
-                  # Parameter file and friends: identical modulo the wall-clock stamp.
-                  diff <(grep -v "CurrentTimeIdentifier" "$f") \
-                       <(grep -v "CurrentTimeIdentifier" "$b") \
+                  # Parameter file and friends: identical modulo lines that
+                  # legitimately vary run-to-run (wall-clock stamps and the
+                  # per-run UUIDs minted under CONFIG_UUID=yes).
+                  VARY='CurrentTimeIdentifier|InitialCPUTime|MetaDataSimulationUUID|MetaDataDatasetUUID|MetaDataRestartDatasetUUID|MetaDataInitialConditionsUUID'
+                  diff <(grep -vE "$VARY" "$f") \
+                       <(grep -vE "$VARY" "$b") \
                     || { echo "::error::text file mismatch: $f"; status=1; } ;;
               esac
             done
