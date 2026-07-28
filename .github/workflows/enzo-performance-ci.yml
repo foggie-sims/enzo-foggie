@@ -64,12 +64,16 @@ jobs:
       - name: Guard build configuration
         run: |
           cd src/enzo
-          grep -i "FAST_SIB" show-config.log
-          grep -i "FAST_SIB" show-config.log | grep -qi "yes" \
-            || { echo "::error::CONFIG_FAST_SIB is not 'yes' - refusing to test this configuration"; exit 1; }
-          if grep -iE "PARTICLES.*128" show-config.log | grep -vq "^#"; then
-            echo "::error::128-bit particle positions detected (CONFIG_PFLOAT_16): cic_deposit/cic_interp compile empty"; exit 1
-          fi
+          # show-config lines look like: "CONFIG_FAST_SIB  [fastsib-{yes,no}]  : yes"
+          # -- parse the configured VALUE after the colon, not the option menu.
+          getval() { grep "^   $1 " show-config.log | awk -F: '{gsub(/ /,"",$2); print $2}'; }
+          fastsib=$(getval CONFIG_FAST_SIB)
+          particles=$(getval CONFIG_PARTICLES)
+          echo "CONFIG_FAST_SIB=$fastsib  CONFIG_PARTICLES=$particles"
+          [ "$fastsib" = "yes" ] \
+            || { echo "::error::CONFIG_FAST_SIB is '$fastsib', not 'yes' - refusing to test this configuration"; exit 1; }
+          [ "$particles" != "128" ] \
+            || { echo "::error::128-bit particle positions (CONFIG_PFLOAT_16): cic_deposit/cic_interp compile empty"; exit 1; }
 
       - name: Build enzo.exe
         run: |
