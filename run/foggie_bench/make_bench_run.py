@@ -70,9 +70,13 @@ def main():
     os.makedirs(out)
 
     text = open(restart).read()
-    cycle = read_param(text, "CycleNumber")
+    # Enzo dump parameter files record the cycle as InitialCycleNumber
+    # (WriteParameterFile.C); accept CycleNumber as a fallback.
+    cycle = read_param(text, "InitialCycleNumber")
     if cycle is None:
-        sys.exit("error: CycleNumber not found in restart parameter file")
+        cycle = read_param(text, "CycleNumber")
+    if cycle is None:
+        sys.exit("error: InitialCycleNumber not found in restart parameter file")
     stop_cycle = int(cycle) + args.nsteps
 
     kept = [ln for ln in text.splitlines() if not OVERRIDES_DROP.match(ln)]
