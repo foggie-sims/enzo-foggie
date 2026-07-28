@@ -1,0 +1,74 @@
+# Rebuilds audit/dashboard.html whenever the remediation ledger changes on the
+# enzo-performance branch — i.e. whenever a PR that fixes an audit item (and
+# updates audit/status.yml, as the ledger header instructs) is merged.
+#
+# Like enzo-performance-ci.yml, this file lives only on the enzo-performance
+# branch and its triggers are filtered to that branch, so no other branch of
+# enzo-foggie is affected.
+#
+# The regenerated dashboard is committed back to the branch by the Actions bot
+# with [skip ci] so the commit does not re-trigger the build CI or this workflow.
+
+name: audit dashboard
+
+on:
+  push:
+    branches: [enzo-performance]
+    paths:
+      - 'audit/status.yml'
+      - 'audit/build_dashboard.py'
+  workflow_dispatch:
+
+concurrency:
+  group: audit-dashboard-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  rebuild:
+    name: Rebuild dashboard from status.yml
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out enzo-performance
+        uses: actions/checkout@v4
+        with:
+          ref: enzo-performance
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Fetch latest branch CI result
+        id: ci
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          resp=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/enzo-performance-ci.yml/runs?branch=enzo-performance&per_page=1&status=completed")
+          echo "url=$(echo "$resp"    | python3 -c "import json,sys; r=json.load(sys.stdin).get('workflow_runs',[]); print(r[0]['html_url'] if r else '')")"    >> "$GITHUB_OUTPUT"
+          echo "status=$(echo "$resp" | python3 -c "import json,sys; r=json.load(sys.stdin).get('workflow_runs',[]); print(r[0]['conclusion'] if r else '')")" >> "$GITHUB_OUTPUT"
+          echo "sha=$(echo "$resp"    | python3 -c "import json,sys; r=json.load(sys.stdin).get('workflow_runs',[]); print(r[0]['head_sha'] if r else '')")"    >> "$GITHUB_OUTPUT"
+          echo "time=$(echo "$resp"   | python3 -c "import json,sys; r=json.load(sys.stdin).get('workflow_runs',[]); print(r[0]['updated_at'] if r else '')")"  >> "$GITHUB_OUTPUT"
+
+      - name: Build dashboard
+        env:
+          CI_RUN_URL: ${{ steps.ci.outputs.url }}
+          CI_RUN_STATUS: ${{ steps.ci.outputs.status }}
+          CI_RUN_SHA: ${{ steps.ci.outputs.sha }}
+          CI_RUN_TIME: ${{ steps.ci.outputs.time }}
+        run: python3 audit/build_dashboard.py
+
+      - name: Commit regenerated dashboard
+        run: |
+          if git diff --quiet audit/dashboard.html; then
+            echo "Dashboard unchanged; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add audit/dashboard.html
+          git commit -m "Rebuild audit dashboard [skip ci]"
+          git push origin enzo-performance
