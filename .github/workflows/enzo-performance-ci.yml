@@ -121,10 +121,15 @@ jobs:
           mkdir -p ci-tests/star-smoke && cd ci-tests/star-smoke
           cp ../../run/StarParticle/TabularFeedbackTest/TestMechAndTabFeedback.enzo .
           cp ../../run/StarParticle/TabularFeedbackTest/*.h5 ../../run/StarParticle/TabularFeedbackTest/*.hdf5 . 2>/dev/null || true
-          sed -i 's/^StopTime.*/StopTime               = 2.0/' TestMechAndTabFeedback.enzo
+          # Canonical deck (StopTime = 50 Myr): the static ambient medium makes
+          # steps cheap, and the full window covers the SNII + SNIa epochs.
           mpirun --oversubscribe -np 4 ../../src/enzo/enzo.exe -d TestMechAndTabFeedback.enzo > run.log 2>&1 \
             || { tail -50 run.log; exit 1; }
           ls DD*/ > /dev/null
+          # Prove the run exercised SN injection: nsn is column 9 of the
+          # per-rank particle feedback log.
+          awk '$9 > 0 {found=1} END {exit !found}' feedbacklog_parts_*.txt \
+            || { echo "::error::no SN events logged - smoke test did not exercise feedback injection"; exit 1; }
 
       # C0 determinism harness (test plan section 3.1, run-to-run flavor): the same
       # executable and problem must produce bit-identical outputs. Catches
@@ -167,11 +172,20 @@ jobs:
             mkdir -p "ci-tests/star-$r" && pushd "ci-tests/star-$r" > /dev/null
             cp ../../run/StarParticle/TabularFeedbackTest/TestMechAndTabFeedback.enzo .
             cp ../../run/StarParticle/TabularFeedbackTest/*.h5 ../../run/StarParticle/TabularFeedbackTest/*.hdf5 . 2>/dev/null || true
-            sed -i 's/^StopTime.*/StopTime               = 1.0/' TestMechAndTabFeedback.enzo
+            # 10 Myr: past SNII onset (~4 Myr), so the stochastic draws and the
+            # injection sweep genuinely execute; short of the full 50 Myr deck.
+            sed -i 's/^StopTime.*/StopTime               = 10.0/' TestMechAndTabFeedback.enzo
             mpirun --oversubscribe -np 1 ../../src/enzo/enzo.exe -d TestMechAndTabFeedback.enzo > run.log 2>&1 \
               || { tail -50 run.log; exit 1; }
             popd > /dev/null
           done
+          # The determinism claim is vacuous if no SNe fired: require events,
+          # and require the two runs' SN event logs to match exactly (this is
+          # the direct test of the seeded RNG stream).
+          awk '$9 > 0 {found=1} END {exit !found}' ci-tests/star-a/feedbacklog_parts_*.txt \
+            || { echo "::error::no SN events in determinism runs - stochastic path not exercised"; exit 1; }
+          diff ci-tests/star-a/feedbacklog_parts_00000000.txt ci-tests/star-b/feedbacklog_parts_00000000.txt \
+            || { echo "::error::SN event logs differ between identical serial runs - RNG seeding is not deterministic"; exit 1; }
 
       - name: Determinism — bitwise compare A vs B
         run: |
