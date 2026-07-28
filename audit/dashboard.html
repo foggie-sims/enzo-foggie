@@ -78,11 +78,11 @@
 <div class="wrap">
   <p class="eyebrow">enzo-performance &#183; audit remediation</p>
   <h1>Audit Remediation Dashboard</h1>
-  <p class="gen-line">Generated 2026-07-28 17:01 UTC from <code>audit/status.yml</code>
-    &#183; overall 1/39 done, 0 in progress</p>
-  <p class="ci-line">Latest branch CI: <a class="ci-badge bad" href="https://github.com/foggie-sims/enzo-foggie/actions/runs/30380343735">failure</a> at <code>f3a8c90ca</code> (2026-07-28T16:53:45Z) &#183; <a href="https://github.com/foggie-sims/enzo-foggie/actions?query=branch%3Aenzo-performance">all runs</a></p>
+  <p class="gen-line">Generated 2026-07-28 17:28 UTC from <code>audit/status.yml</code>
+    &#183; overall 1/40 done, 0 in progress</p>
+  <p class="ci-line">Generated locally (no CI context) &#183; <a href="https://github.com/foggie-sims/enzo-foggie/actions?query=branch%3Aenzo-performance">branch CI runs</a></p>
   <div class="cards">
-<a class="card" href="#tier0"><div class="card-name">Tier 0 - parameter files and build flags</div><div class="card-num"><span class="big">1</span>/9 done</div><div class="bar" role="img" aria-label="1 of 9 done"><div class="bar-done" style="width:11.1%"></div><div class="bar-prog" style="width:0.0%"></div></div></a><a class="card" href="#tier1"><div class="card-name">Tier 1 - trivial-to-low-effort code fixes</div><div class="card-num"><span class="big">0</span>/13 done</div><div class="bar" role="img" aria-label="0 of 13 done"><div class="bar-done" style="width:0.0%"></div><div class="bar-prog" style="width:0.0%"></div></div></a><a class="card" href="#tier2"><div class="card-name">Tier 2 - medium efforts</div><div class="card-num"><span class="big">0</span>/12 done</div><div class="bar" role="img" aria-label="0 of 12 done"><div class="bar-done" style="width:0.0%"></div><div class="bar-prog" style="width:0.0%"></div></div></a><a class="card" href="#tier3"><div class="card-name">Tier 3 - architectural</div><div class="card-num"><span class="big">0</span>/5 done</div><div class="bar" role="img" aria-label="0 of 5 done"><div class="bar-done" style="width:0.0%"></div><div class="bar-prog" style="width:0.0%"></div></div></a>
+<a class="card" href="#tier0"><div class="card-name">Tier 0 - parameter files and build flags</div><div class="card-num"><span class="big">1</span>/9 done</div><div class="bar" role="img" aria-label="1 of 9 done"><div class="bar-done" style="width:11.1%"></div><div class="bar-prog" style="width:0.0%"></div></div></a><a class="card" href="#tier1"><div class="card-name">Tier 1 - trivial-to-low-effort code fixes</div><div class="card-num"><span class="big">0</span>/14 done</div><div class="bar" role="img" aria-label="0 of 14 done"><div class="bar-done" style="width:0.0%"></div><div class="bar-prog" style="width:0.0%"></div></div></a><a class="card" href="#tier2"><div class="card-name">Tier 2 - medium efforts</div><div class="card-num"><span class="big">0</span>/12 done</div><div class="bar" role="img" aria-label="0 of 12 done"><div class="bar-done" style="width:0.0%"></div><div class="bar-prog" style="width:0.0%"></div></div></a><a class="card" href="#tier3"><div class="card-name">Tier 3 - architectural</div><div class="card-num"><span class="big">0</span>/5 done</div><div class="bar" role="img" aria-label="0 of 5 done"><div class="bar-done" style="width:0.0%"></div><div class="bar-prog" style="width:0.0%"></div></div></a>
   </div>
 
   <h2 id="tier0">Tier 0 - parameter files and build flags</h2>
@@ -104,7 +104,7 @@
     </table>
   </div>
   <h2 id="tier1">Tier 1 - trivial-to-low-effort code fixes</h2>
-  <p class="tier-desc">Minutes to hours each &#8212; 0/13 done</p>
+  <p class="tier-desc">Minutes to hours each &#8212; 0/14 done</p>
   <div class="tablewrap">
     <table>
       <thead><tr><th>ID</th><th>Item</th><th>Audit</th><th>Class</th><th>Status</th><th>PRs</th><th>Test evidence</th></tr></thead>
@@ -122,6 +122,7 @@
 <tr class="row-todo"><td>T1.11</td><td>Re-enable Hilbert bounding-box normalization (3 commented-out lines)</td><td><a href="enzoaudit.html#s41">&#167;4.1</a></td><td><span class="chip cls-c1">C1</span></td><td><span class="chip st-todo">To do</span></td><td>&#8212;</td><td>&#8212;</td></tr>
 <tr class="row-todo"><td>T1.12</td><td>Single-pass particle Courant reduction; single-pass particle-type histogram in CommunicationSyncNumberOfParticles</td><td><a href="enzoaudit.html#s51">&#167;5.1</a></td><td><span class="chip cls-c0">C0</span></td><td><span class="chip st-todo">To do</span></td><td>&#8212;</td><td>&#8212;</td></tr>
 <tr class="row-todo"><td>T1.13</td><td>Fix latent bugs: case-21 fall-through, sink-path double free, CreateSUBlingList leak, Hilbert OOB/overflow, ReceiveRegion wrong-array zeroing, uninitialized APTotalNumber</td><td><a href="enzoaudit.html#appendix">&#167;A</a></td><td><span class="chip cls-c0">C0</span></td><td><span class="chip st-todo">To do</span></td><td>&#8212;</td><td>&#8212;</td></tr>
+<tr class="row-todo"><td>T1.14</td><td>Diagnose parallel run-to-run nondeterminism in hydro AMR (message-order-dependent flux/boundary accumulation); extend BITWISE_IDENTICALITY beyond gravity/photons or document ordering guarantees<div class="note-line">Discovered by CI: two identical np=4 SedovBlastAMR runs (default build, no gravity, no RNG) diverge bitwise; hundreds of cells differ by t=0.3. Serial runs are the current bitwise gate.</div></td><td><a href="enzoaudit.html#s42">&#167;4.2</a></td><td><span class="chip cls-c1">C1</span></td><td><span class="chip st-todo">To do</span></td><td>&#8212;</td><td><a href="https://github.com/foggie-sims/enzo-foggie/actions/runs/30381349766">30381349766</a></td></tr>
       </tbody>
     </table>
   </div>

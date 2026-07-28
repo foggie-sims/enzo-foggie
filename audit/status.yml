@@ -183,6 +183,14 @@ tiers:
         status: todo
         prs: []
         tests: []
+      - id: T1.14
+        title: "Diagnose parallel run-to-run nondeterminism in hydro AMR (message-order-dependent flux/boundary accumulation); extend BITWISE_IDENTICALITY beyond gravity/photons or document ordering guarantees"
+        ref: "4.2"
+        class: C1
+        status: todo
+        prs: []
+        tests: ["https://github.com/foggie-sims/enzo-foggie/actions/runs/30381349766"]
+        note: "Discovered by CI: two identical np=4 SedovBlastAMR runs (default build, no gravity, no RNG) diverge bitwise; hundreds of cells differ by t=0.3. Serial runs are the current bitwise gate."
 
   - id: tier2
     name: "Tier 2 - medium efforts"

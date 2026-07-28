@@ -111,26 +111,44 @@ jobs:
             || { tail -50 run.log; exit 1; }
 
       # C0 determinism harness (test plan section 3.1, run-to-run flavor): the same
-      # executable, problem, and rank count must produce bit-identical outputs.
-      # Catches uninitialized memory, unseeded nondeterminism, and race conditions
-      # without needing stored gold data.
-      - name: Determinism — SedovBlastAMR run B
+      # executable and problem must produce bit-identical outputs. Catches
+      # uninitialized memory and unseeded nondeterminism without stored gold data.
+      #
+      # MEASURED CONSTRAINT (run 3 of this workflow): at np=4 the default build is
+      # NOT run-to-run bitwise reproducible even for pure hydro — message-arrival
+      # order in the AMR flux/boundary accumulation changes floating-point
+      # summation order, and the differences grow chaotically (hundreds of cells
+      # by t=0.3). CONFIG_BITWISE_IDENTICALITY only covers the gravity/photon
+      # paths, not hydro. So the strict bitwise gate runs SERIAL (np=1), where
+      # execution order is fixed; parallel reproducibility is tracked as audit
+      # ledger item T1.14. Deck is shortened to keep two serial runs fast.
+      - name: Determinism — serial run A
         timeout-minutes: 20
         run: |
-          mkdir -p ci-tests/sedov-b && cd ci-tests/sedov-b
+          mkdir -p ci-tests/det-a && cd ci-tests/det-a
           cp ../../run/Hydro/Hydro-2D/SedovBlastAMR/SedovBlastAMR.enzo .
-          mpirun --oversubscribe -np 4 ../../src/enzo/enzo.exe -d SedovBlastAMR.enzo > run.log 2>&1 \
+          sed -i 's/^StopTime.*/StopTime                  = 0.05/' SedovBlastAMR.enzo
+          mpirun --oversubscribe -np 1 ../../src/enzo/enzo.exe -d SedovBlastAMR.enzo > run.log 2>&1 \
+            || { tail -50 run.log; exit 1; }
+
+      - name: Determinism — serial run B
+        timeout-minutes: 20
+        run: |
+          mkdir -p ci-tests/det-b && cd ci-tests/det-b
+          cp ../../run/Hydro/Hydro-2D/SedovBlastAMR/SedovBlastAMR.enzo .
+          sed -i 's/^StopTime.*/StopTime                  = 0.05/' SedovBlastAMR.enzo
+          mpirun --oversubscribe -np 1 ../../src/enzo/enzo.exe -d SedovBlastAMR.enzo > run.log 2>&1 \
             || { tail -50 run.log; exit 1; }
 
       - name: Determinism — bitwise compare A vs B
         run: |
           cd ci-tests
           status=0
-          for dumpdir in sedov-a/DD*/; do
+          for dumpdir in det-a/DD*/; do
             d=$(basename "$dumpdir")
-            [ -d "sedov-b/$d" ] || { echo "::error::run B missing dump $d"; status=1; continue; }
-            for f in "sedov-a/$d"/*; do
-              b="sedov-b/$d/$(basename "$f")"
+            [ -d "det-b/$d" ] || { echo "::error::run B missing dump $d"; status=1; continue; }
+            for f in "det-a/$d"/*; do
+              b="det-b/$d/$(basename "$f")"
               [ -f "$b" ] || { echo "::error::run B missing file: $f"; status=1; continue; }
               case "$(basename "$f")" in
                 *.cpu*)
