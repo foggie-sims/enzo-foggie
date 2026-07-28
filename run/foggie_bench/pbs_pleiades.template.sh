@@ -18,10 +18,9 @@ module load mpi-hpe/mpt
 
 cd @OUT@
 
-# Restart data is read in place from the production directory.
-ln -sfn @RESTART_DIR@/* .
-
-mpiexec -np @RANKS@ @ENZO@ -d -r @PARAM@ > enzo_bench.log 2>&1
+# The snapshot directory (shadow copy with the edited parameter file) was
+# prepared by make_bench_run.py; restart with the standard Enzo syntax.
+mpiexec -np @RANKS@ @ENZO@ -d -r @RESTART_REL@ > enzo_bench.log 2>&1
 status=$?
 
 echo "exit=$status" > bench_exit_status

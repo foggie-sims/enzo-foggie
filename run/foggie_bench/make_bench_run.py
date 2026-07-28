@@ -97,8 +97,24 @@ def main():
         "dtDataDump            = 0.0",
         "StopTime              = 1e20",
     ]
-    param_copy = os.path.join(out, os.path.basename(restart) + ".bench")
+
+    # Build a shadow snapshot directory inside the run dir: Enzo snapshots
+    # are directories and are restarted as "-r RD0016/RD0016", with the
+    # hierarchy's data paths relative to the run root. The shadow directory
+    # symlinks every snapshot file in place and substitutes the edited
+    # parameter file under its original name, so Enzo sees a normal
+    # snapshot while the production dump stays untouched.
+    snap = os.path.basename(restart)
+    snap_dir = os.path.join(out, snap)
+    os.makedirs(snap_dir)
+    src_dir = os.path.dirname(restart)
+    for entry in sorted(os.listdir(src_dir)):
+        if entry == snap:
+            continue  # replaced by the edited copy below
+        os.symlink(os.path.join(src_dir, entry), os.path.join(snap_dir, entry))
+    param_copy = os.path.join(snap_dir, snap)
     open(param_copy, "w").write("\n".join(kept) + "\n")
+    restart_rel = os.path.join(snap, snap)
 
     nodes = max(1, (args.ranks + args.ncpus - 1) // args.ncpus)
     template = open(TEMPLATE).read()
@@ -112,8 +128,7 @@ def main():
               .replace("@QUEUE@", args.queue)
               .replace("@GROUP@", args.group)
               .replace("@ENZO@", enzo)
-              .replace("@PARAM@", param_copy)
-              .replace("@RESTART_DIR@", os.path.dirname(restart)))
+              .replace("@RESTART_REL@", restart_rel))
     launch_path = os.path.join(out, "launch.sh")
     open(launch_path, "w").write(launch)
     os.chmod(launch_path, os.stat(launch_path).st_mode | stat.S_IXUSR)
