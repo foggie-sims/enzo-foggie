@@ -1,0 +1,610 @@
+<title>Enzo/FOGGIE Performance &amp; Consistency Test Plan</title>
+<style>
+  :root {
+    --paper: #faf9f7;
+    --ink: #1c1b22;
+    --mist: #5f5c6b;
+    --violet: #54468a;
+    --violet-soft: #eceafa;
+    --amber: #a34d09;
+    --amber-soft: #f7ede2;
+    --line: #e3e1da;
+    --card: #f3f2ee;
+    --code-bg: #edecf2;
+    --good: #2c6e49;
+    --good-soft: #e4f0e9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #16151c;
+      --ink: #e8e6f0;
+      --mist: #a09db0;
+      --violet: #a99ee2;
+      --violet-soft: #262336;
+      --amber: #e0a35c;
+      --amber-soft: #2e2418;
+      --line: #2d2b38;
+      --card: #1e1d26;
+      --code-bg: #24222e;
+      --good: #7fc8a0;
+      --good-soft: #1c2b22;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16151c;
+    --ink: #e8e6f0;
+    --mist: #a09db0;
+    --violet: #a99ee2;
+    --violet-soft: #262336;
+    --amber: #e0a35c;
+    --amber-soft: #2e2418;
+    --line: #2d2b38;
+    --card: #1e1d26;
+    --code-bg: #24222e;
+    --good: #7fc8a0;
+    --good-soft: #1c2b22;
+  }
+  :root[data-theme="light"] {
+    --paper: #faf9f7;
+    --ink: #1c1b22;
+    --mist: #5f5c6b;
+    --violet: #54468a;
+    --violet-soft: #eceafa;
+    --amber: #a34d09;
+    --amber-soft: #f7ede2;
+    --line: #e3e1da;
+    --card: #f3f2ee;
+    --code-bg: #edecf2;
+    --good: #2c6e49;
+    --good-soft: #e4f0e9;
+  }
+
+  html { background: var(--paper); }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Charter, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 1.0rem;
+    line-height: 1.62;
+  }
+  .wrap { max-width: 46rem; margin: 0 auto; padding: 3rem 1.25rem 6rem; }
+  h1, h2, h3, h4, .eyebrow, .chip, .toc, .meta, th {
+    font-family: Seravek, Avenir, "Avenir Next", "Segoe UI", Frutiger, system-ui, sans-serif;
+  }
+  code, pre {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 0.84em;
+  }
+  code { background: var(--code-bg); border-radius: 3px; padding: 0.08em 0.35em; white-space: nowrap; }
+  pre { background: var(--code-bg); border-radius: 6px; padding: 0.9rem 1.1rem; overflow-x: auto; line-height: 1.5; }
+  pre code { background: none; padding: 0; white-space: pre; }
+
+  .eyebrow {
+    text-transform: uppercase; letter-spacing: 0.14em;
+    font-size: 0.72rem; font-weight: 600; color: var(--amber); margin: 0 0 0.75rem;
+  }
+  h1 {
+    font-size: clamp(1.7rem, 4.5vw, 2.4rem); line-height: 1.15; font-weight: 700;
+    letter-spacing: -0.01em; margin: 0 0 1.2rem; text-wrap: balance;
+  }
+  .meta {
+    display: grid; grid-template-columns: max-content 1fr; gap: 0.3rem 1.1rem;
+    font-size: 0.82rem; color: var(--mist);
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    padding: 0.9rem 0; margin: 0 0 2.2rem;
+  }
+  .meta dt { font-weight: 600; margin: 0; color: var(--ink); }
+  .meta dd { margin: 0; }
+
+  .toc { background: var(--card); border-radius: 8px; padding: 1.1rem 1.4rem; font-size: 0.88rem; margin: 0 0 3rem; }
+  .toc p { margin: 0 0 0.5rem; text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.7rem; font-weight: 600; color: var(--mist); }
+  .toc ol { margin: 0; padding-left: 1.3rem; }
+  .toc li { margin: 0.22rem 0; }
+  a { color: var(--violet); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--amber); }
+  a:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; border-radius: 2px; }
+
+  h2 {
+    font-size: 1.45rem; line-height: 1.25; font-weight: 700;
+    margin: 3.2rem 0 1rem; padding-top: 1.4rem; border-top: 2px solid var(--violet);
+    text-wrap: balance;
+  }
+  h2 .secnum { color: var(--violet); margin-right: 0.5rem; font-variant-numeric: tabular-nums; }
+  h3 { font-size: 1.08rem; font-weight: 700; margin: 2.2rem 0 0.6rem; text-wrap: balance; }
+  h3 .secnum { color: var(--violet); margin-right: 0.4rem; }
+  h4 { font-size: 0.95rem; font-weight: 700; margin: 1.6rem 0 0.4rem; }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1.1rem; padding-left: 1.5rem; }
+  li { margin: 0.35rem 0; }
+  li > ul, li > ol { margin-top: 0.35rem; margin-bottom: 0.35rem; }
+
+  .note {
+    border-left: 3px solid var(--amber); background: var(--amber-soft);
+    padding: 0.75rem 1.1rem; border-radius: 0 6px 6px 0; margin: 0 0 1.1rem;
+  }
+  .keyrec {
+    border-left: 3px solid var(--violet); background: var(--violet-soft);
+    padding: 0.75rem 1.1rem; border-radius: 0 6px 6px 0; margin: 0 0 1.1rem;
+  }
+  .keyrec > p:last-child, .note > p:last-child { margin-bottom: 0; }
+
+  .tablewrap { overflow-x: auto; margin: 0 0 1.4rem; border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+  th {
+    text-align: left; font-weight: 650; font-size: 0.74rem; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--mist); background: var(--card);
+    padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  td { padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-weight: 600; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .chip {
+    display: inline-block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; border-radius: 999px; padding: 0.1rem 0.6rem;
+    vertical-align: 0.12em; margin-right: 0.3rem; white-space: nowrap;
+  }
+  .chip.c0 { background: var(--good); color: var(--paper); }
+  .chip.c1 { background: var(--violet); color: var(--paper); }
+  .chip.c2 { background: var(--amber); color: var(--paper); }
+  .chip.b  { background: var(--mist); color: var(--paper); }
+
+  .classes { display: grid; gap: 0.9rem; margin: 1.4rem 0 1.6rem; }
+  .cls { background: var(--card); border-radius: 8px; padding: 1rem 1.2rem; }
+  .cls h4 { margin: 0 0 0.35rem; font-size: 0.92rem; }
+  .cls p { margin: 0; font-size: 0.93rem; }
+
+  footer {
+    margin-top: 4rem; border-top: 1px solid var(--line); padding-top: 1.2rem;
+    font-size: 0.82rem; color: var(--mist);
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Test Plan &#183; Companion to the Performance &amp; Scaling Audit</p>
+    <h1>Enzo/FOGGIE Performance &amp; Consistency Test Plan</h1>
+    <dl class="meta">
+      <dt>Purpose</dt><dd>Measure performance as the audit's tiered changes land, and verify that new runs remain numerically and physically consistent with older ones as the code changes</dd>
+      <dt>Basis</dt><dd>The performance &amp; scaling audit of <code>foggie-sims/enzo-foggie</code> at commit <code>4ceb000</code> (&#167; references below point to that report)</dd>
+      <dt>Codebase assets</dt><dd>Existing test problems under <code>run/</code>, the <code>EnzoTiming</code>/<code>performance.out</code> plumbing, <code>src/performance_tools/</code>, yt-based answer testing</dd>
+    </dl>
+  </header>
+
+  <nav class="toc">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#s1">Principles: change classes, horizons, controls</a></li>
+      <li><a href="#s2">Performance measurement</a></li>
+      <li><a href="#s3">Numerical &amp; physical consistency testing</a></li>
+      <li><a href="#s4">Gravity-specific accuracy tests</a></li>
+      <li><a href="#s5">Test matrix by audit area</a></li>
+      <li><a href="#s6">Cadence, gates, and re-baselining policy</a></li>
+      <li><a href="#s7">Deliverables and automation</a></li>
+      <li><a href="#s8">What runs in GitHub CI vs. on the supercomputer</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="s1"><span class="secnum">1</span>Principles: change classes, horizons, controls</h2>
+
+  <h3><span class="secnum">1.1</span>Classify every change before it lands</h3>
+
+  <p>The audit's recommendations differ fundamentally in what they are <em>allowed</em> to do to the answer. Testing effort is wasted (or worse, misleading) if a change is held to the wrong standard. Every PR should declare one of three classes, and the class determines which gates in &#167;6 apply:</p>
+
+  <div class="classes">
+    <div class="cls">
+      <h4><span class="chip c0">C0</span>Bitwise-identical expected</h4>
+      <p>Pure code motion that does not alter any floating-point operation or its order: hoisting <code>IdentifySpeciesFields</code>, deleting the per-cell &#956; file write, guarding debug reductions, removing dead zeroing, timer/instrumentation changes, bounds checks, memory-management fixes (allocatable arrays, scratch pools that preserve values), early returns on provably-zero work (e.g. <code>StarParticleFindAll</code> guard when no Star types exist, <code>nfbcells == 0</code> return). <strong>Gate: bit-for-bit identical outputs</strong> at fixed rank count (&#167;3.1).</p>
+    </div>
+    <div class="cls">
+      <h4><span class="chip c1">C1</span>Roundoff-equivalent</h4>
+      <p>Changes that reorder floating-point arithmetic or data ownership but implement the same algorithm: collective fusion, <code>Alltoallv</code> conversions, Morton-sorting particles (reorders CIC summation), load-balancer changes (moves grids &#8594; different reduction orders), restored compiler flags (<code>-xAVX</code>, <code>-ip</code>), OpenMP with reductions, sibling-list restructuring. <strong>Gate: tolerance-based answer tests at short horizon, statistical equivalence at long horizon</strong> (&#167;3.2&#8211;3.3).</p>
+    </div>
+    <div class="cls">
+      <h4><span class="chip c2">C2</span>Answer-changing by design</h4>
+      <p>Parameter and algorithm changes whose <em>point</em> is a different (usually better) numerical behavior: <code>RebuildHierarchyCycleSkip</code>, subgrid sizing, <code>MaximumGravityRefinementLevel</code>, <code>INTERPOLATE_LINEAR</code>, <code>INFLUENCE2</code>, the feedback age cutoff, the <code>StarFeedbackSNePerTimestepLimit</code> default fix, <code>dtAcceleration</code> active-zone restriction, RNG seeding. <strong>Gate: physical validation against the science metrics</strong> (&#167;3.3), reviewed explicitly, then a deliberate re-baseline of the gold answers (&#167;6.3).</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><strong>Two audit fixes are prerequisites for this plan, not outcomes of it.</strong> (1) <em>Seed the feedback RNG</em> (audit &#167;5.1.4): until <code>draw_stochastic</code> is seeded deterministically (per rank, from a run-level seed parameter), stochastic SNe make even C0 comparisons impossible on any run that forms stars. (2) <em>Enable the rebuild sub-phase timers and per-level dt diagnostics</em> (audit &#167;5.5): without them, most of the KPIs in &#167;2.3 cannot be measured. Land both first, as C0/C2-trivial changes validated on runs without star formation.</p>
+  </div>
+
+  <h3><span class="secnum">1.2</span>Comparison horizons: galaxies are chaotic</h3>
+
+  <p>A FOGGIE galaxy is a chaotic system: roundoff-level perturbations decorrelate individual cell values and particle positions within roughly a local dynamical time. Direct field comparison is therefore only meaningful over short horizons; beyond that, only statistics are comparable. The plan uses three horizons:</p>
+
+  <ul>
+    <li><strong>H1 &#8212; a few timesteps</strong> (1&#8211;5 root steps): direct field and particle comparisons; bitwise for C0, tight relative tolerances (10&#8315;&#185;&#178;&#8211;10&#8315;&#8312;) for C1.</li>
+    <li><strong>H2 &#8212; tens of Myr</strong> (~10&#8211;50 root steps from a production restart): loose field tolerances in stable regions; population statistics begin to be the primary measure.</li>
+    <li><strong>H3 &#8212; hundreds of Myr</strong> (science-length reruns, milestone-only): purely statistical/physical comparison (&#167;3.3). No expectation of trajectory-level agreement &#8212; two C1-equivalent runs will differ here as much as two seeds would.</li>
+  </ul>
+
+  <h3><span class="secnum">1.3</span>Controls</h3>
+
+  <ul>
+    <li><strong>Fix everything except the change under test:</strong> same ICs (store them with the test), same rank count and layout for C0/C1-H1 (reduction order depends on P), same machine partition and node type for benchmarks, same compiler and flags &#8212; except when the flags <em>are</em> the change (audit &#167;5.1.6), which is C1.</li>
+    <li><strong>One change per measurement.</strong> Tier 0 parameters especially: measure <code>RebuildHierarchyCycleSkip</code>, <code>LoadBalancing = 4</code>, and the subgrid sizing separately before combining, or their effects cannot be attributed.</li>
+    <li><strong>Repeats:</strong> &#8805;3 runs per benchmark configuration; report median and spread. System noise on shared filesystems and networks routinely exceeds 5%; a claimed speedup below the measured spread is not a result.</li>
+    <li><strong>Version the gold data.</strong> Every stored answer/baseline records: commit hash, parameter deck, ICs hash, rank count, machine, compiler + flags. A baseline whose provenance is unknown is not a baseline.</li>
+  </ul>
+
+  <h2 id="s2"><span class="secnum">2</span>Performance measurement</h2>
+
+  <h3><span class="secnum">2.1</span>Benchmark hierarchy</h3>
+
+  <p>Four benchmark levels, increasing in cost and realism. B1&#8211;B2 run routinely; B3&#8211;B4 run at tier milestones.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>ID</th><th>Benchmark</th><th>Setup</th><th>Cost</th><th>What it measures</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>B1</td>
+          <td>Subsystem timer harness</td>
+          <td>Instrumented timers (post-&#167;5.5 fix) on existing small problems; no new binaries &#8212; the "micro-benchmarks" are the per-subsystem timer regions themselves (RH sub-phases, <code>SolveHydroEquations</code>, star feedback, CIC deposit, sibling search)</td>
+          <td class="num">minutes, 8&#8211;32 ranks</td>
+          <td>Kernel-level effects of C0/C1 fixes: hoists, pow-elimination, table-lookup reordering, allocator changes</td>
+        </tr>
+        <tr>
+          <td>B2</td>
+          <td>Standard problem set</td>
+          <td><code>run/CosmologySimulation/amr_nested_cosmology</code> (nested ICs, must-refine particles, <code>MultiRefineRegion</code> &#8212; the closest in-tree analogue of a FOGGIE run); <code>run/StarParticle/TabularFeedbackTest</code> (exercises <code>star_maker2</code> + <code>star_feedback6</code> exactly on the FOGGIE path); one hydro-only problem (e.g. SedovBlast-AMR) as a control that should not move</td>
+          <td class="num">10&#8211;60 min, 16&#8211;128 ranks</td>
+          <td>Rebuild cost, flagging, feedback path, subgrid statistics; catches regressions in paths the change was not supposed to touch</td>
+        </tr>
+        <tr>
+          <td>B3</td>
+          <td><strong>FOGGIE-bench</strong> (the canonical benchmark)</td>
+          <td>A restart from a production snapshot with an established galaxy (e.g. one of the halos at z &#8776; 2, L<sub>max</sub> = 10&#8211;11, &#8819;10&#8310; star particles), run for exactly 5 root-grid steps at the production rank count. Check the deck, restart pointer, and launch script into <code>run/foggie_bench/</code> so the configuration is versioned (the audit found no production deck in-tree)</td>
+          <td class="num">hours, production scale</td>
+          <td>The actual FOGGIE regime: deep-level subcycle costs, concentrated-particle imbalance, rebuild share, collective time. This is the number the audit's projections are judged against</td>
+        </tr>
+        <tr>
+          <td>B4</td>
+          <td>Strong-scaling study</td>
+          <td>FOGGIE-bench at ~4 rank counts (e.g. 256 / 512 / 1024 / 2048), 3 repeats each</td>
+          <td class="num">milestone only</td>
+          <td>Parallel efficiency curve and its knee; the audit predicts specific anti-scaling terms (replicated metadata, auto-tuned grid counts) that should visibly flatten as Tier 1&#8211;2 changes land</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3><span class="secnum">2.2</span>Why 5 root steps from a restart</h3>
+
+  <p>Per the audit's measurement plan (&#167;7.5), a short restart window at production scale captures every cost the audit describes &#8212; the 2<sup>L</sup> subcycle structure, rebuild share, collective counts, feedback costs &#8212; without the expense or chaos-divergence of a long rerun. Five steps is long enough to average over rebuild and output cadence, short enough that C1 changes keep the workload (grid counts, particle counts, SF events with a seeded RNG) essentially identical between baseline and candidate, which is what makes A/B timing meaningful.</p>
+
+  <h3><span class="secnum">2.3</span>Metrics (recorded for every benchmark run)</h3>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Metric</th><th>Source</th><th>Audit target it tracks</th></tr></thead>
+      <tbody>
+        <tr><td>Wall clock per root step (median of steps 2&#8211;5)</td><td><code>performance.out</code> (<code>EnzoTiming</code>)</td><td>Headline number</td></tr>
+        <tr><td>RebuildHierarchy share of wall clock, with sub-phase breakdown (flagging / FindSubgrids / ShareGrids / interpolation / CopyZones / load balance / particle collect)</td><td><code>RH_PERF</code> slots &#8594; TIMER regions (&#167;5.5 prerequisite)</td><td>&#167;3.2, &#167;3.3, &#167;3.5&#8211;3.7</td></tr>
+        <tr><td>Time in MPI: total, in collectives, in <code>CommunicationReceiveHandler</code>; message counts and volumes per subsystem</td><td>mpiP or IPM link-time profiler on B3; <code>MPI_INSTRUMENTATION</code> build for detail</td><td>&#167;4.2 (collective storms, O(N&#178;) drain, transpose)</td></tr>
+        <tr><td>Per-level, per-rank {max, mean, min} of: active cells, particles, wall time &#8212; and the derived imbalance ratio max/mean per level</td><td>Extend <code>OutputLevelInformation</code> (data exists; only the per-rank reduction is missing)</td><td>&#167;4.1 (the load-balance wall); the single most diagnostic table for FOGGIE</td></tr>
+        <tr><td>Grid statistics per level: count, mean size, ghost-zone fraction</td><td>Hierarchy file post-processing (yt)</td><td>&#167;3.4 (subgrid sizing), &#167;3.5</td></tr>
+        <tr><td>Subcycle count per level and the per-level dt-limiter histogram (which constraint, which grid)</td><td>New dt diagnostic (&#167;5.3 prerequisite)</td><td>&#167;5.3; detects feedback-driven dt collapse</td></tr>
+        <tr><td>Star-path time: <code>StarParticleHandler</code>, feedback (<code>star_feedback6</code>), <code>StarParticleFindAll</code>+bookkeeping collectives</td><td>TIMER regions added around each</td><td>&#167;5.1</td></tr>
+        <tr><td>Gravity time: deposits, potential solves (+ multigrid iteration counts), FFT/transpose</td><td>TIMER + multigrid diagnostics (&#167;5.2)</td><td>&#167;5.2</td></tr>
+        <tr><td>Memory high-water per rank (and its distribution across ranks)</td><td><code>getrusage</code> ru_maxrss logged at each root step</td><td>&#167;3.1 (replicated metadata), &#167;3.4</td></tr>
+        <tr><td>I/O: restart read time, output write time, metadata op counts</td><td>Darshan (link once, free thereafter)</td><td>&#167;5.4; the &#956;-file and log-file hazards</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>All metrics are written to one JSON summary per run (a small parser over <code>performance.out</code> + the new diagnostics; <code>src/performance_tools/performance_tools.py</code> is the starting point) and appended to a results ledger (CSV or SQLite) keyed by commit, benchmark ID, rank count, and repeat index. A one-page plot script tracks the headline KPIs over commit history &#8212; that is the "performance as it improves" record.</p>
+
+  <h3><span class="secnum">2.4</span>Acceptance criteria for performance PRs</h3>
+
+  <ul>
+    <li>A performance PR states its predicted effect ("reduces rebuild share on B3", "cuts collective count per subcycle by ~2&#215;") and the measured effect on the relevant benchmark, with repeats and spread.</li>
+    <li>No benchmark may regress by more than the measured noise band (2&#963; of repeats) without an explicit, stated justification.</li>
+    <li>The hydro-only control problem in B2 must be unaffected (within noise) by star/gravity/balance changes &#8212; this catches accidental coupling.</li>
+  </ul>
+
+  <h2 id="s3"><span class="secnum">3</span>Numerical &amp; physical consistency testing</h2>
+
+  <h3><span class="secnum">3.1</span>C0: bitwise regression harness</h3>
+
+  <p><strong>Procedure.</strong> For each C0 PR: run the B2 problem set plus a 2-root-step FOGGIE-bench restart, baseline vs candidate, identical rank count and parameters. Compare every HDF5 output with <code>h5diff</code> (field data, particle data, and attribute values); compare the hierarchy files textually. The gate is <em>zero differences</em>.</p>
+
+  <ul>
+    <li>Bitwise identity in Enzo holds only at fixed processor count and layout &#8212; reduction orders change with P. Pin P per test.</li>
+    <li>Runs that form stars require the seeded RNG (&#167;1.1) first; until then, C0 tests run with <code>StarParticleCreation = 0</code> variants as a partial gate.</li>
+    <li>This harness doubles as the <em>fastest possible</em> reviewer tool: a C0 claim that fails bitwise identity means the change was mis-classified, which is itself the finding.</li>
+  </ul>
+
+  <h3><span class="secnum">3.2</span>C1: tolerance-based answer testing (horizon H1&#8211;H2)</h3>
+
+  <p><strong>Framework.</strong> Use Enzo's yt-based answer testing: store gold outputs for the B2 set and the 5-step FOGGIE-bench; compare candidate outputs field-by-field and via derived quantities.</p>
+
+  <ul>
+    <li><strong>H1 (1&#8211;5 root steps):</strong> relative L1/L&#8734; field errors on density, energies, velocities, metal density; particle position/velocity RMS drift. Start tolerances at 10&#8315;&#185;&#8304; (H1, few steps, pure FP-reorder changes) and loosen only with justification; record the achieved error so tolerance creep is visible in the ledger.</li>
+    <li><strong>Grid-independent comparison:</strong> because C1 changes (especially load balancing and regridding changes) legitimately alter the grid layout, compare on deposited/uniform-resampled fields (yt covering grids at a fixed level) and on global reductions (total mass, metals, energy, momentum by component, star count and total stellar mass), not on per-grid data.</li>
+    <li><strong>H2 (tens of Myr):</strong> the field tolerances give way to the statistical metrics of &#167;3.3, evaluated with tight thresholds (the runs are still nearly-identical realizations at this horizon).</li>
+    <li><strong>Conservation invariants (every horizon, every class):</strong> total baryon mass, total metal mass (split SNII/SNIa where tracked), total injected feedback energy and momentum (from the feedback accounting already in <code>star_feedback6</code>), and &#8212; for non-cosmological control problems &#8212; total energy. These must agree to near machine precision regardless of chaos, and they catch real bugs that field tolerances miss.</li>
+  </ul>
+
+  <h3><span class="secnum">3.3</span>C2 and long-horizon: physical validation suite</h3>
+
+  <p>For answer-changing improvements and for any H3 comparison, the question is not "is it the same?" but "is it the same galaxy, physically?" &#8212; evaluated with the observables FOGGIE's science depends on. Metrics, evaluated at fixed checkpoint redshifts/times against the baseline run:</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Category</th><th>Metric</th><th>Comparison</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Star formation</td>
+          <td>SFR(t) in 25 Myr bins; cumulative M&#8902;(t); star-particle mass function; formation-site metallicity distribution</td>
+          <td>Fractional agreement of the cumulative curves (suggest &#177;10% at H2, &#177;20% at H3, tightened empirically from a seed-ensemble &#8212; see below); two-sample KS on distributions</td>
+        </tr>
+        <tr>
+          <td>Galaxy properties</td>
+          <td>M<sub>vir</sub>, M&#8902;, M<sub>gas</sub>, gas fraction, half-mass radius, disk kinematics (v/&#963;) at checkpoints</td>
+          <td>Within the seed-ensemble scatter</td>
+        </tr>
+        <tr>
+          <td>CGM (FOGGIE's science)</td>
+          <td>Radial profiles of density, temperature, metallicity; mass fractions in phase bins (cold/cool/warm/hot); H I and O VI covering fractions and column-density distributions (Trident sightlines through the existing FOGGIE analysis pipeline)</td>
+          <td>Profile-wise fractional bands; KS on column distributions</td>
+        </tr>
+        <tr>
+          <td>Metals budget</td>
+          <td>Total metals produced vs. present (ISM/CGM/stars split); SNII vs SNIa partition</td>
+          <td>Near-exact for production (bookkeeping), band for spatial partition</td>
+        </tr>
+        <tr>
+          <td>Dark matter</td>
+          <td>Halo mass function in the zoom region; density profile of the main halo; substructure counts above a mass floor</td>
+          <td>Within ensemble scatter; profile agreement outside convergence radius</td>
+        </tr>
+        <tr>
+          <td>Resolution/refinement behavior</td>
+          <td>Cell-count per level vs time; refined-volume fraction in the tracked region</td>
+          <td>Direct comparison &#8212; C2 grid-sizing changes shift these by design; the record documents the shift</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="keyrec">
+    <p><strong>Calibrate tolerances with a seed ensemble, once.</strong> Run 3&#8211;5 realizations of a mid-sized FOGGIE restart differing only in the (newly seeded) feedback RNG seed, to H2 and one to H3. The spread of every &#167;3.3 metric across that ensemble <em>is</em> the natural chaos band: a code change whose effect lies within the band is physically consistent; one outside it needs a physics explanation. This converts "looks similar" into a quantitative, defensible criterion, and the ensemble is reusable for every future C1/C2 change.</p>
+    <p><strong>The C2 changes with physics content get targeted checks in addition:</strong> the feedback age cutoff must reproduce the baseline's total SN count and energy budget to the bookkeeping level (old particles were contributing zeros &#8212; so this is really a C1-with-C2-classification safety check); the <code>StarFeedbackSNePerTimestepLimit</code> default fix and <code>RebuildHierarchyCycleSkip</code> must show SFH and CGM metrics inside the ensemble band; <code>MaximumGravityRefinementLevel</code> must pass the gravity tests of &#167;4 plus a DM-profile comparison.</p>
+  </div>
+
+  <h3><span class="secnum">3.4</span>A deliberately boring control</h3>
+
+  <p>Keep one small cosmological DM+hydro run (no star formation, no feedback &#8212; e.g. the nested-cosmology deck with <code>StarParticleCreation = 0</code>) in the answer suite at all times. It is insensitive to the noisiest physics, so it isolates AMR/gravity/communication changes: if it moves outside roundoff when a star-path PR lands, the PR touched something it should not have.</p>
+
+  <h2 id="s4"><span class="secnum">4</span>Gravity-specific accuracy tests</h2>
+
+  <p>The audit flagged the per-patch Dirichlet gravity scheme (&#167;5.2.2) as an accuracy issue, and several recommended changes (<code>INTERPOLATE_LINEAR</code>, <code>INFLUENCE2</code>, <code>MaximumGravityRefinementLevel</code>, tolerance fix) alter forces by design. These need direct force-quality tests, which also guard the C1 gravity restructurings (Morton sort, deposit refactor, Alltoallv transpose):</p>
+
+  <ol>
+    <li><strong>Point-mass force accuracy (<code>ProblemType 23</code>, in-tree).</strong> RMS and max force error vs. the analytic solution, on a unigrid and with a static refined region so the error is measured <em>across the refinement boundary</em>. Report error vs. radius; the level-boundary discontinuity appears as a spike at the interface. Run before/after each gravity change; C2 gravity changes must reduce (or at worst preserve) the interface error.</li>
+    <li><strong>Orbit test across a refinement boundary.</strong> A two-body/circular-orbit problem in which the orbit crosses a static level boundary; track energy and angular-momentum drift per orbit. This converts the audit's "force jump at level edges" into one number, and directly measures the improvement from <code>INTERPOLATE_LINEAR</code>/<code>INFLUENCE2</code>.</li>
+    <li><strong>Spurious heating test.</strong> An isolated equilibrium halo (DM particles only) spanning 2&#8211;3 static levels, evolved for many dynamical times; measure the velocity-dispersion and energy drift of particles binned by radius relative to the level boundaries. This is the artifact FOGGIE stars and DM actually experience; it should shrink with the gravity accuracy bundle and must not grow with any C1 change.</li>
+    <li><strong>Cosmology cross-check.</strong> A small DM-only box: matter power spectrum and halo mass function vs. baseline, tolerance from the roundoff-chaos band. Guards the FFT/transpose and deposit changes at cosmological scales.</li>
+    <li><strong>Multigrid health.</strong> With the iteration-count diagnostic on: distribution of V-cycles per solve and the count of 200-sweep-fallback events on FOGGIE-bench. The fallback count should be ~zero after the tolerance/padding fixes; any nonzero count is logged with the offending grid's dimensions.</li>
+  </ol>
+
+  <h2 id="s5"><span class="secnum">5</span>Test matrix by audit area</h2>
+
+  <p>Which tests gate which audit changes &#8212; the reviewer's lookup table:</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Audit area</th><th>Representative changes</th><th>Class</th><th>Performance evidence</th><th>Consistency evidence</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Rebuild frequency &amp; internals (&#167;3.2)</td>
+          <td><code>CycleSkip</code>; parent-grouping fix; dead-work removal</td>
+          <td><span class="chip c2">C2</span><span class="chip c0">C0</span></td>
+          <td>B2/B3 rebuild share; sub-phase timers</td>
+          <td>CycleSkip: &#167;3.3 ensemble band + refinement-behavior record. Internals: bitwise</td>
+        </tr>
+        <tr>
+          <td>Chaining mesh &amp; sibling search (&#167;3.3)</td>
+          <td>Level-adaptive mesh; visit-stamp dedup</td>
+          <td><span class="chip c0">C0</span></td>
+          <td>B3 sibling-search timer; ShareGrids/CopyZones timers</td>
+          <td>Bitwise (sibling <em>sets</em> must be identical; order may differ &#8594; verify no order dependence, else C1)</td>
+        </tr>
+        <tr>
+          <td>Subgrid sizing (&#167;3.4)</td>
+          <td><code>SubgridSizeAutoAdjust = 0</code>, edge/size params</td>
+          <td><span class="chip c2">C2</span></td>
+          <td>B3 ghost fraction, message counts, wall/step; B4 curve</td>
+          <td>&#167;3.3 suite; grid-statistics record; hydro control within roundoff-chaos band</td>
+        </tr>
+        <tr>
+          <td>Must-refine flagging (&#167;3.7)</td>
+          <td>Sparse flag messages</td>
+          <td><span class="chip c1">C1</span></td>
+          <td>B2 nested-cosmology flagging timer, message volume</td>
+          <td>Flag fields identical pre/post (integer data &#8594; exact); H1 field tolerances</td>
+        </tr>
+        <tr>
+          <td>Load balancing (&#167;4.1)</td>
+          <td>Mode 4 + Hilbert key fix; particle-aware weights; placement-before-fill</td>
+          <td><span class="chip c1">C1</span>/<span class="chip c2">C2</span></td>
+          <td><strong>The per-level imbalance table</strong> (max/mean rank work); B3 wall/step; B4</td>
+          <td>Grid-independent comparisons only (&#167;3.2); conservation invariants; &#167;3.3 at H2</td>
+        </tr>
+        <tr>
+          <td>Communication (&#167;4.2)</td>
+          <td>Receive-handler O(N); batched feedback collectives; Alltoallv; fusions</td>
+          <td><span class="chip c1">C1</span></td>
+          <td>mpiP/IPM collective time and counts on B3</td>
+          <td>H1 tolerances near machine precision (same summands, different order); conservation exact</td>
+        </tr>
+        <tr>
+          <td>Threading (&#167;4.3)</td>
+          <td>OpenMP grid loop</td>
+          <td><span class="chip c1">C1</span></td>
+          <td>B3 at 1 rank/NUMA &#215; threads vs flat MPI, same cores; memory/rank</td>
+          <td>H1 tolerances; run twice with different thread counts to expose races; ThreadSanitizer on B1-scale problems</td>
+        </tr>
+        <tr>
+          <td>Star formation/feedback (&#167;5.1)</td>
+          <td>FindAll guard; hoists; age cutoff; table reordering; heap arrays; SNe-limit default</td>
+          <td><span class="chip c0">C0</span>/<span class="chip c1">C1</span>/<span class="chip c2">C2</span></td>
+          <td>TabularFeedbackTest + B3 star-path timers</td>
+          <td>C0 items bitwise (seeded RNG); age cutoff: SN count/energy bookkeeping identical; SNe-limit: &#167;3.3 ensemble band</td>
+        </tr>
+        <tr>
+          <td>Gravity (&#167;5.2)</td>
+          <td>Deposit restructure; Morton sort; <code>MaximumGravityRefinementLevel</code>; accuracy bundle; FFT/transpose</td>
+          <td><span class="chip c1">C1</span>/<span class="chip c2">C2</span></td>
+          <td>B3 gravity timers; multigrid iteration stats</td>
+          <td>&#167;4 force tests (all of them); DM cosmology cross-check; H1 tolerances for C1 items</td>
+        </tr>
+        <tr>
+          <td>Timestep control (&#167;5.3)</td>
+          <td>dt diagnostics; ghost-zone scan fix</td>
+          <td><span class="chip c0">C0</span>/<span class="chip c2">C2</span></td>
+          <td>Subcycle-count histogram on B3</td>
+          <td>Ghost fix: dt may legitimately grow &#8212; verify limiter histogram shows only ghost-origin limiters removed; &#167;3.3 at H2</td>
+        </tr>
+        <tr>
+          <td>Compiler flags (&#167;5.1.6)</td>
+          <td>Restore <code>-xAVX -ip</code> (+ <code>-heap-arrays</code>)</td>
+          <td><span class="chip c1">C1</span></td>
+          <td>B1/B2 kernel timers; B3 wall/step</td>
+          <td>H1 tolerances; conservation invariants; full B2 answer suite (vectorization changes FP contraction)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="s6"><span class="secnum">6</span>Cadence, gates, and re-baselining policy</h2>
+
+  <h3><span class="secnum">6.1</span>Per-PR gate <span class="chip b">&lt; 1 hr</span></h3>
+  <ul>
+    <li>Build (both machine files) + the change-class declaration.</li>
+    <li>C0 PRs: bitwise harness on B2 + 2-step FOGGIE-bench slice (&#167;3.1).</li>
+    <li>C1 PRs: H1 answer tests on B2 with stored tolerances; conservation invariants.</li>
+    <li>All PRs: B1/B2 timing vs. the ledger; predicted-vs-measured statement.</li>
+  </ul>
+
+  <h3><span class="secnum">6.2</span>Nightly / weekly <span class="chip b">automated</span></h3>
+  <ul>
+    <li>Nightly: full B2 set (answers + performance) on the current main branch; ledger append; alert on &gt;2&#963; timing regression or any answer-test failure.</li>
+    <li>Weekly: 5-step FOGGIE-bench (B3) at a reduced-but-representative rank count; the per-level imbalance table and rebuild share tracked over time.</li>
+  </ul>
+
+  <h3><span class="secnum">6.3</span>Tier milestones <span class="chip b">manual review</span></h3>
+  <ul>
+    <li>After each audit tier lands: full B3 at production scale (3 repeats), B4 scaling study, &#167;3.3 physical validation at H2 (and H3 after Tier 2), &#167;4 gravity tests.</li>
+    <li><strong>Re-baselining is an explicit, reviewed event:</strong> when a C2 change is accepted, its physical-validation report is archived with the decision, the gold answers are regenerated at the new commit, and the ledger records the discontinuity. Gold data is never silently overwritten &#8212; the audit found exactly this pattern (undocumented defaults, unrecorded production settings) at the root of several issues.</li>
+  </ul>
+
+  <h2 id="s7"><span class="secnum">7</span>Deliverables and automation</h2>
+
+  <ol>
+    <li><strong><code>run/foggie_bench/</code></strong> &#8212; the versioned FOGGIE-bench deck, restart pointer, launch scripts for Pleiades/Aitken, and the metric-extraction script (one JSON per run).</li>
+    <li><strong><code>run/foggie_tests/</code></strong> &#8212; the B2 problem list with parameter decks pinned, the C0 bitwise driver (<code>h5diff</code> wrapper), the C1 answer-test configuration (yt), and the conservation-invariant checker.</li>
+    <li><strong>Gravity test problems</strong> &#8212; the orbit-across-boundary and spurious-heating decks (&#167;4.2&#8211;4.3; small additions next to the existing <code>TestGravity</code> problems).</li>
+    <li><strong>The results ledger + plots</strong> &#8212; CSV/SQLite plus a plotting script tracking the &#167;2.3 KPIs per commit; the audit's four headline numbers (rebuild share, collective time, finest-level imbalance, star-feedback time) on one page.</li>
+    <li><strong>The seed ensemble</strong> (&#167;3.3) &#8212; run once after RNG seeding lands; its measured bands checked in as the tolerance file the physical-validation suite reads.</li>
+    <li><strong>CI hooks</strong> &#8212; per-PR compile + B2-small in GitHub Actions; nightly/weekly jobs as batch cron on the production machine. The full split of what belongs where is &#167;8.</li>
+    <li><strong>Prerequisite PRs</strong> (from &#167;1.1): RNG seeding; RH sub-phase timers; per-level dt-limiter diagnostic; per-level per-rank work table. These are the plan's foundation and are themselves C0/diagnostic-only.</li>
+  </ol>
+
+  <h2 id="s8"><span class="secnum">8</span>What runs in GitHub CI vs. on the supercomputer</h2>
+
+  <p>The dividing line is not "performance vs. correctness" &#8212; it is that hosted CI runners can verify <em>deterministic</em> things (bits, counters, invariants) but cannot measure <em>wall-clock</em> meaningfully, and they top out at a few cores. Everything at production scale, everything timed, and everything touching production data belongs on Pleiades/Aitken.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Plan component</th><th>Where</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Build checks (gcc/gfortran + OpenMPI + HDF5; multiple configs: &#177;Grackle, <code>FAST_SIB</code>, PFLOAT variants)</td>
+          <td><span class="chip c0">CI</span></td>
+          <td>Enzo builds on commodity hardware in minutes; catches the "silent mis-build" class the audit flagged (<code>FAST_SIB</code> off, <code>CONFIG_PFLOAT_16</code>)</td>
+        </tr>
+        <tr>
+          <td>C0 bitwise harness (&#167;3.1) on B2-small at fixed 4&#8211;8 ranks</td>
+          <td><span class="chip c0">CI</span></td>
+          <td>Bitwise identity does not care about hardware speed; <code>mpirun -np 4 --oversubscribe</code> + <code>h5diff</code> on a 2-core runner is a complete test. The highest-value CI piece</td>
+        </tr>
+        <tr>
+          <td>C1 answer tests (&#167;3.2) on B2 at small scale; conservation invariants</td>
+          <td><span class="chip c0">CI</span></td>
+          <td>Gold files for small problems are MBs &#8212; storable in Git LFS or as release assets; essentially what enzo-dev's answer suite already does</td>
+        </tr>
+        <tr>
+          <td>Gravity accuracy: point-mass (<code>ProblemType 23</code>), orbit-across-boundary (&#167;4.1&#8211;4.2)</td>
+          <td><span class="chip c0">CI</span></td>
+          <td>Idealized, small, minutes each. The long spurious-heating test (&#167;4.3) fits a <em>nightly</em> CI job at reduced particle count; full-size on HPC</td>
+        </tr>
+        <tr>
+          <td>Sanitizer builds (ASan/UBSan on B2-small; TSan once OpenMP lands)</td>
+          <td><span class="chip c0">CI</span></td>
+          <td>Directly targets the audit's UB/leak findings; only practical at CI problem sizes anyway</td>
+        </tr>
+        <tr>
+          <td><strong>Deterministic performance counters:</strong> collectives per subcycle, message counts, grid counts and ghost fraction, subcycle counts, rebuild sub-phase call counts</td>
+          <td><span class="chip c0">CI</span></td>
+          <td>The key trick: these numbers are exact and machine-independent, so CI <em>can</em> gate on them ("allreduces per subcycle went 8 &#8594; 5 and must not creep back") even though it cannot time anything</td>
+        </tr>
+        <tr>
+          <td>Ledger parsers, JSON schema, dashboard plots, tolerance files</td>
+          <td><span class="chip c0">CI</span></td>
+          <td>Pure software: unit-test the parsers, render the dashboard on a schedule</td>
+        </tr>
+        <tr>
+          <td>Wall-clock timing gates (&#167;2.4), noise-band regression detection</td>
+          <td><span class="chip c2">HPC</span></td>
+          <td>Hosted runners are shared, virtualized, 2&#8211;4 cores; timing noise swamps any real signal. CI can at most catch order-of-magnitude smoke regressions</td>
+        </tr>
+        <tr>
+          <td>B3 FOGGIE-bench, B4 scaling, the per-level imbalance table at scale</td>
+          <td><span class="chip c2">HPC</span></td>
+          <td>Needs 256&#8211;2048 ranks and a production restart far too large to leave the filesystem, let alone put in a repo</td>
+        </tr>
+        <tr>
+          <td>mpiP/IPM/Darshan profiling (&#167;2.3)</td>
+          <td><span class="chip c2">HPC</span></td>
+          <td>Only meaningful on the real interconnect at real rank counts</td>
+        </tr>
+        <tr>
+          <td>Compiler-flag validation (audit &#167;5.1.6)</td>
+          <td><span class="chip c1">Both</span></td>
+          <td>Intel oneAPI installs in CI for build/correctness checks of <code>-heap-arrays</code> etc., but the <code>-xAVX</code>/<code>-march</code> performance claim must be measured on the actual Milan/Skylake nodes</td>
+        </tr>
+        <tr>
+          <td>Seed ensemble, H2/H3 physical validation, CGM/Trident metrics (&#167;3.3)</td>
+          <td><span class="chip c2">HPC</span></td>
+          <td>Production-scale runs over hundreds of Myr; the analysis code could run anywhere, but the data lives on the machine</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3><span class="secnum">8.1</span>Mapped to the gates of &#167;6</h3>
+
+  <ul>
+    <li><strong>Per-PR gate (&#167;6.1): ~90% CI-implementable</strong> &#8212; build, class declaration, C0 bitwise, C1 small answer tests, invariants, counter regression. The one exception is the 2-step FOGGIE-bench slice, which needs the machine.</li>
+    <li><strong>Nightly gate (&#167;6.2): splits</strong> &#8212; answer tests and counters in CI; timing on the machine.</li>
+    <li><strong>Weekly and milestone gates (&#167;6.2&#8211;6.3): entirely supercomputer work.</strong></li>
+  </ul>
+
+  <h3><span class="secnum">8.2</span>Wiring the two together</h3>
+
+  <p>NASA HECC security policy makes a self-hosted GitHub runner on Pleiades impractical, so use a <strong>pull-based</strong> pattern: a cron/batch job on the HPC side pulls <code>main</code> (or a tagged candidate), runs the B3/weekly suite, and pushes its JSON results to a results branch or a small companion repo; a scheduled GitHub Action renders the dashboard and posts commit statuses from that ledger. GitHub orchestrates and displays; the machine only ever initiates outbound connections &#8212; no inbound access to HPC is required.</p>
+
+  <div class="keyrec">
+    <p><strong>The honest summary:</strong> CI can prevent essentially all <em>correctness</em> regressions and all <em>algorithmic-count</em> regressions on every PR &#8212; most of the day-to-day protection. What it cannot do is say whether a change actually made FOGGIE faster: every real speedup claim in the audit's tiers is verified by the batch jobs on Pleiades, at weekly-plus-milestone cadence.</p>
+  </div>
+
+  <footer>
+    <p>Companion to the Enzo Performance &amp; Scaling Audit of <code>foggie-sims/enzo-foggie</code> (commit <code>4ceb000</code>). Section references (&#167;) point to that report.</p>
+  </footer>
+</div>

@@ -1,0 +1,641 @@
+<title>Enzo Performance &amp; Scaling Audit &#8212; FOGGIE</title>
+<style>
+  :root {
+    --paper: #faf9f7;
+    --ink: #1c1b22;
+    --mist: #5f5c6b;
+    --violet: #54468a;
+    --violet-soft: #eceafa;
+    --amber: #a34d09;
+    --amber-soft: #f7ede2;
+    --line: #e3e1da;
+    --card: #f3f2ee;
+    --code-bg: #edecf2;
+    --good: #2c6e49;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #16151c;
+      --ink: #e8e6f0;
+      --mist: #a09db0;
+      --violet: #a99ee2;
+      --violet-soft: #262336;
+      --amber: #e0a35c;
+      --amber-soft: #2e2418;
+      --line: #2d2b38;
+      --card: #1e1d26;
+      --code-bg: #24222e;
+      --good: #7fc8a0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16151c;
+    --ink: #e8e6f0;
+    --mist: #a09db0;
+    --violet: #a99ee2;
+    --violet-soft: #262336;
+    --amber: #e0a35c;
+    --amber-soft: #2e2418;
+    --line: #2d2b38;
+    --card: #1e1d26;
+    --code-bg: #24222e;
+    --good: #7fc8a0;
+  }
+  :root[data-theme="light"] {
+    --paper: #faf9f7;
+    --ink: #1c1b22;
+    --mist: #5f5c6b;
+    --violet: #54468a;
+    --violet-soft: #eceafa;
+    --amber: #a34d09;
+    --amber-soft: #f7ede2;
+    --line: #e3e1da;
+    --card: #f3f2ee;
+    --code-bg: #edecf2;
+    --good: #2c6e49;
+  }
+
+  html { background: var(--paper); }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Charter, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 1.0rem;
+    line-height: 1.62;
+  }
+  .wrap {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 3rem 1.25rem 6rem;
+  }
+  .sans, h1, h2, h3, h4, .eyebrow, .chip, .toc, .meta, th, .tierhead {
+    font-family: Seravek, Avenir, "Avenir Next", "Segoe UI", Frutiger, system-ui, sans-serif;
+  }
+  code, pre {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 0.84em;
+  }
+  code {
+    background: var(--code-bg);
+    border-radius: 3px;
+    padding: 0.08em 0.35em;
+    white-space: nowrap;
+  }
+  pre {
+    background: var(--code-bg);
+    border-radius: 6px;
+    padding: 0.9rem 1.1rem;
+    overflow-x: auto;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; white-space: pre; }
+
+  /* ---------- masthead ---------- */
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--amber);
+    margin: 0 0 0.75rem;
+  }
+  h1 {
+    font-size: clamp(1.7rem, 4.5vw, 2.5rem);
+    line-height: 1.15;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 1.2rem;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+  .meta {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.3rem 1.1rem;
+    font-size: 0.82rem;
+    color: var(--mist);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    padding: 0.9rem 0;
+    margin: 0 0 2.2rem;
+  }
+  .meta dt { font-weight: 600; margin: 0; color: var(--ink); }
+  .meta dd { margin: 0; }
+
+  /* ---------- toc ---------- */
+  .toc {
+    background: var(--card);
+    border-radius: 8px;
+    padding: 1.1rem 1.4rem;
+    font-size: 0.88rem;
+    margin: 0 0 3rem;
+  }
+  .toc p {
+    margin: 0 0 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--mist);
+  }
+  .toc ol { margin: 0; padding-left: 1.3rem; }
+  .toc li { margin: 0.22rem 0; }
+  a { color: var(--violet); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { color: var(--amber); }
+  a:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; border-radius: 2px; }
+
+  /* ---------- sections ---------- */
+  h2 {
+    font-size: 1.45rem;
+    line-height: 1.25;
+    font-weight: 700;
+    margin: 3.2rem 0 1rem;
+    padding-top: 1.4rem;
+    border-top: 2px solid var(--violet);
+    color: var(--ink);
+    text-wrap: balance;
+  }
+  h2 .secnum { color: var(--violet); margin-right: 0.5rem; font-variant-numeric: tabular-nums; }
+  h3 {
+    font-size: 1.08rem;
+    font-weight: 700;
+    margin: 2.2rem 0 0.6rem;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+  h3 .secnum { color: var(--violet); margin-right: 0.4rem; }
+  h4 { font-size: 0.95rem; font-weight: 700; margin: 1.6rem 0 0.4rem; }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1.1rem; padding-left: 1.5rem; }
+  li { margin: 0.35rem 0; }
+  li > ul, li > ol { margin-top: 0.35rem; margin-bottom: 0.35rem; }
+  strong { font-weight: 700; }
+  hr { border: none; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+
+  .lede { font-size: 1.06rem; color: var(--ink); }
+  .note {
+    border-left: 3px solid var(--amber);
+    background: var(--amber-soft);
+    padding: 0.75rem 1.1rem;
+    border-radius: 0 6px 6px 0;
+    margin: 0 0 1.1rem;
+  }
+  .keyrec {
+    border-left: 3px solid var(--violet);
+    background: var(--violet-soft);
+    padding: 0.75rem 1.1rem;
+    border-radius: 0 6px 6px 0;
+    margin: 0 0 1.1rem;
+  }
+  .keyrec > p:last-child, .note > p:last-child { margin-bottom: 0; }
+
+  /* ---------- multipliers ---------- */
+  .mults { display: grid; gap: 0.9rem; margin: 1.4rem 0 1.6rem; }
+  .mult {
+    background: var(--card);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+  }
+  .mult h4 { margin: 0 0 0.35rem; font-size: 0.92rem; }
+  .mult h4 .n {
+    display: inline-block;
+    background: var(--violet);
+    color: var(--paper);
+    border-radius: 50%;
+    width: 1.35rem; height: 1.35rem;
+    line-height: 1.35rem;
+    text-align: center;
+    font-size: 0.78rem;
+    margin-right: 0.45rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .mult p { margin: 0; font-size: 0.93rem; }
+
+  /* ---------- tables ---------- */
+  .tablewrap { overflow-x: auto; margin: 0 0 1.4rem; border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+  th {
+    text-align: left;
+    font-weight: 650;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--mist);
+    background: var(--card);
+    padding: 0.55rem 0.85rem;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  td {
+    padding: 0.55rem 0.85rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-weight: 600; }
+  .comparison td:first-child { white-space: normal; min-width: 9rem; }
+  .comparison td { min-width: 11rem; }
+
+  /* ---------- chips ---------- */
+  .chip {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-radius: 999px;
+    padding: 0.1rem 0.6rem;
+    vertical-align: 0.12em;
+    margin-right: 0.4rem;
+  }
+  .chip.t0 { background: var(--good); color: var(--paper); }
+  .chip.t1 { background: var(--violet); color: var(--paper); }
+  .chip.t2 { background: var(--amber); color: var(--paper); }
+  .chip.t3 { background: var(--mist); color: var(--paper); }
+
+  .findings-list li { margin: 0.6rem 0; }
+
+  footer {
+    margin-top: 4rem;
+    border-top: 1px solid var(--line);
+    padding-top: 1.2rem;
+    font-size: 0.82rem;
+    color: var(--mist);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    a { transition: color 120ms ease; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Code Audit &#183; foggie-sims/enzo-foggie</p>
+    <h1>Enzo Performance &amp; Scaling Audit for FOGGIE</h1>
+    <dl class="meta">
+      <dt>Scope</dt><dd><code>src/enzo</code> at commit <code>4ceb000</code></dd>
+      <dt>Focus</dt><dd>Deep AMR zooms (10+ levels, nested must-refine regions, <code>MultiRefineRegion</code> tracking) with 10&#8310;&#8211;10&#8311; star particles concentrated in a few galaxies on the finest levels</dd>
+      <dt>Method</dt><dd>Six parallel line-by-line code audits (hierarchy construction, time integration, MPI communication, load balancing, gravity/particles, star formation/feedback), plus an architectural comparison against RAMSES, Nyx, and ART</dd>
+      <dt>References</dt><dd>All file references are to <code>src/enzo/</code> unless noted; line numbers as of <code>4ceb000</code></dd>
+    </dl>
+  </header>
+
+  <nav class="toc">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#s1">Executive summary</a></li>
+      <li><a href="#s2">Why the FOGGIE regime is Enzo's worst case</a></li>
+      <li><a href="#s3">Findings: architecture and AMR machinery</a></li>
+      <li><a href="#s4">Findings: parallelism</a></li>
+      <li><a href="#s5">Findings: physics modules</a></li>
+      <li><a href="#s6">Comparison: RAMSES, Nyx, and ART</a></li>
+      <li><a href="#s7">Recommendations, tiered</a></li>
+      <li><a href="#appendix">Appendix A &#8212; correctness issues found in passing</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="s1"><span class="secnum">1</span>Executive summary</h2>
+
+  <p class="lede">Enzo's poor scaling in the FOGGIE regime is not one bottleneck but the product of three architectural multipliers, each of which the FOGGIE configuration maximizes:</p>
+
+  <div class="mults">
+    <div class="mult">
+      <h4><span class="n">1</span>The subcycle multiplier</h4>
+      <p>Level L executes ~2<sup>L</sup> times per root-grid step (<code>EvolveLevel.C:391</code>), and every subcycle is a globally synchronous phase: a timestep allreduce, ~14 communication rounds, star-particle bookkeeping collectives, and (by default) a full rebuild of the entire sub-hierarchy. At L<sub>max</sub> = 10&#8211;11 this is ~2000 level-executions and <strong>~4&#215;10&#8308; global collectives per root step</strong> before any feedback-related communication.</p>
+    </div>
+    <div class="mult">
+      <h4><span class="n">2</span>The replicated-hierarchy multiplier</h4>
+      <p>Every MPI rank holds a full copy of the grid hierarchy &#8212; not just metadata, but an instantiated <code>grid</code> object (~4 kB) per remote grid (<code>CommunicationShareGrids.C:176-241</code>) &#8212; and every hot loop iterates over the <em>global</em> grid list, filtering ownership inside the call. Because the auto-tuner targets 16 grids per rank (<code>DetermineSubgridSizeExtrema.C:45-53</code>), grid count grows linearly with rank count, so per-rank metadata memory and loop overhead grow as O(N<sub>ranks</sub>), and aggregate bookkeeping as O(N<sub>ranks</sub>&#178;). Adding processors makes this component of the code <em>slower</em>.</p>
+    </div>
+    <div class="mult">
+      <h4><span class="n">3</span>The concentrated-particle multiplier</h4>
+      <p>The load balancer's work estimate is cell count only &#8212; the particle count is computed and then explicitly discarded (<code>CommunicationLoadBalanceGrids.C:84</code>). Every per-particle cost (deposits, feedback table lookups, particle Courant scans, rebuild churn) lands on the handful of ranks that own the galaxies, and the bulk-synchronous structure makes everyone else wait. Meanwhile particle deposits for gravity recur once per ancestor level per subcycle &#8212; <strong>~2<sup>L+1</sup> CIC deposits per particle per root step</strong> (<code>DepositParticleMassField.C</code>) &#8212; and the star feedback path performs 6 yield-table integrations per star per subcycle with no age cutoff before the calls (<code>star_feedback6.F</code>).</p>
+    </div>
+  </div>
+
+  <p>On top of these, the audit found a large number of specific defects: O(N&#178;) loops on hot paths, a serialized O(N<sub>ranks</sub>)-step transpose inside the gravity FFT, per-star global allreduce storms in feedback spheres, a chaining mesh that degenerates to a single bucket for zoom geometries, Hilbert load-balancing keys that run out of resolution at exactly level ~11, dense allreduces of sparse data, several latent correctness bugs, and a June 2025 build-flag change that disabled vectorization on Pleiades.</p>
+
+  <p>The good news: a substantial fraction of the total cost can be recovered with <strong>parameter-file and build-flag changes alone</strong> (<a href="#s71">&#167;7.1</a>), and another large fraction with <strong>localized, low-risk code fixes</strong> (<a href="#s72">&#167;7.2</a>). The architectural gaps relative to RAMSES/Nyx/ART (<a href="#s6">&#167;6</a>) &#8212; distributed metadata, composite gravity solves, threading &#8212; are long-term projects, but the comparison also shows Enzo's patch-based design is not inherently the problem; the implementation predates the scales FOGGIE runs at.</p>
+
+  <h2 id="s2"><span class="secnum">2</span>Why the FOGGIE regime is Enzo's worst case</h2>
+
+  <p>A useful mental model for the cost of one root-grid step:</p>
+
+  <pre><code>Cost &#8776; &#931;_L  2^L  &#215;  [ C_sync(N_ranks)  +  C_meta(N_grids_L)  +  C_local(work_L) ]</code></pre>
+
+  <ul>
+    <li><strong>C<sub>sync</sub></strong> &#8212; per-subcycle collectives and communication rounds. Latency-bound; grows with log(N<sub>ranks</sub>) per collective but the <em>count</em> of collectives is fixed per subcycle, so it is multiplied by ~2<sup>L<sub>max</sub>+1</sup> &#8776; 2000&#8211;4000 per root step.</li>
+    <li><strong>C<sub>meta</sub></strong> &#8212; per-rank traversal of the replicated grid list (~10 loops per subcycle over all grids on the level, plus the rebuild machinery). Independent of rank count; proportional to <em>total</em> grid count, which itself is proportional to rank count under the auto-tuner. This is the anti-scaling term.</li>
+    <li><strong>C<sub>local</sub></strong> &#8212; actual physics on locally owned grids. This is the only term that shrinks as ranks are added, and only if the load balancer distributes it &#8212; which, for particle-dominated work, it currently does not attempt.</li>
+  </ul>
+
+  <p>FOGGIE's configuration pushes all three terms to their worst case simultaneously: deep hierarchy (maximizes the 2<sup>L</sup> multiplier), high rank counts (maximizes N<sub>grids</sub> via the auto-tuner and collective latency), and extreme spatial concentration of particles and fine grids (maximizes load imbalance within C<sub>local</sub> and defeats the spatial-locality assumptions in the chaining mesh and Hilbert balancer).</p>
+
+  <h2 id="s3"><span class="secnum">3</span>Findings: architecture and AMR machinery</h2>
+
+  <h3 id="s31"><span class="secnum">3.1</span>Replicated hierarchy metadata (the fundamental non-scalable structure)</h3>
+
+  <p>Every rebuild, <code>CommunicationShareGrids.C</code> (called from <code>RebuildHierarchy.C:454</code> once per level) does an <code>MPI_Allgather</code> + <code>MPI_Allgatherv</code> of a ~80-byte <code>PackedGrid</code> for every new subgrid, and then <strong>every rank instantiates a full <code>HierarchyEntry</code> + <code>grid</code> object for every remote grid</strong> (<code>CommunicationShareGrids.C:176-241</code>), including heap allocation of <code>CellLeftEdge</code>/<code>CellWidth</code> arrays per dimension (<code>Grid_PrepareGridDerivedQuantities.C:39-40</code>). At ~4 kB per grid per rank, a 160,000-grid hierarchy costs <strong>~640 MB per rank of pure remote-grid metadata</strong>, replicated identically everywhere. This is the deep-zoom memory wall, and it is also what makes every <code>for (grid1 = 0; grid1 &lt; NumberOfGrids; ...)</code> loop O(total) rather than O(local).</p>
+
+  <p>Downstream, ownership is filtered <em>inside</em> the per-grid calls (e.g. <code>Grid_SolveHydroEquations.C:64-65</code> returns early for non-local grids), so a rank owning zero grids on level 10 still executes ~10 loops of length N<sub>10</sub>, with a virtual call per grid per loop, at every one of the 1024 level-10 subcycles.</p>
+
+  <div class="keyrec">
+    <p><strong>Recommendations:</strong> (i) short term, build a per-rank <code>LocalGrids[]</code> index array once per <code>EvolveLevel</code> entry and drive all local-only loops from it &#8212; mechanical and low risk; (ii) medium term, replace the remote-grid <code>grid</code> object with a lightweight proxy (rank, dims, edges, processor, parent) and compute <code>CellLeftEdge</code>/<code>CellWidth</code> on demand (uniform spacing makes them O(1)); (iii) long term, share grid metadata only with the neighborhood that can overlap (the chaining mesh can determine this), moving from Allgatherv to a sparse exchange. Item (iii) is the Enzo equivalent of RAMSES's "locally essential tree" and is the structural fix.</p>
+  </div>
+
+  <h3 id="s32"><span class="secnum">3.2</span>RebuildHierarchy: frequency and internal costs</h3>
+
+  <ul>
+    <li><strong>Frequency.</strong> The hierarchy below level L is rebuilt after every subcycle except the last (<code>EvolveLevel.C:973-974</code>), and <code>RebuildHierarchyCycleSkip[level]</code> &#8212; the only throttle &#8212; defaults to 1 (never skip) for every level. At L<sub>max</sub> = 10 this is ~2000 rebuild-level iterations per root step; rebuilds are commonly 30&#8211;50% of wall clock in deep Enzo zooms. <strong>Setting <code>RebuildHierarchyCycleSkip[L] = 2&#8211;4</code> for L &#8805; 4 is the single highest-value zero-code change available.</strong></li>
+    <li><strong>O(N&#178;) parent grouping.</strong> <code>RebuildHierarchy.C:203-242</code> groups grids by parent with a naive double loop &#8212; O(N&#178;/2) pointer comparisons per level per rebuild, unfiltered by ownership, executed identically on every rank (~10&#8312; ops/level/rebuild/rank at FOGGIE scale). Fix: sort or hash by parent pointer, and restrict to locally-owned parents (the downstream <code>MoveAllParticles</code> already no-ops for remote grids).</li>
+    <li><strong>Dead work and stack hazards.</strong> Five to seven <code>MAX_NUMBER_OF_SUBGRIDS</code> (=100,000) pointer arrays live on the stack (~4&#8211;5 MB of frame in a routine reached through the level recursion); <code>RebuildHierarchy.C:439-441</code> zeroes 100,000 entries per level per rebuild and the filled values are then overwritten before use (dead code); <code>RebuildHierarchy.C:372-375</code> reads uninitialized memory when <code>SubgridSizeAutoAdjust = FALSE</code>.</li>
+    <li><strong>Debug collectives.</strong> <code>RebuildHierarchy.C:425-426</code> issues two unconditional blocking <code>MPI_Reduce</code> calls per level per rebuild whose only consumer is an <code>if (debug)</code> printf. At high rank counts this is tens of seconds of pure synchronization per root step. Guard them.</li>
+  </ul>
+
+  <h3 id="s33"><span class="secnum">3.3</span>The chaining mesh (FastSiblingLocator) collapses for zoom geometries</h3>
+
+  <p><code>FastSiblingLocatorInitialize.C:44</code> sizes the sibling-search chaining mesh as <code>min(TopGridDims/4, 128)</code> cells <strong>over the whole domain</strong>, for every level (<code>FastSiblingLocatorEntireDomain = TRUE</code> by default). For a FOGGIE box with a ~10&#8315;&#179; zoom region, all grids on levels &#8819;6 fall into one or two mesh cells, so sibling search degenerates to O(N<sub>level</sub>&#178;) &#8212; the accelerator provides zero acceleration exactly where it is needed. Compounding this, the duplicate check inside <code>Grid_FastSiblingLocatorFindSiblings.C:117-141</code> is a linear rescan of the accumulated sibling list per candidate (O(S&#178;), before the processor filter and overlap check), and the mesh construction performs up to millions of individual 16-byte <code>new</code>/<code>delete</code> pairs plus a 16 MB pointer-array clear per call.</p>
+
+  <div class="keyrec">
+    <p><strong>Recommendations:</strong> size the mesh to the bounding box of the grids actually being inserted with O(1) mean occupancy (the bounding-box machinery already exists in <code>LoadBalanceHilbertCurve.C:89-96</code>); replace the dedup rescan with a visit-stamp on the grid object (O(1), ~10 lines); arena-allocate the chain links. As an immediate parameter-level experiment, <code>FastSiblingLocatorEntireDomain = 0</code> (mesh over the RefineRegion) should recover most of the deep-level locality, at the cost of pushing root grids onto an unaccelerated overflow list &#8212; worth measuring.</p>
+  </div>
+
+  <p>Note also that every overlap loop carries an <code>#ifdef FAST_SIB</code> / <code>#else</code> pair where the fallback is a literal all-pairs O(N&#178;) <code>CheckForOverlap</code> (e.g. <code>PrepareDensityField.C:328-343</code>, <code>SetBoundaryConditions.C:164-202</code>). <strong>Verify <code>CONFIG_FAST_SIB = yes</code> in the production build</strong> &#8212; mis-building without it is a silent ~100&#215; regression &#8212; and consider deleting the fallback branches.</p>
+
+  <h3 id="s34"><span class="secnum">3.4</span>Subgrid sizing: deep-level grids are mostly ghost zones</h3>
+
+  <p>With <code>SubgridSizeAutoAdjust = TRUE</code> (default), <code>DetermineSubgridSizeExtrema.C:45-53</code> computes <code>MaximumSubgridSize = N_cells/(N_ranks &#215; 16)</code>, clamped below by hard-coded floors <code>MINIMUM_SIZE = 2000</code> (parent cells) and <code>MINIMUM_EDGE = 4</code>. On deep FOGGIE levels the floors bind: a 4-parent-cell-edge subgrid becomes a 14&#179; child grid after refinement and ghost zones &#8212; <strong>81% ghost cells</strong>; even at the 2000-cell ceiling (~31&#179; child) it is 46% ghost. Consequences: 2&#8211;5&#215; inflated memory and boundary-exchange volume per unit of real work, an exploding message count (message count, not bandwidth, limits <code>SetBoundaryConditions</code> at high rank counts), and grid counts that scale with rank count (<a href="#s31">&#167;3.1</a>). The hydro sweeps compound this: <code>Grid_SolvePPM_DE.C:91</code> and <code>Grid_xEulerSweep.C:174-175</code> sweep the full transverse ghost extent, a 2.1&#215; flop overhead at the auto-tuned grid size vs 1.4&#215; at 32&#179;.</p>
+
+  <div class="keyrec">
+    <p><strong>Recommendations:</strong> for FOGGIE, set <code>SubgridSizeAutoAdjust = 0</code>, <code>MinimumSubgridEdge = 16</code> (ghost fraction 81% &#8594; ~28%), <code>MaximumSubgridSize</code> in the 10&#8309;&#8211;2.6&#215;10&#8309; range, and benchmark; in code, promote the two floors to runtime parameters and make the sizing ghost-aware (enforce edge &#8805; 2&#215;NumberOfGhostZones as a floor rationale). Fewer, fatter grids simultaneously improve memory, message counts, sibling-list sizes, CIC cache locality, and the behavior of the greedy load balancer.</p>
+  </div>
+
+  <h3 id="s35"><span class="secnum">3.5</span>Grid creation (Berger&#8211;Rigoutsos) inefficiencies</h3>
+
+  <p><code>IdentifyNewSubgridsBySignature.C</code> never reuses signatures across bisection splits (each tree node pays &#8805;3 full projections of its volume plus 1&#8211;2 full copies; O(V&#183;K) for the skewed trees FOGGIE's nested geometry produces), and the inflection-point split search has been reduced to the single longest dimension &#8212; <code>for (i = 0; i &lt; 1; i++)</code> at line 126, with the original <code>MAX_DIMENSION</code> loop commented out &#8212; falling through to a blind bisection when that one dimension has no acceptable crossing, which systematically produces worse-fitting grids and therefore more of them. Additionally any proto-subgrid with an edge &#8805; 516 cells is force-split regardless of efficiency (an artifact of the Fortran work-array limit <code>MAX_ANY_SINGLE_DIRECTION</code>).</p>
+
+  <p><strong>Recommendations:</strong> slice the parent's signature arrays into children instead of recomputing (removes ~2/3 of projection cost); restore the multi-dimension inflection search; carry <code>NumberFlagged</code> into children.</p>
+
+  <h3 id="s36"><span class="secnum">3.6</span>Flagging-field costs</h3>
+
+  <p>Each <code>CellFlaggingMethod</code> makes its own independent full-grid passes (&#8805;15 passes per grid per rebuild for a typical FOGGIE method set), <code>Grid_FlagBufferZones.C</code> copies the full temp buffer back per buffer-zone iteration, and <code>Grid_SetFlaggingFieldStaticRegions.C:51</code> scans all 1000 <code>MAX_STATIC_REGIONS</code> slots for every grid on every level even when only a handful are defined. The must-refine particle path is the FOGGIE-critical one and is covered in <a href="#s37">&#167;3.7</a>.</p>
+
+  <h3 id="s37"><span class="secnum">3.7</span>Must-refine particle flagging ships dense fields (FOGGIE-critical)</h3>
+
+  <p>For remote grids, any rank holding contributing particles computes the <strong>entire dense <code>float</code> flagging field for that grid (ghost zones included) and sends it</strong> (<code>Grid_SetParticleMassFlaggingField.C:166-171</code>); the owner then sums the incoming buffers element-wise. This is invoked for every level &#8804; <code>MustRefineParticlesRefineToLevel</code> &#8212; i.e. all the nested levels of a FOGGIE zoom &#8212; once per level per rebuild. The source itself concedes the problem (<code>RebuildHierarchy.C:407-411</code>: "there will be scaling issues if one tries to do nonlocal refinement on large numbers of particles").</p>
+
+  <div class="keyrec">
+    <p><strong>Recommendations:</strong> send a sparse representation &#8212; a bitfield (32&#215; smaller), a list of flagged cell indices, or simply the contributing particle positions for owner-side deposit. Also exploit the existing <code>AllLocal</code> fast path (taken when <code>level &gt; MaximumStaticSubgridLevel</code>) by defining static refine regions down to the deepest level where particle locality holds.</p>
+  </div>
+
+  <h2 id="s4"><span class="secnum">4</span>Findings: parallelism</h2>
+
+  <h3 id="s41"><span class="secnum">4.1</span>Load balancing (the FOGGIE scaling wall)</h3>
+
+  <ol>
+    <li>
+      <p><strong>The work estimate ignores particles entirely.</strong> <code>CommunicationLoadBalanceGrids.C:79-87</code> fetches the per-grid particle count and discards it; <code>ComputeTime[i] = float(NumberOfCells)</code>. The Hilbert path (<code>LoadBalanceHilbertCurve.C:126-132, 419-425</code>) does the same. A disk grid with 10&#8309; star particles and a CGM grid with zero are identical to the balancer. Every per-particle cost in this report therefore concentrates on a few ranks, unmitigated. The infrastructure for a fix already exists: the radiative-transfer balancer feeds a measured per-grid work array through the <code>float *InputGridWork</code> overload of <code>LoadBalanceHilbertCurve</code> (<code>CommunicationLoadBalancePhotonGrids.C:113-115</code>).</p>
+      <div class="keyrec"><p><strong>Recommendation:</strong> add <code>ComputeWorkEstimate() = CellsTotal + w_p&#183;N_particles + w_s&#183;N_stars</code> (new parameters, default 0 &#8594; behavior unchanged), calibrate the weights against per-level timings; longer term, feed measured per-grid times through <code>InputGridWork</code>. This is the single largest structural payoff available.</p></div>
+    </li>
+    <li><strong>The default balancer (mode 1) gives up on first failure.</strong> The greedy loop (<code>CommunicationLoadBalanceGrids.C:119-217</code>) aborts balancing for the <em>whole level</em> the first time the smallest grid on the most-loaded rank exceeds half the current imbalance (<code>:197-198</code>) &#8212; exactly the deep-zoom case where one rank holds one big grid. There is no grid-splitting fallback. The loop is also serial, replicated on every rank, moves one grid per O(N<sub>ranks</sub> + N<sub>grids</sub>) iteration, and picks first-fit rather than best-fit. <strong>Recommendation:</strong> switch production to <code>LoadBalancing = 4</code> (Hilbert) now; fix mode 1 to mark stuck ranks and continue.</li>
+    <li><strong>Hilbert keys run out of resolution at level ~11.</strong> <code>HilbertCurve3D.C</code> extracts 19 bits of <em>domain-absolute</em> coordinate; for a 256&#179; root grid the key resolution equals the cell size at exactly L = 11, so deeper grids get tied keys, the sort loses locality, and the fuzzy-boundary refinement silently no-ops. The fix is <strong>already written but commented out</strong>: bounding-box normalization at <code>LoadBalanceHilbertCurve.C:112-113</code> (and <code>:405-406</code>, <code>:642-643</code>; <code>BoundingBoxWidthInv</code> is computed and unused). Re-enabling it recovers ~500&#215; key resolution for a 10&#8315;&#179; zoom. Also widen the key comparison (the two-word key is collapsed into a 53-bit double while carrying 57 bits).</li>
+    <li><strong>Per-level-only balancing; root grids frozen.</strong> Levels are balanced in isolation; the only cross-level-aware balancer (<code>CommunicationLoadBalanceRootGrids</code>, which weights root tiles by descendant cells) <strong>returns immediately for any nested-IC run</strong> (<code>StaticRefineRegionLevel[0] != INT_UNDEFINED</code> guard at <code>:60-64</code>), so FOGGIE root tiles keep their initialization-time cyclic assignment (<code>CommunicationPartitionGrid.C:551</code>, <code>gridcounter % NumberOfProcessors</code>) forever &#8212; including the tiles under the zoom that parent the entire hierarchy. <strong>Recommendation:</strong> parameterize the zoom early-return and weight root placement by expected subgrid load; longer term, a multi-constraint SFC partition over all levels.</li>
+    <li><strong>Grids are born on the parent's rank, filled, then migrated.</strong> New subgrids are created on the parent's processor, populated by interpolation, and only afterwards load-balanced &#8212; so full field payloads (plus particles on non-static levels) cross the network every rebuild, and the few ranks parenting the zoom are transient memory hot spots. <strong>Recommendation:</strong> assign the destination processor <em>before</em> <code>InterpolateFieldValues</code> (geometry and work estimates are known right after <code>CommunicationShareGrids</code>); the interpolation itself then performs the transfer.</li>
+    <li><strong>Modes 2/3 are a silent no-op on fresh zoom runs</strong> (<code>CoresPerNode</code> stays 1 because <code>DetermineNumberOfNodes()</code> is unreachable before the early returns; each rank then "balances" against itself with no warning). Add a guard/failure and make <code>CoresPerNode</code> a readable parameter.</li>
+  </ol>
+
+  <p>Latent bugs in the balancers: an out-of-bounds <code>HilbertData[-1]</code> read in <code>LoadBalanceHilbertCurveRootGrids.C</code> (missing <code>BlockDivisions[i] == 0</code> guard); <code>int</code> overflow of <code>TotalWork</code> above 2.1&#215;10&#8313; ghost-inclusive cells (garbage partitions); unbounded partition <code>while</code> loops; a division by zero when a rank receives zero work.</p>
+
+  <h3 id="s42"><span class="secnum">4.2</span>Communication layer</h3>
+
+  <ol>
+    <li><strong>Per-star collective storms (very high impact for FOGGIE).</strong> <code>Star_FindFeedbackSphere.C:113-170</code> performs <strong>one 7-element <code>MPI_Allreduce</code> per radius shell per star</strong> while growing feedback spheres (<code>StarParticleAddFeedback.C:131,164</code>); with hundreds of forming stars this is 10&#179;&#8211;10&#8308; global allreduces per level-subcycle. The active-particle feedback-zone machinery similarly runs a full three-phase communication round over all grids <em>per particle</em> (<code>ConstructFeedbackZone.C:119-141</code>). <strong>Recommendation:</strong> batch across stars &#8212; compute all local shells, then one packed allreduce (or pipelined <code>MPI_Iallreduce</code>); one three-phase round covering all (particle, grid) pairs.</li>
+    <li><strong><code>CommunicationReceiveHandler</code> is O(N&#178;).</strong> The drain loop (<code>CommunicationReceiveHandler.C:74-343</code>) rescans the entire receive-record table (two full scans, plus a third on active-particle completions) after every <code>MPI_Waitsome</code> return; with trickling completions this is O(N&#178;) per round, ~14 rounds per subcycle. With <code>GRIDS_PER_LOOP = 100000</code> (batching effectively disabled in <code>SetBoundaryConditions.C</code>, <code>PrepareDensityField.C</code>, <code>UpdateFromFinerGrids.C</code>, <code>CopyZonesFromOldGrids.C</code>, <code>DepositParticleMassFlaggingField.C</code>), N reaches N<sub>grids</sub> &#215; N<sub>siblings</sub>. <strong>Recommendation:</strong> dispatch only the completed indices <code>MPI_Waitsome</code> already returns, keep an explicit deferred list for dependency-blocked records, and lower <code>GRIDS_PER_LOOP</code> to ~512&#8211;1024 (also bounds receive-buffer memory and removes the unchecked overflow of <code>MAX_RECEIVE_BUFFERS = 150000</code>, which currently has <strong>no bounds check anywhere</strong> and fails as silent corruption).</li>
+    <li><strong>The gravity FFT transpose is a serialized ring.</strong> <code>CommunicationTranspose.C</code> variants 0/1 loop over all processor "jumps" with a blocking send/wait per step &#8212; O(N<sub>ranks</sub>) serialized latency steps per transpose, &#215;6 transposes per root-grid potential solve (~13 <code>CommunicationTranspose</code> calls in <code>CommunicationParallelFFT.C</code>); variant 2 pipelines only 128 at a time. On top of this the FFT itself is a 1-D slab decomposition (<code>CommunicationParallelFFT.C:56-88</code>) &#8212; parallelism capped at N<sub>root</sub> slabs (256 ranks for a 256&#179; root grid), with all other ranks idle but still exchanging zero-length messages. <strong>Recommendations:</strong> replace the ring with a single <code>MPI_Alltoallv</code> (the routing tables already contain the counts/displacements); ensure <code>UnigridTranspose = 2</code> (the default &#8212; verify it is not overridden); medium term, adopt a pencil decomposition or an external FFT (heFFTe/FFTW-MPI), or gather the root solve onto a min(P, N<sub>root</sub>) sub-communicator. Also note the bundled <code>s90</code> serial FFT is used unless a vendor macro is set (<code>select_fft.F90:86</code>) &#8212; several &#215; slower than FFTW/MKL, with two extra full-array transposes per call in <code>wrapper3d.F90</code>.</li>
+    <li><strong>Dense collectives of sparse data.</strong> <code>CommunicationSyncNumberOfParticles</code> allreduces <code>45 &#215; N_grids</code> ints (~1.8&#8211;18 MB at FOGGIE grid counts) with ~1/N<sub>ranks</sub> occupancy, up to four times per <code>CommunicationCollectParticles</code>, several times per rebuild level. The stride grew from 33 to 45 in this fork (PR #54), which also added <strong>12 full linear scans of every grid's particle array per sync</strong> (<code>Grid_ReturnNumberOfParticlesOfThisType</code> per type) to feed an I/O diagnostic. <code>CommunicationShareActiveParticles</code> uses <code>MPI_Allgatherv</code> where <code>Alltoallv</code> is correct (every rank receives every moving particle &#8212; a factor-N<sub>ranks</sub> waste; the per-destination counts are computed and thrown away). <strong>Recommendations:</strong> one-pass 12-bin histogram (or incrementally maintained <code>ParticleTypeCount[]</code>, which already exists in <code>Grid.h</code>); gate the extra 12 slots on output steps; sparse owner-keyed allgatherv for the sync; convert ShareActiveParticles to the Alltoallv pattern already used correctly by <code>CommunicationShareParticles</code>.</li>
+    <li><strong>Collective fusion and stragglers.</strong> Numerous adjacent small reductions can be packed: the two timestep allreduces in <code>SetLevelTimeStep.C:69,88</code>; the two rebuild sums; the two per-level star-count allreduces (<code>RecordTotalStarParticleCount</code> + <code>CommunicationUpdateStarParticleCount</code>); the five-in-a-row <code>CommunicationAllSumValues</code> in <code>RecalibrateMBHFeedbackThermalRadius.C</code>, <code>RecalibrateAccretingMass.C</code>, <code>CalculateSubtractionParameters.C</code>; and <code>StarParticleFindAll</code>'s global star-list allgatherv (see <a href="#s51">&#167;5.1</a>). Two unconditional barriers bracketing <code>EvolveLevel</code> (<code>EvolveHierarchy.C:508,554</code>) exist purely to time the <code>Evtime</code> log and should be removed or guarded.</li>
+    <li><strong>Send-buffer management.</strong> <code>CommunicationBufferedSend.C</code> scans the whole buffer table per send taking the <em>last</em> free slot (O(B) per message), reclaims only every 30th call, and hard-exits at 40,000 outstanding buffers. Fix: free-list (O(1)), byte-budget-driven reclamation, soft in-flight cap with <code>MPI_Waitany</code>.</li>
+    <li><strong>Message-payload trims.</strong> Halo exchanges send all ~20&#8211;30 baryon fields even when the consumer needs ~8 (<code>Grid_CommunicationSendRegion.C</code> with <code>SendField == ALL_FIELDS</code>) &#8212; a ~3&#215; bandwidth saving available via per-call field masks. <code>int TransferSize</code> overflows at 2.1&#215;10&#8313; elements &#8212; within a factor of ~1.1 for a whole-grid move of a 400&#179;, 30-field grid, doubled by <code>NEW_AND_OLD</code>; promote to 64-bit.</li>
+  </ol>
+
+  <h3 id="s43"><span class="secnum">4.3</span>No threading</h3>
+
+  <p>The only OpenMP in the tree is in <code>ffte4X.F90</code>. Everything else &#8212; hydro, gravity, CIC, chemistry, feedback, and all the replicated-metadata loops &#8212; is flat MPI, so the replicated hierarchy is paid once per <em>core</em> and every collective spans all cores.</p>
+
+  <div class="keyrec">
+    <p><strong>Recommendation:</strong> thread the <em>grid loop</em> (not the kernels): a <code>#pragma omp parallel for schedule(dynamic)</code> over the local grid list in <code>EvolveLevel.C:505-587, 666-765</code> covers <code>SolveHydroEquations</code>, chemistry, particle updates, and feedback with minimal code change (prerequisite: make the few <code>static</code> scratch arrays, e.g. <code>Grid_FastSiblingLocatorFindSiblings.C:41</code>, thread-local). Running 1 rank per NUMA domain &#215; 16&#8211;64 threads divides replicated-hierarchy memory and collective width by the same factor &#8212; the cheapest big lever against &#167;3.1 short of distributing the metadata. This is precisely the path ART took in the early 2000s and RAMSES-yOMP takes today (<a href="#s6">&#167;6</a>).</p>
+  </div>
+
+  <h2 id="s5"><span class="secnum">5</span>Findings: physics modules</h2>
+
+  <h3 id="s51"><span class="secnum">5.1</span>Star particles and feedback (FOGGIE-specific path: <code>star_maker2.F</code> + <code>star_feedback6.F</code>)</h3>
+
+  <p>The recurring theme: almost every star-particle code path runs once per level per subcycle and scales with the <em>total</em> particle or grid count of the hierarchy, not with local work. At 2<sup>11</sup> subcycles per root step with 10&#8310;&#8211;10&#8311; concentrated particles, every term is multiplied simultaneously.</p>
+
+  <ol>
+    <li>
+      <p><strong><code>StarParticleFindAll</code> scans the whole hierarchy every level-subcycle.</strong> <code>StarParticleInitialize</code> &#8594; <code>StarParticleFindAll</code> walks <strong>all levels 0..MAX_DEPTH</strong>, scanning every particle (dark matter included) to find new <code>Star</code>-framework objects, then allgathers the global star list (~1.3 kB per <code>StarBuffer</code>). For FOGGIE's configuration (no Star-framework particle types in use) this is ~10&#185;&#8304; particle-type comparisons per root step <strong>to find nothing</strong>. The Active-Particle framework has exactly the right guard (<code>ActiveParticleInitialize.C:45</code> returns when no types are enabled); <code>StarParticleFindAll</code> has none.</p>
+      <div class="keyrec"><p><strong>Recommendation (highest-leverage single change in the star subsystem, ~hours):</strong> skip <code>StarParticleFindAll</code> and its dependents entirely when no Star-framework maker (<code>POP3_STAR</code>, <code>STAR_CLUSTER</code>, <code>MBH_PARTICLE</code>, <code>SINGLE_STAR</code>, <code>StarParticleRadiativeFeedback</code>) is enabled. Also: never enable <code>StarParticleRadiativeFeedback</code> at FOGGIE star counts &#8212; it promotes every star particle to a <code>Star</code> object, making this path O(N&#178;) with a 1.3 kB &#215; N<sub>stars</sub> allgatherv per subcycle.</p></div>
+    </li>
+    <li>
+      <p><strong>Yield-table integration without an age gate.</strong> <code>star_feedback6.F</code> performs six <code>integrate_yields</code> calls per star particle per subcycle (<code>sne_number</code>, <code>sne_mass</code>, <code>sne_II_metal</code>, <code>sne_Ia_metal</code>), each with a linear metallicity search; the sub-threshold skip (<code>nsn &lt; nsn_timestep</code>) is applied only <em>after</em> all six, and there is no age cutoff before the calls &#8212; a 10 Gyr old particle pays the full cost to return zero. On level-11 grids each particle pays this ~2000&#215; per root step.</p>
+      <p><strong>Recommendations:</strong> (i) test <code>age &gt; tabAge(ntabAge)</code> immediately after the particle-type checks and skip; (ii) call <code>sne_number</code> first, test, then the rest; (iii) fuse the four routines onto one shared index triple; (iv) cache the metallicity index per particle.</p>
+      <div class="note"><p><strong>The code default <code>StarFeedbackSNePerTimestepLimit = 1.0e-6</code> contradicts the documented default of 1e-3</strong> &#8212; and the docs explicitly warn that values below 1e-3 significantly slow the code. Reconcile; production runs inheriting the code default are running 1000&#215; below the recommended threshold.</p></div>
+    </li>
+    <li>
+      <p><strong>Per-cell waste in the feedback prologue.</strong> In <code>Grid_StarParticleHandler.C</code>:</p>
+      <ul>
+        <li><code>IdentifySpeciesFields</code> &#8212; 12 linear field searches &#8212; is called <strong>inside the innermost cell loop</strong> of the <code>mu_field</code> construction (<code>:1783</code>, and again in the MOM_STAR branch at <code>:1719</code>): 300&#8211;400 wasted comparisons per cell, a 20&#8211;30&#215; overhead on that loop, on every grid at every subcycle regardless of whether the grid has stars. Hoist it (minutes).</li>
+        <li>A per-cell <code>fopen</code>/<code>fprintf</code>/<code>fclose</code> diagnostic (<code>:1801-1829</code>) has all ranks appending to the <strong>same file</strong> whenever &#956; goes out of range &#8212; a latent filesystem-serializing job-killer, and redundant (the Fortran side already clamps &#956;). Remove or gate + rank-suffix.</li>
+        <li><code>ComputeCoolingTime</code> &#8212; a full Grackle solve over the whole grid &#8212; runs on <strong>every grid at every subcycle</strong> whenever star formation is on (<code>:861-862</code>), but its output is consumed only when <code>StarMakerThermalCrit == 1</code> (<code>star_maker2.F:212</code>). This is a hidden near-doubling of the cooling budget. Gate it.</li>
+        <li><code>AllocateNewParticles(0.25&#183;N_cells)</code> allocates ~6 MB of particle buffers per grid per subcycle even when zero stars form; the full-grid temperature field, DM-field copy, and species&#8594;fraction round trip are likewise unconditional. Right-size and gate on <code>MakeStars</code>.</li>
+      </ul>
+    </li>
+    <li>
+      <p><strong><code>star_feedback6.F</code> internals.</strong></p>
+      <ul>
+        <li>14 full-grid automatic (stack) arrays per call &#8212; ~38 MB of stack for a 70&#179; grid at <code>-r8</code> &#8212; with no <code>-heap-arrays</code> in any machine file: a stack-overflow class of crash whose likely symptom is "memory issues" at high optimization (see item 6). Make them <code>allocatable</code> or add <code>-heap-arrays</code>; structurally, replace the dense per-cell accumulators with a compact list of explosion cells (typically &#8810;1% of cells), which also removes the unconditional full-grid zeroing and second-phase sweep (add an <code>nfbcells == 0</code> early return meanwhile &#8212; one line).</li>
+        <li>Loop-invariant <code>pow()</code> calls (real-literal exponents forcing libm <code>pow</code>) are recomputed per neighbor cell &#8212; e.g. the unresolved-momentum expression (3 <code>pow</code>s) identically 27 times per explosion cell. Hoist; use integer exponents and <code>sqrt()</code>.</li>
+        <li>The (2r+1)&#179; feedback stencil is traversed ~13 times per explosion cell across bookkeeping passes, one of which (<code>mom_inj</code>/<code>energy_inj</code>) ignores the distance mask. Fuse the fusable passes; the cost grows 4.6&#215;/12.7&#215; if <code>StarFeedbackDistRadius</code> is raised to 2/3.</li>
+        <li><code>draw_stochastic</code> uses Fortran <code>RANDOM_NUMBER</code> with <strong>no seed call</strong> (unlike <code>star_maker_ssn.F</code>), so ranks likely draw identical sequences &#8212; correlated stochastic SNe across the volume. A statistics bug worth fixing alongside.</li>
+        <li>The two <code>momentum_convert</code> calls mutate the shared velocity arrays over the stencil, so overlapping feedback regions from adjacent explosion cells interact mid-conversion &#8212; a correctness concern in starbursts and a blocker for threading the explosion loop.</li>
+      </ul>
+    </li>
+    <li>
+      <p><strong>Particle bookkeeping at scale.</strong></p>
+      <ul>
+        <li>The particle Courant scan (<code>Grid_ComputeTimeStep.C:379-398</code>) does three passes with a division per particle; restructure to a single fused max-reduction and one division (~30&#215; cheaper on million-particle grids).</li>
+        <li>Rebuild-time particle churn: every structural change reallocates and copies all ~11 SoA arrays; <code>TransferSubgridParticles</code> computes the cell-index assignment twice (CountOnly then real). Adopt capacity/size semantics with geometric growth, in-place compaction, and reuse of the count-pass assignment.</li>
+        <li>Two O(N<sub>grids</sub>) star-count allreduces per level per subcycle (<code>RecordTotalStarParticleCount</code>, <code>CommunicationUpdateStarParticleCount</code>), each preceded by O(N<sub>particles</sub>) type scans &#8212; merge into one, skip when nothing formed, maintain counts incrementally.</li>
+      </ul>
+    </li>
+    <li>
+      <p><strong>Build-flag regression.</strong> Commit <code>1bc879d</code> (June 2025) dropped <code>-xAVX -ip -ipo</code> from <code>Make.mach.pleiades-mpich</code> to work around memory issues &#8212; very plausibly the stack overflows of item 4. The result is scalar SSE2 code for all Fortran kernels on Pleiades, a plausible 1.5&#8211;3&#215; slowdown, and no inlining of the small helpers called millions of times per step.</p>
+      <div class="keyrec"><p><strong>Recommendation:</strong> fix the stack allocation root cause, then restore <code>-xAVX</code>/<code>-march</code> and <code>-ip</code>; reintroduce <code>-ipo</code> last and separately. Best effort-to-benefit ratio in the audit.</p></div>
+    </li>
+  </ol>
+
+  <h3 id="s52"><span class="secnum">5.2</span>Gravity</h3>
+
+  <ol>
+    <li>
+      <p><strong>Exponential particle-deposit multiplicity.</strong> <code>DepositParticleMassField</code> recurses over the entire subtree below each grid, so every particle is CIC-deposited into every ancestor level at every subcycle of that level: &#931;<sub>L</sub> 2<sup>L</sup> &#8776; 2<sup>L<sub>max</sub>+1</sup> deposits per particle per root step (~2&#215;10&#185;&#8304; CIC scatters for 10&#8311; particles at L<sub>max</sub> = 10), each deposit costing ~5 array passes (mass-rescale copy with per-call <code>new</code>/<code>delete</code>, position drift out and back, scatter).</p>
+      <p><strong>Recommendations:</strong> set <code>MaximumGravityRefinementLevel</code> explicitly (e.g. L<sub>max</sub> &#8722; 2/3) &#8212; the code's one lever, and check whether FOGGIE production decks set it; drift once per recursion instead of per ancestor; hoist the rescale buffer; long term, restrict the child's <em>already-built</em> mass field to the parent (O(N<sub>cells</sub>), particle-count independent &#8212; the RAMSES/Nyx approach).</p>
+    </li>
+    <li>
+      <p><strong>Per-patch Dirichlet solves &#8212; the known level-boundary force artifact.</strong> Each subgrid's potential is solved independently with boundary values tri-linearly interpolated from the parent, iterated <code>PotentialIterations</code> (default 4) times with sibling-boundary averaging, plus one more solve in <code>EvolveLevel</code> &#8212; 5+ multigrid solves per grid per subcycle, with no coarse-fine flux matching and no composite solve. The buffer-region source mass is injected with <strong>nearest-neighbor</strong> interpolation (<code>INTERPOLATE_LINEAR</code> explicitly disabled in <code>Grid_CopyParentToGravitatingFieldBoundary.C:136</code>), the previous solution is discarded every subcycle (<code>delete</code>/<code>new</code> in <code>Grid_PreparePotentialField.C:80-83</code>), and the root-grid FFT uses the continuum &#8722;1/k&#178; Green's function while the levels use a 2nd-order finite-difference Laplacian &#8212; mismatched operators at the 0/1 interface (<code>INFLUENCE2</code>, the discrete form, is compiled out). The multigrid itself coarsens non-2<sup>j</sup>+1 dimensions with the nesting assertion commented out (<code>MultigridSolver.C:72-80</code>), degrading V-cycle convergence; the convergence tolerance <em>loosens</em> with grid size (<code>Grid_SolveForPotential.C:76</code>); and the unconverged fallback is up to 200 silent Gauss&#8211;Seidel sweeps per grid, then a fatal error.</p>
+      <p><strong>Recommendations:</strong> short term &#8212; enable <code>INTERPOLATE_LINEAR</code>, reuse the previous potential as the initial guess, test <code>INFLUENCE2</code>, instrument multigrid iteration counts (top suspect for unexplained level-time spikes), fix the tolerance to a fixed RMS criterion, and benchmark <code>PotentialIterations = 2</code> with capped V-cycles on later iterations. Long term &#8212; a composite multilevel solve (RAMSES octree multigrid / AMReX MLMG equivalent) is the correct fix for both cost and the well-known spurious heating of particles crossing refinement boundaries; at 10+ levels this accuracy issue is material, not cosmetic.</p>
+    </li>
+    <li>
+      <p><strong>Node-level particle kernels.</strong> <code>cic_deposit.F</code>/<code>cic_interp.F</code> are scalar (scatter cannot vectorize; no directives), no OpenMP, and particles are never spatially sorted, so million-particle grids thrash L1 on every scatter. Morton-sorting particles at rebuild (~50 lines, insert after <code>CommunicationCollectParticles</code>) is typically worth 2&#8211;4&#215; on deposit/interpolation. Note also <code>GravitatingMassField</code> sizing (+12 cells per dimension) makes the three gravity arrays 1.6&#8211;2.9&#215; the baryon-field size per grid &#8212; another argument for larger subgrids (<a href="#s34">&#167;3.4</a>). Verify <code>CONFIG_PFLOAT_16</code> is <em>not</em> set: the CIC kernel bodies are compiled empty under 16-byte positions.</p>
+    </li>
+  </ol>
+
+  <h3 id="s53"><span class="secnum">5.3</span>Timestep control</h3>
+
+  <ul>
+    <li><code>SetLevelTimeStep</code> takes a global minimum per level &#8212; one anomalous cell anywhere halves the level dt and doubles the subcycle count for that level <em>and everything below</em>. The <code>dtAcceleration</code> scan includes ghost zones (<code>Grid_ComputeTimeStep.C:412-422</code>), so interpolated boundary accelerations can set the global step; restrict it to the active region (one line). There is no cap or diagnostic on the subcycle ratio.</li>
+    <li><strong>Recommendation (cheap, high diagnostic value):</strong> log, once per level-step, which constraint on which grid set the timestep. Feedback-heated cells shrinking level dt is invisible today and is a plausible driver of anomalous subcycle counts.</li>
+    <li>Chemistry (<code>solve_rate_cool.F</code>, itmax = 10&#8308; per-cell substeps) creates order-of-magnitude within-grid cost variance that no cell-count-based balancer can see &#8212; supporting the measured-work balancing recommendation (<a href="#s41">&#167;4.1.1</a>).</li>
+  </ul>
+
+  <h3 id="s54"><span class="secnum">5.4</span>High-frequency bookkeeping</h3>
+
+  <p><code>OutputFromEvolveLevel</code> polls the filesystem (4 <code>access()</code> calls + a broadcast) at every finest-level subcycle (~1024&#215;/root step) under <code>FileDirectedOutput</code>; <code>TIMER_WRITE</code> issues one <code>MPI_Gather</code> per timer key per root step (<code>TimingCycleSkip = 1</code> default) and <code>TIMER_START</code> performs two string-keyed map lookups per grid per subcycle. Throttle the polling, set <code>TimingCycleSkip = 10</code>, pack the gathers, and use pre-registered timer handles.</p>
+
+  <h3 id="s55"><span class="secnum">5.5</span>Instrumentation gap</h3>
+
+  <p>The default build reports <strong>one number</strong> for the entire rebuild subsystem. A complete 16-slot sub-phase breakdown already exists (<code>RHperf</code> in <code>RebuildHierarchy.C</code>) but is disabled by <code>#define NO_RH_PERF</code> at line 92. Enabling it (or converting the slots to <code>TIMER_*</code> regions so they flow into <code>performance.out</code> and <code>performance_tools.py</code>) is trivial and is a prerequisite for measuring everything else in this report. Similarly, uncomment/promote the multigrid iteration-count diagnostics (<code>MultigridSolver.C:217,234</code>) and add the per-level dt-limiter line (<a href="#s53">&#167;5.3</a>).</p>
+
+  <h2 id="s6"><span class="secnum">6</span>Comparison: RAMSES, Nyx, and ART</h2>
+
+  <div class="tablewrap">
+    <table class="comparison">
+      <thead>
+        <tr><th>Property</th><th>Enzo (this fork)</th><th>RAMSES</th><th>Nyx (AMReX)</th><th>ART/cART</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Refinement unit</td><td>arbitrary rectangular patch</td><td>oct (2&#179; cells) in a fully-threaded tree</td><td>fixed-size box (<code>max_grid_size</code>, <code>blocking_factor</code>)</td><td>cell/oct in a refinement tree</td></tr>
+        <tr><td>Hierarchy metadata</td><td>fully replicated <code>grid</code> objects on every rank</td><td>distributed; each rank holds local octs + "locally essential" boundary</td><td>compact <code>BoxArray</code> + <code>DistributionMapping</code> (metadata cheap, field data local-only)</td><td>distributed local trees + buffer zone</td></tr>
+        <tr><td>Regridding</td><td>global <code>RebuildHierarchy</code> per subcycle per level</td><td>incremental, local oct refine/derefine; no global rebuild</td><td>parallel Berger&#8211;Rigoutsos tagging &#8594; new BoxArray; cheap remap</td><td>incremental, local</td></tr>
+        <tr><td>Load-balance unit &amp; driver</td><td>whole patch; cell-count-only greedy (default)</td><td>oct segments along Peano&#8211;Hilbert curve, cost-weighted</td><td>boxes via SFC or knapsack over per-box costs; can weight particles; dual-grid option</td><td>SFC segments weighted by measured cost</td></tr>
+        <tr><td>Particle load balance</td><td>none (follows grid owner; particles invisible to balancer)</td><td>implicit &#8212; particles live in oct lists, follow the SFC domain</td><td>explicit &#8212; particle container redistribution; separate particle distribution maps</td><td>implicit via SFC</td></tr>
+        <tr><td>Gravity on fine levels</td><td>independent per-patch relaxation with interpolated Dirichlet BCs</td><td>multigrid solved across the octree (composite)</td><td>MLMG composite multilevel solve with coarse-fine sync/flux registers</td><td>multilevel relaxation on the tree</td></tr>
+        <tr><td>Threading / accelerators</td><td>none (flat MPI); CUDA for PPM only, off</td><td>MPI (+ RAMSES-yOMP hybrid branch; cuRAMSES GPU work)</td><td>MPI + OpenMP tiling + full GPU (CUDA/HIP) offload</td><td>hybrid MPI+OpenMP since early 2000s</td></tr>
+        <tr><td>Subcycling</td><td>factor-2 W-cycle, uncapped ratio, no alternatives</td><td>per-level dt, factor 2, incremental tree</td><td>runtime-selectable: none / standard / user pattern / <strong>optimal</strong></td><td>factor-2</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>What the comparison implies for the FOGGIE pain points specifically:</p>
+
+  <ul>
+    <li><strong>Deep hierarchy:</strong> RAMSES and ART never rebuild &#8212; refinement is an incremental local tree operation, so the 2<sup>L</sup> &#215; rebuild multiplier that dominates Enzo's deep levels simply does not exist. Nyx regrids like Enzo but the operation is a parallel clustering over distributed tags producing a compact box list &#8212; no per-rank instantiation of remote grid objects and no O(N&#178;) loops. Enzo's equivalents are &#167;3.1&#8211;3.3, and the mitigations listed there (skip-cycles, local grid lists, proxy metadata, neighborhood sharing) close most of the practical gap without abandoning patches.</li>
+    <li><strong>Concentrated star particles:</strong> in RAMSES/ART, particles are attached to the local tree and <em>automatically</em> follow the cost-weighted SFC decomposition &#8212; an oct-granular unit of balance means a single galaxy spreads across many ranks. Nyx makes particle cost an explicit input to the distribution map and can even balance particles on a different grid than the fluid. Enzo's balancer discards the particle count (<a href="#s41">&#167;4.1.1</a>); fixing that estimate, plus Hilbert mode with working keys (&#167;4.1.3) and smaller effective balance granularity via larger-but-fewer grids per level, is the Enzo-shaped version of what the other codes get architecturally.</li>
+    <li><strong>Gravity at level boundaries:</strong> RAMSES (octree multigrid) and Nyx (MLMG with flux registers) both solve a composite problem across levels; Enzo's per-patch Dirichlet scheme (<a href="#s52">&#167;5.2.2</a>) is the original 1998 design and is the biggest <em>accuracy</em> gap for a 10-level zoom, in addition to its cost.</li>
+    <li><strong>Node-level:</strong> Nyx demonstrates that block-structured AMR maps cleanly onto OpenMP tiling and GPUs; RAMSES-yOMP and cuRAMSES show the octree codes retrofitting the same hybrid parallelism Enzo lacks entirely (<a href="#s43">&#167;4.3</a>). The scaling walls FOGGIE hits are being actively attacked in every one of these communities; none of them ships a flat-MPI, fully-replicated-metadata configuration at FOGGIE scale.</li>
+    <li><strong>Honest caveats:</strong> octrees pay ~2&#215; memory per cell in tree overhead and worse cache/vector behavior per cell than patch sweeps; AMReX's fixed box sizes waste some refinement volume relative to Enzo's fitted patches. Enzo's per-patch solvers are genuinely fast <em>per cell</em> &#8212; the deficit is in the machinery around them.</li>
+  </ul>
+
+  <p><em>References:</em> RAMSES &#8212; Teyssier (2002), <a href="https://github.com/ramses-organisation/ramses">github.com/ramses-organisation/ramses</a>; Nyx &#8212; Almgren et al. (2013), <a href="https://github.com/AMReX-Astro/Nyx">github.com/AMReX-Astro/Nyx</a>, AMReX docs (MLMG, subcycling modes, dual-grid); ART &#8212; Kravtsov, Klypin &amp; Khokhlov (1997), Rudd, Zentner &amp; Kravtsov (2008) (no canonical public repo; hybrid MPI+OpenMP versions distributed by the group).</p>
+
+  <h2 id="s7"><span class="secnum">7</span>Recommendations, tiered</h2>
+
+  <h3 id="s71"><span class="chip t0">Tier 0</span>Parameter files and build flags (no code changes; try first)</h3>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Change</th><th>Addresses</th><th>Expected effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>RebuildHierarchyCycleSkip[L] = 2&#8211;4</code> for L &#8805; 4</td><td>&#167;3.2</td><td>Directly divides the dominant rebuild + collective count; highest-value single knob</td></tr>
+        <tr><td><code>LoadBalancing = 4</code></td><td>&#167;4.1.2</td><td>Escapes the mode-1 abort pathology; spatial locality preserved</td></tr>
+        <tr><td><code>SubgridSizeAutoAdjust = 0</code>, <code>MinimumSubgridEdge = 16</code>, <code>MaximumSubgridSize &#8776; 2.6&#215;10&#8309;</code></td><td>&#167;3.4</td><td>Ghost fraction 81%&#8594;~28%; fewer grids, fewer messages, smaller metadata</td></tr>
+        <tr><td>Set <code>MaximumGravityRefinementLevel = L_max &#8722; 2</code> (validate forces)</td><td>&#167;5.2.1</td><td>Truncates the exponential deposit multiplier</td></tr>
+        <tr><td><code>LoadBalancingMinLevel = 1</code>; verify <code>UnigridTranspose = 2</code>, <code>ParallelRootGridIO = 1</code>, <code>ParallelParticleIO = 1</code></td><td>&#167;4.2.3, I/O</td><td>Avoids known slow paths (note the <code>MustRefineParticlesCreateParticles == 1</code> &#215; <code>ParallelRootGridIO</code> constraint in <code>CosmologySimulationInitialize.C:693</code>)</td></tr>
+        <tr><td><code>TimingCycleSkip = 10</code>; keep <code>FileDirectedOutput</code> polling throttled</td><td>&#167;5.4</td><td>Removes ~10&#179; filesystem ops + ~20 gathers per root step</td></tr>
+        <tr><td>Restore <code>-xAVX</code>/<code>-march</code> and <code>-ip</code> on Pleiades <strong>after</strong> the &#167;5.1.4 stack fix; add <code>-heap-arrays 64</code></td><td>&#167;5.1.6</td><td>1.5&#8211;3&#215; on all Fortran kernels</td></tr>
+        <tr><td>Verify <code>CONFIG_FAST_SIB = yes</code> and <code>CONFIG_PFLOAT_16</code> not set in production builds</td><td>&#167;3.3, &#167;5.2.3</td><td>Guards against silent 100&#215; regressions</td></tr>
+        <tr><td>Check in a FOGGIE production parameter deck under <code>run/</code></td><td>&#167;4.1</td><td>Nothing in-tree records production settings today; makes tuning auditable</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="s72"><span class="chip t1">Tier 1</span>Trivial-to-low-effort code fixes (minutes to hours each)</h3>
+
+  <ol class="findings-list">
+    <li>Guard <code>StarParticleFindAll</code> when no Star-framework type is enabled (&#167;5.1.1) &#8212; the single biggest star-path win.</li>
+    <li>Hoist <code>IdentifySpeciesFields</code> out of the <code>mu_field</code> cell loop; skip <code>mu_field</code> on starless grids (&#167;5.1.3).</li>
+    <li>Delete or gate the per-cell &#956; file write (&#167;5.1.3).</li>
+    <li>Age cutoff + call reordering in <code>star_feedback6.F</code>; reconcile the <code>StarFeedbackSNePerTimestepLimit</code> default vs documentation (&#167;5.1.2).</li>
+    <li>Gate <code>ComputeCoolingTime</code> on <code>StarMakerThermalCrit</code>; right-size <code>AllocateNewParticles</code> (&#167;5.1.3).</li>
+    <li>Make the <code>star_feedback6.F</code> grid arrays allocatable + early return when no feedback (&#167;5.1.4); seed the RNG.</li>
+    <li>Guard the two debug reductions in <code>RebuildHierarchy.C:425-426</code>; remove the <code>Evtime</code> barriers; fuse adjacent small allreduces (&#167;4.2.5).</li>
+    <li>Enable <code>RH_PERF</code> (or convert to TIMER regions); add the per-level dt-limiter diagnostic; instrument multigrid iteration counts (&#167;5.5).</li>
+    <li>Visit-stamp dedup in <code>FastSiblingLocatorFindSiblings</code>; hash/sort the parent-grouping loop (&#167;3.2&#8211;3.3).</li>
+    <li>Lower <code>GRIDS_PER_LOOP</code> to ~512&#8211;1024; bounds-check <code>CommunicationReceiveIndex</code> (&#167;4.2.2).</li>
+    <li>Re-enable the Hilbert bounding-box normalization (3 commented-out lines) (&#167;4.1.3).</li>
+    <li>Single-pass particle Courant reduction (&#167;5.1.5); single-pass particle-type histogram in <code>CommunicationSyncNumberOfParticles</code> (&#167;4.2.4).</li>
+    <li>Fix the small latent bugs: the <code>case 21</code> fall-through in <code>CommunicationReceiveHandler.C:298-305</code> (live for any Active-Particle feedback user), the sink-path double free in <code>Grid_DepositParticlePositions.C</code>, the <code>CreateSUBlingList</code> leak, the Hilbert OOB/overflow items (&#167;4.1), the <code>Grid_CommunicationReceiveRegion.C:422</code> wrong-array zeroing, and the uninitialized <code>APTotalNumber</code>.</li>
+  </ol>
+
+  <h3 id="s73"><span class="chip t2">Tier 2</span>Medium efforts (days to weeks)</h3>
+
+  <ol class="findings-list">
+    <li>Particle-aware (then measured-work) load-balance estimate via the existing <code>InputGridWork</code> overload (&#167;4.1.1) &#8212; the structural fix for FOGGIE's imbalance.</li>
+    <li>Batch the per-star feedback-sphere allreduces and per-particle feedback-zone rounds (&#167;4.2.1).</li>
+    <li>Level-adaptive chaining mesh (&#167;3.3).</li>
+    <li>O(N) receive-handler dispatch + real batching (&#167;4.2.2).</li>
+    <li><code>MPI_Alltoallv</code> transpose; <code>Alltoallv</code> for ShareActiveParticles; sparse sync-of-particle-counts (&#167;4.2.3&#8211;4.2.4).</li>
+    <li>Local-grid-list driving of all local-only loops in <code>EvolveLevel</code>, <code>UpdateFromFinerGrids</code>, <code>PrepareDensityField</code> (&#167;3.1).</li>
+    <li>Assign subgrid processors before interpolation (&#167;4.1.5).</li>
+    <li>Sparse must-refine flagging messages (&#167;3.7).</li>
+    <li>Morton-sort particles at rebuild; drift-once deposit restructure; scratch-pool the PPM sweep temporaries and potential-solve <code>rhs</code> (&#167;5.2.1, &#167;5.2.3, &#167;3.2).</li>
+    <li>Signature reuse + restored multi-dim inflection search in Berger&#8211;Rigoutsos (&#167;3.5).</li>
+    <li>OpenMP over the local grid loop; 1 rank per NUMA domain (&#167;4.3).</li>
+    <li>Gravity accuracy bundle: <code>INTERPOLATE_LINEAR</code>, potential reuse as initial guess, <code>INFLUENCE2</code> test, fixed-RMS tolerance, capped fallback (&#167;5.2.2).</li>
+  </ol>
+
+  <h3 id="s74"><span class="chip t3">Tier 3</span>Architectural (months; sequence after Tiers 0&#8211;2 are measured)</h3>
+
+  <ol class="findings-list">
+    <li><strong>Distributed hierarchy metadata</strong> &#8212; proxy objects first, then neighborhood-limited metadata exchange (&#167;3.1). This is the change that removes the O(N<sub>ranks</sub>) per-rank scaling term everywhere and is what RAMSES/ART/AMReX all have in some form.</li>
+    <li><strong>Composite multilevel gravity solve</strong> (&#167;5.2.2) &#8212; the correct long-term fix for both the solve cost and the refinement-boundary force artifacts.</li>
+    <li><strong>Pencil-decomposed or external FFT</strong> for the root-grid solve (&#167;4.2.3).</li>
+    <li><strong>Cross-level (multi-constraint) load balancing</strong> including root-tile placement for zooms (&#167;4.1.4).</li>
+    <li>Sub-communicators per level for the fine-level collectives (&#167;2), and/or optimal subcycling &#224; la Nyx.</li>
+  </ol>
+
+  <h3 id="s75"><span class="secnum">7.5</span>Measurement plan</h3>
+
+  <p>Before and after each tier: (1) enable the rebuild sub-phase timers and per-level dt diagnostics (Tier 1.8); (2) record per-level, per-rank {max, mean, min} of cells, particles, and wall time each root step (the data exists in <code>OutputLevelInformation</code>/<code>CollectGridInformation</code>; only the reduction is missing); (3) track the four headline numbers this audit predicts will move: wall-clock share of <code>RebuildHierarchy</code>, time-in-collectives per root step, max/mean per-rank work on the two finest levels, and total star-feedback time per root step. A representative restart at production scale run for ~10 root steps per configuration is sufficient for all of the above.</p>
+
+  <h2 id="appendix"><span class="secnum">A</span>Appendix &#8212; correctness issues found in passing</h2>
+  <p>Fix these regardless of performance.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Issue</th><th>Location</th></tr></thead>
+      <tbody>
+        <tr><td><code>case 21</code> falls through into <code>case 22</code> &#8212; wrong-argument active-particle send on every feedback-zone receive (live for AccretingParticle/GalaxyParticle/SmartStar users)</td><td><code>CommunicationReceiveHandler.C:298-305</code></td></tr>
+        <tr><td>No bounds check on <code>CommunicationReceiveIndex</code> vs <code>MAX_RECEIVE_BUFFERS</code> &#8212; silent corruption past ~150k receives</td><td>12+ call sites, e.g. <code>Grid_CommunicationSendRegion.C:264</code></td></tr>
+        <tr><td><code>int</code> overflow of <code>TransferSize</code> for large grid moves; <code>MPI_Arg</code> is 32-bit</td><td><code>Grid_CommunicationSendRegion.C:77-78</code></td></tr>
+        <tr><td>Use-after-free + double free of <code>ParticleMassPointerSink</code>; leak of <code>ParticleMassTemp</code> (sink-particle path)</td><td><code>Grid_DepositParticlePositions.C:300-372, 255-257/493-495</code></td></tr>
+        <tr><td>Wrong array zeroed (<code>BaryonField</code> instead of <code>OldBaryonField</code>)</td><td><code>Grid_CommunicationReceiveRegion.C:422</code></td></tr>
+        <tr><td><code>Grids</code>/<code>ChildGrids</code> leak on <code>FluxCorrection == 0</code> early return</td><td><code>CreateSUBlingList.C:78-83</code></td></tr>
+        <tr><td>Uninitialized <code>APTotalNumber</code> accumulation</td><td><code>CommunicationCollectParticles.C:221</code></td></tr>
+        <tr><td><code>cSndRcv</code> routing tables never freed; stale if decomposition changes</td><td><code>CommunicationTranspose.C:339,361-362</code></td></tr>
+        <tr><td>Hilbert balancer: OOB <code>HilbertData[-1]</code> read; <code>int</code> overflow of <code>TotalWork</code>; unbounded partition loops; <code>MinWork == 0</code> division</td><td><code>LoadBalanceHilbertCurveRootGrids.C:146-179</code>, <code>LoadBalanceHilbertCurve.C:66,131,141-144,188,254</code></td></tr>
+        <tr><td>Uninitialized read of <code>NumberOfCells[]</code> when <code>SubgridSizeAutoAdjust = FALSE</code></td><td><code>RebuildHierarchy.C:372-375</code></td></tr>
+        <tr><td>Off-by-one sibling-list overflow guard (<code>&gt;</code> vs <code>&gt;=</code>)</td><td><code>Grid_FastSiblingLocatorFindSiblings.C:120,136,170</code></td></tr>
+        <tr><td>Unseeded <code>RANDOM_NUMBER</code> &#8594; correlated stochastic SNe across ranks</td><td><code>star_feedback6.F:2043-2081</code></td></tr>
+        <tr><td>Overlapping feedback stencils mutate shared velocity arrays mid-conversion</td><td><code>star_feedback6.F:1146,1292</code></td></tr>
+        <tr><td>Unbalanced <code>LCAPERF_START</code>/<code>STOP</code> on the Grackle path</td><td><code>Grid_MultiSpeciesHandler.C:31,39</code></td></tr>
+        <tr><td><code>StarFeedbackSNePerTimestepLimit</code> code default (1e-6) contradicts documented default (1e-3)</td><td><code>SetDefaultGlobalValues.C:628</code> vs <code>doc/manual/.../star_particles.rst:337</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    <p>Performance &amp; scaling audit of <code>foggie-sims/enzo-foggie</code> at commit <code>4ceb000</code>. The canonical source of this report is <code>PERFORMANCE_AUDIT.md</code> on branch <code>claude/enzo-performance-scaling-audit-lb2fgo</code>.</p>
+  </footer>
+</div>
