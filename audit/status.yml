@@ -15,6 +15,9 @@
 # `ref` is the section of audit/PERFORMANCE_AUDIT.md / enzoaudit.html the item
 # comes from; the dashboard links it. `class` is the consistency class from the
 # test plan (C0 bitwise / C1 roundoff / C2 answer-changing).
+#
+# BRANCH POLICY (2026-07-28): no PRs to main until further notice - all
+# remediation work lands on enzo-performance only.
 
 tiers:
   - id: tier0
@@ -152,9 +155,10 @@ tiers:
         title: "Visit-stamp dedup in FastSiblingLocatorFindSiblings; hash/sort the parent-grouping loop"
         ref: "3.2"
         class: C0
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
+        tests: ["CI: serial bitwise determinism (SedovBlastAMR exercises both loops via RebuildHierarchy)"]
+        note: "Landed: O(1) hashed dedup replacing the O(S^2) rescan (+ off-by-one overflow guards fixed); first-occurrence-ordered hash grouping replacing the O(N^2) parent scan, preserving the exact call order. Awaiting CI validation."
       - id: T1.10
         title: "Lower GRIDS_PER_LOOP to ~512-1024; bounds-check CommunicationReceiveIndex"
         ref: "4.2"

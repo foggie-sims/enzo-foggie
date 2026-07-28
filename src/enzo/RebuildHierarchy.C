@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <unordered_map>
+#include <vector>
 
 #include "EnzoTiming.h" 
 #include "ErrorExceptions.h"
@@ -217,27 +219,47 @@ int RebuildHierarchy(TopGridData *MetaData,
     }    
 
     /* Collect all the grids with the same parent and pass them all to
-       MoveAllParticles (marking which ones have already been passed). */
+       MoveAllParticles.  Group by parent with a single hashed pass:
+       groups are processed in order of each parent's first occurrence
+       and members keep ascending grid order, reproducing the call
+       sequence of the previous O(grids^2) scan exactly. */
 
-    for (j = 0; j < grids; j++)
-      if (GridPointer[j] != NULL) {
+    {
+      std::unordered_map<HierarchyEntry*, int> GroupOfParent;
+      std::vector<HierarchyEntry*> GroupParent;
+      std::vector<std::vector<grid*> > GroupMembers;
+      GroupOfParent.reserve(grids);
+
+      for (j = 0; j < grids; j++) {
+	std::unordered_map<HierarchyEntry*, int>::iterator it =
+	  GroupOfParent.find(GridParent[j]);
+	int gid;
+	if (it == GroupOfParent.end()) {
+	  gid = (int) GroupMembers.size();
+	  GroupOfParent[GridParent[j]] = gid;
+	  GroupParent.push_back(GridParent[j]);
+	  GroupMembers.push_back(std::vector<grid*>());
+	} else
+	  gid = it->second;
+	GroupMembers[gid].push_back(GridPointer[j]);
+      }
+
+      for (j = 0; j < (int) GroupMembers.size(); j++) {
 	grids2 = 0;
-	for (k = j; k < grids; k++)
-	  if (GridParent[k] == GridParent[j]) {
-	    ContigiousGridList[grids2++] = GridPointer[k];
-	    GridPointer[k] = NULL;
-	  }
+	for (k = 0; k < (int) GroupMembers[j].size(); k++)
+	  ContigiousGridList[grids2++] = GroupMembers[j][k];
 
-	GridParent[j]->GridData->MoveAllStars(grids2, ContigiousGridList, 
-					      MetaData->TopGridDims[0]);
-	GridParent[j]->GridData->MoveAllParticles(grids2, ContigiousGridList);
+	GroupParent[j]->GridData->MoveAllStars(grids2, ContigiousGridList,
+					       MetaData->TopGridDims[0]);
+	GroupParent[j]->GridData->MoveAllParticles(grids2, ContigiousGridList);
 
-#ifdef TRANSFER   
+#ifdef TRANSFER
 	/* Rescue all PhotonPackages before the subgrids are deleted. */
-	GridParent[j]->GridData->MoveAllPhotonPackages(grids2, ContigiousGridList);
+	GroupParent[j]->GridData->MoveAllPhotonPackages(grids2, ContigiousGridList);
 #endif // TRANSFER
-	
-      } // end: if grid pointer valid
+
+      } // end: loop over parent groups
+    }
  
   } // end: loop over levels
   tt1 = ReturnWallTime();
