@@ -14,7 +14,6 @@
 
 module load comp-intel/2020.4.304
 module load hdf5/1.8.18_serial
-module load mpi-hpe/mpt
 
 cd @OUT@
 
