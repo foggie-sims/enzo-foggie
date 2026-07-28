@@ -110,6 +110,22 @@ jobs:
           mpirun --oversubscribe -np 2 ../../src/enzo/enzo.exe -d TestOrbit.enzo > run.log 2>&1 \
             || { tail -50 run.log; exit 1; }
 
+      # The FOGGIE star-particle path: star_maker2/star_feedback6 mechanical
+      # feedback with tabular yields (ProblemType 90, single 2000-Msun star).
+      # This is the coverage that makes the Tier-1 star-particle fixes
+      # CI-gateable. StopTime is shortened from the deck's 50 Myr; a few Myr
+      # exercises table integration, stochastic draws, and injection.
+      - name: Smoke test — TabularFeedbackTest (star_feedback6, np=4)
+        timeout-minutes: 25
+        run: |
+          mkdir -p ci-tests/star-smoke && cd ci-tests/star-smoke
+          cp ../../run/StarParticle/TabularFeedbackTest/TestMechAndTabFeedback.enzo .
+          cp ../../run/StarParticle/TabularFeedbackTest/*.h5 ../../run/StarParticle/TabularFeedbackTest/*.hdf5 . 2>/dev/null || true
+          sed -i 's/^StopTime.*/StopTime               = 2.0/' TestMechAndTabFeedback.enzo
+          mpirun --oversubscribe -np 4 ../../src/enzo/enzo.exe -d TestMechAndTabFeedback.enzo > run.log 2>&1 \
+            || { tail -50 run.log; exit 1; }
+          ls DD*/ > /dev/null
+
       # C0 determinism harness (test plan section 3.1, run-to-run flavor): the same
       # executable and problem must produce bit-identical outputs. Catches
       # uninitialized memory and unseeded nondeterminism without stored gold data.
@@ -140,15 +156,36 @@ jobs:
           mpirun --oversubscribe -np 1 ../../src/enzo/enzo.exe -d SedovBlastAMR.enzo > run.log 2>&1 \
             || { tail -50 run.log; exit 1; }
 
+      # Star-path serial determinism: valid only because star_feedback6 now
+      # seeds its RNG deterministically by rank (audit item T1.6, seeding
+      # part); before that fix, draw_stochastic used OS-entropy seeding and
+      # no two runs agreed even serially.
+      - name: Determinism — star feedback serial runs A and B
+        timeout-minutes: 30
+        run: |
+          for r in a b; do
+            mkdir -p "ci-tests/star-$r" && pushd "ci-tests/star-$r" > /dev/null
+            cp ../../run/StarParticle/TabularFeedbackTest/TestMechAndTabFeedback.enzo .
+            cp ../../run/StarParticle/TabularFeedbackTest/*.h5 ../../run/StarParticle/TabularFeedbackTest/*.hdf5 . 2>/dev/null || true
+            sed -i 's/^StopTime.*/StopTime               = 1.0/' TestMechAndTabFeedback.enzo
+            mpirun --oversubscribe -np 1 ../../src/enzo/enzo.exe -d TestMechAndTabFeedback.enzo > run.log 2>&1 \
+              || { tail -50 run.log; exit 1; }
+            popd > /dev/null
+          done
+
       - name: Determinism — bitwise compare A vs B
         run: |
           cd ci-tests
           status=0
-          for dumpdir in det-a/DD*/; do
+          for pair in "det-a det-b" "star-a star-b"; do
+          set -- $pair
+          A=$1; B=$2
+          echo "=== comparing $A vs $B ==="
+          for dumpdir in "$A"/DD*/; do
             d=$(basename "$dumpdir")
-            [ -d "det-b/$d" ] || { echo "::error::run B missing dump $d"; status=1; continue; }
-            for f in "det-a/$d"/*; do
-              b="det-b/$d/$(basename "$f")"
+            [ -d "$B/$d" ] || { echo "::error::$B missing dump $d"; status=1; continue; }
+            for f in "$A/$d"/*; do
+              b="$B/$d/$(basename "$f")"
               [ -f "$b" ] || { echo "::error::run B missing file: $f"; status=1; continue; }
               case "$(basename "$f")" in
                 *.cpu*)
@@ -168,6 +205,7 @@ jobs:
                     || { echo "::error::text file mismatch: $f"; status=1; } ;;
               esac
             done
+          done
           done
           [ "$status" -eq 0 ] && echo "All outputs bit-identical between runs A and B."
           exit $status

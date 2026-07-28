@@ -205,6 +205,19 @@ c
       character*32 feedbacklog_grid
       character*32 debug_filename
       character*8   post
+      INTG_PREC, save :: ran1_init = 0
+
+c
+c     Initialize the RNG stream used by draw_stochastic the first time
+c     this routine is called. Seeding by MPI rank makes the stochastic
+c     SN draws reproducible run-to-run while keeping the streams
+c     distinct across processors. Without this, RANDOM_NUMBER is seeded
+c     from OS entropy on modern compilers and no two runs agree.
+c
+      if (ran1_init .eq. 0_IKIND) then
+         call init_random_seed(procnum)
+         ran1_init = 1_IKIND
+      endif
 
 c
 c     Ensure we're not using ZEUS

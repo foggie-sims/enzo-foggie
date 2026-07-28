@@ -129,10 +129,10 @@ tiers:
         title: "Make star_feedback6.F grid arrays allocatable + early return when no feedback; seed the RNG"
         ref: "5.1"
         class: C2
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
-        note: "RNG seeding is a prerequisite for all consistency testing (test plan 1.1)"
+        tests: ["CI: 'Determinism - star feedback serial runs' step (bitwise A/B on TabularFeedbackTest)"]
+        note: "RNG seeding landed (init_random_seed by rank in star_feedback6, mirroring star_maker_ssn); verified by the star-path serial determinism gate. Allocatable arrays + early return still to do."
       - id: T1.7
         title: "Guard debug reductions in RebuildHierarchy; remove Evtime barriers; fuse adjacent small allreduces"
         ref: "4.2"
@@ -320,3 +320,40 @@ tiers:
         status: todo
         prs: []
         tests: []
+
+  - id: ci
+    name: "CI harness - branch test infrastructure"
+    description: "Extensions that expand what the enzo-performance CI can gate (test plan sections 6.1, 8)"
+    items:
+      - id: CI.1
+        title: "Branch-scoped CI: build + config guards + smoke tests (SedovBlastAMR, GravityTest, TestOrbit) + serial bitwise determinism harness"
+        ref: "5.5"
+        class: C0
+        status: done
+        prs: []
+        tests: ["https://github.com/foggie-sims/enzo-foggie/actions/runs/30384500583"]
+        note: "First green run 2026-07-28; discovered parallel hydro nondeterminism (T1.14) en route"
+      - id: CI.2
+        title: "Star-path coverage: TabularFeedbackTest (star_maker2 + star_feedback6 tabular/mechanical feedback) as np=4 smoke + serial bitwise determinism"
+        ref: "5.1"
+        class: C0
+        status: done
+        prs: []
+        tests: ["CI: 'Smoke test - TabularFeedbackTest' and 'Determinism - star feedback serial runs' steps"]
+        note: "Required landing the T1.6 RNG seeding first; makes Tier-1 star-particle fixes CI-gateable"
+      - id: CI.3
+        title: "Sanitizer job (ASan/UBSan) on the short serial decks"
+        ref: "A"
+        class: C0
+        status: todo
+        prs: []
+        tests: []
+        note: "Makes T1.13 latent-bug fixes verifiable"
+      - id: CI.4
+        title: "Force-error tolerance gate parsed from GravityTest results"
+        ref: "5.2"
+        class: C0
+        status: todo
+        prs: []
+        tests: []
+        note: "Turns the GravityTest smoke run into a real accuracy gate for gravity-touching changes"
