@@ -21,7 +21,7 @@ module load comp-intel/2020.4.304 2>/dev/null
 module load hdf5/1.8.18_serial 2>/dev/null
 
 export LD_LIBRARY_PATH="/u/jtumlins/installs/mpich-4.0.3/usr/local/lib":"/u/jtumlins/installs/mpich-4.0.3/usr/lib":"/u/jtumlins/grackle/grackle-3.3.1-dev/build/lib64":$LD_LIBRARY_PATH
-export PATH="/nobackup/jtumlins/anaconda3/bin:/u/scicon/tools/bin/:/u/jtumlins/installs/mpich-4.0.3/usr/local/bin:$PATH"
+export PATH="/home1/jtumlins/anaconda3/bin:/nobackup/jtumlins/anaconda3/bin:/u/scicon/tools/bin/:/u/jtumlins/installs/mpich-4.0.3/usr/local/bin:$PATH"
 
 # --- single-instance lock: builds and long ticks must not overlap ---
 LOCK="$FOGGIE_BENCH_ROOT/.runner.lock"

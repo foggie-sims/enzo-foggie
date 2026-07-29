@@ -51,8 +51,11 @@ RUNS = os.path.join(ROOT, "runs")
 
 
 def sh(cmd, cwd=None, check=True, capture=True):
-    r = subprocess.run(cmd, shell=True, cwd=cwd, text=True,
-                       capture_output=capture)
+    # python3.6-compatible subprocess invocation: NAS system
+    # python may be what cron finds.
+    pipe = subprocess.PIPE if capture else None
+    r = subprocess.run(cmd, shell=True, cwd=cwd, universal_newlines=True,
+                       stdout=pipe, stderr=pipe)
     if check and r.returncode != 0:
         raise RuntimeError(f"command failed ({r.returncode}): {cmd}\n"
                            f"stdout: {(r.stdout or '')[-2000:]}\n"
@@ -246,7 +249,8 @@ def advance(entry):
         r = subprocess.run(
             f"python3 {cmp_script} {da} {db} --class {entry.get('class', 'C1')}"
             + floor_arg,
-            shell=True, text=True, capture_output=True)
+            shell=True, universal_newlines=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         st["compare_stdout"] = r.stdout[-4000:]
         st["compare_exit"] = r.returncode
         cj = os.path.join(db, "comparison.json")
