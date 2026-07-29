@@ -123,12 +123,13 @@ def build(sha):
     # Overlay the CURRENT branch tip's machine file: toolchain paths
     # (compiler, MPICH, grackle) must be current even when the code under
     # test is historical, or old commits fail on stale install paths.
+    machfile = "Make.mach.nasa-aitken-milan-mpich"
     shutil.copyfile(
-        os.path.join(REPO, "src", "enzo", "Make.mach.pleiades-mpich"),
-        os.path.join(bdir, "src", "enzo", "Make.mach.pleiades-mpich"))
+        os.path.join(REPO, "src", "enzo", machfile),
+        os.path.join(bdir, "src", "enzo", machfile))
     sh("./configure", cwd=bdir)
     ed = os.path.join(bdir, "src", "enzo")
-    sh("make machine-pleiades-mpich && make grackle-yes && make opt-high",
+    sh("make machine-nasa-aitken-milan-mpich && make grackle-yes && make opt-high",
        cwd=ed)
     sh("make -j8", cwd=ed, capture=True)
     if not os.path.isfile(exe):
