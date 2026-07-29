@@ -32,7 +32,8 @@ TEMPLATE = os.path.join(HERE, "pbs_pleiades.template.sh")
 # candidate dump at identical cycles regardless of dt differences.
 OVERRIDES_DROP = re.compile(
     r"^\s*(StopCycle|CycleSkipDataDump|dtDataDump|TimeLastDataDump|"
-    r"CycleLastDataDump|StopTime|CosmologyOutputRedshift\[\d+\])\s*=")
+    r"CycleLastDataDump|StopTime|CosmologyOutputRedshift\[\d+\]|"
+    r"NumberOfOutputsBeforeExit)\s*=")
 
 
 def read_param(text, name):
@@ -101,6 +102,10 @@ def main():
         "CycleSkipDataDump     = 1",
         "dtDataDump            = 0.0",
         "StopTime              = 1e20",
+        # Production decks use NumberOfOutputsBeforeExit for requeue
+        # chaining; with dumps at every root step an inherited value
+        # would exit the run at the first output.
+        "NumberOfOutputsBeforeExit = 0",
     ]
 
     # Build a shadow snapshot directory inside the run dir: Enzo snapshots
