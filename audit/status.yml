@@ -194,7 +194,7 @@ tiers:
         status: todo
         prs: []
         tests: ["https://github.com/foggie-sims/enzo-foggie/actions/runs/30381349766"]
-        note: "Discovered by CI: two identical np=4 SedovBlastAMR runs (default build, no gravity, no RNG) diverge bitwise; hundreds of cells differ by t=0.3. Serial runs are the current bitwise gate."
+        note: "Discovered by CI, quantified at production scale by FOGGIE-bench A1/A2 (identical code, 5 root steps from production restart): rel mass diffs grow ~1 decade per root step, 1e-11 to 1e-7 by step 5; refinement structure diverges by step 4; +-1 star formation event; wall-clock noise 2.2%. Production A/B gating therefore uses the measured noise floor (compare_runs.py --noise-floor)."
 
   - id: tier2
     name: "Tier 2 - medium efforts"
@@ -361,7 +361,7 @@ tiers:
         status: in-progress
         prs: []
         tests: []
-        note: "Harness landed in run/foggie_bench/. ON HOLD: Aitken down for maintenance (2026-07-28) - bench validation of T1.9 and all subsequent fixes queued until access returns. First baseline/candidate pair doubles as the harness shakedown."
+        note: "Shakedown complete: A1/A2 identical-code pair ran 5 root steps from a production restart and the comparator processed 6 dumps end-to-end, measuring the production noise floor (see T1.14). Noise-floor-aware gating added. T1.9 verdict pending A1-vs-B."
       - id: CI.6
         title: "Pull-model HPC runner: queue.yml on enzo-performance -> cron runner on NAS -> results on bench-results branch"
         ref: "7.5"

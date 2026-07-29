@@ -190,8 +190,36 @@ def main():
     ap.add_argument("candidate")
     ap.add_argument("--class", dest="cls", choices=("C0", "C1", "C2"),
                     default="C1")
+    ap.add_argument("--noise-floor", metavar="COMPARISON_JSON",
+                    help="comparison.json from an identical-code pair (A1 vs "
+                         "A2). Gates become max(class tolerance, factor x "
+                         "floor) per metric per dump; structure/star-count "
+                         "requirements relax from the first dump at which the "
+                         "floor pair itself diverged. At production scale "
+                         "parallel nondeterminism (ledger T1.14) makes this "
+                         "mode mandatory - absolute tolerances only suit "
+                         "serial/deterministic runs.")
+    ap.add_argument("--noise-factor", type=float, default=10.0,
+                    help="multiplier on the measured floor (default 10)")
     args = ap.parse_args()
     tol = TOL[args.cls]
+
+    floor_rel = {}          # dump -> metric -> measured rel diff
+    floor_star = {}         # dump -> star count delta
+    floor_struct_break = None  # first dump name where floor structure diverged
+    if args.noise_floor:
+        fl = json.load(open(args.noise_floor))
+        for dname, entry in fl.get("per_dump", {}).items():
+            floor_rel[dname] = {k[len("rel_"):]: v for k, v in entry.items()
+                                if k.startswith("rel_")}
+            sa, sb = entry.get("sums_baseline"), entry.get("sums_candidate")
+            if sa and sb:
+                floor_star[dname] = abs(sa["star_count"] - sb["star_count"])
+        for fmsg in fl.get("failures", []):
+            if "per-level structure differs" in fmsg:
+                d = fmsg.split(":")[0].strip()
+                if floor_struct_break is None or d < floor_struct_break:
+                    floor_struct_break = d
 
     da = find_dumps(args.baseline)
     db = find_dumps(args.candidate)
@@ -214,8 +242,15 @@ def main():
         hb = parse_hierarchy(db[name] + ".hierarchy")
         entry["levels_baseline"] = ha
         entry["levels_candidate"] = hb
-        if tol["structure_exact"] and ha != hb:
-            report["failures"].append(f"{name}: per-level structure differs")
+        struct_required = tol["structure_exact"] and not (
+            floor_struct_break is not None and name >= floor_struct_break)
+        entry["structure_differs"] = (ha != hb)
+        if entry["structure_differs"]:
+            if struct_required:
+                report["failures"].append(f"{name}: per-level structure differs")
+            else:
+                print(f"note: {name}: structure differs (within floor-pair "
+                      f"divergence regime, not gated)")
         sa = mass_sums(da[name])
         sb = mass_sums(db[name])
         if sa and sb:
@@ -224,12 +259,23 @@ def main():
             for key in ("baryon_mass", "metal_mass", "stellar_mass", "dm_mass"):
                 r = rel(sa[key], sb[key])
                 entry[f"rel_{key}"] = r
-                if r > tol["conserve"]:
+                gate = tol["conserve"]
+                if gate is not None and args.noise_floor:
+                    gate = max(gate,
+                               args.noise_factor *
+                               floor_rel.get(name, {}).get(key, 0.0))
+                entry[f"gate_{key}"] = gate
+                if gate is not None and r > gate:
                     report["failures"].append(
-                        f"{name}: {key} differs by {r:.3e} (> {tol['conserve']:.0e})")
-            if sa["star_count"] != sb["star_count"]:
+                        f"{name}: {key} differs by {r:.3e} (> gate {gate:.3e})")
+            dstar = abs(sa["star_count"] - sb["star_count"])
+            entry["star_count_diff"] = dstar
+            star_gate = 0 if not args.noise_floor else \
+                int(args.noise_factor * max(1, floor_star.get(name, 0)))
+            if dstar > star_gate:
                 report["failures"].append(
-                    f"{name}: star count {sa['star_count']} vs {sb['star_count']}")
+                    f"{name}: star count {sa['star_count']} vs {sb['star_count']}"
+                    f" (|diff| {dstar} > gate {star_gate})")
         report["per_dump"][name] = entry
 
     ta = parse_timing(args.baseline)
