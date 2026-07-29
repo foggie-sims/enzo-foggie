@@ -366,10 +366,10 @@ tiers:
         title: "Pull-model HPC runner: queue.yml on enzo-performance -> cron runner on NAS -> results on bench-results branch"
         ref: "7.5"
         class: C0
-        status: in-progress
+        status: done
         prs: []
         tests: []
-        note: "Runner, cron wrapper, queue schema, and HPC_SETUP.md landed. Untested until first tick on a front end; manual bench_A1/A2/B runs in flight independently."
+        note: "Runner proven end-to-end through r1-r5 hardening (self-update, timeouts, incremental submission), then superseded 2026-07-29 by moving the audit to a Claude Code CLI session directly on Aitken. Cron decommissioned; hpc_runner.py remains usable as a manual one-tick script. See audit/HANDOFF.md."
       - id: CI.4
         title: "Force-error tolerance gate parsed from GravityTest results"
         ref: "5.2"
