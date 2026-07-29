@@ -1,25 +1,25 @@
 #=======================================================================
 #
-# FILE:        Make.mach.nasa-aitken-milan-mpich 
+# FILE:        Make.mach.nasa-aitken-milan-mpich
 #
-# DESCRIPTION: Makefile settings for NASA's aitken with mpich 
+# DESCRIPTION: Makefile settings for NASA's aitken with mpich
 #
 #    modules: module use -a /nasa/modulefiles/testing
 #             comp-intel/2020.4.304
-#             mpi-hpe/mpt.2.23, and
 #             hdf5/1.8.18_serial
+#    uses a locally compiled MPICH to avoid memory issues with system MPT
 #
 # AUTHOR:      Molly Peeples
 # DATE:        2021-06-02
 #
 # AUTHOR:      JT
-# DATE:        2025-12-20 
+# DATE:        2025-12-20
 #
 #=======================================================================
 
-MACH_TEXT  = NASA Aitken Milan (MPICH variant) 
+MACH_TEXT  = NASA Aitken Milan (MPICH variant)
 MACH_VALID = 1
-MACH_FILE  = Make.mach.nasa-aitken-rome
+MACH_FILE  = Make.mach.nasa-aitken-milan-mpich
 
 MACHINE_NOTES = "MACHINE_NOTES for NASA Aitken Milan nodes with MPICH4.0.3 : \
         The following modules are needed to compile: \
@@ -30,10 +30,10 @@ MACHINE_NOTES = "MACHINE_NOTES for NASA Aitken Milan nodes with MPICH4.0.3 : \
 # Install paths (local variables)
 #-----------------------------------------------------------------------
 
+# Keep this or change to your own MPICH
 LOCAL_MPI_INSTALL = /u/jtumlins/installs/mpich-4.0.3/usr/local/
 LOCAL_HDF5_INSTALL   = /nasa/modulefiles/sles15/hdf5/1.8.18_serial
-LOCAL_PYTHON_INSTALL = $(YT_DEST)
-LOCAL_COMPILER_DIR    = /nasa/modulefiles/testing/comp-intel/2020.4.304
+# Keep this or change to your own grackle
 LOCAL_GRACKLE_INSTALL = /u/jtumlins/grackle/grackle-3.3.1-dev/build
 
 
@@ -41,7 +41,7 @@ LOCAL_GRACKLE_INSTALL = /u/jtumlins/grackle/grackle-3.3.1-dev/build
 # Compiler settings
 #-----------------------------------------------------------------------
 
-MACH_CPP       = icpc 
+MACH_CPP       = icpc
 
 # With MPI
 
@@ -54,28 +54,28 @@ MACH_LD_MPI    = icpc
 # Without MPI
 
 MACH_CC_NOMPI  = icc
-MACH_CXX_NOMPI = icc
+MACH_CXX_NOMPI = icpc
 MACH_FC_NOMPI  = ifort
 MACH_F90_NOMPI = ifort
-MACH_LD_NOMPI  = icpc 
+MACH_LD_NOMPI  = icpc
 
 #-----------------------------------------------------------------------
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 
-MACH_DEFINES = -DLINUX -DH5_USE_16_API 
+MACH_DEFINES = -DLINUX -DH5_USE_16_API
 
 #-----------------------------------------------------------------------
 # Compiler flag settings
 #-----------------------------------------------------------------------
 
 MACH_CPPFLAGS = -P -traditional
-MACH_CFLAGS   = 
-MACH_CXXFLAGS = 
-MACH_FFLAGS   = 
-MACH_F90FLAGS = 
-MACH_LDFLAGS  = 
-#,-static 
+MACH_CFLAGS   =
+MACH_CXXFLAGS =
+MACH_FFLAGS   =
+MACH_F90FLAGS =
+MACH_LDFLAGS  =
+#,-static
 
 #-----------------------------------------------------------------------
 # Optimization flags
@@ -92,9 +92,9 @@ MACH_LDFLAGS  =
 #
 # *** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***
 
-MACH_OPT_WARN        = 
+MACH_OPT_WARN        =
 MACH_OPT_DEBUG       = -g -O0
-# Best for Aitken Rome nodes
+# Best for Aitken nodes
 # See: https://www.nas.nasa.gov/hecc/support/kb/preparing-to-run-on-aitken-rome-nodes_657.html
 MACH_OPT_HIGH        = -g -O2 -march=core-avx2
 MACH_OPT_AGGRESSIVE  = -O3 -march=core-avx2
@@ -109,7 +109,6 @@ LOCAL_INCLUDES_GRACKLE = -I$(LOCAL_GRACKLE_INSTALL)/include
 
 MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5) $(LOCAL_INCLUDES_GRACKLE)
 MACH_INCLUDES_MPI     = $(LOCAL_INCLUDES_MPI)
-MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)
 
 #-----------------------------------------------------------------------
 # Libraries
@@ -119,7 +118,6 @@ MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)
 LOCAL_LIBS_MPI    = -L$(LOCAL_MPI_INSTALL)/lib -lmpi -lmpich -lmpicxx -lmpifort -L/u/jtumlins/installs/mpich-4.0.3/usr/lib -lucp -lucs -lucm -luct
 
 LOCAL_LIBS_HDF5   = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5 -lz
-LOCAL_LIBS_LZ     = -L/u/mpeeples/miniconda3/lib -lz
 LOCAL_LIBS_GRACKLE = -L$(LOCAL_GRACKLE_INSTALL)/lib64 -lgrackle
 
 LOCAL_LIBS_MACH = -lifcore -lifport
