@@ -15,6 +15,11 @@
 module load comp-intel/2020.4.304
 module load hdf5/1.8.18_serial
 
+# Runtime environment for the MPICH + grackle the executable links
+# (paths match Make.mach.pleiades-mpich and the FOGGIE production setup).
+export LD_LIBRARY_PATH="/u/jtumlins/installs/mpich-4.0.3/usr/local/lib":"/u/jtumlins/installs/mpich-4.0.3/usr/lib":"/u/jtumlins/grackle/grackle-3.3.1-dev/build/lib64":$LD_LIBRARY_PATH
+export PATH="/nobackup/jtumlins/anaconda3/bin:/u/scicon/tools/bin/:/u/jtumlins/installs/mpich-4.0.3/usr/local/bin:$PATH"
+
 cd @OUT@
 
 # The snapshot directory (shadow copy with the edited parameter file) was
