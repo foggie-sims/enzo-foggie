@@ -562,7 +562,31 @@ float grid::ComputeTimeStep()
     dt = min(dt, MaxRadiationDt);
   
 #endif /* TRANSFER */
- 
+
+  /* Record which constraint set the timestep (audit item T1.8: the
+     per-level dt-limiter histogram in EvolveHierarchy reads this via
+     SetLevelTimeStep). Codes must match DtLimiterName[] in
+     EvolveHierarchy.C. */
+
+  TimeStepLimiterCode = -1;
+  if      (dt == dtBaryons)      TimeStepLimiterCode = 0;
+  else if (dt == dtParticles)    TimeStepLimiterCode = 1;
+  else if (dt == dtMHD)          TimeStepLimiterCode = 2;
+  else if (dt == dtViscous)      TimeStepLimiterCode = 3;
+  else if (dt == dtAcceleration) TimeStepLimiterCode = 4;
+  else if (dt == dtExpansion)    TimeStepLimiterCode = 5;
+  else if (dt == dtConduction)   TimeStepLimiterCode = 6;
+  else if (dt == dtCR)           TimeStepLimiterCode = 7;
+  else if (dt == dtGasDrag)      TimeStepLimiterCode = 8;
+  else if (dt == dtCooling)      TimeStepLimiterCode = 9;
+  else if (dt == dtQuantum)      TimeStepLimiterCode = 10;
+#ifdef TRANSFER
+  else if (dt == dtRadPressure)    TimeStepLimiterCode = 11;
+  else if (dt == dtSafetyVelocity) TimeStepLimiterCode = 12;
+  else if (RadiativeTransferFLD && dt == MaxRadiationDt)
+                                   TimeStepLimiterCode = 13;
+#endif /* TRANSFER */
+
   /* Debugging info. */
   
   if (debug1) {

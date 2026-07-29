@@ -147,10 +147,10 @@ tiers:
         title: "Enable RH_PERF (or TIMER regions); per-level dt-limiter diagnostic; multigrid iteration instrumentation"
         ref: "5.5"
         class: C0
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
-        note: "Prerequisite for the performance KPIs (test plan 1.1, 2.3)"
+        tests: ["CI: serial bitwise determinism must be unchanged (diagnostics only add output)"]
+        note: "Landed: RH_PERF sub-phase totals printed per root cycle; per-level dt-limiter histogram (which constraint set dt, on which level) reduced+printed per root cycle; multigrid solve/V-cycle/fallback counters. Two small reductions per root cycle added. Awaiting CI + bench validation."
       - id: T1.9
         title: "Visit-stamp dedup in FastSiblingLocatorFindSiblings; hash/sort the parent-grouping loop"
         ref: "3.2"

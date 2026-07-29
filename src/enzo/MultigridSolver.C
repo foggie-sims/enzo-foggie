@@ -40,6 +40,22 @@ extern "C" void FORTRAN_NAME(mg_relax)(float *solution, float *rhs, int *ndim,
 #define PRE_SMOOTH 2
 #define POST_SMOOTH 3
 #define NUM_CYCLES 1
+
+/* Aggregate solver statistics (audit item T1.8): solve count, total
+   V-cycle iterations, count of solves that entered the Gauss-Seidel
+   fallback, and total fallback sweeps. Fetched-and-reset once per root
+   cycle by EvolveHierarchy. The fallback firing at all is the top
+   suspect for unexplained level-time spikes (audit 5.2). */
+
+static Eint32 MGStat[4] = {0, 0, 0, 0};
+
+void MGSolverGetAndResetStats(Eint32 stats[4])
+{
+  for (int i = 0; i < 4; i++) {
+    stats[i] = MGStat[i];
+    MGStat[i] = 0;
+  }
+}
  
 int MultigridSolver(float *TopRHS, float *TopSolution, int Rank, int TopDims[],
 		    float &norm, float &mean, int start_depth,
@@ -236,6 +252,13 @@ int MultigridSolver(float *TopRHS, float *TopSolution, int Rank, int TopDims[],
     repeat++;
   }
  
+  MGStat[0]++;
+  MGStat[1] += iter;
+  if (repeat > 0) {
+    MGStat[2]++;
+    MGStat[3] += repeat;
+  }
+
   if (tol_check > tolerance) {
     ENZO_VFAIL("Too many iterations (%"ISYM"): tol=%"GSYM", check=%"GSYM"\n", iter,
 	    tolerance, tol_check)

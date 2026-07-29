@@ -1689,6 +1689,14 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
     return ProcessorNumber;
   }
 
+/* Which constraint set this grid's last ComputeTimeStep result
+   (codes in Grid_ComputeTimeStep.C; -1 = not yet computed). */
+
+  int TimeStepLimiterCode;
+  int ReturnTimeStepLimiterCode() {
+    return TimeStepLimiterCode;
+  }
+
 /* Send a region from a real grid to a 'fake' grid on another processor. */
 
   int CommunicationSendRegion(grid *ToGrid, int ToProcessor, int SendField, 

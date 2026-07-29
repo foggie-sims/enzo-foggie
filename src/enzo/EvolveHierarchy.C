@@ -103,6 +103,12 @@ int CheckForResubmit(TopGridData &MetaData, int &Stop);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int OutputLevelInformation(FILE *fptr, TopGridData &MetaData,
 			   LevelHierarchyEntry *LevelArray[]);
+
+/* T1.8 per-root-cycle diagnostics (SetLevelTimeStep.C, MultigridSolver.C) */
+void DtLimiterReset(void);
+Eint32 *DtLimiterHistogram(void);
+void MGSolverGetAndResetStats(Eint32 stats[4]);
+int CommunicationSumValues(Eint32 *Values, int Number);
 int PrepareGravitatingMassField(HierarchyEntry *Grid, TopGridData *MetaData,
 				LevelHierarchyEntry *LevelArray[], int level);
 int ReduceFragmentation(HierarchyEntry &TopGrid, TopGridData &MetaData,
@@ -564,6 +570,44 @@ if (MultiRefineRegionSpatiallyVaryingStarMass > 0){
     MetaData.LastCycleCPUTime = ReturnWallTime() - LastCPUTime;
     MetaData.CPUTime += MetaData.LastCycleCPUTime;
     LastCPUTime = ReturnWallTime();
+
+    /* T1.8 diagnostics: reduce and print the per-level dt-limiter
+       histogram and the multigrid solver statistics accumulated over
+       this root cycle, then reset. Two small reductions per root cycle. */
+    {
+      static const char *DtLimiterName[] =
+	{"Baryons", "Particles", "MHD", "Viscous", "Accel", "Expansion",
+	 "Conduction", "CR", "GasDrag", "Cooling", "Quantum",
+	 "RadPressure", "SafetyVel", "FLD"};
+      const int NC = 14;  /* == DT_LIMITER_NCODES in SetLevelTimeStep.C */
+      Eint32 *hist = DtLimiterHistogram();
+      CommunicationSumValues(hist, MAX_DEPTH_OF_HIERARCHY * NC);
+      Eint32 mgstat[4];
+      MGSolverGetAndResetStats(mgstat);
+      CommunicationSumValues(mgstat, 4);
+      if (MyProcessorNumber == ROOT_PROCESSOR) {
+	for (int lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++) {
+	  Eint32 rowsum = 0;
+	  for (int c = 0; c < NC; c++)
+	    rowsum += hist[lvl * NC + c];
+	  if (rowsum > 0) {
+	    printf("DtLimiter cycle %"ISYM" L%"ISYM":", MetaData.CycleNumber, lvl);
+	    for (int c = 0; c < NC; c++)
+	      if (hist[lvl * NC + c] > 0)
+		printf(" %s=%"ISYM, DtLimiterName[c],
+		       (int) hist[lvl * NC + c]);
+	    printf("\n");
+	  }
+	}
+	if (mgstat[0] > 0)
+	  printf("MGSolver cycle %"ISYM": solves=%"ISYM" avg_vcycles=%.2f "
+		 "fallbacks=%"ISYM" fallback_sweeps=%"ISYM"\n",
+		 MetaData.CycleNumber, (int) mgstat[0],
+		 (double) mgstat[1] / (double) mgstat[0],
+		 (int) mgstat[2], (int) mgstat[3]);
+      }
+      DtLimiterReset();
+    }
 
     if (MyProcessorNumber == ROOT_PROCESSOR) {
 	

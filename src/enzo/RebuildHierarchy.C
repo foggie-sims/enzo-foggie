@@ -91,7 +91,10 @@ static double RHperf[16];
 
 int MustCollectParticlesToLevelZero = FALSE;  // Set only in NestedCosmologySimulationInitialize
 
-#define NO_RH_PERF
+/* Sub-phase timing of the rebuild (audit item T1.8): the RHperf slots
+   accumulate across calls; the reduced running totals are printed once
+   per root cycle (level-0 rebuilds only) to bound the extra collective. */
+#define RH_PERF
 
 
 /* RebuildHierarchy function */
@@ -758,11 +761,19 @@ int RebuildHierarchy(TopGridData *MetaData,
   /* Done for this level. */
 
 #ifdef RH_PERF
+  if (level == 0) {
 #ifdef USE_MPI
-  CommunicationReduceValues(RHperf, 16, MPI_MAX);
+    CommunicationReduceValues(RHperf, 16, MPI_MAX);
 #endif
-  //CommunicationSumValues(RHperf, 16);
-  if (debug) fpcol(RHperf, 16, 16, stdout);
+    if (MyProcessorNumber == ROOT_PROCESSOR) {
+      printf("RHperf (cumulative s, max over ranks): collect=%.3g flag=%.3g "
+	     "find=%.3g share=%.3g interp=%.3g mesh=%.3g copy=%.3g "
+	     "loadbal=%.3g collect2=%.3g\n",
+	     RHperf[0], RHperf[3], RHperf[4], RHperf[5], RHperf[8],
+	     RHperf[9] + RHperf[10], RHperf[12], RHperf[13], RHperf[14]);
+      fpcol(RHperf, 16, 16, stdout);
+    }
+  }
 #endif /* RH_PERF */
   ReportMemoryUsage("Rebuild pos 4");
   TIMER_STOP("RebuildHierarchy");

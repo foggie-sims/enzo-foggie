@@ -28,6 +28,29 @@
  
 float CommunicationMinValue(float Value);
 
+/* Per-root-cycle histogram of which constraint set each level's timestep
+   (audit item T1.8). Recorded here by the rank owning the level-minimum
+   grid; reduced, printed, and reset once per root cycle by
+   EvolveHierarchy. */
+
+#define DT_LIMITER_NCODES 14
+static Eint32 DtLimiterHist[MAX_DEPTH_OF_HIERARCHY * DT_LIMITER_NCODES];
+
+void DtLimiterRecord(int level, int code)
+{
+  if (level >= 0 && level < MAX_DEPTH_OF_HIERARCHY &&
+      code >= 0 && code < DT_LIMITER_NCODES)
+    DtLimiterHist[level * DT_LIMITER_NCODES + code]++;
+}
+
+Eint32 *DtLimiterHistogram(void) { return DtLimiterHist; }
+
+void DtLimiterReset(void)
+{
+  for (int i = 0; i < MAX_DEPTH_OF_HIERARCHY * DT_LIMITER_NCODES; i++)
+    DtLimiterHist[i] = 0;
+}
+
 int SetLevelTimeStep(HierarchyEntry *Grids[], int NumberOfGrids, int level,
 		     float *dtThisLevelSoFar, float *dtThisLevel,
 		     float dtLevelAbove)
@@ -62,11 +85,22 @@ int SetLevelTimeStep(HierarchyEntry *Grids[], int NumberOfGrids, int level,
     /* Compute the mininum timestep for all grids. */
  
     *dtThisLevel = huge_number;
+    int MinGridIndex = -1;
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
       dtGrid      = Grids[grid1]->GridData->ComputeTimeStep();
-      *dtThisLevel = min(*dtThisLevel, dtGrid);
+      if (dtGrid < *dtThisLevel) {
+	*dtThisLevel = dtGrid;
+	MinGridIndex = grid1;
+      }
     }
+    float LocalMinDt = *dtThisLevel;
     *dtThisLevel = CommunicationMinValue(*dtThisLevel);
+
+    /* The rank owning the globally-limiting grid records which
+       constraint set it (T1.8 dt-limiter histogram). */
+    if (MinGridIndex >= 0 && LocalMinDt <= (*dtThisLevel) * (1.0 + 1e-12))
+      DtLimiterRecord(level,
+	  Grids[MinGridIndex]->GridData->ReturnTimeStepLimiterCode());
 
     /* Compute conduction timestep and use to set the number 
        of iterations without rebuiding the hierarchy. */
