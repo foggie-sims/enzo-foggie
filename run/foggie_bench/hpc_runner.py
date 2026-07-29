@@ -73,16 +73,33 @@ def sync_clone(path, branch, create_branch_if_missing=False):
         sh(f"git checkout -q {branch} 2>/dev/null || git checkout -q -b {branch} origin/{branch}",
            cwd=path)
         sh(f"git reset --hard origin/{branch}", cwd=path)
-    elif create_branch_if_missing:
+        return
+    if not create_branch_if_missing:
+        raise RuntimeError(f"branch {branch} missing and creation not allowed")
+
+    # The branch does not exist on the remote. Creation must be idempotent:
+    # an earlier tick may have created the local branch and its initial
+    # commit but died at the push (typically the PAT not being set up yet).
+    local = sh(f"git rev-parse --verify --quiet refs/heads/{branch}",
+               cwd=path, check=False)
+    if local:
+        sh(f"git checkout -q {branch}", cwd=path)
+        sh("git reset --hard && git clean -fdq", cwd=path)
+    else:
         sh(f"git checkout -q --orphan {branch}", cwd=path)
         sh("git rm -rf --quiet . || true", cwd=path)
         open(os.path.join(path, "README.md"), "w").write(
             "FOGGIE-bench results branch - written only by hpc_runner.py\n")
         sh("git add README.md && git commit -m 'Initialize bench-results'",
            cwd=path)
+    try:
         sh(f"git push -u origin {branch}", cwd=path)
-    else:
-        raise RuntimeError(f"branch {branch} missing and creation not allowed")
+    except RuntimeError as e:
+        raise RuntimeError(
+            str(e) + "\nhint: pushing bench-results failed - the GitHub PAT "
+            "credential is probably not set up for this clone yet "
+            "(HPC_SETUP.md step 2). The local branch is intact; rerun the "
+            "tick after fixing credentials.")
 
 
 def resolve_sha(ref):
