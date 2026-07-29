@@ -109,7 +109,8 @@ def mass_sums(param_path):
     # Level-aware cell volume needs per-grid dx; we sum per grid using the
     # grid's own spacing from the hierarchy-companion attributes in the HDF5.
     sums = {"baryon_mass": 0.0, "metal_mass": 0.0,
-            "stellar_mass": 0.0, "dm_mass": 0.0, "star_count": 0}
+            "stellar_mass": 0.0, "dm_mass": 0.0, "star_count": 0,
+            "metal_fields": {}}
     for cpu in sorted(glob.glob(param_path + ".cpu*")):
         with h5py.File(cpu, "r") as f:
             for gname, g in f.items():
@@ -130,11 +131,19 @@ def mass_sums(param_path):
                         vol = 1.0
                     d = dens[()]
                     sums["baryon_mass"] += float(d.sum()) * vol
-                    for mf in ("Metal_Density", "SN_Colour", "MetalSNII_Density",
-                               "MetalSNIa_Density"):
-                        md = g.get(mf)
-                        if md is not None:
-                            sums["metal_mass"] += float(md[()].sum()) * vol
+                    # Sum every metal-like field individually as well as in
+                    # total: code versions name/split these differently
+                    # (e.g. split-star-particles vs enzo-performance), and a
+                    # single opaque total misreads cross-version comparisons
+                    # as enormous metal differences.
+                    for mf in g.keys():
+                        if ((("etal" in mf or "olou" in mf or "olor" in mf)
+                             and "Density" in mf)
+                                or mf == "SN_Colour"):
+                            v = float(g[mf][()].sum()) * vol
+                            sums["metal_mass"] += v
+                            sums["metal_fields"][mf] = \
+                                sums["metal_fields"].get(mf, 0.0) + v
                 pm = g.get("particle_mass")
                 pt = g.get("particle_type")
                 if pm is not None and pt is not None:
