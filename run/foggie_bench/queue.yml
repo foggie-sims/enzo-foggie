@@ -34,10 +34,10 @@
 #     noise_floor_json: results/t19-manual/noise_floor_A1_vs_A2.json
 
 entries:
-  # t18-instrumentation (r1) failed on the stale grackle path in the
-  # pleiades machine file; retried as -r2 with the aitken-milan-mpich
-  # toolchain. Failed entries keep their results/ record for the log.
-  - id: t18-instrumentation-r2
+  # r1 failed on the stale grackle path in the pleiades machine file;
+  # r2 was burned by the runner's stale-module self-update lag (fixed by
+  # re-exec-after-sync). Failed entries keep their results/ record.
+  - id: t18-instrumentation-r3
     baseline_ref: "7f22798^"          # tip immediately before the T1.8 commit
     candidate_ref: "8aa475f"          # T1.8 + prototype fix, CI run 14 green
     restart: /nobackup/jtumlins/halo_008508/nref11c_nref9f/RD0016/RD0016

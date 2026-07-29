@@ -23,6 +23,7 @@ Layout under $FOGGIE_BENCH_ROOT:
   runs/<id>/      bench run directories
 """
 
+import hashlib
 import json
 import os
 import re
@@ -31,6 +32,17 @@ import subprocess
 import sys
 import time
 import traceback
+
+
+def _self_hash():
+    try:
+        return hashlib.sha1(open(os.path.abspath(__file__), "rb").read()
+                            ).hexdigest()
+    except OSError:
+        return None
+
+
+RUNNER_HASH_AT_START = _self_hash()
 
 try:
     import yaml
@@ -280,6 +292,16 @@ def main():
     for d in (ROOT, BUILDS, RUNS):
         os.makedirs(d, exist_ok=True)
     sync_clone(REPO, BRANCH)
+
+    # If the sync just updated this very file, the in-memory code is stale
+    # (a tick once processed a new queue entry with the previous build
+    # logic and burned it). Re-exec so this tick runs the updated runner;
+    # the wrapper's flock survives exec.
+    if RUNNER_HASH_AT_START and _self_hash() not in (None, RUNNER_HASH_AT_START):
+        log("runner source changed during sync; re-executing updated runner")
+        sys.stdout.flush()
+        os.execv(sys.executable, [sys.executable, os.path.abspath(__file__)])
+
     sync_clone(RESULTS, RESULTS_BRANCH, create_branch_if_missing=True)
 
     qpath = os.path.join(REPO, "run", "foggie_bench", "queue.yml")
