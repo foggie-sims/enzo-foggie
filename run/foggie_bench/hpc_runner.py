@@ -62,12 +62,17 @@ BUILDS = os.path.join(ROOT, "builds")
 RUNS = os.path.join(ROOT, "runs")
 
 
-def sh(cmd, cwd=None, check=True, capture=True):
+def sh(cmd, cwd=None, check=True, capture=True, timeout=600):
     # python3.6-compatible subprocess invocation: NAS system
-    # python may be what cron finds.
+    # python may be what cron finds. Every command gets a timeout so a
+    # wedged filesystem or PBS call fails the entry loudly instead of
+    # freezing the tick under the lock forever.
     pipe = subprocess.PIPE if capture else None
-    r = subprocess.run(cmd, shell=True, cwd=cwd, universal_newlines=True,
-                       stdout=pipe, stderr=pipe)
+    try:
+        r = subprocess.run(cmd, shell=True, cwd=cwd, universal_newlines=True,
+                           stdout=pipe, stderr=pipe, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(f"command timed out after {timeout}s: {cmd}")
     if check and r.returncode != 0:
         raise RuntimeError(f"command failed ({r.returncode}): {cmd}\n"
                            f"stdout: {(r.stdout or '')[-2000:]}\n"
@@ -143,7 +148,7 @@ def build(sha):
     ed = os.path.join(bdir, "src", "enzo")
     sh("make machine-nasa-aitken-milan-mpich && make grackle-yes && make opt-high",
        cwd=ed)
-    sh("make -j8", cwd=ed, capture=True)
+    sh("make -j8", cwd=ed, capture=True, timeout=7200)
     if not os.path.isfile(exe):
         raise RuntimeError(f"build produced no enzo.exe for {sha[:12]}")
     return exe
@@ -206,14 +211,16 @@ def advance(entry):
         for label, exe in ((la, st["exe_a"]), (lb, st["exe_b"])):
             out = os.path.join(rundir, f"bench_{label}")
             if not os.path.isdir(out):
+                log(f"{eid}: preparing {label}")
                 sh(f"python3 {mk} --restart {entry['restart']} --enzo {exe}"
                    f" --nsteps {entry.get('nsteps', 5)}"
                    f" --ranks {entry.get('ranks', 512)}"
                    f" --model {entry.get('model', 'rom_ait')}"
                    f" --ncpus {entry.get('ncpus', 128)}"
                    f" --queue {entry.get('queue', 'devel')}"
-                   f" --out {out}")
-            jid = sh(f"qsub {os.path.join(out, 'launch.sh')}")
+                   f" --out {out}", timeout=900)
+            log(f"{eid}: submitting {label}")
+            jid = sh(f"qsub {os.path.join(out, 'launch.sh')}", timeout=300)
             st["jobs"][label] = {"dir": out, "jobid": jid}
             log(f"{eid}: submitted {label} as {jid}")
         st["phase"] = "submitted"
