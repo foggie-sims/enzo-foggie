@@ -33,4 +33,15 @@
 #     class: C0
 #     noise_floor_json: results/t19-manual/noise_floor_A1_vs_A2.json
 
-entries: []
+entries:
+  - id: t18-instrumentation
+    baseline_ref: "7f22798^"          # tip immediately before the T1.8 commit
+    candidate_ref: "8aa475f"          # T1.8 + prototype fix, CI run 14 green
+    restart: /nobackup/jtumlins/halo_008508/nref11c_nref9f/RD0016/RD0016
+    nsteps: 5
+    ranks: 512
+    model: rom_ait
+    ncpus: 128
+    queue: devel
+    class: C0
+    noise_floor_json: results/t19-manual/noise_floor_A1_vs_A2.json
