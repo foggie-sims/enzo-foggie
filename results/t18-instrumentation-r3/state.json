@@ -1,0 +1,11 @@
+{
+  "phase": "failed",
+  "baseline_sha": "42dcbbd86c642740cddef435607280b4f9dc3259",
+  "candidate_sha": "8aa475fa8747f7078afc10dacd733caeed444e9f",
+  "exe_a": "/home1/jtumlins/foggie_bench_root/builds/42dcbbd86c64/src/enzo/enzo.exe",
+  "exe_b": "/home1/jtumlins/foggie_bench_root/builds/8aa475fa8747/src/enzo/enzo.exe",
+  "updated": "2026-07-29T18:04:54Z",
+  "errors": [
+    "Traceback (most recent call last):\n  File \"/home1/jtumlins/foggie_bench_root/repo/run/foggie_bench/hpc_runner.py\", line 299, in main\n    # the wrapper's flock survives exec.\n  File \"/home1/jtumlins/foggie_bench_root/repo/run/foggie_bench/hpc_runner.py\", line 197, in advance\n    st[\"exe_b\"] = build(st[\"candidate_sha\"])\n  File \"/home1/jtumlins/foggie_bench_root/repo/run/foggie_bench/hpc_runner.py\", line 60, in sh\n    RESULTS = os.path.join(ROOT, \"results\")\nRuntimeError: command failed (1): python3 /home1/jtumlins/foggie_bench_root/repo/run/foggie_bench/make_bench_run.py --restart /nobackup/jtumlins/halo_008508/nref11c_nref9f/RD0016/RD0016 --enzo /home1/jtumlins/foggie_bench_root/builds/42dcbbd86c64/src/enzo/enzo.exe --nsteps 5 --ranks 512 --model rom_ait --ncpus 128 --queue devel --out /home1/jtumlins/foggie_bench_root/runs/t18-instrumentation-r3/bench_A\nstdout: \nstderr: error: restart parameter file not found: /nobackup/jtumlins/halo_008508/nref11c_nref9f/RD0016/RD0016\n\n"
+  ]
+}
