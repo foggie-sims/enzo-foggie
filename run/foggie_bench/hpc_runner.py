@@ -120,6 +120,12 @@ def build(sha):
     log(f"building {sha[:12]}")
     sh(f"git clone --no-checkout {REPO} {bdir}")
     sh(f"git checkout -q {sha}", cwd=bdir)
+    # Overlay the CURRENT branch tip's machine file: toolchain paths
+    # (compiler, MPICH, grackle) must be current even when the code under
+    # test is historical, or old commits fail on stale install paths.
+    shutil.copyfile(
+        os.path.join(REPO, "src", "enzo", "Make.mach.pleiades-mpich"),
+        os.path.join(bdir, "src", "enzo", "Make.mach.pleiades-mpich"))
     sh("./configure", cwd=bdir)
     ed = os.path.join(bdir, "src", "enzo")
     sh("make machine-pleiades-mpich && make grackle-yes && make opt-high",
