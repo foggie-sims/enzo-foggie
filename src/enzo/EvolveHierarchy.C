@@ -104,11 +104,11 @@ int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int OutputLevelInformation(FILE *fptr, TopGridData &MetaData,
 			   LevelHierarchyEntry *LevelArray[]);
 
-/* T1.8 per-root-cycle diagnostics (SetLevelTimeStep.C, MultigridSolver.C) */
+/* T1.8 per-root-cycle diagnostics (SetLevelTimeStep.C, MultigridSolver.C).
+   CommunicationSumValues comes from CommunicationUtilities.h. */
 void DtLimiterReset(void);
 Eint32 *DtLimiterHistogram(void);
 void MGSolverGetAndResetStats(Eint32 stats[4]);
-int CommunicationSumValues(Eint32 *Values, int Number);
 int PrepareGravitatingMassField(HierarchyEntry *Grid, TopGridData *MetaData,
 				LevelHierarchyEntry *LevelArray[], int level);
 int ReduceFragmentation(HierarchyEntry &TopGrid, TopGridData &MetaData,
