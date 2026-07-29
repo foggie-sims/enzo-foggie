@@ -35,9 +35,10 @@
 
 entries:
   # r1: stale grackle path; r2: runner self-update lag; r3: wrong anchor
-  # path (taken from a placeholder example). All fixed; the real anchor
-  # is documented in anchor.md. Failed entries keep their results/ record.
-  - id: t18-instrumentation-r4
+  # path (taken from a placeholder example); r4: qsub missing from the bare
+  # cron PATH (wrapper now appends /PBS/bin). All fixed; the real anchor is
+  # documented in anchor.md. Failed entries keep their results/ record.
+  - id: t18-instrumentation-r5
     baseline_ref: "7f22798^"          # tip immediately before the T1.8 commit
     candidate_ref: "8aa475f"          # T1.8 + prototype fix, CI run 14 green
     restart: /home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff/RD0016/RD0016
