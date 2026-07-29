@@ -24,7 +24,7 @@
 #   - id: t19-noise-floor
 #     baseline_ref: 4cc3c66^
 #     candidate_ref: 4cc3c66^
-#     restart: /nobackup/jtumlins/halo_008508/nref11c_nref9f/RD0016/RD0016
+#     restart: /path/to/snapshot/RD0016/RD0016
 #     nsteps: 5
 #     ranks: 512
 #     model: rom_ait
@@ -34,13 +34,13 @@
 #     noise_floor_json: results/t19-manual/noise_floor_A1_vs_A2.json
 
 entries:
-  # r1 failed on the stale grackle path in the pleiades machine file;
-  # r2 was burned by the runner's stale-module self-update lag (fixed by
-  # re-exec-after-sync). Failed entries keep their results/ record.
-  - id: t18-instrumentation-r3
+  # r1: stale grackle path; r2: runner self-update lag; r3: wrong anchor
+  # path (taken from a placeholder example). All fixed; the real anchor
+  # is documented in anchor.md. Failed entries keep their results/ record.
+  - id: t18-instrumentation-r4
     baseline_ref: "7f22798^"          # tip immediately before the T1.8 commit
     candidate_ref: "8aa475f"          # T1.8 + prototype fix, CI run 14 green
-    restart: /nobackup/jtumlins/halo_008508/nref11c_nref9f/RD0016/RD0016
+    restart: /home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff/RD0016/RD0016
     nsteps: 5
     ranks: 512
     model: rom_ait
