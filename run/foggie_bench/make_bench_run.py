@@ -52,6 +52,11 @@ def main():
     ap.add_argument("--walltime", default="4:00:00")
     ap.add_argument("--queue", default="normal")
     ap.add_argument("--group", default="s3128")
+    ap.add_argument("--mpiexec",
+                    default="/u/jtumlins/installs/mpich-4.0.3/usr/local/bin/mpiexec",
+                    help="MPI launcher matching the MPI the build links against "
+                         "(Make.mach.pleiades-mpich links MPICH 4.0.3, so the "
+                         "system MPT mpiexec will NOT work)")
     ap.add_argument("--model", default="rom_ait",
                     help="PBS node model (e.g. rom_ait for Aitken Rome, bro for Pleiades Broadwell)")
     ap.add_argument("--ncpus", type=int, default=128, help="Cores per node")
@@ -128,6 +133,7 @@ def main():
               .replace("@QUEUE@", args.queue)
               .replace("@GROUP@", args.group)
               .replace("@ENZO@", enzo)
+              .replace("@MPIEXEC@", args.mpiexec)
               .replace("@RESTART_REL@", restart_rel))
     launch_path = os.path.join(out, "launch.sh")
     open(launch_path, "w").write(launch)

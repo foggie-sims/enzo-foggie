@@ -19,7 +19,9 @@ cd @OUT@
 
 # The snapshot directory (shadow copy with the edited parameter file) was
 # prepared by make_bench_run.py; restart with the standard Enzo syntax.
-mpiexec -np @RANKS@ @ENZO@ -d -r @RESTART_REL@ > enzo_bench.log 2>&1
+# The launcher must belong to the MPI the executable links against
+# (MPICH per Make.mach.pleiades-mpich), not the system MPT mpiexec.
+@MPIEXEC@ -np @RANKS@ @ENZO@ -d -r @RESTART_REL@ > enzo_bench.log 2>&1
 status=$?
 
 echo "exit=$status" > bench_exit_status
