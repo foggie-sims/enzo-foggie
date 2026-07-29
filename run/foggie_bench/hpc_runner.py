@@ -207,8 +207,10 @@ def advance(entry):
         rundir = os.path.join(RUNS, eid)
         os.makedirs(rundir, exist_ok=True)
         mk = os.path.join(REPO, "run", "foggie_bench", "make_bench_run.py")
-        st["jobs"] = {}
+        st.setdefault("jobs", {})
         for label, exe in ((la, st["exe_a"]), (lb, st["exe_b"])):
+            if label in st["jobs"]:
+                continue
             out = os.path.join(rundir, f"bench_{label}")
             if not os.path.isdir(out):
                 log(f"{eid}: preparing {label}")
@@ -220,10 +222,21 @@ def advance(entry):
                    f" --queue {entry.get('queue', 'devel')}"
                    f" --out {out}", timeout=900)
             log(f"{eid}: submitting {label}")
-            jid = sh(f"qsub {os.path.join(out, 'launch.sh')}", timeout=300)
+            try:
+                jid = sh(f"qsub {os.path.join(out, 'launch.sh')}", timeout=300)
+            except RuntimeError as e:
+                # Per-user queue limits (devel allows very few concurrent
+                # jobs) are transient: keep the jobs already submitted, stay
+                # in 'built', and retry the remainder on later ticks.
+                if "would exceed" in str(e) or "per-user limit" in str(e):
+                    log(f"{eid}: queue limit rejected {label}; retrying on a "
+                        f"later tick")
+                    break
+                raise
             st["jobs"][label] = {"dir": out, "jobid": jid}
             log(f"{eid}: submitted {label} as {jid}")
-        st["phase"] = "submitted"
+        if len(st["jobs"]) == 2:
+            st["phase"] = "submitted"
         save_state(eid, st)
         return  # give the jobs at least one tick
 
