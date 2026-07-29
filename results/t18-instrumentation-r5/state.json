@@ -1,0 +1,11 @@
+{
+  "phase": "failed",
+  "baseline_sha": "42dcbbd86c642740cddef435607280b4f9dc3259",
+  "candidate_sha": "8aa475fa8747f7078afc10dacd733caeed444e9f",
+  "exe_a": "/home1/jtumlins/foggie_bench_root/builds/42dcbbd86c64/src/enzo/enzo.exe",
+  "exe_b": "/home1/jtumlins/foggie_bench_root/builds/8aa475fa8747/src/enzo/enzo.exe",
+  "updated": "2026-07-29T19:30:07Z",
+  "errors": [
+    "Traceback (most recent call last):\n  File \"/home1/jtumlins/foggie_bench_root/repo/run/foggie_bench/hpc_runner.py\", line 328, in main\n    advance(entry)\n  File \"/home1/jtumlins/foggie_bench_root/repo/run/foggie_bench/hpc_runner.py\", line 223, in advance\n    jid = sh(f\"qsub {os.path.join(out, 'launch.sh')}\", timeout=300)\n  File \"/home1/jtumlins/foggie_bench_root/repo/run/foggie_bench/hpc_runner.py\", line 77, in sh\n    raise RuntimeError(f\"command failed ({r.returncode}): {cmd}\\n\"\nRuntimeError: command failed (38): qsub /home1/jtumlins/foggie_bench_root/runs/t18-instrumentation-r5/bench_B/launch.sh\nstdout: \nstderr: qsub: would exceed queue generic's per-user limit\n\n"
+  ]
+}
