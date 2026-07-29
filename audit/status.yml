@@ -155,10 +155,10 @@ tiers:
         title: "Visit-stamp dedup in FastSiblingLocatorFindSiblings; hash/sort the parent-grouping loop"
         ref: "3.2"
         class: C0
-        status: in-progress
+        status: done
         prs: []
-        tests: ["CI: serial bitwise determinism (SedovBlastAMR exercises both loops via RebuildHierarchy)"]
-        note: "Landed: O(1) hashed dedup replacing the O(S^2) rescan (+ off-by-one overflow guards fixed); first-occurrence-ordered hash grouping replacing the O(N^2) parent scan, preserving the exact call order. Awaiting CI validation."
+        tests: ["CI: serial bitwise determinism (run 12, both pairs bit-identical)", "FOGGIE-bench: A1-vs-B within 10x measured noise floor at every dump/metric; no structure or star-count divergence (better than identical-code A1-vs-A2)"]
+        note: "O(1) hashed sibling dedup (+ overflow guard fixes) and O(N) first-occurrence parent grouping. CI-validated bitwise (serial); production-validated against the measured noise floor (5 root steps, production restart). Wall-clock effect not measurable above 2.2% timing noise until T1.8 instrumentation lands."
       - id: T1.10
         title: "Lower GRIDS_PER_LOOP to ~512-1024; bounds-check CommunicationReceiveIndex"
         ref: "4.2"
@@ -358,10 +358,10 @@ tiers:
         title: "FOGGIE-bench harness (test plan B3): abbreviated production restart runs + A/B comparator"
         ref: "7.5"
         class: C0
-        status: in-progress
+        status: done
         prs: []
         tests: []
-        note: "Shakedown complete: A1/A2 identical-code pair ran 5 root steps from a production restart and the comparator processed 6 dumps end-to-end, measuring the production noise floor (see T1.14). Noise-floor-aware gating added. T1.9 verdict pending A1-vs-B."
+        note: "Shakedown complete and first real verdict delivered: A1/A2 measured the production noise floor (see T1.14); A1-vs-B validated T1.9 within 10x floor. Harness operational end-to-end."
       - id: CI.6
         title: "Pull-model HPC runner: queue.yml on enzo-performance -> cron runner on NAS -> results on bench-results branch"
         ref: "7.5"
