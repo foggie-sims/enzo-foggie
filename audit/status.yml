@@ -362,6 +362,14 @@ tiers:
         prs: []
         tests: []
         note: "Harness landed in run/foggie_bench/. ON HOLD: Aitken down for maintenance (2026-07-28) - bench validation of T1.9 and all subsequent fixes queued until access returns. First baseline/candidate pair doubles as the harness shakedown."
+      - id: CI.6
+        title: "Pull-model HPC runner: queue.yml on enzo-performance -> cron runner on NAS -> results on bench-results branch"
+        ref: "7.5"
+        class: C0
+        status: in-progress
+        prs: []
+        tests: []
+        note: "Runner, cron wrapper, queue schema, and HPC_SETUP.md landed. Untested until first tick on a front end; manual bench_A1/A2/B runs in flight independently."
       - id: CI.4
         title: "Force-error tolerance gate parsed from GravityTest results"
         ref: "5.2"

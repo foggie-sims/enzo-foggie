@@ -1,0 +1,35 @@
+# FOGGIE-bench work queue.
+#
+# Entries are written on the enzo-performance branch (by hand or by the
+# session managing the audit). The HPC runner (hpc_runner.py, driven by cron
+# on a front end) reads this file, executes entries, and pushes state and
+# results to the bench-results branch under results/<id>/. The runner NEVER
+# writes to this file or this branch - queue authorship and result reporting
+# are one-way flows in opposite directions.
+#
+# Entry schema:
+#   id:            unique slug; results live at results/<id>/ on bench-results
+#   baseline_ref:  git ref/sha built as run A
+#   candidate_ref: git ref/sha built as run B (same as baseline_ref for a
+#                  noise-floor pair - the runner then labels runs A1/A2)
+#   restart:       absolute path to the snapshot parameter file on /nobackup
+#   nsteps:        root-grid steps (default 5)
+#   ranks:         MPI ranks
+#   model:         PBS node model (rom_ait, bro, ...)
+#   ncpus:         cores per node (128 for rom_ait)
+#   queue:         PBS queue (devel walltime auto-clamps to 2h)
+#   class:         C0 | C1 | C2 - comparator gate (test plan section 1.1)
+#
+# Example (commented out):
+#   - id: t19-noise-floor
+#     baseline_ref: 4cc3c66^
+#     candidate_ref: 4cc3c66^
+#     restart: /nobackup/jtumlins/halo_008508/nref11c_nref9f/RD0016/RD0016
+#     nsteps: 5
+#     ranks: 512
+#     model: rom_ait
+#     ncpus: 128
+#     queue: devel
+#     class: C0
+
+entries: []
