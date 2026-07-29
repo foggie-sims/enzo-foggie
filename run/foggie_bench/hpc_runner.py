@@ -231,8 +231,21 @@ def advance(entry):
         cmp_script = os.path.join(REPO, "run", "foggie_bench", "compare_runs.py")
         da = st["jobs"][la]["dir"]
         db = st["jobs"][lb]["dir"]
+        # Optional measured noise floor: entry field 'noise_floor_json' is a
+        # path relative to the bench-results clone (e.g.
+        # results/t19-manual/noise_floor_A1_vs_A2.json). Mandatory in
+        # practice for production-scale gating (ledger T1.14).
+        floor_arg = ""
+        nf = entry.get("noise_floor_json")
+        if nf:
+            nf_path = os.path.join(RESULTS, nf)
+            if not os.path.isfile(nf_path):
+                raise RuntimeError(
+                    f"noise_floor_json not found in results clone: {nf}")
+            floor_arg = f" --noise-floor {nf_path}"
         r = subprocess.run(
-            f"python3 {cmp_script} {da} {db} --class {entry.get('class', 'C1')}",
+            f"python3 {cmp_script} {da} {db} --class {entry.get('class', 'C1')}"
+            + floor_arg,
             shell=True, text=True, capture_output=True)
         st["compare_stdout"] = r.stdout[-4000:]
         st["compare_exit"] = r.returncode
