@@ -115,11 +115,28 @@ Three findings that redirect the audit:
 3. The star subsystem, the audit's headline Tier-1 target, is now
    0.5% of wall. That work is done.
 
-Pass 3 (sha ed40e892) adds GravityAccel, SetAccelBoundary,
-CopyToOldBaryon, StarParticleInitFinal, CreateSiblingList and
-CommBufferedSend to chase the unattributed 62.8%. Level_NN lines are
-NESTED (Level_10 is inside Level_09 ...) - never sum them into an
-attribution total; time_budget.py separates them for this reason.
+Passes 3 and 4 closed the accounting to **99.8%**, and the answer was a
+surprise: **62.7% of wall is a single `MPI_Allreduce`** - the one inside
+`CommunicationUpdateStarParticleCount`, called from
+`StarParticleFinalize` once per subcycle of every level (4327 times in a
+5-root-step run). It is ~100% barrier wait, not communication: the
+payload is 1-8 kB among 128 ranks on ONE node against 320 ms measured
+per call. Chemistry (8.5%), rebuild (8.0%) and hydro (5.0%) are the
+next largest and are an order of magnitude smaller.
+
+**Full analysis, proposed fix, and its three failure modes are in
+`audit/SPFinalize_Edits.md`.** That work is deliberately DEFERRED behind
+T2.1 (see that file's "Relationship to T2.1").
+
+Two traps for anyone reading performance.out directly:
+- `Level_NN` lines are NOT nested - the level timer brackets stop before
+  the recursive EvolveLevel call, so they are exclusive per-level times
+  summing to ~87% of Total. They are a different decomposition axis and
+  must never be added to the section budget.
+- Several sections are cross-cutting (`SolveForPotential` is started
+  inside PrepareDensityField.C; `SPCommUpdateCount` inside SPFinalize;
+  the comm pump inside several). `time_budget.py` knows which; coverage
+  meaningfully over 100% means a new overlap needs classifying.
 
 ## Key technical facts (hard-won, do not re-learn)
 
