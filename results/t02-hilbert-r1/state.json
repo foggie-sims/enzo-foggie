@@ -1,0 +1,32 @@
+{
+  "id": "t02-hilbert-r1",
+  "date": "2026-07-30",
+  "purpose": "T0.2 experiment: LoadBalancing=4 (Hilbert) vs production LoadBalancing=1, after the 126-bit key rework and T1.13 partitioner fixes",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5,
+    "restart": "/home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff/RD0016/RD0016",
+    "restart_cycle": 2110,
+    "parameter_delta": "LoadBalancing 1 -> 4 in the shadow parameter file (LoadBalancingCycleSkip=2, MinLevel 0, MaxLevel 50 unchanged)"
+  },
+  "baseline": "t15-coolgate-r1/bench_B (sha 4051c0b7, LoadBalancing=1; Hilbert code paths dead there, so the code delta is irrelevant to the comparison)",
+  "candidate_sha": "aed694db69a2",
+  "runs": {
+    "bench_B": {
+      "build": "aed694db69a2",
+      "job": "24917013",
+      "queue": "normal",
+      "exit": 0
+    }
+  },
+  "verdict": {
+    "comparison": "verdict_t15B_vs_t02B.json",
+    "correctness": "PASS at class C0 vs the 3-pair envelope floor - mass sums within 10x identical-code noise, mesh bit-identical at every dump, 1 particle level migration (gate 10). Changing the balancer perturbs the answer no more than parallel nondeterminism.",
+    "wall_clock": "2212.3 s vs 2231.3 s baseline (-0.9%, single sample, near the ~1.6% node scatter)",
+    "phase_analysis": "RH_PERF: rebuild grew 179.1 -> 208.5 s (loadbal 13.2 -> 42.3 s: the Hilbert balancer + post-reassignment grid migration; find/share/copy also up), while everything OUTSIDE rebuild got ~48 s (~2%) faster - the locality gain is real but currently offset by balancer overhead. This 5-step window includes the one-time migration away from the restart's stored greedy layout, so steady-state overhead should be lower."
+  },
+  "recommendation": "Keep LoadBalancing=1 in production for now. Revisit after T2.1 (particle-aware work estimate) - the balancer weights are still cells-only, which is where FOGGIE's imbalance actually lives; and consider a longer bench to measure steady-state churn. The Hilbert path is now correct and usable at production scale (was: OOB reads, overflow-garbled partitions, degenerate keys above level ~11).",
+  "ci": "https://github.com/foggie-sims/enzo-foggie/actions/runs/30542276975"
+}

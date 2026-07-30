@@ -1,0 +1,8 @@
+RHperf (cumulative s, max over ranks): collect=0.096 flag=0.453 find=0.6 share=0.772 interp=0.304 mesh=0.0292 copy=0.679 loadbal=0.799 collect2=0.276
+MGSolver cycle 2111: solves=1353980 avg_vcycles=1.20 fallbacks=0 fallback_sweeps=0
+MGSolver cycle 2112: solves=1417975 avg_vcycles=1.18 fallbacks=0 fallback_sweeps=0
+RHperf (cumulative s, max over ranks): collect=0.941 flag=1.41 find=28.5 share=30.1 interp=9.85 mesh=2.85 copy=12.1 loadbal=20 collect2=0.52
+MGSolver cycle 2113: solves=1327770 avg_vcycles=1.18 fallbacks=0 fallback_sweeps=0
+MGSolver cycle 2114: solves=1301505 avg_vcycles=1.19 fallbacks=0 fallback_sweeps=0
+RHperf (cumulative s, max over ranks): collect=1.8 flag=2.28 find=53.9 share=55.6 interp=19 mesh=6.31 copy=22.7 loadbal=42.3 collect2=0.792
+MGSolver cycle 2115: solves=1290915 avg_vcycles=1.18 fallbacks=0 fallback_sweeps=0
