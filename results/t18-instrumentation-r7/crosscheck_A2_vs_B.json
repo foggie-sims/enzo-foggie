@@ -1,0 +1,963 @@
+{
+  "class": "C0",
+  "dumps_compared": [
+    "DD0394",
+    "DD0395",
+    "DD0396",
+    "DD0397",
+    "DD0398",
+    "DD0399"
+  ],
+  "failures": [
+    "DD0399: baryon_mass differs by 8.879e-08 (> gate 5.762e-08)"
+  ],
+  "per_dump": {
+    "DD0394": {
+      "levels_baseline": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762441
+        },
+        "1": {
+          "grids": 12,
+          "cells": 258688,
+          "particles": 17151
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 24033
+        },
+        "3": {
+          "grids": 81,
+          "cells": 1833920,
+          "particles": 52217
+        },
+        "4": {
+          "grids": 113,
+          "cells": 6649328,
+          "particles": 1880389
+        },
+        "5": {
+          "grids": 646,
+          "cells": 8006304,
+          "particles": 538405
+        },
+        "6": {
+          "grids": 900,
+          "cells": 10344928,
+          "particles": 390036
+        },
+        "7": {
+          "grids": 744,
+          "cells": 5974944,
+          "particles": 235660
+        },
+        "8": {
+          "grids": 478,
+          "cells": 3238680,
+          "particles": 216458
+        },
+        "9": {
+          "grids": 232,
+          "cells": 1994528,
+          "particles": 248264
+        },
+        "10": {
+          "grids": 192,
+          "cells": 2022584,
+          "particles": 329026
+        },
+        "11": {
+          "grids": 192,
+          "cells": 1961576,
+          "particles": 631780
+        }
+      },
+      "levels_candidate": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762441
+        },
+        "1": {
+          "grids": 12,
+          "cells": 258688,
+          "particles": 17151
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 24033
+        },
+        "3": {
+          "grids": 81,
+          "cells": 1833920,
+          "particles": 52217
+        },
+        "4": {
+          "grids": 113,
+          "cells": 6649328,
+          "particles": 1880389
+        },
+        "5": {
+          "grids": 646,
+          "cells": 8006304,
+          "particles": 538405
+        },
+        "6": {
+          "grids": 900,
+          "cells": 10344928,
+          "particles": 390036
+        },
+        "7": {
+          "grids": 744,
+          "cells": 5974944,
+          "particles": 235660
+        },
+        "8": {
+          "grids": 478,
+          "cells": 3238680,
+          "particles": 216458
+        },
+        "9": {
+          "grids": 232,
+          "cells": 1994528,
+          "particles": 248264
+        },
+        "10": {
+          "grids": 192,
+          "cells": 2022584,
+          "particles": 329026
+        },
+        "11": {
+          "grids": 192,
+          "cells": 1961576,
+          "particles": 631780
+        }
+      },
+      "structure_differs": false,
+      "sums_baseline": {
+        "baryon_mass": 43409331464.21674,
+        "metal_mass": 200467589.49291384,
+        "stellar_mass": 4758570934.163191,
+        "dm_mass": 50644876474.2722,
+        "star_count": 1417131,
+        "metal_fields": {
+          "MetalAGB_Density": 3.570444800000046e-13,
+          "MetalNSM_Density": 3.570444800000046e-13,
+          "MetalSNII_Density": 99898703.38617386,
+          "MetalSNIa_Density": 336981.0373226158,
+          "Metal_Density": 100231905.06942177
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 43409331464.21674,
+        "metal_mass": 200467589.49291384,
+        "stellar_mass": 4758570934.163191,
+        "dm_mass": 50644876474.2722,
+        "star_count": 1417131,
+        "metal_fields": {
+          "MetalAGB_Density": 3.570444800000046e-13,
+          "MetalNSM_Density": 3.570444800000046e-13,
+          "MetalSNII_Density": 99898703.38617386,
+          "MetalSNIa_Density": 336981.0373226158,
+          "Metal_Density": 100231905.06942177
+        }
+      },
+      "rel_baryon_mass": 0.0,
+      "gate_baryon_mass": 1e-12,
+      "rel_metal_mass": 0.0,
+      "gate_metal_mass": 1e-12,
+      "rel_stellar_mass": 0.0,
+      "gate_stellar_mass": 1e-12,
+      "rel_dm_mass": 0.0,
+      "gate_dm_mass": 1e-12,
+      "star_count_diff": 0
+    },
+    "DD0395": {
+      "levels_baseline": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762440
+        },
+        "1": {
+          "grids": 12,
+          "cells": 258688,
+          "particles": 17152
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 24031
+        },
+        "3": {
+          "grids": 81,
+          "cells": 1833920,
+          "particles": 57861
+        },
+        "4": {
+          "grids": 205,
+          "cells": 7150392,
+          "particles": 1900531
+        },
+        "5": {
+          "grids": 722,
+          "cells": 7938776,
+          "particles": 524368
+        },
+        "6": {
+          "grids": 954,
+          "cells": 9996936,
+          "particles": 382538
+        },
+        "7": {
+          "grids": 742,
+          "cells": 5922600,
+          "particles": 231201
+        },
+        "8": {
+          "grids": 477,
+          "cells": 3270992,
+          "particles": 212153
+        },
+        "9": {
+          "grids": 244,
+          "cells": 2049528,
+          "particles": 253434
+        },
+        "10": {
+          "grids": 216,
+          "cells": 2065304,
+          "particles": 961524
+        }
+      },
+      "levels_candidate": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762440
+        },
+        "1": {
+          "grids": 12,
+          "cells": 258688,
+          "particles": 17152
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 24031
+        },
+        "3": {
+          "grids": 81,
+          "cells": 1833920,
+          "particles": 57861
+        },
+        "4": {
+          "grids": 205,
+          "cells": 7150392,
+          "particles": 1900531
+        },
+        "5": {
+          "grids": 722,
+          "cells": 7938776,
+          "particles": 524368
+        },
+        "6": {
+          "grids": 954,
+          "cells": 9996936,
+          "particles": 382538
+        },
+        "7": {
+          "grids": 742,
+          "cells": 5922600,
+          "particles": 231201
+        },
+        "8": {
+          "grids": 477,
+          "cells": 3270992,
+          "particles": 212153
+        },
+        "9": {
+          "grids": 244,
+          "cells": 2049528,
+          "particles": 253434
+        },
+        "10": {
+          "grids": 216,
+          "cells": 2065304,
+          "particles": 961524
+        }
+      },
+      "structure_differs": false,
+      "sums_baseline": {
+        "baryon_mass": 7370938461.2953415,
+        "metal_mass": 28730642.302739423,
+        "stellar_mass": 793071833.0720177,
+        "dm_mass": 10658492877.988289,
+        "star_count": 1418504,
+        "metal_fields": {
+          "MetalAGB_Density": 3.408106994452336e-13,
+          "MetalNSM_Density": 3.408106994452336e-13,
+          "MetalSNII_Density": 14310199.87775069,
+          "MetalSNIa_Density": 55440.47049642072,
+          "Metal_Density": 14365001.954492468
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7370938461.929333,
+        "metal_mass": 28730642.3037578,
+        "stellar_mass": 793071833.0720255,
+        "dm_mass": 10658492877.988289,
+        "star_count": 1418504,
+        "metal_fields": {
+          "MetalAGB_Density": 3.408106995106017e-13,
+          "MetalNSM_Density": 3.408106995106017e-13,
+          "MetalSNII_Density": 14310199.878213353,
+          "MetalSNIa_Density": 55440.47053795096,
+          "Metal_Density": 14365001.95500666
+        }
+      },
+      "rel_baryon_mass": 8.601228252408063e-11,
+      "gate_baryon_mass": 2.058719407011371e-09,
+      "rel_metal_mass": 3.544574022513367e-11,
+      "gate_metal_mass": 2.940339738655333e-09,
+      "rel_stellar_mass": 9.920681560300755e-15,
+      "gate_stellar_mass": 1e-12,
+      "rel_dm_mass": 0.0,
+      "gate_dm_mass": 1e-12,
+      "star_count_diff": 0
+    },
+    "DD0396": {
+      "levels_baseline": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762352
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17239
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 23902
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1844080,
+          "particles": 58512
+        },
+        "4": {
+          "grids": 211,
+          "cells": 7165400,
+          "particles": 1896780
+        },
+        "5": {
+          "grids": 701,
+          "cells": 7927344,
+          "particles": 525333
+        },
+        "6": {
+          "grids": 956,
+          "cells": 10057400,
+          "particles": 382186
+        },
+        "7": {
+          "grids": 728,
+          "cells": 5877792,
+          "particles": 236049
+        },
+        "8": {
+          "grids": 477,
+          "cells": 3239640,
+          "particles": 211768
+        },
+        "9": {
+          "grids": 236,
+          "cells": 2018752,
+          "particles": 252760
+        },
+        "10": {
+          "grids": 195,
+          "cells": 2018776,
+          "particles": 961529
+        }
+      },
+      "levels_candidate": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762352
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17239
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 23902
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1844080,
+          "particles": 58512
+        },
+        "4": {
+          "grids": 211,
+          "cells": 7165400,
+          "particles": 1896780
+        },
+        "5": {
+          "grids": 701,
+          "cells": 7927344,
+          "particles": 525333
+        },
+        "6": {
+          "grids": 956,
+          "cells": 10057400,
+          "particles": 382186
+        },
+        "7": {
+          "grids": 728,
+          "cells": 5877792,
+          "particles": 236049
+        },
+        "8": {
+          "grids": 477,
+          "cells": 3239640,
+          "particles": 211768
+        },
+        "9": {
+          "grids": 236,
+          "cells": 2018752,
+          "particles": 252760
+        },
+        "10": {
+          "grids": 195,
+          "cells": 2018776,
+          "particles": 961529
+        }
+      },
+      "structure_differs": false,
+      "sums_baseline": {
+        "baryon_mass": 7359999736.609171,
+        "metal_mass": 28887648.80275711,
+        "stellar_mass": 791596495.8732257,
+        "dm_mass": 10719171444.213638,
+        "star_count": 1419681,
+        "metal_fields": {
+          "MetalAGB_Density": 3.4150302121861445e-13,
+          "MetalNSM_Density": 3.4150302121861445e-13,
+          "MetalSNII_Density": 14388511.949912384,
+          "MetalSNIa_Density": 55630.89727381258,
+          "Metal_Density": 14443505.955571253
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7359999730.791167,
+        "metal_mass": 28887648.74987179,
+        "stellar_mass": 791596495.8004489,
+        "dm_mass": 10719171444.213638,
+        "star_count": 1419681,
+        "metal_fields": {
+          "MetalAGB_Density": 3.4150303008127386e-13,
+          "MetalNSM_Density": 3.4150303008127386e-13,
+          "MetalSNII_Density": 14388511.923615081,
+          "MetalSNIa_Density": 55630.89707058644,
+          "Metal_Density": 14443505.929186396
+        }
+      },
+      "rel_baryon_mass": 7.904896552564818e-10,
+      "gate_baryon_mass": 7.257377578348337e-09,
+      "rel_metal_mass": 1.830724279386693e-09,
+      "gate_metal_mass": 1.838239684045658e-08,
+      "rel_stellar_mass": 9.193673141934798e-11,
+      "gate_stellar_mass": 4.217092463252363e-09,
+      "rel_dm_mass": 0.0,
+      "gate_dm_mass": 1e-12,
+      "star_count_diff": 0
+    },
+    "DD0397": {
+      "levels_baseline": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762352
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17239
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 23902
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1844080,
+          "particles": 58512
+        },
+        "4": {
+          "grids": 211,
+          "cells": 7165400,
+          "particles": 1896426
+        },
+        "5": {
+          "grids": 699,
+          "cells": 7929984,
+          "particles": 526538
+        },
+        "6": {
+          "grids": 961,
+          "cells": 10055888,
+          "particles": 382256
+        },
+        "7": {
+          "grids": 723,
+          "cells": 5891128,
+          "particles": 233592
+        },
+        "8": {
+          "grids": 466,
+          "cells": 3225752,
+          "particles": 208798
+        },
+        "9": {
+          "grids": 235,
+          "cells": 2033192,
+          "particles": 249473
+        },
+        "10": {
+          "grids": 206,
+          "cells": 2082288,
+          "particles": 970448
+        }
+      },
+      "levels_candidate": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762352
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17239
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 23902
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1844080,
+          "particles": 58512
+        },
+        "4": {
+          "grids": 211,
+          "cells": 7165400,
+          "particles": 1896426
+        },
+        "5": {
+          "grids": 699,
+          "cells": 7929984,
+          "particles": 526538
+        },
+        "6": {
+          "grids": 961,
+          "cells": 10055888,
+          "particles": 382256
+        },
+        "7": {
+          "grids": 723,
+          "cells": 5891128,
+          "particles": 233592
+        },
+        "8": {
+          "grids": 466,
+          "cells": 3225752,
+          "particles": 208798
+        },
+        "9": {
+          "grids": 235,
+          "cells": 2033192,
+          "particles": 249473
+        },
+        "10": {
+          "grids": 206,
+          "cells": 2082288,
+          "particles": 970448
+        }
+      },
+      "structure_differs": false,
+      "sums_baseline": {
+        "baryon_mass": 7406238461.714692,
+        "metal_mass": 29192416.562354304,
+        "stellar_mass": 794738430.1101961,
+        "dm_mass": 10956406151.926758,
+        "star_count": 1420807,
+        "metal_fields": {
+          "MetalAGB_Density": 3.836839511500665e-13,
+          "MetalNSM_Density": 3.836839511500665e-13,
+          "MetalSNII_Density": 14539697.69138815,
+          "MetalSNIa_Density": 56831.68825306756,
+          "Metal_Density": 14595887.182713278
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7406238473.953311,
+        "metal_mass": 29192416.923530687,
+        "stellar_mass": 794738429.6810408,
+        "dm_mass": 10956406151.926758,
+        "star_count": 1420807,
+        "metal_fields": {
+          "MetalAGB_Density": 3.83687256694202e-13,
+          "MetalNSM_Density": 3.83687256694202e-13,
+          "MetalSNII_Density": 14539697.874835836,
+          "MetalSNIa_Density": 56831.685497056584,
+          "Metal_Density": 14595887.363197967
+        }
+      },
+      "rel_baryon_mass": 1.6524743152343112e-09,
+      "gate_baryon_mass": 2.005283176113684e-08,
+      "rel_metal_mass": 1.237226721228227e-08,
+      "gate_metal_mass": 3.3397252364596616e-08,
+      "rel_stellar_mass": 5.39995718681856e-10,
+      "gate_stellar_mass": 3.352379021317844e-09,
+      "rel_dm_mass": 0.0,
+      "gate_dm_mass": 1e-12,
+      "star_count_diff": 0
+    },
+    "DD0398": {
+      "levels_baseline": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762351
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17225
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571624,
+          "particles": 23939
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1849096,
+          "particles": 58222
+        },
+        "4": {
+          "grids": 213,
+          "cells": 7166648,
+          "particles": 1897296
+        },
+        "5": {
+          "grids": 711,
+          "cells": 7908536,
+          "particles": 525119
+        },
+        "6": {
+          "grids": 968,
+          "cells": 10040712,
+          "particles": 381107
+        },
+        "7": {
+          "grids": 723,
+          "cells": 5944024,
+          "particles": 233380
+        },
+        "8": {
+          "grids": 461,
+          "cells": 3203696,
+          "particles": 213098
+        },
+        "9": {
+          "grids": 226,
+          "cells": 1975040,
+          "particles": 247440
+        },
+        "10": {
+          "grids": 200,
+          "cells": 2054968,
+          "particles": 971456
+        }
+      },
+      "levels_candidate": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762351
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17225
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571624,
+          "particles": 23939
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1849096,
+          "particles": 58222
+        },
+        "4": {
+          "grids": 213,
+          "cells": 7166648,
+          "particles": 1897296
+        },
+        "5": {
+          "grids": 711,
+          "cells": 7908536,
+          "particles": 525119
+        },
+        "6": {
+          "grids": 968,
+          "cells": 10040712,
+          "particles": 381107
+        },
+        "7": {
+          "grids": 723,
+          "cells": 5944024,
+          "particles": 233380
+        },
+        "8": {
+          "grids": 461,
+          "cells": 3203696,
+          "particles": 213098
+        },
+        "9": {
+          "grids": 226,
+          "cells": 1975040,
+          "particles": 247440
+        },
+        "10": {
+          "grids": 200,
+          "cells": 2054968,
+          "particles": 971456
+        }
+      },
+      "structure_differs": false,
+      "sums_baseline": {
+        "baryon_mass": 7405859924.280927,
+        "metal_mass": 29358901.587242022,
+        "stellar_mass": 797248344.1791824,
+        "dm_mass": 11063297837.028307,
+        "star_count": 1421904,
+        "metal_fields": {
+          "MetalAGB_Density": 1.6815554890621322e-09,
+          "MetalNSM_Density": 1.6815554890621322e-09,
+          "MetalSNII_Density": 14622657.3134229,
+          "MetalSNIa_Density": 57112.96782636921,
+          "Metal_Density": 14679131.305992894
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7405859730.958494,
+        "metal_mass": 29358903.49239171,
+        "stellar_mass": 797248348.2815706,
+        "dm_mass": 11063297837.028307,
+        "star_count": 1421904,
+        "metal_fields": {
+          "MetalAGB_Density": 1.6815565689460176e-09,
+          "MetalNSM_Density": 1.6815565689460176e-09,
+          "MetalSNII_Density": 14622658.266485397,
+          "MetalSNIa_Density": 57112.976030712045,
+          "Metal_Density": 14679132.249875717
+        }
+      },
+      "rel_baryon_mass": 2.6103981778561124e-08,
+      "gate_baryon_mass": 5.0991119074875136e-08,
+      "rel_metal_mass": 6.489171802943153e-08,
+      "gate_metal_mass": 1.270121600290434e-07,
+      "rel_stellar_mass": 5.145684092518879e-09,
+      "gate_stellar_mass": 4.819318834834678e-08,
+      "rel_dm_mass": 0.0,
+      "gate_dm_mass": 1e-12,
+      "star_count_diff": 0
+    },
+    "DD0399": {
+      "levels_baseline": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762351
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17225
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571624,
+          "particles": 23939
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1849096,
+          "particles": 58222
+        },
+        "4": {
+          "grids": 213,
+          "cells": 7166648,
+          "particles": 1897838
+        },
+        "5": {
+          "grids": 715,
+          "cells": 7918320,
+          "particles": 523362
+        },
+        "6": {
+          "grids": 962,
+          "cells": 10066368,
+          "particles": 382755
+        },
+        "7": {
+          "grids": 723,
+          "cells": 5906472,
+          "particles": 232746
+        },
+        "8": {
+          "grids": 456,
+          "cells": 3178448,
+          "particles": 209662
+        },
+        "9": {
+          "grids": 222,
+          "cells": 1985272,
+          "particles": 245901
+        },
+        "10": {
+          "grids": 195,
+          "cells": 2082136,
+          "particles": 977784
+        }
+      },
+      "levels_candidate": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762351
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17225
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571624,
+          "particles": 23939
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1849096,
+          "particles": 58222
+        },
+        "4": {
+          "grids": 213,
+          "cells": 7166648,
+          "particles": 1897838
+        },
+        "5": {
+          "grids": 715,
+          "cells": 7918320,
+          "particles": 523362
+        },
+        "6": {
+          "grids": 962,
+          "cells": 10066368,
+          "particles": 382755
+        },
+        "7": {
+          "grids": 723,
+          "cells": 5906472,
+          "particles": 232746
+        },
+        "8": {
+          "grids": 456,
+          "cells": 3178448,
+          "particles": 209662
+        },
+        "9": {
+          "grids": 222,
+          "cells": 1985272,
+          "particles": 245901
+        },
+        "10": {
+          "grids": 195,
+          "cells": 2082136,
+          "particles": 977784
+        }
+      },
+      "structure_differs": false,
+      "sums_baseline": {
+        "baryon_mass": 7421329640.708876,
+        "metal_mass": 29602648.093198467,
+        "stellar_mass": 803603886.90112,
+        "dm_mass": 11054019687.751476,
+        "star_count": 1423056,
+        "metal_fields": {
+          "MetalAGB_Density": 2.6303866230692315e-06,
+          "MetalNSM_Density": 2.6303866230692315e-06,
+          "MetalSNII_Density": 14743639.716316154,
+          "MetalSNIa_Density": 58005.39818894863,
+          "Metal_Density": 14801002.978688378
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7421330299.612164,
+        "metal_mass": 29602669.903332926,
+        "stellar_mass": 803604040.887399,
+        "dm_mass": 11054019687.751476,
+        "star_count": 1423056,
+        "metal_fields": {
+          "MetalAGB_Density": 2.6304828179937554e-06,
+          "MetalNSM_Density": 2.6304828179937554e-06,
+          "MetalSNII_Density": 14743650.50865748,
+          "MetalSNIa_Density": 58005.483374714626,
+          "Metal_Density": 14801013.911295716
+        }
+      },
+      "rel_baryon_mass": 8.878506430605943e-08,
+      "gate_baryon_mass": 5.762373845768684e-08,
+      "rel_metal_mass": 7.36762411313155e-07,
+      "gate_metal_mass": 1.1623125610535977e-06,
+      "rel_stellar_mass": 1.9161959270479734e-07,
+      "gate_stellar_mass": 2.5835018485413745e-07,
+      "rel_dm_mass": 0.0,
+      "gate_dm_mass": 1e-12,
+      "star_count_diff": 0
+    }
+  },
+  "timing": {
+    "baseline": {
+      "cycles": 5,
+      "total_time": 2401.5883,
+      "rebuild_time": 177.95211
+    },
+    "candidate": {
+      "cycles": 5,
+      "total_time": 2414.0836,
+      "rebuild_time": 174.82658999999998
+    },
+    "speedup": 0.9948239986386552
+  }
+}

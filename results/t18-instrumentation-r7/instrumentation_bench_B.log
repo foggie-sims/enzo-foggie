@@ -1,0 +1,58 @@
+RHperf (cumulative s, max over ranks): collect=0.167 flag=0.641 find=0.493 share=0.749 interp=0.361 mesh=0.0348 copy=0.554 loadbal=0.595 collect2=0.437
+DtLimiter cycle 2111 L1: Baryons=1
+DtLimiter cycle 2111 L2: Baryons=1
+DtLimiter cycle 2111 L3: Baryons=1
+DtLimiter cycle 2111 L4: Baryons=2
+DtLimiter cycle 2111 L5: Baryons=10
+DtLimiter cycle 2111 L6: Baryons=20
+DtLimiter cycle 2111 L7: Baryons=45
+DtLimiter cycle 2111 L8: Baryons=108
+DtLimiter cycle 2111 L9: Baryons=267
+DtLimiter cycle 2111 L10: Baryons=457
+MGSolver cycle 2111: solves=1353980 avg_vcycles=1.20 fallbacks=0 fallback_sweeps=0
+DtLimiter cycle 2112 L1: Baryons=1
+DtLimiter cycle 2112 L2: Baryons=1
+DtLimiter cycle 2112 L3: Baryons=1
+DtLimiter cycle 2112 L4: Baryons=2
+DtLimiter cycle 2112 L5: Baryons=11
+DtLimiter cycle 2112 L6: Baryons=28
+DtLimiter cycle 2112 L7: Baryons=66
+DtLimiter cycle 2112 L8: Baryons=116
+DtLimiter cycle 2112 L9: Baryons=220
+DtLimiter cycle 2112 L10: Baryons=436
+MGSolver cycle 2112: solves=1417975 avg_vcycles=1.18 fallbacks=0 fallback_sweeps=0
+RHperf (cumulative s, max over ranks): collect=1.3 flag=2.34 find=15.9 share=22.4 interp=9.85 mesh=2.39 copy=6.87 loadbal=7.34 collect2=0.81
+DtLimiter cycle 2113 L1: Baryons=1
+DtLimiter cycle 2113 L2: Baryons=1
+DtLimiter cycle 2113 L3: Baryons=1
+DtLimiter cycle 2113 L4: Baryons=2
+DtLimiter cycle 2113 L5: Baryons=9
+DtLimiter cycle 2113 L6: Baryons=26
+DtLimiter cycle 2113 L7: Baryons=67
+DtLimiter cycle 2113 L8: Baryons=112
+DtLimiter cycle 2113 L9: Baryons=209
+DtLimiter cycle 2113 L10: Baryons=414
+MGSolver cycle 2113: solves=1327770 avg_vcycles=1.18 fallbacks=0 fallback_sweeps=0
+DtLimiter cycle 2114 L1: Baryons=1
+DtLimiter cycle 2114 L2: Baryons=1
+DtLimiter cycle 2114 L3: Baryons=1
+DtLimiter cycle 2114 L4: Baryons=2
+DtLimiter cycle 2114 L5: Baryons=12
+DtLimiter cycle 2114 L6: Baryons=32
+DtLimiter cycle 2114 L7: Baryons=54
+DtLimiter cycle 2114 L8: Baryons=107
+DtLimiter cycle 2114 L9: Baryons=216
+DtLimiter cycle 2114 L10: Baryons=419
+MGSolver cycle 2114: solves=1301505 avg_vcycles=1.19 fallbacks=0 fallback_sweeps=0
+RHperf (cumulative s, max over ranks): collect=2.49 flag=3.71 find=33.3 share=45 interp=19.8 mesh=4.74 copy=13.4 loadbal=12.7 collect2=1.15
+DtLimiter cycle 2115 L1: Baryons=1
+DtLimiter cycle 2115 L2: Baryons=1
+DtLimiter cycle 2115 L3: Baryons=1
+DtLimiter cycle 2115 L4: Baryons=2
+DtLimiter cycle 2115 L5: Baryons=9
+DtLimiter cycle 2115 L6: Baryons=26
+DtLimiter cycle 2115 L7: Baryons=59
+DtLimiter cycle 2115 L8: Baryons=116
+DtLimiter cycle 2115 L9: Baryons=212
+DtLimiter cycle 2115 L10: Baryons=414
+MGSolver cycle 2115: solves=1290925 avg_vcycles=1.18 fallbacks=0 fallback_sweeps=0

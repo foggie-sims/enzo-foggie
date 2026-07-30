@@ -1,0 +1,231 @@
+{
+  "class": "C0",
+  "merged_from": [
+    "noise_floor_A1_vs_A2.json",
+    "floor_A1_vs_A3.json",
+    "floor_A2_vs_A3.json"
+  ],
+  "dumps_compared": [
+    "DD0394",
+    "DD0395",
+    "DD0396",
+    "DD0397",
+    "DD0398",
+    "DD0399"
+  ],
+  "failures": [
+    "DD0399: per-level structure differs"
+  ],
+  "per_dump": {
+    "DD0394": {
+      "rel_baryon_mass": 0.0,
+      "rel_metal_mass": 0.0,
+      "rel_stellar_mass": 0.0,
+      "rel_dm_mass": 0.0,
+      "star_count_diff": 0,
+      "sums_baseline": {
+        "baryon_mass": 43409331464.21674,
+        "metal_mass": 200467589.49291384,
+        "stellar_mass": 4758570934.163191,
+        "dm_mass": 50644876474.2722,
+        "star_count": 1417131,
+        "metal_fields": {
+          "MetalAGB_Density": 3.570444800000046e-13,
+          "MetalNSM_Density": 3.570444800000046e-13,
+          "MetalSNII_Density": 99898703.38617386,
+          "MetalSNIa_Density": 336981.0373226158,
+          "Metal_Density": 100231905.06942177
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 43409331464.21674,
+        "metal_mass": 200467589.49291384,
+        "stellar_mass": 4758570934.163191,
+        "dm_mass": 50644876474.2722,
+        "star_count": 1417131,
+        "metal_fields": {
+          "MetalAGB_Density": 3.570444800000046e-13,
+          "MetalNSM_Density": 3.570444800000046e-13,
+          "MetalSNII_Density": 99898703.38617386,
+          "MetalSNIa_Density": 336981.0373226158,
+          "Metal_Density": 100231905.06942177
+        }
+      }
+    },
+    "DD0395": {
+      "rel_baryon_mass": 2.058719407011371e-10,
+      "rel_metal_mass": 3.168442216214715e-10,
+      "rel_stellar_mass": 8.718174704506797e-15,
+      "rel_dm_mass": 0.0,
+      "star_count_diff": 0,
+      "sums_baseline": {
+        "baryon_mass": 7370938462.812811,
+        "metal_mass": 28730642.311187208,
+        "stellar_mass": 793071833.072019,
+        "dm_mass": 10658492877.988289,
+        "star_count": 1418504,
+        "metal_fields": {
+          "MetalAGB_Density": 3.408106995340653e-13,
+          "MetalNSM_Density": 3.408106995340653e-13,
+          "MetalSNII_Density": 14310199.881886486,
+          "MetalSNIa_Density": 55440.4705625283,
+          "Metal_Density": 14365001.958738375
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7370938461.2953415,
+        "metal_mass": 28730642.302739423,
+        "stellar_mass": 793071833.0720177,
+        "dm_mass": 10658492877.988289,
+        "star_count": 1418504,
+        "metal_fields": {
+          "MetalAGB_Density": 3.408106994452336e-13,
+          "MetalNSM_Density": 3.408106994452336e-13,
+          "MetalSNII_Density": 14310199.87775069,
+          "MetalSNIa_Density": 55440.47049642072,
+          "Metal_Density": 14365001.954492468
+        }
+      }
+    },
+    "DD0396": {
+      "rel_baryon_mass": 1.6618635926135693e-09,
+      "rel_metal_mass": 5.171985986375969e-09,
+      "rel_stellar_mass": 8.566933099705131e-10,
+      "rel_dm_mass": 0.0,
+      "star_count_diff": 0,
+      "sums_baseline": {
+        "baryon_mass": 7359999741.950601,
+        "metal_mass": 28887648.855859533,
+        "stellar_mass": 791596495.5394021,
+        "dm_mass": 10719171444.213638,
+        "star_count": 1419681,
+        "metal_fields": {
+          "MetalAGB_Density": 3.4150303874141907e-13,
+          "MetalNSM_Density": 3.4150303874141907e-13,
+          "MetalSNII_Density": 14388511.976346042,
+          "MetalSNIa_Density": 55630.89735542647,
+          "Metal_Density": 14443505.98215838
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7359999736.609171,
+        "metal_mass": 28887648.80275711,
+        "stellar_mass": 791596495.8732257,
+        "dm_mass": 10719171444.213638,
+        "star_count": 1419681,
+        "metal_fields": {
+          "MetalAGB_Density": 3.4150302121861445e-13,
+          "MetalNSM_Density": 3.4150302121861445e-13,
+          "MetalSNII_Density": 14388511.949912384,
+          "MetalSNIa_Density": 55630.89727381258,
+          "Metal_Density": 14443505.955571253
+        }
+      }
+    },
+    "DD0397": {
+      "rel_baryon_mass": 2.3031913441734446e-09,
+      "rel_metal_mass": 5.051752697393468e-09,
+      "rel_stellar_mass": 1.0986624563488841e-09,
+      "rel_dm_mass": 0.0,
+      "star_count_diff": 0,
+      "sums_baseline": {
+        "baryon_mass": 7406238476.566298,
+        "metal_mass": 29192416.659848955,
+        "stellar_mass": 794738429.8437697,
+        "dm_mass": 10956406151.926758,
+        "star_count": 1420807,
+        "metal_fields": {
+          "MetalAGB_Density": 3.8367937032682847e-13,
+          "MetalNSM_Density": 3.8367937032682847e-13,
+          "MetalSNII_Density": 14539697.741547631,
+          "MetalSNIa_Density": 56831.68575405625,
+          "Metal_Density": 14595887.232547414
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7406238461.714692,
+        "metal_mass": 29192416.562354304,
+        "stellar_mass": 794738430.1101961,
+        "dm_mass": 10956406151.926758,
+        "star_count": 1420807,
+        "metal_fields": {
+          "MetalAGB_Density": 3.836839511500665e-13,
+          "MetalNSM_Density": 3.836839511500665e-13,
+          "MetalSNII_Density": 14539697.69138815,
+          "MetalSNIa_Density": 56831.68825306756,
+          "Metal_Density": 14595887.182713278
+        }
+      }
+    },
+    "DD0398": {
+      "rel_baryon_mass": 1.4306557793085541e-08,
+      "rel_metal_mass": 4.887496201490649e-08,
+      "rel_stellar_mass": 2.5345787589981525e-08,
+      "rel_dm_mass": 0.0,
+      "star_count_diff": 0,
+      "sums_baseline": {
+        "baryon_mass": 7405859886.517618,
+        "metal_mass": 29358901.21434827,
+        "stellar_mass": 797248340.3369884,
+        "dm_mass": 11063297837.028307,
+        "star_count": 1421904,
+        "metal_fields": {
+          "MetalAGB_Density": 1.6815530350002813e-09,
+          "MetalNSM_Density": 1.6815530350002813e-09,
+          "MetalSNII_Density": 14622657.138568943,
+          "MetalSNIa_Density": 57112.95508639507,
+          "Metal_Density": 14679131.120693099
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7405859924.280927,
+        "metal_mass": 29358901.587242022,
+        "stellar_mass": 797248344.1791824,
+        "dm_mass": 11063297837.028307,
+        "star_count": 1421904,
+        "metal_fields": {
+          "MetalAGB_Density": 1.6815554890621322e-09,
+          "MetalNSM_Density": 1.6815554890621322e-09,
+          "MetalSNII_Density": 14622657.3134229,
+          "MetalSNIa_Density": 57112.96782636921,
+          "Metal_Density": 14679131.305992894
+        }
+      }
+    },
+    "DD0399": {
+      "rel_baryon_mass": 2.893506894253561e-08,
+      "rel_metal_mass": 1.3760907269373226e-07,
+      "rel_stellar_mass": 2.5835018485413746e-08,
+      "rel_dm_mass": 0.0,
+      "star_count_diff": 1,
+      "sums_baseline": {
+        "baryon_mass": 7421329597.9444,
+        "metal_mass": 29602644.652445495,
+        "stellar_mass": 803603866.1399987,
+        "dm_mass": 11054019687.751476,
+        "star_count": 1423057,
+        "metal_fields": {
+          "MetalAGB_Density": 2.6303820374547523e-06,
+          "MetalNSM_Density": 2.6303820374547523e-06,
+          "MetalSNII_Density": 14743638.010843249,
+          "MetalSNIa_Density": 58005.37523911096,
+          "Metal_Density": 14801001.26635812
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7421329640.708876,
+        "metal_mass": 29602648.093198467,
+        "stellar_mass": 803603886.90112,
+        "dm_mass": 11054019687.751476,
+        "star_count": 1423056,
+        "metal_fields": {
+          "MetalAGB_Density": 2.6303866230692315e-06,
+          "MetalNSM_Density": 2.6303866230692315e-06,
+          "MetalSNII_Density": 14743639.716316154,
+          "MetalSNIa_Density": 58005.39818894863,
+          "Metal_Density": 14801002.978688378
+        }
+      }
+    }
+  }
+}

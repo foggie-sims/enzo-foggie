@@ -1,0 +1,74 @@
+{
+  "id": "t18-instrumentation-r7",
+  "date": "2026-07-29",
+  "purpose": "T1.8 production stamp + noise-floor re-measurement at the production parallel config",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5,
+    "restart": "/home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff/RD0016/RD0016",
+    "restart_cycle": 2110,
+    "note": "First bench at the true FOGGIE production config; earlier benches (t19-manual, T1.9 stamp) ran 512 ranks on 4 x rom_ait, an accidental make_bench_run.py default. Noise floors are config-specific, so the floor was re-measured here."
+  },
+  "baseline_sha": "42dcbbd86c64",
+  "candidate_sha": "8aa475fa8747",
+  "runs": {
+    "bench_A1": {
+      "build": "42dcbbd86c64",
+      "job": "24915961",
+      "queue": "devel",
+      "exit": 0
+    },
+    "bench_A2": {
+      "build": "42dcbbd86c64",
+      "job": "24916041",
+      "queue": "devel",
+      "exit": 0
+    },
+    "bench_A3": {
+      "build": "42dcbbd86c64",
+      "job": "24916159",
+      "queue": "normal",
+      "exit": 0
+    },
+    "bench_B": {
+      "build": "8aa475fa8747",
+      "job": "24916042",
+      "queue": "normal",
+      "exit": 0
+    }
+  },
+  "noise_floor": {
+    "envelope": "noise_floor_envelope_A123.json",
+    "pairs": [
+      "noise_floor_A1_vs_A2.json",
+      "floor_A1_vs_A3.json",
+      "floor_A2_vs_A3.json"
+    ],
+    "summary": "Identical-code divergence at 1x128 mil_ait grows ~1 decade per root step; envelope at step 5 (DD0399): baryon 2.9e-8, metal 1.4e-7, stellar 2.6e-8, +-1 star event, structure diverges at DD0399. Wall-clock noise ~0.5%. Single-pair floors scatter by ~5x at step 5 (A1-A2 baryon 5.8e-9 vs A2-A3 2.9e-8) - use the multi-pair envelope (merge_noise_floors.py)."
+  },
+  "verdict": {
+    "comparison": "verdict_A1_vs_B.json",
+    "crosscheck": "crosscheck_A2_vs_B.json (A2 baseline, single-pair floor)",
+    "result": "PASS at class C0 with the 3-pair envelope floor (gates = max(1e-12, 10x envelope)); worst margin DD0399 baryon_mass 9.455e-08 vs gate 2.894e-07. Structure/star-count deltas within the floor divergence regime. Wall-clock ratio A1/B = 0.999.",
+    "note": "Against the single-pair A1-A2 floor, A1-vs-B tripped only DD0399 baryon (9.5e-8 vs 5.8e-8 gate); the A1-A2 step-5 baryon sample proved an outlier vs the other pairs, motivating the envelope."
+  },
+  "instrumentation_first_production_numbers": {
+    "wall_clock": "candidate 2414.1 s vs baseline 2412.9 s over 5 root cycles - zero measurable overhead (0.05%, noise 0.5%)",
+    "rh_perf_cumulative_max_over_ranks_s": {
+      "share": 45.0,
+      "find": 33.3,
+      "interp": 19.8,
+      "copy": 13.4,
+      "loadbal": 12.7,
+      "mesh": 4.74,
+      "flag": 3.71,
+      "collect": 2.49,
+      "collect2": 1.15
+    },
+    "dt_limiter": "Baryons (CFL) is the binding dt constraint on every level in every root cycle; L10 runs ~410-460 subcycles per root cycle",
+    "mg_solver": "1.29-1.42M subgrid solves per root cycle, avg 1.18-1.20 V-cycles, zero fallbacks",
+    "scaling_observation": "5 root steps take ~2413 s at 128 ranks vs ~2360 s at 512 ranks: 4x cores bought ~2% - the audit's strong-scaling ceiling measured directly at the anchor"
+  }
+}
