@@ -97,10 +97,10 @@ tiers:
         title: "Guard StarParticleFindAll when no Star-framework type is enabled"
         ref: "5.1"
         class: C0
-        status: in-progress
+        status: done
         prs: []
-        tests: ["Local serial A/B (TabularFeedbackTest deck, old exe vs guarded exe): all HDF5 payloads h5diff-identical, feedback/star logs byte-identical", "CI: serial bitwise determinism gates (pending)"]
-        note: "Probe-once guard in StarParticleInitialize: with no framework maker enabled (POP3/colored-POP3/cluster/MBH/BigStarFormation/StarParticleRadiativeFeedback), StarParticleFindAll runs once to check for legacy framework stars in the data, then the Star-object machinery is skipped for the rest of the run. FOGGIE config (H2REG_STAR + MECH feedback) skips ~1e10 particle-type comparisons + one allgather per level-subcycle. Awaiting CI + production bench stamp."
+        tests: ["Local serial A/B (TabularFeedbackTest deck, old exe vs guarded exe): all HDF5 payloads h5diff-identical, feedback/star logs byte-identical", "CI green on d25c550c (run 30512578492): build, smoke, gravity gate, both serial bitwise determinism pairs, sanitizers", "FOGGIE-bench t11-guard-r1: PASS class C0 vs the 1x128 envelope noise floor (baseline = t18-r7 candidate run)"]
+        note: "Probe-once guard in StarParticleInitialize: with no framework maker enabled (POP3/colored-POP3/cluster/MBH/BigStarFormation/StarParticleRadiativeFeedback), StarParticleFindAll runs once to check for legacy framework stars in the data, then the Star-object machinery is skipped for the rest of the run. FOGGIE config (H2REG_STAR + MECH feedback) skips ~1e10 particle-type comparisons + one allgather per level-subcycle. Wall-clock effect at the anchor below the 0.5% timing noise (2411.5 vs 2414.1 s over 5 root steps) - the removed work is real but small at 128 ranks; expected to matter more as the allgather scales with rank count. Archive: results/t11-guard-r1/ on bench-results."
       - id: T1.2
         title: "Hoist IdentifySpeciesFields out of the mu_field cell loop; skip mu_field on starless grids"
         ref: "5.1"
