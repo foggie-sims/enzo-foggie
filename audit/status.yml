@@ -28,9 +28,10 @@ tiers:
         title: "RebuildHierarchyCycleSkip[L] = 2-4 for L >= 4"
         ref: "3.2"
         class: C2
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
+        tests: ["FOGGIE-bench t01-rebuildskip-r1 (skip 2 -> 3 for L>=4) pending"]
+        note: "Discovery 2026-07-30: production ALREADY runs RebuildHierarchyCycleSkip=2 on all levels 0-10 (in the production parameter file; every bench baseline inherited it), so the audit's floor recommendation is deployed. The live experiment is skip=3 for L>=4 (levels 0-3 stay at the production value). Drift budget at CourantSafetyNumber=0.4 / ParticleCourant=0.8 / NumberOfBufferZones=2: hydro 1.2 cells (safe), particles 2.4 cells (0.4 over the buffer - marginal; exactly what the C2 comparison is for). skip=4 would need NumberOfBufferZones raised to ~4."
       - id: T0.2
         title: "LoadBalancing = 4 (Hilbert)"
         ref: "4.1"
