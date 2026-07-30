@@ -18,6 +18,7 @@
 #endif /* USE_MPI */
 #include <stdlib.h>
 #include <stdio.h>
+#include "EnzoTiming.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -71,15 +72,26 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
   fluxes SubgridFluxesRefined;
   InitializeFluxes(&SubgridFluxesRefined);
 
+  /* CommReceiveHandler accumulates the whole message pump (wait +
+     unpack/dispatch); MPIWaitReceive is the pure MPI_Waitsome wait
+     inside it.  Both are cross-cutting: this handler is called from
+     inside other timed sections (SetBoundaryConditions,
+     PrepareDensityField, UpdateFromFinerGrids, ...), so these totals
+     overlap those - they attribute, not partition. */
+
+  TIMER_START("CommReceiveHandler");
+
   while (ReceivesCompletedToDate < TotalReceives) {
 
     /* Call the MPI wait handler. */
 
     float time1 = ReturnWallTime();
 
+    TIMER_START("MPIWaitReceive");
     MPI_Waitsome(TotalReceives, CommunicationReceiveMPI_Request,
 		 &NumberOfCompleteRequests, ListOfIndices, ListOfStatuses);
-//    printf("MPI: %"ISYM" %"ISYM" %"ISYM"\n", TotalReceives, 
+    TIMER_STOP("MPIWaitReceive");
+//    printf("MPI: %"ISYM" %"ISYM" %"ISYM"\n", TotalReceives,
 //	   ReceivesCompletedToDate, NumberOfCompleteRequests);
 
     CommunicationTime += ReturnWallTime() - time1;
@@ -348,6 +360,8 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 
   CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
   //  printf("P(%d) out of CRH\n", MyProcessorNumber);
+
+  TIMER_STOP("CommReceiveHandler");
 
 #endif /* USE_MPI */
 
