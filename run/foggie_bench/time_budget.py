@@ -42,6 +42,9 @@ CROSS_CUTTING = {
     "MPIWaitReceive",       # the pure MPI_Waitsome wait inside the pump
     "CommBufferedSend",     # send side, likewise called from within sections
     "SolveForPotential",    # started inside PrepareDensityField.C:414
+    "SPCommUpdateCount",    # inside StarParticleFinalize (SPFinalize)
+    "SPFindTotalParticles",  # inside StarParticleInitialize (SPInitialize)
+    "SPRecordStarCount",     # ditto
 }
 
 
