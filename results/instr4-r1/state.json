@@ -1,0 +1,45 @@
+{
+  "id": "instr4-r1",
+  "date": "2026-07-30",
+  "purpose": "Split the 63% star-particle section into work vs synchronization",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5
+  },
+  "candidate_sha": "f62e194523b1",
+  "runs": {
+    "bench_B": {
+      "build": "f62e194523b1",
+      "job": "24918289",
+      "queue": "normal",
+      "exit": 0
+    }
+  },
+  "result": {
+    "total_wall_s": 2214.5,
+    "SPFinalize_s": 1387.7,
+    "SPCommUpdateCount_s": 1387.7,
+    "SPInitialize_s": 5.6,
+    "SPFindTotalParticles_s": 3.5,
+    "SPRecordStarCount_s": 2.1,
+    "conclusion": "SPFinalize == SPCommUpdateCount to 0.1 s: the ENTIRE cost of StarParticleFinalize is the single MPI_Allreduce in CommunicationUpdateStarParticleCount. StarParticleInitialize is negligible (0.3%) - the earlier suspicion that the FindTotalNumberOfParticles hierarchy walk was expensive is falsified (3.5 s).",
+    "per_call_ms": 320,
+    "calls": 4327,
+    "payload": "2*NumberOfGrids ints (~1-8 kB) among 128 ranks ON A SINGLE NODE (shared-memory MPI): true payload cost is tens of microseconds. So ~100% of the 320 ms/call is synchronization wait, not communication."
+  },
+  "imbalance_character": {
+    "per_rank_spread_per_cycle": "mean 252-314 s, min 130-237 s, max 284-354 s",
+    "interpretation": "No rank sits near zero at the barrier, so there is no single persistently-slow rank absorbing the work while others wait. The slowest rank VARIES between subcycles - the imbalance fluctuates. That is the regime where removing unnecessary barriers pays: wall time is currently sum-over-subcycles of max-over-ranks, and without the barrier it tends toward max-over-ranks of the sum (max(sum) <= sum(max))."
+  },
+  "opportunity": {
+    "description": "User observation (2026-07-30): FOGGIE sets StarFormationOncePerRootGridTimeStep=1, so SetMakeStars() runs only at level 0 once per root step (EvolveLevel.C:415-427) and each grid clears its flag after its first StarParticleHandler call. New star particles can therefore only appear in the FIRST subcycle of each level per root cycle - but the Allreduce runs on all 4327 subcycles. Its actual job (SetNewParticleIndex) is a no-op when nothing was created.",
+    "prize": "~1388 s of 2214 s is barrier wait at this one call. Reducing 4327 collectives to ~55 (one per level per root cycle) could approach a 2x wall-clock improvement - larger than everything Tier 1 delivered combined (~7%).",
+    "risks": [
+      "DEADLOCK: the skip condition must be identical on every rank without a collective. A local test ('did my grids make particles?') diverges. Note MakeStars itself diverges across ranks because Grid_StarParticleHandler returns on the processor check BEFORE clearing it.",
+      "STALE COUNTS: the Allreduce also refreshes non-owned grids' particle counts as a side effect; particles migrate between grids at rebuild (every 2 subcycles). Must confirm nothing between rebuilds depends on that refresh.",
+      "WAIT MIGRATION: removing a barrier does not remove imbalance; it can relocate to the next sync point. Bounded by how much the fluctuating imbalance averages out - the spread data says a lot, but only a bench proves it."
+    ]
+  }
+}
