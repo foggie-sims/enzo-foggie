@@ -97,9 +97,10 @@ tiers:
         title: "Guard StarParticleFindAll when no Star-framework type is enabled"
         ref: "5.1"
         class: C0
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
+        tests: ["Local serial A/B (TabularFeedbackTest deck, old exe vs guarded exe): all HDF5 payloads h5diff-identical, feedback/star logs byte-identical", "CI: serial bitwise determinism gates (pending)"]
+        note: "Probe-once guard in StarParticleInitialize: with no framework maker enabled (POP3/colored-POP3/cluster/MBH/BigStarFormation/StarParticleRadiativeFeedback), StarParticleFindAll runs once to check for legacy framework stars in the data, then the Star-object machinery is skipped for the rest of the run. FOGGIE config (H2REG_STAR + MECH feedback) skips ~1e10 particle-type comparisons + one allgather per level-subcycle. Awaiting CI + production bench stamp."
       - id: T1.2
         title: "Hoist IdentifySpeciesFields out of the mu_field cell loop; skip mu_field on starless grids"
         ref: "5.1"

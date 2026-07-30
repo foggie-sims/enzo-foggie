@@ -65,6 +65,30 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
   grid *GridPointer[MAX_NUMBER_OF_SUBGRIDS];
   FLOAT TimeNow = LevelArray[ThisLevel]->GridData->ReturnTime();
 
+  /* The Star framework only tracks particle types made by the POP3,
+     colored-POP3, star-cluster and MBH makers, by BigStarFormation
+     (simple sources via star_maker9), or - with
+     StarParticleRadiativeFeedback - normal stars.  When none of those
+     are enabled, StarParticleFindAll still scans every particle on
+     every level each level-subcycle and allgathers an (empty) global
+     star list.  Probe the particle data once (legacy Star-type
+     particles can arrive through a restart even with the makers off);
+     if nothing is found, skip the Star-object machinery for the rest
+     of the run.  AllStars stays NULL, which every consumer already
+     treats as "no stars". */
+
+  static int StarFrameworkInUse = INT_UNDEFINED;
+
+  int StarFrameworkMakersEnabled =
+    STARMAKE_METHOD(POP3_STAR) || STARMAKE_METHOD(COLORED_POP3_STAR) ||
+    STARMAKE_METHOD(STAR_CLUSTER) || STARMAKE_METHOD(MBH_PARTICLE) ||
+    StarParticleRadiativeFeedback == TRUE || BigStarFormation > 0;
+
+  if (!StarFrameworkMakersEnabled && StarFrameworkInUse == FALSE) {
+    LCAPERF_STOP("StarParticleInitialize");
+    return SUCCESS;
+  }
+
   /* Initialize all star particles if this is a restart */
 
   if (MetaData->FirstTimestepAfterRestart)
@@ -79,6 +103,15 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
   if (StarParticleFindAll(LevelArray, AllStars) == FAIL) {
         ENZO_FAIL("Error in StarParticleFindAll.");
   }
+
+  /* One-time probe (see above): with no framework maker enabled, decide
+     from the actual particle data whether the machinery can be skipped
+     from now on.  AllStars is globally identical on all ranks after
+     StarParticleFindAll, so every rank reaches the same verdict. */
+
+  if (StarFrameworkInUse == INT_UNDEFINED)
+    StarFrameworkInUse = (StarFrameworkMakersEnabled || AllStars != NULL)
+      ? TRUE : FALSE;
 
   if (MetaData->FirstTimestepAfterRestart == FALSE) {
 
