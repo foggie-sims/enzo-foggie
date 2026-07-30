@@ -72,9 +72,21 @@ c
       refine = cellsize/cloudsize
       half = 0.5001_PKIND/refine
       shift = 0.5_PKIND/refine
-      edge1 = REAL(dim1,PKIND) - half
-      edge2 = REAL(dim2,PKIND) - half
-      edge3 = REAL(dim3,PKIND) - half
+c
+c     The deposit below always touches field(i1+1,...), where
+c     i1 = int(xpos - shift) + 1, so keeping i1+1 <= dim requires
+c     xpos < dim - 1 + shift.  The previous upper clamp, dim - half,
+c     reserves half a cloud width and so only satisfies that for
+c     refine <= 1.0001.  When cloudsize < cellsize (a subgrid deposited
+c     onto a coarser parent, refine = 2**dlevel) a particle pinned at the
+c     old edge gave i1 = dim, and the field(...,k1+1) terms then ran one
+c     k-plane past the end of the array.  Note 2*shift - half is exactly
+c     1 - 0.5001 when refine == 1, so equal cloud and cell size deposits
+c     are unchanged.
+c
+      edge1 = REAL(dim1,PKIND) - 1._PKIND + 2._PKIND*shift - half
+      edge2 = REAL(dim2,PKIND) - 1._PKIND + 2._PKIND*shift - half
+      edge3 = REAL(dim3,PKIND) - 1._PKIND + 2._PKIND*shift - half
 c
       if (cloudsize .gt. cellsize) then
          write(6,*) "cloudsize > cellsize in cic_deposit!"
