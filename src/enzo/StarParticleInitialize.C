@@ -12,6 +12,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -49,10 +50,17 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
      these are to be used in CommunicationUpdateStarParticleCount 
      in StarParticleFinalize */  
 
+  /* Walks every grid on every level (and reduces), once per subcycle
+     of every level - the audit 5.1 "scales with the whole hierarchy,
+     not local work" pattern. */
+  TIMER_START("SPFindTotalParticles");
   MetaData->NumberOfParticles = FindTotalNumberOfParticles(LevelArray);
+  TIMER_STOP("SPFindTotalParticles");
   NumberOfOtherParticles = MetaData->NumberOfParticles - NumberOfStarParticles;
-  RecordTotalStarParticleCount(Grids, NumberOfGrids, 
+  TIMER_START("SPRecordStarCount");
+  RecordTotalStarParticleCount(Grids, NumberOfGrids,
 			       TotalStarParticleCountPrevious);
+  TIMER_STOP("SPRecordStarCount");
 
   /* Initialize the IMF lookup table if requested and not defined */
 
