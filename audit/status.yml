@@ -137,8 +137,8 @@ tiers:
         class: C2
         status: in-progress
         prs: []
-        tests: ["CI: 'Determinism - star feedback serial runs' step (bitwise A/B on TabularFeedbackTest)"]
-        note: "RNG seeding landed (init_random_seed by rank in star_feedback6, mirroring star_maker_ssn); verified by the star-path serial determinism gate. Allocatable arrays + early return still to do."
+        tests: ["CI: 'Determinism - star feedback serial runs' step (bitwise A/B on TabularFeedbackTest)", "Local serial A/B vs T1.13 build: feedback logs byte-identical, all dump payloads h5diff-identical", "CI + production bench stamp pending"]
+        note: "RNG seeding landed earlier (init_random_seed by rank). Now also landed: the 14 full-grid accumulators are heap-allocatable (were ~38 MB of automatic stack per call at 70^3/-r8 - the audit's stack-overflow crash class); early return before logs/allocation/zeroing when no particle passes the star filter; injection sweep skipped when nothing was deposited (nfbcells). Awaiting CI + bench stamp to flip done."
       - id: T1.7
         title: "Guard debug reductions in RebuildHierarchy; remove Evtime barriers; fuse adjacent small allreduces"
         ref: "4.2"

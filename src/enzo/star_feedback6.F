@@ -185,13 +185,19 @@ c
       R_PREC te1(2*distrad+1,2*distrad+1,2*distrad+1)
       R_PREC ge1(2*distrad+1,2*distrad+1,2*distrad+1)
       R_PREC metal1(2*distrad+1,2*distrad+1,2*distrad+1)
-      R_PREC nsn_grid(nx,ny,nz), meject_grid(nx,ny,nz),
-     &     mzeject_grid(nx,ny,nz), mzeject_ii_grid(nx,ny,nz),
-     &     mzeject_ia_grid(nx,ny,nz), up_grid(nx,ny,nz),
-     &     vp_grid(nx,ny,nz), wp_grid(nx,ny,nz)
-      R_PREC pSNmass_grid(nx,ny,nz), pSNmetal_grid(nx,ny,nz),
-     &      pSNmom_grid(nx,ny,nz), pSNup_grid(nx,ny,nz),
-     &      pSNvp_grid(nx,ny,nz), pSNwp_grid(nx,ny,nz)
+c     Full-grid accumulators. Allocatable (heap), NOT automatic (stack):
+c     14 grid-sized automatic arrays are ~38 MB of stack for a 70^3
+c     grid at -r8 and overflow the thread stack at high optimization
+c     with no -heap-arrays in the machine files (audit 5.1). They are
+c     only allocated after the early-return checks below.
+      R_PREC, allocatable :: nsn_grid(:,:,:), meject_grid(:,:,:),
+     &     mzeject_grid(:,:,:), mzeject_ii_grid(:,:,:),
+     &     mzeject_ia_grid(:,:,:), up_grid(:,:,:),
+     &     vp_grid(:,:,:), wp_grid(:,:,:)
+      R_PREC, allocatable :: pSNmass_grid(:,:,:), pSNmetal_grid(:,:,:),
+     &      pSNmom_grid(:,:,:), pSNup_grid(:,:,:),
+     &      pSNvp_grid(:,:,:), pSNwp_grid(:,:,:)
+      INTG_PREC any_star, nfbcells
       R_PREC up_avg, vp_avg, wp_avg, up_avg_w, vp_avg_w, wp_avg_w
       R_PREC wind_mass, wind_metal, wind_mom
       R_PREC ke_b_wind(2*distrad+1,2*distrad+1,2*distrad+1)
@@ -249,6 +255,36 @@ c
          ERROR_MESSAGE
       endif
 c
+c     Early return when no particle on this grid can inject feedback
+c     (same filter as the particle loop below). Skips the log-file
+c     open/close, the full-grid accumulator allocation + zeroing, and
+c     the full-grid injection sweep - which otherwise run on every
+c     grid at every level-subcycle whether or not it hosts stars.
+c
+      any_star = 0_IKIND
+      do n=1_IKIND, npart
+         if (tcp(n) .gt. 0._RKIND .and. mp(n) .gt. 0._RKIND .and.
+     &        type(n) .eq. 2_IKIND) then
+            any_star = 1_IKIND
+            goto 6
+         endif
+      enddo
+ 6    continue
+      if (any_star .eq. 0_IKIND) return
+c
+c     Heap-allocate the full-grid accumulators (see declaration note).
+c     The preSN arrays are allocated unconditionally because the
+c     injection sweep's compound conditionals index them without
+c     guaranteed short-circuit evaluation.
+c
+      allocate(nsn_grid(nx,ny,nz), meject_grid(nx,ny,nz),
+     &     mzeject_grid(nx,ny,nz), mzeject_ii_grid(nx,ny,nz),
+     &     mzeject_ia_grid(nx,ny,nz), up_grid(nx,ny,nz),
+     &     vp_grid(nx,ny,nz), wp_grid(nx,ny,nz))
+      allocate(pSNmass_grid(nx,ny,nz), pSNmetal_grid(nx,ny,nz),
+     &     pSNmom_grid(nx,ny,nz), pSNup_grid(nx,ny,nz),
+     &     pSNvp_grid(nx,ny,nz), pSNwp_grid(nx,ny,nz))
+c
 c     Initialize feedback and debug logs
 c
       if (feedback_log .eq. 1_IKIND) then
@@ -304,6 +340,7 @@ c
 c     Loop over particles to add their number of supernovae, mass and
 c     metals ejection to the locations of their host cells on the grids
 c
+      nfbcells = 0_IKIND
       do n=1_IKIND, npart
 c
 c        If particle is a star and has non-negative mass and creation time:
@@ -692,6 +729,7 @@ c
 c     Put nsn, meject, mzeject, and weighted particle velocity values on grid at this location
 c     Weight average velocity for SNe by number of SNe going off in each particle
 c
+            nfbcells = nfbcells + 1_IKIND
             nsn_grid(ic,jc,kc) = nsn_grid(ic,jc,kc) + nsn
             meject_grid(ic,jc,kc) = meject_grid(ic,jc,kc) + m_eject
             up_grid(ic,jc,kc) = up_grid(ic,jc,kc) + up(n)*nsn
@@ -746,6 +784,12 @@ c
  10         continue
          endif
       enddo ! end loop over star particles
+c
+c     No particle deposited anything: the accumulator grids are all
+c     zero, so the full-grid injection sweep below would only burn a
+c     grid's worth of comparisons. Jump straight to the log cleanup.
+c
+      if (nfbcells .eq. 0_IKIND) goto 900
 c
 c-----------------------------------------------------------------------
 c
@@ -1401,6 +1445,7 @@ c
          enddo
       enddo ! end loop over feedback grid
 c
+ 900  continue
 c
       if (feedback_log .eq. 1) then
          close(4)
