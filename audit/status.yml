@@ -105,17 +105,17 @@ tiers:
         title: "Hoist IdentifySpeciesFields out of the mu_field cell loop; skip mu_field on starless grids"
         ref: "5.1"
         class: C0
-        status: in-progress
+        status: done
         prs: []
-        tests: ["Local serial A/B vs T1.1 build: feedback logs byte-identical, all dump payloads h5diff-identical", "CI + production bench stamp pending"]
-        note: "Both MOM_STAR and MECH_STAR branches: species indices looked up once per grid (was: 12 linear field searches per cell); the whole mu_field fill skipped when the grid has no PARTICLE_TYPE_STAR particles (the feedback Fortran reads mu only inside its type==2 particle loop)."
+        tests: ["Local serial A/B vs T1.1 build: feedback logs byte-identical, all dump payloads h5diff-identical", "CI green on eb4eb451 (run 30515147467)", "FOGGIE-bench t12-mufield-r1: PASS class C0 vs the envelope floor (mesh bit-identical every dump; one particle level swap at DD0398, within the measured migration noise channel)"]
+        note: "Both MOM_STAR and MECH_STAR branches: species indices looked up once per grid (was: 12 linear field searches per cell); the whole mu_field fill skipped when the grid has no PARTICLE_TYPE_STAR particles (the feedback Fortran reads mu only inside its type==2 particle loop). Wall clock 2397.4 vs 2411.5 s (0.6% faster, at the noise edge). Bench initially FAILed on a conflated structure gate - see the comparator refinement recorded in t12-mufield-r1/state.json on bench-results."
       - id: T1.3
         title: "Delete or gate the per-cell mu file write"
         ref: "5.1"
         class: C0
-        status: in-progress
+        status: done
         prs: []
-        tests: ["Local serial A/B vs T1.1 build: feedback logs byte-identical, all dump payloads h5diff-identical", "CI + production bench stamp pending"]
+        tests: ["Local serial A/B vs T1.1 build: feedback logs byte-identical, all dump payloads h5diff-identical", "CI green on eb4eb451 (run 30515147467)", "FOGGIE-bench t12-mufield-r1: PASS class C0 (shared stamp with T1.2, same commit)"]
         note: "Deleted: all ranks appended to one shared mu_and_baryon_fields.txt whenever mu left [0.0625, 2] - a filesystem-serializing hazard, and redundant because star_feedback6.F clamps mu_cell to exactly that range (NaN included) before use."
       - id: T1.4
         title: "Age cutoff + call reordering in star_feedback6.F; reconcile StarFeedbackSNePerTimestepLimit default vs docs"

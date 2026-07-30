@@ -34,8 +34,13 @@ production configuration.
   2026-07-29 from three baseline runs (t18-instrumentation-r7 A1/A2/A3,
   all pairwise comparisons merged with `merge_noise_floors.py`). Envelope:
   relative mass diffs grow ~1 decade per root step to (baryon/metal/stellar)
-  2.9e-8 / 1.4e-7 / 2.6e-8 at step 5; structure diverges at the step-5 dump;
-  +-1 stochastic star event; wall-clock noise ~0.5%. Archived at
+  2.9e-8 / 1.4e-7 / 2.6e-8 at step 5; the MESH (per-level grid/cell
+  counts) stayed bit-identical in every identical-code pair through all 5
+  steps; the observed structure-channel noise is integer events - +-1
+  stochastic star and single particles hopping a refinement level with
+  the mesh unchanged (seen from step 4 on). compare_runs.py gates the
+  mesh exactly and the migration/star channels as counts. Wall-clock
+  noise ~0.5%. Archived at
   `results/t18-instrumentation-r7/noise_floor_envelope_A123.json` on
   `bench-results` - use this for all 1x128 gating. Single-pair floors
   scatter ~5x at step 5; always gate against a multi-pair envelope. A noise

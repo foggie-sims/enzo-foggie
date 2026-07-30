@@ -193,6 +193,27 @@ def rel(a, b):
     return abs(a - b) / max(abs(a), abs(b))
 
 
+def mesh_and_migrations(la, lb):
+    """Split a per-level structure diff into (mesh_differs, migrations).
+
+    mesh_differs: grid or cell counts differ on any level - a genuine
+    refinement-structure change, gated exactly.  migrations: total
+    |particle-count delta| across levels with the mesh identical - single
+    particles crossing level boundaries under parallel nondeterminism
+    (T1.14), observed between identical-code runs at the production
+    anchor, so gated like the star count rather than as structure.
+    """
+    keys = set(la) | set(lb)
+    mesh_differs = any(
+        la.get(l, {}).get("grids") != lb.get(l, {}).get("grids") or
+        la.get(l, {}).get("cells") != lb.get(l, {}).get("cells")
+        for l in keys)
+    migrations = sum(
+        abs(la.get(l, {}).get("particles", 0) -
+            lb.get(l, {}).get("particles", 0)) for l in keys)
+    return mesh_differs, migrations
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("baseline")
@@ -215,7 +236,8 @@ def main():
 
     floor_rel = {}          # dump -> metric -> measured rel diff
     floor_star = {}         # dump -> star count delta
-    floor_struct_break = None  # first dump name where floor structure diverged
+    floor_migr = {}         # dump -> per-level particle migration sum
+    floor_struct_break = None  # first dump where the floor MESH diverged
     if args.noise_floor:
         fl = json.load(open(args.noise_floor))
         for dname, entry in fl.get("per_dump", {}).items():
@@ -224,11 +246,29 @@ def main():
             sa, sb = entry.get("sums_baseline"), entry.get("sums_candidate")
             if sa and sb:
                 floor_star[dname] = abs(sa["star_count"] - sb["star_count"])
-        for fmsg in fl.get("failures", []):
-            if "per-level structure differs" in fmsg:
-                d = fmsg.split(":")[0].strip()
-                if floor_struct_break is None or d < floor_struct_break:
-                    floor_struct_break = d
+            la, lb = entry.get("levels_baseline"), entry.get("levels_candidate")
+            if la is not None and lb is not None:
+                m, migr = mesh_and_migrations(la, lb)
+                floor_migr[dname] = migr
+                if m and (floor_struct_break is None
+                          or dname < floor_struct_break):
+                    floor_struct_break = dname
+            elif "particle_level_migrations" in entry:
+                # merged envelope floors (merge_noise_floors.py) carry the
+                # classification instead of the raw level tables
+                floor_migr[dname] = entry["particle_level_migrations"]
+                if entry.get("mesh_differs") and (
+                        floor_struct_break is None
+                        or dname < floor_struct_break):
+                    floor_struct_break = dname
+        # Legacy floors (before the mesh/particle split): fall back to the
+        # failure messages, which conflated the two.
+        if floor_struct_break is None and not floor_migr:
+            for fmsg in fl.get("failures", []):
+                if "per-level structure differs" in fmsg:
+                    d = fmsg.split(":")[0].strip()
+                    if floor_struct_break is None or d < floor_struct_break:
+                        floor_struct_break = d
 
     da = find_dumps(args.baseline)
     db = find_dumps(args.candidate)
@@ -251,15 +291,29 @@ def main():
         hb = parse_hierarchy(db[name] + ".hierarchy")
         entry["levels_baseline"] = ha
         entry["levels_candidate"] = hb
+        entry["structure_differs"] = (ha != hb)
+        mesh_differs, migrations = mesh_and_migrations(ha, hb)
+        entry["mesh_differs"] = mesh_differs
+        entry["particle_level_migrations"] = migrations
         struct_required = tol["structure_exact"] and not (
             floor_struct_break is not None and name >= floor_struct_break)
-        entry["structure_differs"] = (ha != hb)
-        if entry["structure_differs"]:
+        if mesh_differs:
             if struct_required:
-                report["failures"].append(f"{name}: per-level structure differs")
+                report["failures"].append(f"{name}: mesh structure differs "
+                                          "(per-level grid/cell counts)")
             else:
-                print(f"note: {name}: structure differs (within floor-pair "
+                print(f"note: {name}: mesh differs (within floor-pair "
                       f"divergence regime, not gated)")
+        migr_gate = 0 if not args.noise_floor else \
+            int(args.noise_factor * max(1, floor_migr.get(name, 0)))
+        entry["gate_particle_level_migrations"] = migr_gate
+        if migrations > migr_gate and tol["structure_exact"]:
+            report["failures"].append(
+                f"{name}: {migrations} particle level migration(s) "
+                f"(> gate {migr_gate})")
+        elif migrations:
+            print(f"note: {name}: {migrations} particle(s) changed level "
+                  f"with identical mesh (gate {migr_gate})")
         sa = mass_sums(da[name])
         sb = mass_sums(db[name])
         if sa and sb:
