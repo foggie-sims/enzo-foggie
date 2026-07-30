@@ -65,9 +65,10 @@ tiers:
         title: "TimingCycleSkip = 10; throttle FileDirectedOutput polling"
         ref: "5.4"
         class: C0
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
+        tests: ["Local serial A/B: bitwise identical", "CI + anchor bench pending (shared run with instrumentation pass 2)"]
+        note: "The FileDirectedOutput block was worse than the audit's polling framing: 4 filesystem stats on rank 0 PLUS a 5-int MPI_Bcast synchronizing all ranks at every subcycle of every level. Now gated to the level-0 call - trigger-file latency is bounded at one root timestep, matching the feature's stated intent. TimingCycleSkip=10 is a production-deck recommendation (parameter exists); make_bench_run.py now pins TimingCycleSkip=1 so benches keep per-cycle data regardless."
       - id: T0.7
         title: "Restore -xAVX/-march and -ip on Pleiades (after T1.6 stack fix); add -heap-arrays"
         ref: "5.1"

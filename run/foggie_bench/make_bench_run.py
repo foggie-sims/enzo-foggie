@@ -33,7 +33,7 @@ TEMPLATE = os.path.join(HERE, "pbs_pleiades.template.sh")
 OVERRIDES_DROP = re.compile(
     r"^\s*(StopCycle|CycleSkipDataDump|dtDataDump|TimeLastDataDump|"
     r"CycleLastDataDump|StopTime|CosmologyOutputRedshift\[\d+\]|"
-    r"NumberOfOutputsBeforeExit)\s*=")
+    r"NumberOfOutputsBeforeExit|TimingCycleSkip)\s*=")
 
 
 def read_param(text, name):
@@ -110,6 +110,9 @@ def main():
         # chaining; with dumps at every root step an inherited value
         # would exit the run at the first output.
         "NumberOfOutputsBeforeExit = 0",
+        # Benches need per-root-cycle timing data even if production
+        # decks adopt the T0.6 recommendation of TimingCycleSkip = 10.
+        "TimingCycleSkip       = 1",
     ]
 
     # Build a shadow snapshot directory inside the run dir: Enzo snapshots
