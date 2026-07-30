@@ -23,13 +23,14 @@
       "build": "db3daf2b88ee",
       "job": "24916815",
       "queue": "normal",
-      "purpose": "second timing sample - see wall_clock note"
+      "purpose": "second timing sample - see wall_clock note",
+      "exit": 0
     }
   },
   "verdict": {
     "comparison": "verdict_t13B_vs_t16B.json",
     "result": "PASS at class C0 vs the 3-pair envelope floor (one particle level migration at DD0399, gate 10; mesh bit-identical everywhere).",
-    "wall_clock": "candidate 2420.1 s vs baseline 2381.4 s (+1.6%) - single sample on a different normal-queue node; the session's identical-config runs scatter over ~1.6% (2381-2420 s), so inconclusive. bench_B2 adds a second sample; timing is informational, not gated."
+    "wall_clock": "Two candidate samples straddle the baseline: 2420.1 s and 2371.0 s vs baseline 2381.4 s. The +1.6% first sample was node-to-node scatter on the normal queue; T1.6 is wall-clock neutral at the anchor (its value is the crash-class removal and starless-grid waste elimination)."
   },
   "ci": "https://github.com/foggie-sims/enzo-foggie/actions/runs/30525447698"
 }
