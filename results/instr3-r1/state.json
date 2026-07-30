@@ -1,0 +1,42 @@
+{
+  "id": "instr3-r1",
+  "date": "2026-07-30",
+  "purpose": "Instrumentation pass 3: close the wall-clock accounting",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5,
+    "restart_cycle": 2110
+  },
+  "baseline": "t15-coolgate-r1/bench_B",
+  "candidate_sha": "ed40e8920882",
+  "runs": {
+    "bench_B": {
+      "build": "ed40e8920882",
+      "job": "24917855",
+      "queue": "normal",
+      "exit": 0
+    }
+  },
+  "verdict": {
+    "comparison": "verdict_t15B_vs_instr3B.json",
+    "result": "PASS at class C0 vs the envelope floor (mesh identical; 1-2 particle level migrations). Wall 2299.9 s.",
+    "coverage": "99.7% of wall now attributed to named sections (pass 2 was 37.2%). Full table in time_budget.txt."
+  },
+  "headline_finding": {
+    "StarParticleInitFinal_s": 1459.4,
+    "share_of_wall": "63.5%",
+    "per_subcycle_ms": 337,
+    "subcycles_in_run": 4327,
+    "explanation": "StarParticleInitialize + StarParticleFinalize run once per subcycle of EVERY level (4327 subcycles in this 5-root-step run; L10 alone 2140). They were the whole of the previously unattributed 62.8%.",
+    "interpretation_pending": "Not yet known whether this is work or synchronization wait. StarParticleFinalize calls CommunicationUpdateStarParticleCount = MPI_Allreduce over 2*NumberOfGrids ints, which is also a barrier and therefore absorbs upstream load imbalance. Payload cost of that Allreduce on 128 ranks is ~1 ms against 337 ms measured, so <1% is communication payload. Pass 4 (sha f62e1945) splits SPInitialize/SPFinalize and times the Allreduce and the hierarchy walk directly.",
+    "if_imbalance": "Would make T2.1 (particle-aware load-balance work estimate) the highest-value remaining audit item, and would explain the null result of T0.2 (Hilbert balancing on cells-only weights)."
+  },
+  "tooling_corrections": [
+    "SolveForPotential is started inside PrepareDensityField.C:414 - was double-counted; now classified cross-cutting.",
+    "GravityAccel does not overlap SolveForPotential (different call site); counted exclusive.",
+    "Level_NN timers are NOT nested - their brackets stop before the recursive EvolveLevel call, so they are exclusive per-level times summing to ~87% of Total. Never add them to the section budget."
+  ],
+  "ci": "https://github.com/foggie-sims/enzo-foggie/actions/runs/30564483504"
+}
