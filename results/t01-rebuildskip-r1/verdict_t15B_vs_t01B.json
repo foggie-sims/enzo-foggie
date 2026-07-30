@@ -1,0 +1,998 @@
+{
+  "class": "C0",
+  "dumps_compared": [
+    "DD0394",
+    "DD0395",
+    "DD0396",
+    "DD0397",
+    "DD0398",
+    "DD0399"
+  ],
+  "failures": [
+    "DD0395: baryon_mass differs by 3.325e-07 (> gate 2.059e-09)",
+    "DD0395: metal_mass differs by 6.358e-07 (> gate 3.168e-09)",
+    "DD0395: stellar_mass differs by 1.014e-07 (> gate 1.000e-12)",
+    "DD0396: baryon_mass differs by 6.962e-08 (> gate 1.662e-08)",
+    "DD0396: stellar_mass differs by 8.672e-08 (> gate 8.567e-09)",
+    "DD0397: mesh structure differs (per-level grid/cell counts)",
+    "DD0397: 1161 particle level migration(s) (> gate 10)",
+    "DD0397: baryon_mass differs by 1.656e-06 (> gate 2.303e-08)",
+    "DD0397: metal_mass differs by 3.731e-07 (> gate 5.052e-08)",
+    "DD0397: stellar_mass differs by 1.234e-06 (> gate 1.099e-08)",
+    "DD0397: dm_mass differs by 5.176e-06 (> gate 1.000e-12)",
+    "DD0398: mesh structure differs (per-level grid/cell counts)",
+    "DD0398: 289 particle level migration(s) (> gate 10)",
+    "DD0398: baryon_mass differs by 7.555e-05 (> gate 1.431e-07)",
+    "DD0398: metal_mass differs by 9.712e-05 (> gate 4.887e-07)",
+    "DD0398: stellar_mass differs by 5.141e-04 (> gate 2.535e-07)",
+    "DD0399: baryon_mass differs by 1.133e-06 (> gate 2.894e-07)",
+    "DD0399: stellar_mass differs by 1.033e-06 (> gate 2.584e-07)"
+  ],
+  "per_dump": {
+    "DD0394": {
+      "levels_baseline": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762441
+        },
+        "1": {
+          "grids": 12,
+          "cells": 258688,
+          "particles": 17151
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 24033
+        },
+        "3": {
+          "grids": 81,
+          "cells": 1833920,
+          "particles": 52217
+        },
+        "4": {
+          "grids": 113,
+          "cells": 6649328,
+          "particles": 1880389
+        },
+        "5": {
+          "grids": 646,
+          "cells": 8006304,
+          "particles": 538405
+        },
+        "6": {
+          "grids": 900,
+          "cells": 10344928,
+          "particles": 390036
+        },
+        "7": {
+          "grids": 744,
+          "cells": 5974944,
+          "particles": 235660
+        },
+        "8": {
+          "grids": 478,
+          "cells": 3238680,
+          "particles": 216458
+        },
+        "9": {
+          "grids": 232,
+          "cells": 1994528,
+          "particles": 248264
+        },
+        "10": {
+          "grids": 192,
+          "cells": 2022584,
+          "particles": 329026
+        },
+        "11": {
+          "grids": 192,
+          "cells": 1961576,
+          "particles": 631780
+        }
+      },
+      "levels_candidate": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762441
+        },
+        "1": {
+          "grids": 12,
+          "cells": 258688,
+          "particles": 17151
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 24033
+        },
+        "3": {
+          "grids": 81,
+          "cells": 1833920,
+          "particles": 52217
+        },
+        "4": {
+          "grids": 113,
+          "cells": 6649328,
+          "particles": 1880389
+        },
+        "5": {
+          "grids": 646,
+          "cells": 8006304,
+          "particles": 538405
+        },
+        "6": {
+          "grids": 900,
+          "cells": 10344928,
+          "particles": 390036
+        },
+        "7": {
+          "grids": 744,
+          "cells": 5974944,
+          "particles": 235660
+        },
+        "8": {
+          "grids": 478,
+          "cells": 3238680,
+          "particles": 216458
+        },
+        "9": {
+          "grids": 232,
+          "cells": 1994528,
+          "particles": 248264
+        },
+        "10": {
+          "grids": 192,
+          "cells": 2022584,
+          "particles": 329026
+        },
+        "11": {
+          "grids": 192,
+          "cells": 1961576,
+          "particles": 631780
+        }
+      },
+      "structure_differs": false,
+      "mesh_differs": false,
+      "particle_level_migrations": 0,
+      "gate_particle_level_migrations": 10,
+      "sums_baseline": {
+        "baryon_mass": 43409331464.21674,
+        "metal_mass": 200467589.49291384,
+        "stellar_mass": 4758570934.163191,
+        "dm_mass": 50644876474.2722,
+        "star_count": 1417131,
+        "metal_fields": {
+          "MetalAGB_Density": 3.570444800000046e-13,
+          "MetalNSM_Density": 3.570444800000046e-13,
+          "MetalSNII_Density": 99898703.38617386,
+          "MetalSNIa_Density": 336981.0373226158,
+          "Metal_Density": 100231905.06942177
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 43409331464.21674,
+        "metal_mass": 200467589.49291384,
+        "stellar_mass": 4758570934.163191,
+        "dm_mass": 50644876474.2722,
+        "star_count": 1417131,
+        "metal_fields": {
+          "MetalAGB_Density": 3.570444800000046e-13,
+          "MetalNSM_Density": 3.570444800000046e-13,
+          "MetalSNII_Density": 99898703.38617386,
+          "MetalSNIa_Density": 336981.0373226158,
+          "Metal_Density": 100231905.06942177
+        }
+      },
+      "rel_baryon_mass": 0.0,
+      "gate_baryon_mass": 1e-12,
+      "rel_metal_mass": 0.0,
+      "gate_metal_mass": 1e-12,
+      "rel_stellar_mass": 0.0,
+      "gate_stellar_mass": 1e-12,
+      "rel_dm_mass": 0.0,
+      "gate_dm_mass": 1e-12,
+      "star_count_diff": 0
+    },
+    "DD0395": {
+      "levels_baseline": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762440
+        },
+        "1": {
+          "grids": 12,
+          "cells": 258688,
+          "particles": 17152
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 24031
+        },
+        "3": {
+          "grids": 81,
+          "cells": 1833920,
+          "particles": 57861
+        },
+        "4": {
+          "grids": 205,
+          "cells": 7150392,
+          "particles": 1900531
+        },
+        "5": {
+          "grids": 722,
+          "cells": 7938776,
+          "particles": 524368
+        },
+        "6": {
+          "grids": 954,
+          "cells": 9996936,
+          "particles": 382538
+        },
+        "7": {
+          "grids": 742,
+          "cells": 5922600,
+          "particles": 231201
+        },
+        "8": {
+          "grids": 477,
+          "cells": 3270992,
+          "particles": 212153
+        },
+        "9": {
+          "grids": 244,
+          "cells": 2049528,
+          "particles": 253434
+        },
+        "10": {
+          "grids": 216,
+          "cells": 2065304,
+          "particles": 961524
+        }
+      },
+      "levels_candidate": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762440
+        },
+        "1": {
+          "grids": 12,
+          "cells": 258688,
+          "particles": 17152
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 24031
+        },
+        "3": {
+          "grids": 81,
+          "cells": 1833920,
+          "particles": 57861
+        },
+        "4": {
+          "grids": 205,
+          "cells": 7150392,
+          "particles": 1900531
+        },
+        "5": {
+          "grids": 722,
+          "cells": 7938776,
+          "particles": 524368
+        },
+        "6": {
+          "grids": 954,
+          "cells": 9996936,
+          "particles": 382538
+        },
+        "7": {
+          "grids": 742,
+          "cells": 5922600,
+          "particles": 231201
+        },
+        "8": {
+          "grids": 477,
+          "cells": 3270992,
+          "particles": 212153
+        },
+        "9": {
+          "grids": 244,
+          "cells": 2049528,
+          "particles": 253434
+        },
+        "10": {
+          "grids": 216,
+          "cells": 2065304,
+          "particles": 961524
+        }
+      },
+      "structure_differs": false,
+      "mesh_differs": false,
+      "particle_level_migrations": 0,
+      "gate_particle_level_migrations": 10,
+      "sums_baseline": {
+        "baryon_mass": 7370938462.77576,
+        "metal_mass": 28730642.305478368,
+        "stellar_mass": 793071833.0720084,
+        "dm_mass": 10658492877.988289,
+        "star_count": 1418504,
+        "metal_fields": {
+          "MetalAGB_Density": 3.4081069949684673e-13,
+          "MetalNSM_Density": 3.4081069949684673e-13,
+          "MetalSNII_Density": 14310199.879037682,
+          "MetalSNIa_Density": 55440.4705576988,
+          "Metal_Density": 14365001.955883129
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7370940913.321896,
+        "metal_mass": 28730660.57149052,
+        "stellar_mass": 793071752.6212084,
+        "dm_mass": 10658492877.988289,
+        "star_count": 1418504,
+        "metal_fields": {
+          "MetalAGB_Density": 3.408104148311863e-13,
+          "MetalNSM_Density": 3.408104148311863e-13,
+          "MetalSNII_Density": 14310208.663347773,
+          "MetalSNIa_Density": 55440.82087378774,
+          "Metal_Density": 14365011.087269122
+        }
+      },
+      "rel_baryon_mass": 3.324604232647425e-07,
+      "gate_baryon_mass": 2.058719407011371e-09,
+      "rel_metal_mass": 6.357672182768976e-07,
+      "gate_metal_mass": 3.1684422162147146e-09,
+      "rel_stellar_mass": 1.0144200889140886e-07,
+      "gate_stellar_mass": 1e-12,
+      "rel_dm_mass": 0.0,
+      "gate_dm_mass": 1e-12,
+      "star_count_diff": 0
+    },
+    "DD0396": {
+      "levels_baseline": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762352
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17239
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 23902
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1844080,
+          "particles": 58512
+        },
+        "4": {
+          "grids": 211,
+          "cells": 7165400,
+          "particles": 1896780
+        },
+        "5": {
+          "grids": 701,
+          "cells": 7927344,
+          "particles": 525333
+        },
+        "6": {
+          "grids": 956,
+          "cells": 10057400,
+          "particles": 382186
+        },
+        "7": {
+          "grids": 728,
+          "cells": 5877792,
+          "particles": 236049
+        },
+        "8": {
+          "grids": 477,
+          "cells": 3239640,
+          "particles": 211768
+        },
+        "9": {
+          "grids": 236,
+          "cells": 2018752,
+          "particles": 252760
+        },
+        "10": {
+          "grids": 195,
+          "cells": 2018776,
+          "particles": 961529
+        }
+      },
+      "levels_candidate": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762352
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17239
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 23902
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1844080,
+          "particles": 58512
+        },
+        "4": {
+          "grids": 211,
+          "cells": 7165400,
+          "particles": 1896780
+        },
+        "5": {
+          "grids": 701,
+          "cells": 7927344,
+          "particles": 525333
+        },
+        "6": {
+          "grids": 956,
+          "cells": 10057400,
+          "particles": 382186
+        },
+        "7": {
+          "grids": 728,
+          "cells": 5877792,
+          "particles": 236049
+        },
+        "8": {
+          "grids": 477,
+          "cells": 3239640,
+          "particles": 211768
+        },
+        "9": {
+          "grids": 236,
+          "cells": 2018752,
+          "particles": 252760
+        },
+        "10": {
+          "grids": 195,
+          "cells": 2018776,
+          "particles": 961529
+        }
+      },
+      "structure_differs": false,
+      "mesh_differs": false,
+      "particle_level_migrations": 0,
+      "gate_particle_level_migrations": 10,
+      "sums_baseline": {
+        "baryon_mass": 7359999737.512939,
+        "metal_mass": 28887648.78238371,
+        "stellar_mass": 791596495.9351524,
+        "dm_mass": 10719171444.213638,
+        "star_count": 1419681,
+        "metal_fields": {
+          "MetalAGB_Density": 3.4150302713865936e-13,
+          "MetalNSM_Density": 3.4150302713865936e-13,
+          "MetalSNII_Density": 14388511.939436221,
+          "MetalSNIa_Density": 55630.89757658375,
+          "Metal_Density": 14443505.945371201
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7360000249.927661,
+        "metal_mass": 28887648.25718055,
+        "stellar_mass": 791596564.5819607,
+        "dm_mass": 10719171444.213638,
+        "star_count": 1419681,
+        "metal_fields": {
+          "MetalAGB_Density": 3.414995757852859e-13,
+          "MetalNSM_Density": 3.414995757852859e-13,
+          "MetalSNII_Density": 14388511.23733519,
+          "MetalSNIa_Density": 55631.345816116256,
+          "Metal_Density": 14443505.674029544
+        }
+      },
+      "rel_baryon_mass": 6.962156305551606e-08,
+      "gate_baryon_mass": 1.6618635926135694e-08,
+      "rel_metal_mass": 1.8180889863971227e-08,
+      "gate_metal_mass": 5.171985986375969e-08,
+      "rel_stellar_mass": 8.671943681677275e-08,
+      "gate_stellar_mass": 8.566933099705132e-09,
+      "rel_dm_mass": 0.0,
+      "gate_dm_mass": 1e-12,
+      "star_count_diff": 0
+    },
+    "DD0397": {
+      "levels_baseline": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762352
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17239
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 23902
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1844080,
+          "particles": 58512
+        },
+        "4": {
+          "grids": 211,
+          "cells": 7165400,
+          "particles": 1896426
+        },
+        "5": {
+          "grids": 699,
+          "cells": 7929984,
+          "particles": 526538
+        },
+        "6": {
+          "grids": 961,
+          "cells": 10055888,
+          "particles": 382256
+        },
+        "7": {
+          "grids": 723,
+          "cells": 5891128,
+          "particles": 233592
+        },
+        "8": {
+          "grids": 466,
+          "cells": 3225752,
+          "particles": 208798
+        },
+        "9": {
+          "grids": 235,
+          "cells": 2033192,
+          "particles": 249473
+        },
+        "10": {
+          "grids": 206,
+          "cells": 2082288,
+          "particles": 970448
+        }
+      },
+      "levels_candidate": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762352
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17239
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571144,
+          "particles": 23902
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1844080,
+          "particles": 58512
+        },
+        "4": {
+          "grids": 211,
+          "cells": 7165400,
+          "particles": 1896426
+        },
+        "5": {
+          "grids": 699,
+          "cells": 7929984,
+          "particles": 526058
+        },
+        "6": {
+          "grids": 959,
+          "cells": 10053968,
+          "particles": 382834
+        },
+        "7": {
+          "grids": 723,
+          "cells": 5889656,
+          "particles": 233492
+        },
+        "8": {
+          "grids": 465,
+          "cells": 3222456,
+          "particles": 208800
+        },
+        "9": {
+          "grids": 235,
+          "cells": 2033192,
+          "particles": 249473
+        },
+        "10": {
+          "grids": 206,
+          "cells": 2082288,
+          "particles": 970447
+        }
+      },
+      "structure_differs": true,
+      "mesh_differs": true,
+      "particle_level_migrations": 1161,
+      "gate_particle_level_migrations": 10,
+      "sums_baseline": {
+        "baryon_mass": 7406238482.686371,
+        "metal_mass": 29192416.899770398,
+        "stellar_mass": 794738430.280587,
+        "dm_mass": 10956406151.926758,
+        "star_count": 1420807,
+        "metal_fields": {
+          "MetalAGB_Density": 3.8368101450517927e-13,
+          "MetalNSM_Density": 3.8368101450517927e-13,
+          "MetalSNII_Density": 14539697.85926099,
+          "MetalSNIa_Density": 56831.688103469096,
+          "Metal_Density": 14595887.352406135
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7406250745.703316,
+        "metal_mass": 29192406.008898713,
+        "stellar_mass": 794737449.4535071,
+        "dm_mass": 10956349446.287447,
+        "star_count": 1420806,
+        "metal_fields": {
+          "MetalAGB_Density": 3.8430372824707535e-13,
+          "MetalNSM_Density": 3.8430372824707535e-13,
+          "MetalSNII_Density": 14539691.905678181,
+          "MetalSNIa_Density": 56832.20073393415,
+          "Metal_Density": 14595881.902486702
+        }
+      },
+      "rel_baryon_mass": 1.6557658342852566e-06,
+      "gate_baryon_mass": 2.3031913441734444e-08,
+      "rel_metal_mass": 3.7307194270317276e-07,
+      "gate_metal_mass": 5.051752697393468e-08,
+      "rel_stellar_mass": 1.2341508130491084e-06,
+      "gate_stellar_mass": 1.098662456348884e-08,
+      "rel_dm_mass": 5.175569299324005e-06,
+      "gate_dm_mass": 1e-12,
+      "star_count_diff": 1
+    },
+    "DD0398": {
+      "levels_baseline": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762351
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17225
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571624,
+          "particles": 23939
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1849096,
+          "particles": 58222
+        },
+        "4": {
+          "grids": 213,
+          "cells": 7166648,
+          "particles": 1897296
+        },
+        "5": {
+          "grids": 711,
+          "cells": 7908536,
+          "particles": 525119
+        },
+        "6": {
+          "grids": 968,
+          "cells": 10040712,
+          "particles": 381107
+        },
+        "7": {
+          "grids": 723,
+          "cells": 5944024,
+          "particles": 233380
+        },
+        "8": {
+          "grids": 461,
+          "cells": 3203696,
+          "particles": 213098
+        },
+        "9": {
+          "grids": 226,
+          "cells": 1975040,
+          "particles": 247439
+        },
+        "10": {
+          "grids": 200,
+          "cells": 2054968,
+          "particles": 971457
+        }
+      },
+      "levels_candidate": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762351
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17225
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571624,
+          "particles": 23939
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1849096,
+          "particles": 58222
+        },
+        "4": {
+          "grids": 213,
+          "cells": 7166648,
+          "particles": 1897296
+        },
+        "5": {
+          "grids": 711,
+          "cells": 7908536,
+          "particles": 525119
+        },
+        "6": {
+          "grids": 968,
+          "cells": 10040712,
+          "particles": 381107
+        },
+        "7": {
+          "grids": 723,
+          "cells": 5944024,
+          "particles": 233380
+        },
+        "8": {
+          "grids": 461,
+          "cells": 3203696,
+          "particles": 213098
+        },
+        "9": {
+          "grids": 226,
+          "cells": 1975040,
+          "particles": 247294
+        },
+        "10": {
+          "grids": 201,
+          "cells": 2057016,
+          "particles": 971601
+        }
+      },
+      "structure_differs": true,
+      "mesh_differs": true,
+      "particle_level_migrations": 289,
+      "gate_particle_level_migrations": 10,
+      "sums_baseline": {
+        "baryon_mass": 7405859861.003936,
+        "metal_mass": 29358900.950795773,
+        "stellar_mass": 797248501.0925033,
+        "dm_mass": 11063297837.028307,
+        "star_count": 1421904,
+        "metal_fields": {
+          "MetalAGB_Density": 1.681556350186804e-09,
+          "MetalNSM_Density": 1.681556350186804e-09,
+          "MetalSNII_Density": 14622656.999900945,
+          "MetalSNIa_Density": 57112.96275782402,
+          "Metal_Density": 14679130.98813718
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7406419414.263341,
+        "metal_mass": 29361752.53548471,
+        "stellar_mass": 797658568.1046237,
+        "dm_mass": 11063297837.028307,
+        "star_count": 1421903,
+        "metal_fields": {
+          "MetalAGB_Density": 1.4789208621611438e-09,
+          "MetalNSM_Density": 1.4789208621611438e-09,
+          "MetalSNII_Density": 14624053.333715154,
+          "MetalSNIa_Density": 57142.512289135135,
+          "Metal_Density": 14680556.689480558
+        }
+      },
+      "rel_baryon_mass": 7.554976677766101e-05,
+      "gate_baryon_mass": 1.430655779308554e-07,
+      "rel_metal_mass": 9.71190219483387e-05,
+      "gate_metal_mass": 4.887496201490649e-07,
+      "rel_stellar_mass": 0.0005140883938534718,
+      "gate_stellar_mass": 2.5345787589981524e-07,
+      "rel_dm_mass": 0.0,
+      "gate_dm_mass": 1e-12,
+      "star_count_diff": 1
+    },
+    "DD0399": {
+      "levels_baseline": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762351
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17225
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571624,
+          "particles": 23939
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1849096,
+          "particles": 58222
+        },
+        "4": {
+          "grids": 213,
+          "cells": 7166648,
+          "particles": 1897838
+        },
+        "5": {
+          "grids": 715,
+          "cells": 7918320,
+          "particles": 523362
+        },
+        "6": {
+          "grids": 962,
+          "cells": 10066368,
+          "particles": 382755
+        },
+        "7": {
+          "grids": 723,
+          "cells": 5906472,
+          "particles": 232746
+        },
+        "8": {
+          "grids": 456,
+          "cells": 3178448,
+          "particles": 209662
+        },
+        "9": {
+          "grids": 222,
+          "cells": 1985272,
+          "particles": 245901
+        },
+        "10": {
+          "grids": 195,
+          "cells": 2082136,
+          "particles": 977784
+        }
+      },
+      "levels_candidate": {
+        "0": {
+          "grids": 64,
+          "cells": 21952000,
+          "particles": 16762351
+        },
+        "1": {
+          "grids": 12,
+          "cells": 260256,
+          "particles": 17225
+        },
+        "2": {
+          "grids": 27,
+          "cells": 571624,
+          "particles": 23939
+        },
+        "3": {
+          "grids": 82,
+          "cells": 1849096,
+          "particles": 58222
+        },
+        "4": {
+          "grids": 213,
+          "cells": 7166648,
+          "particles": 1897838
+        },
+        "5": {
+          "grids": 715,
+          "cells": 7918320,
+          "particles": 523362
+        },
+        "6": {
+          "grids": 962,
+          "cells": 10066368,
+          "particles": 382755
+        },
+        "7": {
+          "grids": 723,
+          "cells": 5906472,
+          "particles": 232746
+        },
+        "8": {
+          "grids": 456,
+          "cells": 3178448,
+          "particles": 209662
+        },
+        "9": {
+          "grids": 222,
+          "cells": 1985272,
+          "particles": 245903
+        },
+        "10": {
+          "grids": 195,
+          "cells": 2082136,
+          "particles": 977786
+        }
+      },
+      "structure_differs": true,
+      "mesh_differs": false,
+      "particle_level_migrations": 4,
+      "gate_particle_level_migrations": 10,
+      "sums_baseline": {
+        "baryon_mass": 7421329448.8058605,
+        "metal_mass": 29602644.809634745,
+        "stellar_mass": 803603889.1220671,
+        "dm_mass": 11054019687.751476,
+        "star_count": 1423056,
+        "metal_fields": {
+          "MetalAGB_Density": 2.6303880030013295e-06,
+          "MetalNSM_Density": 2.6303880030013295e-06,
+          "MetalSNII_Density": 14743638.100874407,
+          "MetalSNIa_Density": 58005.36487491256,
+          "Metal_Density": 14801001.34388039
+        }
+      },
+      "sums_candidate": {
+        "baryon_mass": 7421337855.572783,
+        "metal_mass": 29602672.916905664,
+        "stellar_mass": 803604719.3084071,
+        "dm_mass": 11054019687.751476,
+        "star_count": 1423060,
+        "metal_fields": {
+          "MetalAGB_Density": 2.1144772424010634e-06,
+          "MetalNSM_Density": 2.1144772424010634e-06,
+          "MetalSNII_Density": 14743652.577130761,
+          "MetalSNIa_Density": 58004.95636916546,
+          "Metal_Density": 14801015.383401733
+        }
+      },
+      "rel_baryon_mass": 1.1327832105956461e-06,
+      "gate_baryon_mass": 2.893506894253561e-07,
+      "rel_metal_mass": 9.494842238632737e-07,
+      "gate_metal_mass": 1.3760907269373227e-06,
+      "rel_stellar_mass": 1.0330779797919465e-06,
+      "gate_stellar_mass": 2.5835018485413745e-07,
+      "rel_dm_mass": 0.0,
+      "gate_dm_mass": 1e-12,
+      "star_count_diff": 4
+    }
+  },
+  "timing": {
+    "baseline": {
+      "cycles": 5,
+      "total_time": 2231.3131000000003,
+      "rebuild_time": 179.09279999999998
+    },
+    "candidate": {
+      "cycles": 5,
+      "total_time": 2218.1083,
+      "rebuild_time": 173.97042
+    },
+    "speedup": 1.0059531809154676
+  }
+}

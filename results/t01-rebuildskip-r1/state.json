@@ -1,0 +1,31 @@
+{
+  "id": "t01-rebuildskip-r1",
+  "date": "2026-07-30",
+  "purpose": "T0.1 experiment: RebuildHierarchyCycleSkip 2 -> 3 for L>=4 (production already runs 2 on all levels 0-10)",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5,
+    "restart": "/home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff/RD0016/RD0016",
+    "restart_cycle": 2110,
+    "parameter_delta": "RebuildHierarchyCycleSkip[4..20] = 3 appended after the production entries (levels 0-3 stay at the production value 2)"
+  },
+  "baseline": "t15-coolgate-r1/bench_B (LoadBalancing=1, production skip=2)",
+  "candidate_sha": "aed694db69a2 (no code delta vs baseline for this path)",
+  "runs": {
+    "bench_B": {
+      "build": "aed694db69a2",
+      "job": "24917227",
+      "queue": "normal",
+      "exit": 0
+    }
+  },
+  "verdict": {
+    "comparison": "verdict_t15B_vs_t01B.json",
+    "correctness": "FAIL far beyond the nondeterminism envelope (class C2 judgment: real answer change). DD0398: mesh grid/cell counts differ, 289 particle level migrations, baryon 7.6e-5, stellar 5.1e-4 relative (gates ~1e-7). DD0399 falls back to ~1e-6 (~4x gate) - much of the DD0398 excursion is refinement-phase bookkeeping at dump time, but the residual dynamical divergence is well above noise.",
+    "wall_clock": "2218.1 s vs 2231.3 s (-0.6%, within node scatter); rebuild 174.0 vs 179.1 s - only ~5 s recovered because production already runs skip=2 everywhere.",
+    "conclusion": "Deeper rebuild skip fails cost/benefit at this anchor: measurable answer change, negligible speedup. Keep production at skip=2. The drift-budget arithmetic agrees: at skip=3, particle drift (3 x 0.8 = 2.4 cells) exceeds the 2-cell flagging buffer."
+  },
+  "discovery": "The production parameter file already sets RebuildHierarchyCycleSkip=2 on ALL levels 0-10 (more aggressive than the audit's L>=4 floor recommendation) - the audit item's baseline benefit was already deployed before the audit."
+}
