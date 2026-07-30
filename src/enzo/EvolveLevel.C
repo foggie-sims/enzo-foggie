@@ -320,7 +320,9 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   if (dbx) fprintf(stderr, "EL: Initialize FSL \n"); 
   SiblingGridList *SiblingList = new SiblingGridList[NumberOfGrids];
   SiblingGridListStorage[level] = SiblingList;
+  TIMER_START("CreateSiblingList");
   CreateSiblingList(Grids, NumberOfGrids, SiblingList, StaticLevelZero,MetaData,level);
+  TIMER_STOP("CreateSiblingList");
   
   /* Adjust the refine region so that only the finest particles 
      are included.  We don't want the more massive particles
@@ -441,8 +443,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
                              level);
     
     Star *AllStars = NULL;
+    TIMER_START("StarParticleInitFinal");
     StarParticleInitialize(Grids, MetaData, NumberOfGrids, LevelArray,
 			   level, AllStars, TotalStarParticleCountPrevious);
+    TIMER_STOP("StarParticleInitFinal");
 
     /* Calculate ClusterSMBHColdGasMass */
 
@@ -508,9 +512,12 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
  
-        CallProblemSpecificRoutines(MetaData, Grids[grid1], grid1, &norm, 
+        CallProblemSpecificRoutines(MetaData, Grids[grid1], grid1, &norm,
                 TopGridTimeStep, level, LevelCycleCount);
-        /* Gravity: compute acceleration field for grid and particles. */
+        /* Gravity: compute acceleration field for grid and particles.
+           GravityAccel contains the per-grid SolveForPotential call, so
+           it overlaps the SolveForPotential section. */
+        TIMER_START("GravityAccel");
         if (SelfGravity) {
             if (level <= MaximumGravityRefinementLevel) {
 
@@ -529,6 +536,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
         /* Gravity: compute field due to preset sources. */
 
         Grids[grid1]->GridData->ComputeAccelerationFieldExternal();
+        TIMER_STOP("GravityAccel");
 
         /* Radiation Pressure: add to acceleration field */
 #ifdef TRANSFER
@@ -547,15 +555,19 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     } // End of loop over grids
 
     //Ensure the consistency of the AccelerationField
+    TIMER_START("SetAccelBoundary");
     SetAccelerationBoundary(Grids, NumberOfGrids,SiblingList,level, MetaData,
             Exterior, LevelArray[level], LevelCycleCount[level]);
+    TIMER_STOP("SetAccelBoundary");
 
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 #endif //SAB.
         /* Copy current fields (with their boundaries) to the old fields
            in preparation for the new step. */
 
+        TIMER_START("CopyToOldBaryon");
         Grids[grid1]->GridData->CopyBaryonFieldToOldBaryonField();
+        TIMER_STOP("CopyToOldBaryon");
 
 	/* Call Schrodinger solver. */
 
@@ -780,8 +792,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     ActiveParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
                            level, NumberOfNewActiveParticles);
     /* Finalize (accretion, feedback, etc.) star particles */
+    TIMER_START("StarParticleInitFinal");
     StarParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
 			 level, AllStars, TotalStarParticleCountPrevious, OutputNow);
+    TIMER_STOP("StarParticleInitFinal");
 
     /* For each grid: a) interpolate boundaries from the parent grid.
                       b) copy any overlapping zones from siblings. */
