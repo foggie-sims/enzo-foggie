@@ -135,10 +135,10 @@ tiers:
         title: "Make star_feedback6.F grid arrays allocatable + early return when no feedback; seed the RNG"
         ref: "5.1"
         class: C2
-        status: in-progress
+        status: done
         prs: []
-        tests: ["CI: 'Determinism - star feedback serial runs' step (bitwise A/B on TabularFeedbackTest)", "Local serial A/B vs T1.13 build: feedback logs byte-identical, all dump payloads h5diff-identical", "CI + production bench stamp pending"]
-        note: "RNG seeding landed earlier (init_random_seed by rank). Now also landed: the 14 full-grid accumulators are heap-allocatable (were ~38 MB of automatic stack per call at 70^3/-r8 - the audit's stack-overflow crash class); early return before logs/allocation/zeroing when no particle passes the star filter; injection sweep skipped when nothing was deposited (nfbcells). Awaiting CI + bench stamp to flip done."
+        tests: ["CI: 'Determinism - star feedback serial runs' step (bitwise A/B on TabularFeedbackTest)", "Local serial A/B vs T1.13 build: feedback logs byte-identical, all dump payloads h5diff-identical", "CI green on db3daf2b (run 30525447698)", "FOGGIE-bench t16-feedback6-r1: PASS class C0 vs the envelope floor"]
+        note: "Complete. RNG seeding (earlier) + now: the 14 full-grid accumulators are heap-allocatable (were ~38 MB of automatic stack per call at 70^3/-r8 - the audit's stack-overflow crash class); early return before logs/allocation/zeroing when no particle passes the star filter; injection sweep skipped when nothing was deposited (nfbcells). Wall clock inconclusive at the anchor (+1.6% single sample vs ~1.6% node-to-node scatter on the normal queue; a second timing sample is archived in t16-feedback6-r1/state.json)."
       - id: T1.7
         title: "Guard debug reductions in RebuildHierarchy; remove Evtime barriers; fuse adjacent small allreduces"
         ref: "4.2"
