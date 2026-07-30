@@ -147,10 +147,10 @@ tiers:
         title: "Enable RH_PERF (or TIMER regions); per-level dt-limiter diagnostic; multigrid iteration instrumentation"
         ref: "5.5"
         class: C0
-        status: in-progress
+        status: done
         prs: []
-        tests: ["CI: serial bitwise determinism must be unchanged (diagnostics only add output)"]
-        note: "Landed: RH_PERF sub-phase totals printed per root cycle; per-level dt-limiter histogram (which constraint set dt, on which level) reduced+printed per root cycle; multigrid solve/V-cycle/fallback counters. Two small reductions per root cycle added. Awaiting CI + bench validation."
+        tests: ["CI: serial bitwise determinism unchanged (run 14 green)", "FOGGIE-bench t18-instrumentation-r7: PASS class C0 vs 3-pair envelope noise floor at the production config (1 node x 128 ranks mil_ait), worst gate margin 3x; overhead 0.05% (below 0.5% timing noise)"]
+        note: "Production-stamped 2026-07-29 at the corrected production config. First production numbers: RebuildHierarchy 7.2% of wall time, dominated by share(45s)+find(33s) of 175s cumulative; dt limited by Baryons/CFL on every level every cycle (L10 ~410-460 subcycles/root cycle); multigrid ~1.3-1.4M subgrid solves/root cycle at 1.18-1.20 avg V-cycles, zero fallbacks. Bonus: 128 vs 512 ranks changes 5-root-step wall time by only ~2% - the strong-scaling ceiling measured directly. Archive: results/t18-instrumentation-r7/ on bench-results."
       - id: T1.9
         title: "Visit-stamp dedup in FastSiblingLocatorFindSiblings; hash/sort the parent-grouping loop"
         ref: "3.2"

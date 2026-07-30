@@ -53,25 +53,22 @@ by staged remediation. Key documents, all in `audit/`:
 
 Done: T0.8, T1.9 (RebuildHierarchy + FastSiblingLocator O(S^2) removal -
 validated bitwise in CI and within 10x noise floor at production scale),
-CI.1-CI.5.
+T1.8 (instrumentation - production-stamped 2026-07-29 by
+t18-instrumentation-r7 at the corrected 1x128 mil_ait config; first
+production numbers in the ledger note and the r7 state.json), CI.1-CI.6
+(CI.6 closed as superseded by the CLI-session migration).
 
 In flight:
-- **T1.8 (instrumentation)** - code landed (`RH_PERF` in
-  RebuildHierarchy, DtLimiter histogram in SetLevelTimeStep /
-  Grid_ComputeTimeStep, MGSolver stats in MultigridSolver, per-root-cycle
-  reduction+print in EvolveHierarchy). CI green (run 14). **Missing only
-  the production A/B stamp** - that is the t18-instrumentation bench
-  (see below). When it passes: flip T1.8 to done and report the first
-  production RHperf/DtLimiter/MGSolver numbers from the candidate's
-  `enzo_bench.log`.
 - **T1.6** - RNG seeding in star_feedback6.F is done; allocatable
   arrays + early return still to do.
-- **CI.6** - the pull-model cron runner; superseded by this migration
-  (see below).
 
-Next queue after the T1.8 stamp (user-approved order): T1.1
-(StarParticleFindAll guard) -> T1.2/T1.3 -> T1.13 (sanitizer-gated) ->
-finish T1.6 -> T1.5.
+Next queue (user-approved order): T1.1 (StarParticleFindAll guard) ->
+T1.2/T1.3 -> T1.13 (sanitizer-gated) -> finish T1.6 -> T1.5.
+
+Open question for the user: the T1.9 production stamp was measured at
+the old 512-rank rom_ait config; its serial-bitwise CI evidence stands,
+but re-stamping at 1x128 mil_ait is cheap now that the envelope floor
+exists, if wanted.
 
 ## Key technical facts (hard-won, do not re-learn)
 
@@ -135,21 +132,20 @@ defaults), but FOGGIE production runs on **1 Milan node, 128 ranks
 floor is config-specific, the 512-rank t19-manual floor cannot gate
 128-rank runs.
 
-**Current attempt: t18-instrumentation-r7** (2026-07-29, this CLI
-session), in `/home1/jtumlins/nobackup/foggie_bench_root/runs/t18-instrumentation-r7/`:
-bench_A1 + bench_A2 (baseline twice -> new noise floor at 1 x 128
-mil_ait) and bench_B (candidate), submitted sequentially (devel
-per-user limit is 1 job). When all three finish:
-
-    python3 run/foggie_bench/compare_runs.py bench_A1 bench_A2 --class C0
-    # archive bench_A2/comparison.json as the new floor, then:
-    python3 run/foggie_bench/compare_runs.py bench_A1 bench_B --class C0 \
-        --noise-floor <the new floor json>
-
-Then: archive the floor, the verdict, and the candidate
-`enzo_bench.log` instrumentation output to `bench-results` under
-`results/t18-instrumentation-r7/`, flip T1.8 to done in the ledger, and
-report the first RHperf/DtLimiter/MGSolver numbers.
+**Resolved by t18-instrumentation-r7** (2026-07-29, CLI session):
+three baseline runs (A1/A2/A3) plus candidate B at 1 x 128 mil_ait.
+A single-pair floor proved statistically fragile - identical-code
+step-5 baryon diffs scattered 5.8e-9 to 2.9e-8 between pairs, and the
+first (unluckily tight) pair tripped a false FAIL on the candidate -
+so the floor is now the all-pairs envelope built with
+`merge_noise_floors.py` (new harness script). Against it the T1.8
+candidate PASSED class C0 with 3x margin at the worst gate.
+Archived under `results/t18-instrumentation-r7/` on bench-results
+(state.json there has the full story + the first production
+RHperf/DtLimiter/MGSolver numbers). T1.8 is done in the ledger.
+Lesson recorded in anchor.md: always measure floors from 3+ baseline
+runs and gate against the envelope; bench jobs may use the normal
+queue (user approval 2026-07-29), which allows concurrent runs.
 
 ## The cron runner is decommissioned by this migration
 

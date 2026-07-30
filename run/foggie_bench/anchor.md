@@ -30,11 +30,17 @@ production configuration.
   diverges by step 4; +-1 stochastic star formation event; wall-clock noise
   ~2.2%. Archived at `results/t19-manual/noise_floor_A1_vs_A2.json` on the
   `bench-results` branch. Valid only for gating 512-rank runs.
-- **Noise floor at 1 x 128 mil_ait (production config)**: being measured by
-  the t18-instrumentation-r7 A1/A2 pair; will be archived at
-  `results/t18-instrumentation-r7/noise_floor_A1_vs_A2.json`. A noise floor
-  is config-specific: gate runs only with a floor measured at the same rank
-  count and node model.
+- **Noise floor at 1 x 128 mil_ait (production config)**: measured
+  2026-07-29 from three baseline runs (t18-instrumentation-r7 A1/A2/A3,
+  all pairwise comparisons merged with `merge_noise_floors.py`). Envelope:
+  relative mass diffs grow ~1 decade per root step to (baryon/metal/stellar)
+  2.9e-8 / 1.4e-7 / 2.6e-8 at step 5; structure diverges at the step-5 dump;
+  +-1 stochastic star event; wall-clock noise ~0.5%. Archived at
+  `results/t18-instrumentation-r7/noise_floor_envelope_A123.json` on
+  `bench-results` - use this for all 1x128 gating. Single-pair floors
+  scatter ~5x at step 5; always gate against a multi-pair envelope. A noise
+  floor is config-specific: gate runs only with a floor measured at the
+  same rank count and node model.
 
 ## Notes
 
