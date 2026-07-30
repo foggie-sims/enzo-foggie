@@ -1,0 +1,29 @@
+{
+  "id": "t13-latent-r1",
+  "date": "2026-07-30",
+  "purpose": "T1.13 production stamp: six latent-bug fixes (audit appendix A)",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5,
+    "restart": "/home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff/RD0016/RD0016",
+    "restart_cycle": 2110
+  },
+  "baseline": "t12-mufield-r1/bench_B (sha eb4eb451f879, T1.2/3 code = parent of this change)",
+  "candidate_sha": "3cd159df59a8",
+  "runs": {
+    "bench_B": {
+      "build": "3cd159df59a8",
+      "job": "24916712",
+      "queue": "normal",
+      "exit": 0
+    }
+  },
+  "verdict": {
+    "comparison": "verdict_t12B_vs_t13B.json",
+    "result": "PASS at class C0 vs the 3-pair envelope floor (mesh/migration-aware comparator). None of the fixed paths fire in the FOGGIE config (no sinks, Hilbert off, no active particles), consistent with a within-noise result.",
+    "wall_clock": "candidate 2381.4 s vs baseline 2397.4 s (0.7% faster, at the noise edge). Cumulative since T1.1 baseline: 2411.5 -> 2381.4 s (-1.2%)."
+  },
+  "ci": "https://github.com/foggie-sims/enzo-foggie/actions/runs/30521958589 (incl. ASan/UBSan job)"
+}
