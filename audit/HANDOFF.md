@@ -51,24 +51,25 @@ by staged remediation. Key documents, all in `audit/`:
 
 ## Ledger state in brief (authoritative copy: status.yml)
 
-Done: T0.8, T1.9 (RebuildHierarchy + FastSiblingLocator O(S^2) removal -
-validated bitwise in CI and within 10x noise floor at production scale),
-T1.8 (instrumentation - production-stamped 2026-07-29 by
-t18-instrumentation-r7 at the corrected 1x128 mil_ait config; first
-production numbers in the ledger note and the r7 state.json), CI.1-CI.6
-(CI.6 closed as superseded by the CLI-session migration).
+Done: T0.8, T1.9, T1.8, T1.1, T1.2, T1.3, T1.5, T1.6, T1.13, CI.1-CI.6.
+The entire user-approved Tier-1 queue completed 2026-07-30 (this CLI
+session). Every item carries three-level evidence: local serial
+bitwise A/B (h5diff), branch-CI green (incl. sanitizers + serial
+determinism), and a production bench stamp at the 1x128 mil_ait anchor
+gated by the envelope noise floor (archives under results/t1*-*/ on
+bench-results, each with a narrative state.json). Wall-clock at the
+anchor: T1.5 is the standout (~7%, the eliminated per-subcycle Grackle
+ComputeCoolingTime); the others are individually at or below the
+~1.6% node-to-node scatter.
 
-In flight:
-- **T1.6** - RNG seeding in star_feedback6.F is done; allocatable
-  arrays + early return still to do.
+Nothing in flight. Natural next steps (not yet user-ordered):
+- Tier 0 parameter items (T0.1-T0.6, T0.9) - C2 class, so they need
+  the answer-comparison judgment, not just the C0 gates.
+- T1.7 (debug reductions / Evtime barriers), T1.10-T1.12 from Tier 1.
+- Re-stamp T1.9 at 1x128 mil_ait (its stamp predates the config fix;
+  serial-bitwise CI evidence stands) - cheap, if wanted.
 
-Next queue (user-approved order): T1.1 (StarParticleFindAll guard) ->
-T1.2/T1.3 -> T1.13 (sanitizer-gated) -> finish T1.6 -> T1.5.
-
-Open question for the user: the T1.9 production stamp was measured at
-the old 512-rank rom_ait config; its serial-bitwise CI evidence stands,
-but re-stamping at 1x128 mil_ait is cheap now that the envelope floor
-exists, if wanted.
+Open question for the user: order of the next batch.
 
 ## Key technical facts (hard-won, do not re-learn)
 
