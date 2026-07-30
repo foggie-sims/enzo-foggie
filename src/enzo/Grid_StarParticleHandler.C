@@ -1702,12 +1702,27 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
     //---- UNIGRID (NON-JEANS MASS) VERSION WITH MOMENTUM
 
-    // Compute mu across grid
+    // Compute mu across grid.  star_feedback3mom reads mu only inside
+    // its particle loop (type == PARTICLE_TYPE_STAR), so grids without
+    // star particles skip the fill entirely; the species field indices
+    // are loop-invariant, so they are looked up once, not per cell.
     float *mu_field = new float[size];
+    int GridHasStars = FALSE;
+    for (i = 0; i < NumberOfParticles; i++)
+      if (ParticleType[i] == PARTICLE_TYPE_STAR) {
+	GridHasStars = TRUE;
+	break;
+      }
+    if (GridHasStars) {
+    if (MultiSpecies != 0)
+      if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
+				HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
+	ENZO_FAIL("Error in grid->IdentifySpeciesFields.\n");
+      }
     for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
       for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
 	for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++) {
-	  
+
 	  index = i + j*GridDimension[0] + k*GridDimension[0]*GridDimension[1];
 	  mu_field[index] = 0.0;
 	  // calculate mu
@@ -1715,11 +1730,6 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 	  if (MultiSpecies == 0) {
 	    mu_field[index] = Mu;
 	  } else {
-
-	    if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
-				      HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
-	      ENZO_FAIL("Error in grid->IdentifySpeciesFields.\n");
-	    }
 
 	    mu_field[index] = BaryonField[DeNum][index] + BaryonField[HINum][index] + BaryonField[HIINum][index] +
 	      (BaryonField[HeINum][index] + BaryonField[HeIINum][index] + BaryonField[HeIIINum][index])/4.0;
@@ -1729,12 +1739,13 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 	    if (MultiSpecies > 2) {
 	      mu_field[index] += (BaryonField[DINum][index] + BaryonField[DIINum][index])/2.0 + (BaryonField[HDINum][index]/3.0);
 	    }
-	    
+
 	  }
 	}
       }
     }
-    
+    } // end: if GridHasStars
+
     FORTRAN_NAME(star_feedback3mom)(
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], mu_field, dmfield,
@@ -1766,12 +1777,30 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
     //---- MOMENTUM FEEDBACK
 
-    // Compute mu across grid
+    // Compute mu across grid.  star_feedback6 reads mu only inside its
+    // particle loop (type == PARTICLE_TYPE_STAR), so grids without star
+    // particles skip the fill entirely; the species field indices are
+    // loop-invariant, so they are looked up once, not per cell.  The
+    // former per-cell out-of-range diagnostic (all ranks appending to
+    // one shared file) is gone: the Fortran side clamps mu to the same
+    // [0.0625, 2] range it guarded.
     float *mu_field = new float[size];
+    int GridHasStars = FALSE;
+    for (i = 0; i < NumberOfParticles; i++)
+      if (ParticleType[i] == PARTICLE_TYPE_STAR) {
+	GridHasStars = TRUE;
+	break;
+      }
+    if (GridHasStars) {
+    if (MultiSpecies != 0)
+      if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
+				HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
+	ENZO_FAIL("Error in grid->IdentifySpeciesFields.\n");
+      }
     for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
       for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
 	for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++) {
-	  
+
 	  index = i + j*GridDimension[0] + k*GridDimension[0]*GridDimension[1];
 	  mu_field[index] = 0.0;
 	  // calculate mu
@@ -1779,11 +1808,6 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 	  if (MultiSpecies == 0) {
 	    mu_field[index] = Mu;
 	  } else {
-
-	    if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
-				      HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
-	      ENZO_FAIL("Error in grid->IdentifySpeciesFields.\n");
-	    }
 
 	    mu_field[index] = BaryonField[DeNum][index] + BaryonField[HINum][index] + BaryonField[HIINum][index] +
 	      (BaryonField[HeINum][index] + BaryonField[HeIINum][index] + BaryonField[HeIIINum][index])/4.0;
@@ -1796,41 +1820,13 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        if (MetalNum != -1) {
          mu_field[index] += BaryonField[MetalNum][index]/16.0;
        }
-	    
-	  }
-     if (mu_field[index] < 0.0625 || mu_field[index] > 2.0) {
 
-      FILE *mu_error_file = fopen("mu_and_baryon_fields.txt", "a");
-      //printf("mu < 0 in Grid_StarParticleHandler.C ! mu = %"FSYM"\n", mu_field[index]);
-      fprintf(mu_error_file, "inverse mu_field = %"FSYM"\n", mu_field[index]);
-      if (MultiSpecies > 0) {
-         fprintf(mu_error_file, "BaryonField[DeNum] = %"ESYM"\n", BaryonField[DeNum][index]);
-         fprintf(mu_error_file, "BaryonField[HINum] = %"ESYM"\n", BaryonField[HINum][index]);
-         fprintf(mu_error_file, "BaryonField[HIINum] = %"ESYM"\n", BaryonField[HIINum][index]);
-         fprintf(mu_error_file, "BaryonField[HeINum] = %"ESYM"\n", BaryonField[HeINum][index]);
-         fprintf(mu_error_file, "BaryonField[HeIINum] = %"ESYM"\n", BaryonField[HeIINum][index]);
-         fprintf(mu_error_file, "BaryonField[HeIIINum] = %"ESYM"\n", BaryonField[HeIIINum][index]);
-         fprintf(mu_error_file, "BaryonField[DensNum] = %"ESYM"\n", BaryonField[DensNum][index]);
-      }
-      if (MultiSpecies > 1) {
-         fprintf(mu_error_file, "BaryonField[HMNum] = %"ESYM"\n", BaryonField[HMNum][index]);
-         fprintf(mu_error_file, "BaryonField[H2INum] = %"ESYM"\n", BaryonField[H2INum][index]);
-         fprintf(mu_error_file, "BaryonField[H2IINum] = %"ESYM"\n", BaryonField[H2IINum][index]);
-      }
-      if (MultiSpecies > 2) {
-         fprintf(mu_error_file, "BaryonField[DINum] = %"ESYM"\n", BaryonField[DINum][index]);
-         fprintf(mu_error_file, "BaryonField[DIINum] = %"ESYM"\n", BaryonField[DIINum][index]);
-         fprintf(mu_error_file, "BaryonField[HDINum] = %"ESYM"\n", BaryonField[HDINum][index]);
-      }
-      if (MetalNum != -1) {
-         fprintf(mu_error_file, "BaryonField[MetalNum] = %"ESYM"\n", BaryonField[MetalNum][index]);
-      }
-      fclose(mu_error_file);
-     }
+	  }
 	}
       }
     }
-    
+    } // end: if GridHasStars
+
     FORTRAN_NAME(star_feedback6)(
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], mu_field,

@@ -105,16 +105,18 @@ tiers:
         title: "Hoist IdentifySpeciesFields out of the mu_field cell loop; skip mu_field on starless grids"
         ref: "5.1"
         class: C0
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
+        tests: ["Local serial A/B vs T1.1 build: feedback logs byte-identical, all dump payloads h5diff-identical", "CI + production bench stamp pending"]
+        note: "Both MOM_STAR and MECH_STAR branches: species indices looked up once per grid (was: 12 linear field searches per cell); the whole mu_field fill skipped when the grid has no PARTICLE_TYPE_STAR particles (the feedback Fortran reads mu only inside its type==2 particle loop)."
       - id: T1.3
         title: "Delete or gate the per-cell mu file write"
         ref: "5.1"
         class: C0
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
+        tests: ["Local serial A/B vs T1.1 build: feedback logs byte-identical, all dump payloads h5diff-identical", "CI + production bench stamp pending"]
+        note: "Deleted: all ranks appended to one shared mu_and_baryon_fields.txt whenever mu left [0.0625, 2] - a filesystem-serializing hazard, and redundant because star_feedback6.F clamps mu_cell to exactly that range (NaN included) before use."
       - id: T1.4
         title: "Age cutoff + call reordering in star_feedback6.F; reconcile StarFeedbackSNePerTimestepLimit default vs docs"
         ref: "5.1"
