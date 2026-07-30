@@ -11,17 +11,25 @@ over cycles and reports each section as a share of `Total`.
 
 Two things make naive summing misleading, so they are handled here:
 
-  - Level_NN lines are NESTED: EvolveLevel recurses, so Level_09 time is
-    contained within Level_08 and so on. They are reported separately
-    from named sections and never added into the attribution total.
-  - Some named sections are CROSS-CUTTING: the communication pump
-    (CommReceiveHandler, MPIWaitReceive, CommBufferedSend) and
-    GravityAccel are entered from inside other timed sections, so their
-    time is already counted in those sections. They are listed but
-    excluded from the coverage sum, which therefore stays <= 100%.
+  - Level_NN lines are a SEPARATE DECOMPOSITION AXIS, not part of the
+    section budget. EvolveLevel's level timer brackets stop before the
+    recursive EvolveLevel(level+1) call, so each Level_NN is the
+    EXCLUSIVE per-level work (verified: their sum is ~87% of Total, the
+    remainder being RebuildHierarchy and I/O, which sit outside the
+    brackets). They decompose the same time by level that the named
+    sections decompose by phase, so the two must never be added
+    together.
+  - Some named sections are CROSS-CUTTING: they are entered from inside
+    another timed section, so their time is already counted there.
+    Verified call sites: SolveForPotential is started inside
+    PrepareDensityField.C, and the communication pump
+    (CommReceiveHandler / MPIWaitReceive / CommBufferedSend) is entered
+    from SetBoundaryConditions, PrepareDensityField, UpdateFromFinerGrids
+    and others. These are listed but excluded from the coverage sum.
 
 Coverage = attributed / Total is the number to watch: it says how much
-of the run the audit can currently name.
+of the run the audit can currently name. Coverage meaningfully above
+100% means a section pair overlaps that is not yet in CROSS_CUTTING.
 """
 
 import os
@@ -33,7 +41,7 @@ CROSS_CUTTING = {
     "CommReceiveHandler",   # invoked from SetBoundaryConditions, PrepareDensityField, ...
     "MPIWaitReceive",       # the pure MPI_Waitsome wait inside the pump
     "CommBufferedSend",     # send side, likewise called from within sections
-    "GravityAccel",         # contains the per-grid SolveForPotential calls
+    "SolveForPotential",    # started inside PrepareDensityField.C:414
 }
 
 
@@ -85,9 +93,13 @@ def report(rundir):
             print(f"    {v:9.1f} s  {100*v/total:5.1f}%  {k}")
 
     if levels:
-        print("\n  level loops (nested; for reference only):")
+        lsum = sum(levels.values())
+        print("\n  per-level decomposition (exclusive of recursion;"
+              " a separate axis - do NOT add to the sections above):")
         for k, v in sorted(levels.items()):
             print(f"    {v:9.1f} s  {100*v/total:5.1f}%  {k}")
+        print(f"    {lsum:9.1f} s  {100*lsum/total:5.1f}%  sum of levels"
+              " (remainder is rebuild + I/O, outside the level brackets)")
 
 
 def main():
