@@ -13,11 +13,11 @@
     "DD0398",
     "DD0399"
   ],
-  "failures": [
-    "DD0399: per-level structure differs"
-  ],
+  "failures": [],
   "per_dump": {
     "DD0394": {
+      "mesh_differs": false,
+      "particle_level_migrations": 0,
       "rel_baryon_mass": 0.0,
       "rel_metal_mass": 0.0,
       "rel_stellar_mass": 0.0,
@@ -53,6 +53,8 @@
       }
     },
     "DD0395": {
+      "mesh_differs": false,
+      "particle_level_migrations": 0,
       "rel_baryon_mass": 2.058719407011371e-10,
       "rel_metal_mass": 3.168442216214715e-10,
       "rel_stellar_mass": 8.718174704506797e-15,
@@ -88,6 +90,8 @@
       }
     },
     "DD0396": {
+      "mesh_differs": false,
+      "particle_level_migrations": 0,
       "rel_baryon_mass": 1.6618635926135693e-09,
       "rel_metal_mass": 5.171985986375969e-09,
       "rel_stellar_mass": 8.566933099705131e-10,
@@ -123,6 +127,8 @@
       }
     },
     "DD0397": {
+      "mesh_differs": false,
+      "particle_level_migrations": 0,
       "rel_baryon_mass": 2.3031913441734446e-09,
       "rel_metal_mass": 5.051752697393468e-09,
       "rel_stellar_mass": 1.0986624563488841e-09,
@@ -158,6 +164,8 @@
       }
     },
     "DD0398": {
+      "mesh_differs": false,
+      "particle_level_migrations": 0,
       "rel_baryon_mass": 1.4306557793085541e-08,
       "rel_metal_mass": 4.887496201490649e-08,
       "rel_stellar_mass": 2.5345787589981525e-08,
@@ -193,6 +201,8 @@
       }
     },
     "DD0399": {
+      "mesh_differs": false,
+      "particle_level_migrations": 1,
       "rel_baryon_mass": 2.893506894253561e-08,
       "rel_metal_mass": 1.3760907269373226e-07,
       "rel_stellar_mass": 2.5835018485413746e-08,

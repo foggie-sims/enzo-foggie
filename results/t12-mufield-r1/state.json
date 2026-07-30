@@ -1,0 +1,30 @@
+{
+  "id": "t12-mufield-r1",
+  "date": "2026-07-29",
+  "purpose": "T1.2+T1.3 production stamp: mu_field prologue fixes (species-lookup hoist, starless-grid skip, per-cell shared-file diagnostic removed)",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5,
+    "restart": "/home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff/RD0016/RD0016",
+    "restart_cycle": 2110
+  },
+  "baseline": "t11-guard-r1/bench_B (sha d25c550c96c8, T1.1 code = parent of this change)",
+  "candidate_sha": "eb4eb451f879",
+  "runs": {
+    "bench_B":  {"build": "eb4eb451f879", "job": "24916433", "queue": "normal", "exit": 0},
+    "bench_B2": {"build": "eb4eb451f879", "job": "24916551", "queue": "normal", "exit": 0, "purpose": "identical-code pair for the migration-noise investigation"}
+  },
+  "verdict": {
+    "comparison": "verdict_t11B_vs_t12B.json",
+    "result": "PASS at class C0 against the 3-pair envelope floor with the mesh/migration-aware comparator. All mass gates pass with margin; mesh (per-level grid/cell counts) bit-identical at every dump; one particle swapped refinement level at DD0398 (gate 10).",
+    "wall_clock": "candidate 2397.4 s vs baseline 2411.5 s over 5 root steps (0.6% faster; timing noise is 0.5% - suggestive, not conclusive)"
+  },
+  "investigation": {
+    "initial_fail": "The pre-refinement comparator flagged 'per-level structure differs' at DD0398. Classification showed the mesh was bit-identical (226/200 grids, same cells on every level); the only delta was one particle counted on L9 in the baseline and L10 in the candidate.",
+    "evidence": "Identical-code pairs show the same channel: A1-A2 and A2-A3 each had a one-particle per-level count delta at DD0399 (mesh identical); B-B2 (this sha, identical code, identcode_B_vs_B2.json) held everything identical through DD0399, mass diffs at the usual noise level. Serial arithmetic is bitwise-proven (local h5diff + CI determinism).",
+    "resolution": "compare_runs.py now gates mesh structure exactly and treats per-level particle-count deltas with identical mesh as an integer noise channel gated like the star count (noise_factor x max(1, floor)); merge_noise_floors.py carries the classification into envelopes. The envelope floor was regenerated; no prior verdict changes outcome under the new comparator."
+  },
+  "ci": "https://github.com/foggie-sims/enzo-foggie/actions/runs/30515147467"
+}
