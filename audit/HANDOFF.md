@@ -51,25 +51,75 @@ by staged remediation. Key documents, all in `audit/`:
 
 ## Ledger state in brief (authoritative copy: status.yml)
 
-Done: T0.8, T1.9, T1.8, T1.1, T1.2, T1.3, T1.5, T1.6, T1.13, CI.1-CI.6.
-The entire user-approved Tier-1 queue completed 2026-07-30 (this CLI
-session). Every item carries three-level evidence: local serial
-bitwise A/B (h5diff), branch-CI green (incl. sanitizers + serial
-determinism), and a production bench stamp at the 1x128 mil_ait anchor
-gated by the envelope noise floor (archives under results/t1*-*/ on
-bench-results, each with a narrative state.json). Wall-clock at the
-anchor: T1.5 is the standout (~7%, the eliminated per-subcycle Grackle
-ComputeCoolingTime); the others are individually at or below the
-~1.6% node-to-node scatter.
+Done: T0.1, T0.2, T0.6, T0.8, T1.1, T1.2, T1.3, T1.5, T1.6, T1.8, T1.9,
+T1.13, CI.1-CI.6. T1.11 is wontfix (superseded - see below).
 
-Nothing in flight. Natural next steps (not yet user-ordered):
-- Tier 0 parameter items (T0.1-T0.6, T0.9) - C2 class, so they need
-  the answer-comparison judgment, not just the C0 gates.
-- T1.7 (debug reductions / Evtime barriers), T1.10-T1.12 from Tier 1.
-- Re-stamp T1.9 at 1x128 mil_ait (its stamp predates the config fix;
-  serial-bitwise CI evidence stands) - cheap, if wanted.
+The user-approved Tier-1 queue and three Tier-0 items completed
+2026-07-30 (this CLI session). Every code item carries three-level
+evidence: local serial bitwise A/B (h5diff), branch-CI green (incl.
+sanitizers + serial determinism), and a production bench stamp at the
+1x128 mil_ait anchor gated by the envelope noise floor (archives under
+`results/<id>/` on bench-results, each with a narrative state.json).
+Wall-clock at the anchor: T1.5 is the standout (~7%, the eliminated
+per-subcycle Grackle ComputeCoolingTime); the others are individually
+at or below the ~1.6% node-to-node scatter.
 
-Open question for the user: order of the next batch.
+Two Tier-0 items closed as measured negatives - both worth NOT
+repeating:
+- **T0.1**: production already runs RebuildHierarchyCycleSkip=2 on all
+  levels (the audit's recommendation predates the audit). Going to
+  skip=3 changes the answer far beyond the noise envelope for -0.6%
+  wall. Keep skip=2.
+- **T0.2**: LoadBalancing=4 now runs correctly at production scale
+  (needed the T1.13 partitioner fixes + the key rework), passes C0,
+  and is wall-neutral: non-rebuild phases ~2% faster, rebuild ~30 s
+  slower (balancer + migration). Keep LoadBalancing=1 until T2.1 makes
+  the work weights particle-aware.
+
+In flight: instrumentation pass 3 (sha ed40e892) - CI + anchor bench
+running as of this writing. See "Where the time actually goes" below.
+
+## Where the time actually goes (measured, not estimated)
+
+The audit's priorities were estimates. Since T1.8 the branch carries
+real per-section timers, and `run/foggie_bench/time_budget.py <rundir>`
+prints the attribution from any bench run's `performance.out`.
+
+Instrumentation pass 2 (`results/instr2-r1` on bench-results, 5 root
+steps at the anchor, 2273 s):
+
+    ChemistryCooling      192.6 s   8.5%   <- Grackle; NOT the elephant
+    RebuildHierarchy      178.3 s   7.8%
+    SolveHydroEquations   111.1 s   4.9%
+    SetBoundaryConditions 107.1 s   4.7%
+    PrepareDensityField    79.9 s   3.5%
+    SetLevelTimeStep       51.3 s   2.3%   (incl. the dt allreduce)
+    SolveForPotential      51.2 s   2.3%
+    Group_WriteAllData     50.7 s   2.2%
+    StarParticleHandler    12.5 s   0.5%   <- after the Tier-1 batch
+    ---------------------------------------
+    attributed             37.2%
+    unattributed           62.8%
+
+    cross-cutting (inside the above, so they attribute but do not
+    partition):
+    CommReceiveHandler    100.1 s   4.4%
+      of which pure wait   87.8 s   3.9%   (MPI_Waitsome)
+
+Three findings that redirect the audit:
+1. Chemistry is 8.5%, not the missing majority - the "Grackle
+   elephant" hypothesis is falsified. Do not start cooling work on
+   the strength of the audit text alone.
+2. The receive pump is 88% pure MPI wait. Comm-flavoured sections are
+   ~15% of wall as an upper bound.
+3. The star subsystem, the audit's headline Tier-1 target, is now
+   0.5% of wall. That work is done.
+
+Pass 3 (sha ed40e892) adds GravityAccel, SetAccelBoundary,
+CopyToOldBaryon, StarParticleInitFinal, CreateSiblingList and
+CommBufferedSend to chase the unattributed 62.8%. Level_NN lines are
+NESTED (Level_10 is inside Level_09 ...) - never sum them into an
+attribution total; time_budget.py separates them for this reason.
 
 ## Key technical facts (hard-won, do not re-learn)
 
