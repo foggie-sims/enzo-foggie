@@ -28,10 +28,10 @@ tiers:
         title: "RebuildHierarchyCycleSkip[L] = 2-4 for L >= 4"
         ref: "3.2"
         class: C2
-        status: in-progress
+        status: done
         prs: []
-        tests: ["FOGGIE-bench t01-rebuildskip-r1 (skip 2 -> 3 for L>=4) pending"]
-        note: "Discovery 2026-07-30: production ALREADY runs RebuildHierarchyCycleSkip=2 on all levels 0-10 (in the production parameter file; every bench baseline inherited it), so the audit's floor recommendation is deployed. The live experiment is skip=3 for L>=4 (levels 0-3 stay at the production value). Drift budget at CourantSafetyNumber=0.4 / ParticleCourant=0.8 / NumberOfBufferZones=2: hydro 1.2 cells (safe), particles 2.4 cells (0.4 over the buffer - marginal; exactly what the C2 comparison is for). skip=4 would need NumberOfBufferZones raised to ~4."
+        tests: ["FOGGIE-bench t01-rebuildskip-r1: skip=3 for L>=4 vs production skip=2 - answer changes far beyond the nondeterminism envelope (DD0398 mesh differs, stellar mass 5e-4 rel vs ~1e-7 gates) for -0.6% wall / ~5 s of rebuild"]
+        note: "Resolved 2026-07-30 with a negative result + a discovery: production ALREADY runs RebuildHierarchyCycleSkip=2 on all levels 0-10 - the audit's recommendation was deployed before the audit, and its benefit is banked in every baseline. Going deeper (skip=3, L>=4) fails cost/benefit: real answer divergence (particle drift 2.4 cells exceeds the 2-cell flagging buffer, as the drift-budget arithmetic predicts) and negligible speedup. Keep production at skip=2; do not raise without also raising NumberOfBufferZones, and the measured payoff does not justify that experiment. Archive: t01-rebuildskip-r1 on bench-results."
       - id: T0.2
         title: "LoadBalancing = 4 (Hilbert)"
         ref: "4.1"
