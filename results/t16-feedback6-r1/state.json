@@ -1,0 +1,35 @@
+{
+  "id": "t16-feedback6-r1",
+  "date": "2026-07-30",
+  "purpose": "T1.6 completion production stamp: star_feedback6 heap-allocatable accumulators + starless-grid early return + injection-sweep skip",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5,
+    "restart": "/home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff/RD0016/RD0016",
+    "restart_cycle": 2110
+  },
+  "baseline": "t13-latent-r1/bench_B (sha 3cd159df59a8, T1.13 code = parent of this change)",
+  "candidate_sha": "db3daf2b88ee",
+  "runs": {
+    "bench_B": {
+      "build": "db3daf2b88ee",
+      "job": "24916789",
+      "queue": "normal",
+      "exit": 0
+    },
+    "bench_B2": {
+      "build": "db3daf2b88ee",
+      "job": "24916815",
+      "queue": "normal",
+      "purpose": "second timing sample - see wall_clock note"
+    }
+  },
+  "verdict": {
+    "comparison": "verdict_t13B_vs_t16B.json",
+    "result": "PASS at class C0 vs the 3-pair envelope floor (one particle level migration at DD0399, gate 10; mesh bit-identical everywhere).",
+    "wall_clock": "candidate 2420.1 s vs baseline 2381.4 s (+1.6%) - single sample on a different normal-queue node; the session's identical-config runs scatter over ~1.6% (2381-2420 s), so inconclusive. bench_B2 adds a second sample; timing is informational, not gated."
+  },
+  "ci": "https://github.com/foggie-sims/enzo-foggie/actions/runs/30525447698"
+}
