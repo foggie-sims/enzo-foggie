@@ -1,0 +1,48 @@
+{
+  "id": "instr2-r1",
+  "date": "2026-07-30",
+  "purpose": "Instrumentation pass 2 stamp + T0.6 (FileDirectedOutput throttle) + first attributed L9/L10 time budget",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5,
+    "restart": "/home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff/RD0016/RD0016",
+    "restart_cycle": 2110
+  },
+  "baseline": "t15-coolgate-r1/bench_B",
+  "candidate_sha": "dc98ab91a927",
+  "runs": {
+    "bench_B": {
+      "build": "dc98ab91a927",
+      "job": "24917650",
+      "queue": "normal",
+      "exit": 0
+    }
+  },
+  "verdict": {
+    "comparison": "verdict_t15B_vs_instr2B.json",
+    "result": "PASS at class C0 vs the envelope floor (1-2 particle level migrations, mesh identical). Wall 2273.0 vs 2231.3 s (+1.9%, within node scatter; timer overhead is microseconds/call).",
+    "attributed_budget_s": {
+      "ChemistryCooling": 192.6,
+      "RebuildHierarchy": 178.3,
+      "SolveHydroEquations": 111.1,
+      "SetBoundaryConditions": 107.1,
+      "CommReceiveHandler": 100.1,
+      "MPIWaitReceive_pure_wait": 87.8,
+      "PrepareDensityField": 79.9,
+      "SetLevelTimeStep": 51.3,
+      "SolveForPotential": 51.2,
+      "Group_WriteAllData": 50.7,
+      "StarParticleHandler": 12.5,
+      "UpdateFromFinerGrids": 9.6
+    },
+    "findings": [
+      "Grackle chemistry is 8.5% of wall - the 'chemistry elephant' hypothesis for the unattributed 70% is falsified.",
+      "The receive pump is 88% pure MPI wait (87.8 of 100.1 s); comm-flavored sections total ~15% of wall as an upper bound.",
+      "Star path is down to 0.5% after the Tier-1 batch.",
+      "~50% of the level-loop time remains unattributed - pass 3 targets: OldBaryonField full-grid copies, ComputeAccelerationField, boundary prolongation internals, send-side communication."
+    ]
+  },
+  "ci": "https://github.com/foggie-sims/enzo-foggie/actions/runs/30560321864"
+}
