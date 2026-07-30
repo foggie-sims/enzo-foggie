@@ -443,10 +443,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
                              level);
     
     Star *AllStars = NULL;
-    TIMER_START("StarParticleInitFinal");
+    TIMER_START("SPInitialize");
     StarParticleInitialize(Grids, MetaData, NumberOfGrids, LevelArray,
 			   level, AllStars, TotalStarParticleCountPrevious);
-    TIMER_STOP("StarParticleInitFinal");
+    TIMER_STOP("SPInitialize");
 
     /* Calculate ClusterSMBHColdGasMass */
 
@@ -792,10 +792,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     ActiveParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
                            level, NumberOfNewActiveParticles);
     /* Finalize (accretion, feedback, etc.) star particles */
-    TIMER_START("StarParticleInitFinal");
+    TIMER_START("SPFinalize");
     StarParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
 			 level, AllStars, TotalStarParticleCountPrevious, OutputNow);
-    TIMER_STOP("StarParticleInitFinal");
+    TIMER_STOP("SPFinalize");
 
     /* For each grid: a) interpolate boundaries from the parent grid.
                       b) copy any overlapping zones from siblings. */
