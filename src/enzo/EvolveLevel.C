@@ -393,8 +393,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     if(CheckpointRestart == FALSE) {
 
     TIMER_START(level_name);
-    SetLevelTimeStep(Grids, NumberOfGrids, level, 
+    TIMER_START("SetLevelTimeStep");
+    SetLevelTimeStep(Grids, NumberOfGrids, level,
         &dtThisLevelSoFar[level], &dtThisLevel[level], dtLevelAbove);
+    TIMER_STOP("SetLevelTimeStep");
 
     TimeSinceRebuildHierarchy[level] += dtThisLevel[level];
 
@@ -478,13 +480,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     When = 0.5;
 
+     TIMER_START("PrepareDensityField");
 #ifdef FAST_SIB
      PrepareDensityField(LevelArray,  level, MetaData, When, SiblingGridListStorage);
 #else   // !FAST_SIB
      PrepareDensityField(LevelArray, level, MetaData, When);
 #endif  // end FAST_SIB
- 
- 
+     TIMER_STOP("PrepareDensityField");
+
+
     /* Prepare normalization for random forcing. Involves top grid only. */
  
     ComputeRandomForcingNormalization(LevelArray, 0, MetaData,
@@ -598,11 +602,13 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
         if (RK2SecondStepBaryonDeposit && SelfGravity && UseHydro) {  
 
             When = 0.5;
+            TIMER_START("PrepareDensityField");
 #ifdef FAST_SIB
             PrepareDensityField(LevelArray,  level, MetaData, When, SiblingGridListStorage);
-#else  
+#else
             PrepareDensityField(LevelArray, level, MetaData, When);
 #endif  // end FAST_SIB
+            TIMER_STOP("PrepareDensityField");
 
 
             for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
@@ -664,11 +670,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       /* Solve the cooling and species rate equations. */
  
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+      TIMER_START("ChemistryCooling");
       Grids[grid1]->GridData->MultiSpeciesHandler();
+      TIMER_STOP("ChemistryCooling");
 
       /* Update particle positions (if present). */
- 
+
+      TIMER_START("ParticleUpdate");
       UpdateParticlePositions(Grids[grid1]->GridData);
+      TIMER_STOP("ParticleUpdate");
 
     /*Trying after solving for radiative transfer */
 #ifdef EMISSIVITY
@@ -690,8 +700,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
       /* Include 'star' particle creation and feedback. */
 
+      TIMER_START("StarParticleHandler");
       Grids[grid1]->GridData->StarParticleHandler
 	(Grids[grid1]->NextGridNextLevel, level ,dtLevelAbove, TopGridTimeStep);
+      TIMER_STOP("StarParticleHandler");
 
       Grids[grid1]->GridData->ActiveParticleHandler
         (Grids[grid1]->NextGridNextLevel, level ,dtLevelAbove,
@@ -884,8 +896,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     EXTRA_OUTPUT_MACRO(3,"Before UFG")
 
+    TIMER_START("UpdateFromFinerGrids");
     UpdateFromFinerGrids(level, Grids, NumberOfGrids, NumberOfSubgrids,
 			     SubgridFluxesEstimate,SUBlingList,MetaData);
+    TIMER_STOP("UpdateFromFinerGrids");
 
     DeleteSUBlingList( NumberOfGrids, SUBlingList );
 
