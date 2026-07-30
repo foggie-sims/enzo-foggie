@@ -30,8 +30,11 @@ struct cmp_star_proc {
 
 struct cmp_hkey {
   bool operator()(hilbert_data const& a, hilbert_data const& b) const {
-    if (a.hkey < b.hkey) return true;
-    else return false;
+    if (a.hkey.hi != b.hkey.hi) return a.hkey.hi < b.hkey.hi;
+    if (a.hkey.lo != b.hkey.lo) return a.hkey.lo < b.hkey.lo;
+    // Deterministic order for exact ties: std::sort is unstable, and a
+    // rank-dependent tie order would defeat cross-rank consistency.
+    return a.grid_num < b.grid_num;
   }
 };
 

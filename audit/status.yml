@@ -35,9 +35,10 @@ tiers:
         title: "LoadBalancing = 4 (Hilbert)"
         ref: "4.1"
         class: C2
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
+        tests: ["Prereqs landed: T1.13 partitioner bug fixes + 128-bit key rework (keys were degenerate below 2^-19 separations - unusable for FOGGIE zoom levels)", "FOGGIE-bench LoadBalancing=4 A/B pending"]
+        note: "Key underrun/lost-index fixed 2026-07-30 (see T1.11 note). Anchor A/B with LoadBalancing=4 vs production LoadBalancing=1 queued; note the balancer work estimate is still cells-only (T2.1), so this measures locality + correct keys, not particle-aware balance."
       - id: T0.3
         title: "SubgridSizeAutoAdjust = 0; MinimumSubgridEdge = 16; MaximumSubgridSize ~ 2.6e5"
         ref: "3.4"
@@ -174,9 +175,10 @@ tiers:
         title: "Re-enable Hilbert bounding-box normalization (3 commented-out lines)"
         ref: "4.1"
         class: C1
-        status: todo
+        status: wontfix
         prs: []
         tests: []
+        note: "Superseded by the 128-bit Hilbert key rework (2026-07-30). Normalization would rescale by the per-call bounding box: near-identity for full-domain runs but anisotropic (distorts curve locality) and temporally unstable (keys shift whenever the balanced grid set changes -> churn). Instead HilbertCurve3D now returns an exact 126-bit integer key (42 octant levels, resolution 2^-42 of the domain in global coordinates) - deep-zoom grids resolve without any FOGGIE-specific geometry, sorting/partitioning are exact, and full-domain users keep their ordering (prefix property). The commented lines stay commented."
       - id: T1.12
         title: "Single-pass particle Courant reduction; single-pass particle-type histogram in CommunicationSyncNumberOfParticles"
         ref: "5.1"

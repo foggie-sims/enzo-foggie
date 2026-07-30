@@ -376,8 +376,17 @@ struct star_data {
   int proc;
 };
 
+/* 126-bit Hilbert key (42 octant levels x 3 bits), kept as integers so
+   sorting and partitioning are exact.  The old double-valued key held
+   only 19 levels and lost its last ~4 bits to the double mantissa;
+   deep-zoom grids closer than 2^-19 of the domain collapsed onto
+   identical keys and their curve order was lost. */
+struct hilbert_key {
+  unsigned long long hi, lo;
+};
+
 struct hilbert_data {
-  double hkey;
+  hilbert_key hkey;
   int grid_num;
 };
 

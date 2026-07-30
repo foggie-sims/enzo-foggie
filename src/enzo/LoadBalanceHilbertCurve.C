@@ -35,7 +35,8 @@
 #include "CommunicationUtilities.h"
 #include "SortCompareFunctions.h"
 
-double HilbertCurve3D(FLOAT *coord);
+hilbert_key HilbertCurve3D(FLOAT *coord);
+double HilbertKeyDiff(const hilbert_key &a, const hilbert_key &b);
 Eint32 compare_hkey(const void *a, const void *b);
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				int NumberOfSubgrids[] = NULL,
@@ -189,8 +190,8 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
      Hilbert curve. */
 
   const double CriticalBalance = 0.1 / NumberOfProcessors;
-  double div_hkey, min_hkey, max_hkey, global_min_hkey;
-  double hkey_boundary;
+  hilbert_key div_key;
+  double lo_span, hi_span, boundary_off;
   char direction;
   int LoadedBlock, UnloadedBlock;
   long long WorkDifference;
@@ -209,30 +210,29 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
       if (BlockDivisions[i] <= 0 || BlockDivisions[i+1] < 0 ||
 	  (i > 0 && BlockDivisions[i-1] < 0)) continue;
       
-      /* Hilbert key for the division and boundaries of the curve
-	 segment that we will move grids */
-      div_hkey = HilbertData[BlockDivisions[i]].hkey;
+      /* Curve spans (as double offsets from the division key) of the
+	 segments we may move grids across.  Keys are exact integers;
+	 the fuzzy interpolation is a heuristic, so double precision on
+	 the differences is plenty. */
+      div_key = HilbertData[BlockDivisions[i]].hkey;
       if (i == 0)
-	min_hkey = div_hkey - FUZZY_BOUNDARY * (div_hkey - HilbertData[0].hkey);
+	lo_span = HilbertKeyDiff(div_key, HilbertData[0].hkey);
       else
-	min_hkey = div_hkey - FUZZY_BOUNDARY * 
-	  (div_hkey - HilbertData[BlockDivisions[i-1]].hkey);
-      max_hkey = div_hkey + FUZZY_BOUNDARY * 
-	(HilbertData[BlockDivisions[i+1]].hkey - div_hkey);
-//      if (debug)
-//	printf("div%d: Hilbert fuzzy range = %lf -> %lf -> %lf\n",
-//	       i, min_hkey, div_hkey, max_hkey);
-      
+	lo_span = HilbertKeyDiff(div_key,
+				 HilbertData[BlockDivisions[i-1]].hkey);
+      hi_span = HilbertKeyDiff(HilbertData[BlockDivisions[i+1]].hkey,
+			       div_key);
+
       // Which processor has more work?
       if (ProcessorWork[i] > ProcessorWork[i+1]) {
 	LoadedBlock = i;
 	UnloadedBlock = i+1;
-	hkey_boundary = min_hkey;
+	boundary_off = -FUZZY_BOUNDARY * lo_span;
 	direction = -1;
       } else {
 	LoadedBlock = i+1;
 	UnloadedBlock = i;
-	hkey_boundary = max_hkey;
+	boundary_off = FUZZY_BOUNDARY * hi_span;
 	direction = +1;
       }
 
@@ -241,7 +241,8 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
 
       grid_num = BlockDivisions[i] + direction;
       while (grid_num >= 0 && grid_num < NumberOfGrids &&
-	     direction * (hkey_boundary - HilbertData[grid_num].hkey) > 0) {
+	     direction * (boundary_off -
+	       HilbertKeyDiff(HilbertData[grid_num].hkey, div_key)) > 0) {
 	WorkDifference = 
 	  ProcessorWork[LoadedBlock] - ProcessorWork[UnloadedBlock];
 	if (2*GridWork[grid_num] < WorkDifference &&
@@ -495,8 +496,8 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
      Hilbert curve. */
 
   const double CriticalBalance = 0.1 / NumberOfProcessors;
-  double div_hkey, min_hkey, max_hkey, global_min_hkey;
-  double hkey_boundary;
+  hilbert_key div_key;
+  double lo_span, hi_span, boundary_off;
   char direction;
   int LoadedBlock, UnloadedBlock;
   long long WorkDifference;
@@ -515,30 +516,29 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
       if (BlockDivisions[i] <= 0 || BlockDivisions[i+1] < 0 ||
 	  (i > 0 && BlockDivisions[i-1] < 0)) continue;
       
-      /* Hilbert key for the division and boundaries of the curve
-	 segment that we will move grids */
-      div_hkey = HilbertData[BlockDivisions[i]].hkey;
+      /* Curve spans (as double offsets from the division key) of the
+	 segments we may move grids across.  Keys are exact integers;
+	 the fuzzy interpolation is a heuristic, so double precision on
+	 the differences is plenty. */
+      div_key = HilbertData[BlockDivisions[i]].hkey;
       if (i == 0)
-	min_hkey = div_hkey - FUZZY_BOUNDARY * (div_hkey - HilbertData[0].hkey);
+	lo_span = HilbertKeyDiff(div_key, HilbertData[0].hkey);
       else
-	min_hkey = div_hkey - FUZZY_BOUNDARY * 
-	  (div_hkey - HilbertData[BlockDivisions[i-1]].hkey);
-      max_hkey = div_hkey + FUZZY_BOUNDARY * 
-	(HilbertData[BlockDivisions[i+1]].hkey - div_hkey);
-//      if (debug)
-//	printf("div%d: Hilbert fuzzy range = %lf -> %lf -> %lf\n",
-//	       i, min_hkey, div_hkey, max_hkey);
-      
+	lo_span = HilbertKeyDiff(div_key,
+				 HilbertData[BlockDivisions[i-1]].hkey);
+      hi_span = HilbertKeyDiff(HilbertData[BlockDivisions[i+1]].hkey,
+			       div_key);
+
       // Which processor has more work?
       if (ProcessorWork[i] > ProcessorWork[i+1]) {
 	LoadedBlock = i;
 	UnloadedBlock = i+1;
-	hkey_boundary = min_hkey;
+	boundary_off = -FUZZY_BOUNDARY * lo_span;
 	direction = -1;
       } else {
 	LoadedBlock = i+1;
 	UnloadedBlock = i;
-	hkey_boundary = max_hkey;
+	boundary_off = FUZZY_BOUNDARY * hi_span;
 	direction = +1;
       }
 
@@ -547,7 +547,8 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
 
       grid_num = BlockDivisions[i] + direction;
       while (grid_num >= 0 && grid_num < NumberOfGrids &&
-	     direction * (hkey_boundary - HilbertData[grid_num].hkey) > 0) {
+	     direction * (boundary_off -
+	       HilbertKeyDiff(HilbertData[grid_num].hkey, div_key)) > 0) {
 	WorkDifference = 
 	  ProcessorWork[LoadedBlock] - ProcessorWork[UnloadedBlock];
 	if (2*GridWork[grid_num] < WorkDifference &&
@@ -779,30 +780,29 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
       if (BlockDivisions[i] <= 0 || BlockDivisions[i+1] < 0 ||
 	  (i > 0 && BlockDivisions[i-1] < 0)) continue;
       
-      /* Hilbert key for the division and boundaries of the curve
-	 segment that we will move grids */
-      div_hkey = HilbertData[BlockDivisions[i]].hkey;
+      /* Curve spans (as double offsets from the division key) of the
+	 segments we may move grids across.  Keys are exact integers;
+	 the fuzzy interpolation is a heuristic, so double precision on
+	 the differences is plenty. */
+      div_key = HilbertData[BlockDivisions[i]].hkey;
       if (i == 0)
-	min_hkey = div_hkey - FUZZY_BOUNDARY * (div_hkey - HilbertData[0].hkey);
+	lo_span = HilbertKeyDiff(div_key, HilbertData[0].hkey);
       else
-	min_hkey = div_hkey - FUZZY_BOUNDARY * 
-	  (div_hkey - HilbertData[BlockDivisions[i-1]].hkey);
-      max_hkey = div_hkey + FUZZY_BOUNDARY * 
-	(HilbertData[BlockDivisions[i+1]].hkey - div_hkey);
-//      if (debug)
-//	printf("div%d: Hilbert fuzzy range = %lf -> %lf -> %lf\n",
-//	       i, min_hkey, div_hkey, max_hkey);
-      
+	lo_span = HilbertKeyDiff(div_key,
+				 HilbertData[BlockDivisions[i-1]].hkey);
+      hi_span = HilbertKeyDiff(HilbertData[BlockDivisions[i+1]].hkey,
+			       div_key);
+
       // Which processor has more work?
       if (ProcessorWork[i] > ProcessorWork[i+1]) {
 	LoadedBlock = i;
 	UnloadedBlock = i+1;
-	hkey_boundary = min_hkey;
+	boundary_off = -FUZZY_BOUNDARY * lo_span;
 	direction = -1;
       } else {
 	LoadedBlock = i+1;
 	UnloadedBlock = i;
-	hkey_boundary = max_hkey;
+	boundary_off = FUZZY_BOUNDARY * hi_span;
 	direction = +1;
       }
 
@@ -811,7 +811,8 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
 
       grid_num = BlockDivisions[i] + direction;
       while (grid_num >= 0 && grid_num < NumberOfGrids &&
-	     direction * (hkey_boundary - HilbertData[grid_num].hkey) > 0) {
+	     direction * (boundary_off -
+	       HilbertKeyDiff(HilbertData[grid_num].hkey, div_key)) > 0) {
 	WorkDifference = 
 	  ProcessorWork[LoadedBlock] - ProcessorWork[UnloadedBlock];
 	if (2*GridWork[grid_num] < WorkDifference &&
