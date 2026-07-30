@@ -1,0 +1,25 @@
+{
+  "id": "t11-guard-r1",
+  "date": "2026-07-29",
+  "purpose": "T1.1 production stamp: StarParticleFindAll probe-once guard",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5,
+    "restart": "/home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff/RD0016/RD0016",
+    "restart_cycle": 2110
+  },
+  "baseline": "t18-instrumentation-r7/bench_B (sha 8aa475fa8747, T1.8 code = parent of the T1.1 change modulo docs-only commits)",
+  "candidate_sha": "d25c550c96c8",
+  "candidate_note": "Executable compiled from the T1.1 working tree before rebase onto the dashboard-bot commit; source contents identical to d25c550c (rebase touched only audit/dashboard.html). The embedded build stamp therefore reads efdbc023.",
+  "runs": {
+    "bench_B": {"build": "d25c550c96c8", "job": "24916303", "queue": "normal", "exit": 0}
+  },
+  "verdict": {
+    "comparison": "verdict_t18B_vs_t11B.json",
+    "result": "PASS at class C0 against the 3-pair envelope noise floor from t18-instrumentation-r7 (same anchor, same config). Structure delta at DD0399 within the floor divergence regime.",
+    "wall_clock": "candidate 2411.5 s vs baseline 2414.1 s over 5 root steps - 0.1% difference, below the 0.5% timing noise. The guard's removed work (all-level particle type scan + empty allgather per level-subcycle) is not measurable at 128 ranks at this anchor."
+  },
+  "ci": "https://github.com/foggie-sims/enzo-foggie/actions/runs/30512578492"
+}
