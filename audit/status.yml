@@ -187,9 +187,10 @@ tiers:
         title: "Fix latent bugs: case-21 fall-through, sink-path double free, CreateSUBlingList leak, Hilbert OOB/overflow, ReceiveRegion wrong-array zeroing, uninitialized APTotalNumber"
         ref: "A"
         class: C0
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
+        tests: ["Local serial A/B vs T1.2/3 build: feedback logs byte-identical, all dump payloads h5diff-identical", "CI (incl. ASan/UBSan job) + production bench stamp pending"]
+        note: "All six fixed: case-21 break added (was falling into CommunicationSendActiveParticles); sink deposit was a use-after-free + double free (restore block read freed ParticleMassPointerSink) - freed once after restore; CreateSUBlingList FluxCorrection==0 early return leaked Grids/ChildGrids; APTotalNumber accumulated from garbage; ReceiveRegion zeroed live BaryonField instead of the new OldBaryonField (data corruption where it fired); Hilbert balancers got 64-bit work sums, complete degenerate-partition guards (old ==0 check missed -1 -> HilbertData[-1]), bounded mover loops, zero-work division guard - applied to RootGrids and both live LoadBalanceHilbertCurve copies."
       - id: T1.14
         title: "Diagnose parallel run-to-run nondeterminism in hydro AMR (message-order-dependent flux/boundary accumulation); extend BITWISE_IDENTICALITY beyond gravity/photons or document ordering guarantees"
         ref: "4.2"
