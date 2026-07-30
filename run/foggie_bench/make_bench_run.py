@@ -13,7 +13,7 @@ Example:
     python3 make_bench_run.py \
         --restart /nobackup/.../DD1234/DD1234 \
         --enzo /home/.../enzo-foggie/src/enzo/enzo.exe \
-        --nsteps 5 --ranks 512 --out bench_baseline
+        --nsteps 5 --ranks 128 --out bench_baseline
 """
 
 import argparse
@@ -48,7 +48,9 @@ def main():
     ap.add_argument("--enzo", required=True, help="Path to enzo.exe to test")
     ap.add_argument("--nsteps", type=int, default=5,
                     help="Number of root-grid steps to run (default 5)")
-    ap.add_argument("--ranks", type=int, default=512, help="MPI ranks")
+    ap.add_argument("--ranks", type=int, default=128,
+                    help="MPI ranks (default matches FOGGIE production: "
+                         "one node, 128 ranks)")
     ap.add_argument("--out", required=True, help="Run directory to create")
     ap.add_argument("--walltime", default="4:00:00")
     ap.add_argument("--queue", default="normal")
@@ -58,8 +60,10 @@ def main():
                     help="MPI launcher matching the MPI the build links against "
                          "(Make.mach.pleiades-mpich links MPICH 4.0.3, so the "
                          "system MPT mpiexec will NOT work)")
-    ap.add_argument("--model", default="rom_ait",
-                    help="PBS node model (e.g. rom_ait for Aitken Rome, bro for Pleiades Broadwell)")
+    ap.add_argument("--model", default="mil_ait",
+                    help="PBS node model (mil_ait = Aitken Milan, the FOGGIE "
+                         "production model; rom_ait = Aitken Rome, bro = "
+                         "Pleiades Broadwell)")
     ap.add_argument("--ncpus", type=int, default=128, help="Cores per node")
     args = ap.parse_args()
 

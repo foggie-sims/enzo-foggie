@@ -33,22 +33,15 @@
 #     class: C0
 #     noise_floor_json: results/t19-manual/noise_floor_A1_vs_A2.json
 
-entries:
-  # r1: stale grackle path; r2: runner self-update lag; r3: wrong anchor
-  # path (taken from a placeholder example); r4: qsub missing from the bare
-  # cron PATH (wrapper now appends /PBS/bin); r5: bench_A submitted but
-  # bench_B rejected by the per-user queue limit, which the runner treated
-  # as fatal (submission is now incremental and retries on later ticks).
-  # All fixed; the real anchor is documented in anchor.md. Failed entries
-  # keep their results/ record.
-  - id: t18-instrumentation-r6
-    baseline_ref: "7f22798^"          # tip immediately before the T1.8 commit
-    candidate_ref: "8aa475f"          # T1.8 + prototype fix, CI run 14 green
-    restart: /home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff/RD0016/RD0016
-    nsteps: 5
-    ranks: 512
-    model: rom_ait
-    ncpus: 128
-    queue: devel
-    class: C0
-    noise_floor_json: results/t19-manual/noise_floor_A1_vs_A2.json
+# The cron runner was decommissioned 2026-07-29 (audit moved to an
+# interactive Claude Code CLI session on Aitken - see audit/HANDOFF.md);
+# hpc_runner.py remains usable as a manual one-tick script. Attempt
+# history for t18-instrumentation r1-r5: stale grackle path; runner
+# self-update lag; placeholder restart path; qsub missing from cron PATH;
+# home-quota failure + wrong parallel config (512 ranks on rom_ait - the
+# production config is 1 node x 128 ranks mil_ait; make_bench_run.py
+# defaults now match). r6 was queued for cron but never ran; the stamp is
+# being produced manually as t18-instrumentation-r7 (A1/A2 re-measure the
+# noise floor at the production config, then A1-vs-B gates T1.8).
+
+entries: []

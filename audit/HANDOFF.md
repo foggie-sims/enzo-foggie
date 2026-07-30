@@ -77,13 +77,15 @@ finish T1.6 -> T1.5.
 
 - **T1.14 / noise floor**: parallel Enzo is NOT run-to-run bitwise
   reproducible (message-arrival order changes FP accumulation;
-  CONFIG_BITWISE_IDENTICALITY covers only gravity/photon paths). At the
-  production anchor (512 ranks, 5 root steps): relative mass diffs grow
-  ~1 decade per root step (1e-11 -> 1e-7 by step 5), refinement structure
-  diverges by step 4, +-1 stochastic star event, ~2.2% wall-clock noise.
-  Therefore all production A/B gating MUST use
-  `compare_runs.py --noise-floor <archived floor json>` (gates become
-  max(class tol, 10x floor)). Absolute tolerances only suit serial runs.
+  CONFIG_BITWISE_IDENTICALITY covers only gravity/photon paths). Measured
+  at the anchor at 512 ranks / rom_ait (a superseded config - production
+  is 1 node x 128 ranks mil_ait; the r7 A1/A2 pair re-measures the floor
+  there): relative mass diffs grow ~1 decade per root step (1e-11 -> 1e-7
+  by step 5), refinement structure diverges by step 4, +-1 stochastic
+  star event, ~2.2% wall-clock noise. Therefore all production A/B gating
+  MUST use `compare_runs.py --noise-floor <archived floor json>` (gates
+  become max(class tol, 10x floor)), with a floor measured at the same
+  rank count / node model. Absolute tolerances only suit serial runs.
 - The anchor snapshot and its properties: `run/foggie_bench/anchor.md`.
 - Bench-run preparation gotchas are all encoded in
   `run/foggie_bench/make_bench_run.py`: restart syntax is
@@ -116,32 +118,38 @@ finish T1.6 -> T1.5.
 ## The t18-instrumentation bench (T1.8 production stamp) - current state
 
 Baseline = `7f22798^` (= 42dcbbd, tip before T1.8); candidate =
-`8aa475f` (T1.8, CI green). 5 root steps, 512 ranks, rom_ait/128,
-devel, class C0 with the archived noise floor. Attempt history (full
-records under `results/t18-instrumentation-r*/` on bench-results):
-r1 stale grackle path in the committed machine file; r2 runner
-self-update lag; r3 placeholder restart path; r4 qsub not in cron PATH;
-r5 bench_A submitted (job 24914598) but bench_B bounced off the
-per-user queue limit and the entry failed. r6 was queued for the cron
-runner just before this migration.
+`8aa475f` (T1.8, CI green). 5 root steps from the anchor restart,
+devel queue, class C0. Attempt history (full records under
+`results/t18-instrumentation-r*/` on bench-results): r1 stale grackle
+path in the committed machine file; r2 runner self-update lag; r3
+placeholder restart path; r4 qsub not in cron PATH; r5 bench_A (job
+24914598) died in 24 s writing its first dump - "Disk quota exceeded",
+because foggie_bench_root then lived on /home1 proper (since moved to
+/home1/jtumlins/nobackup). r6 was queued for the cron runner but never
+ran (cron decommissioned).
 
-**Salvage path for the CLI session** (cheapest route to the stamp):
-`~/foggie_bench_root/runs/t18-instrumentation-r5/` has both run dirs
-fully prepared. If bench_A (baseline) completed (check
-`bench_A/bench_exit_status` == exit=0), just `qsub bench_B/launch.sh`
-when a devel slot is free, and when B finishes run:
+r5 also exposed a config error carried since the first benches: runs
+were prepared at 512 ranks on 4 x rom_ait (the make_bench_run.py
+defaults), but FOGGIE production runs on **1 Milan node, 128 ranks
+(mil_ait)**. The defaults now match production, and because a noise
+floor is config-specific, the 512-rank t19-manual floor cannot gate
+128-rank runs.
 
-    python3 run/foggie_bench/compare_runs.py \
-        ~/foggie_bench_root/runs/t18-instrumentation-r5/bench_A \
-        ~/foggie_bench_root/runs/t18-instrumentation-r5/bench_B \
-        --class C0 \
-        --noise-floor ~/foggie_bench_root/results/results/t19-manual/noise_floor_A1_vs_A2.json
+**Current attempt: t18-instrumentation-r7** (2026-07-29, this CLI
+session), in `/home1/jtumlins/nobackup/foggie_bench_root/runs/t18-instrumentation-r7/`:
+bench_A1 + bench_A2 (baseline twice -> new noise floor at 1 x 128
+mil_ait) and bench_B (candidate), submitted sequentially (devel
+per-user limit is 1 job). When all three finish:
 
-(Adjust the results-clone path as found on disk.) Then: archive the
-comparison + candidate `enzo_bench.log` instrumentation output to
-`bench-results` under `results/t18-instrumentation-r5/`, flip T1.8 to
-done in the ledger, and report the first RHperf/DtLimiter/MGSolver
-numbers.
+    python3 run/foggie_bench/compare_runs.py bench_A1 bench_A2 --class C0
+    # archive bench_A2/comparison.json as the new floor, then:
+    python3 run/foggie_bench/compare_runs.py bench_A1 bench_B --class C0 \
+        --noise-floor <the new floor json>
+
+Then: archive the floor, the verdict, and the candidate
+`enzo_bench.log` instrumentation output to `bench-results` under
+`results/t18-instrumentation-r7/`, flip T1.8 to done in the ledger, and
+report the first RHperf/DtLimiter/MGSolver numbers.
 
 ## The cron runner is decommissioned by this migration
 
@@ -155,11 +163,15 @@ it with cron off. Mark CI.6 accordingly (already noted in the ledger).
 
 ## Aitken-local layout
 
-    ~/foggie_bench_root/repo      clone of enzo-foggie (enzo-performance),
-                                  pushes via SSH deploy key
-    ~/foggie_bench_root/results   clone tracking bench-results
-    ~/foggie_bench_root/builds/   per-sha cached builds
-    ~/foggie_bench_root/runs/     bench run dirs (r5 is the live one)
-    ~/.ssh/config                 Host github.com -> ssh.github.com:443
-                                  with the foggie_bench_deploy key
-    ~/foggie_bench_cron.log       runner log (historical once cron is off)
+Root moved 2026-07-29 from /home1/jtumlins/foggie_bench_root to
+`/home1/jtumlins/nobackup/foggie_bench_root` (= /nobackupnfs1/jtumlins/
+foggie_bench_root) after a bench dump blew the home quota (r5 failure).
+
+    .../foggie_bench_root/repo      clone of enzo-foggie (enzo-performance),
+                                    pushes via SSH deploy key
+    .../foggie_bench_root/results   clone tracking bench-results
+    .../foggie_bench_root/builds/   per-sha cached builds
+    .../foggie_bench_root/runs/     bench run dirs (r7 is the live one)
+    ~/.ssh/config                   Host github.com -> ssh.github.com:443
+                                    with the foggie_bench_deploy key
+    ~/foggie_bench_cron.log         runner log (historical; cron is off)

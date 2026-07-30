@@ -12,19 +12,29 @@ results, so date any change).
 | Run | H2regulated / H2mech_tab_cont_ff |
 | Snapshot | RD0016 |
 | Restart parameter file | `/home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff/RD0016/RD0016` |
-| Rank count | 512 |
-| Node model | rom_ait (128 cores/node) |
+| Rank count | 128 |
+| Node model | mil_ait (1 node, 128 cores) |
 | Star particles | ~1.42 million (from the T1.9 bench comparisons) |
-| Anchored on | 2026-07-29, established via the T1.9 manual benches (A1/A2/B) |
+| Anchored on | 2026-07-29, established via the T1.9 manual benches (A1/A2/B); parallel config corrected to match production 2026-07-29 |
+
+The 1 node x 128 ranks mil_ait configuration matches the FOGGIE production
+jobs. Earlier benches (T1.9 validation, t19-manual floor) ran at 512 ranks
+on 4 x rom_ait - an accidental default from `make_bench_run.py`, never a
+production configuration.
 
 ## Measured properties at this anchor
 
-- **Run-to-run noise floor** (identical code, 5 root steps, 512 ranks):
-  relative mass differences grow ~1 decade per root step, 1e-11 at step 1 to
-  1e-7 by step 5; refinement structure diverges by step 4; +-1 stochastic
-  star formation event; wall-clock noise ~2.2%. Archived at
-  `results/t19-manual/noise_floor_A1_vs_A2.json` on the `bench-results`
-  branch; all production A/B gating uses it via `--noise-floor`.
+- **Run-to-run noise floor at 512 ranks / rom_ait (superseded config)**
+  (identical code, 5 root steps): relative mass differences grow ~1 decade
+  per root step, 1e-11 at step 1 to 1e-7 by step 5; refinement structure
+  diverges by step 4; +-1 stochastic star formation event; wall-clock noise
+  ~2.2%. Archived at `results/t19-manual/noise_floor_A1_vs_A2.json` on the
+  `bench-results` branch. Valid only for gating 512-rank runs.
+- **Noise floor at 1 x 128 mil_ait (production config)**: being measured by
+  the t18-instrumentation-r7 A1/A2 pair; will be archived at
+  `results/t18-instrumentation-r7/noise_floor_A1_vs_A2.json`. A noise floor
+  is config-specific: gate runs only with a floor measured at the same rank
+  count and node model.
 
 ## Notes
 
