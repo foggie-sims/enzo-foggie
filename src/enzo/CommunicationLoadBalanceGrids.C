@@ -81,7 +81,12 @@ int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
     GridHierarchyPointer[i]->GridData->CollectGridInformation
       (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles);
     //    ComputeTime[i] = GridMemory; // roughly speaking
-    ComputeTime[i] = float(NumberOfCells);
+    /* Cells-only unless LoadBalanceParticleWeight is set (audit T2.1):
+       CollectGridInformation already returns the particle count, it was
+       simply discarded here.  Weight 0 reproduces the historical
+       estimate bit-for-bit. */
+    ComputeTime[i] = float(NumberOfCells)
+      + LoadBalanceParticleWeight * float(Particles);
     ProcessorComputeTime[proc] += ComputeTime[i];
     NewProcessorNumber[i] = proc;
   }

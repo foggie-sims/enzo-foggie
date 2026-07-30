@@ -172,6 +172,17 @@ Two traps for anyone reading performance.out directly:
   absorb the rejection and retry.
 - PBS commands are not in cron/bare-shell PATH; interactive shells get
   them from profile scripts. (`/PBS/bin`.)
+- **Header changes do NOT trigger recompiles on Aitken.** `makedepend`
+  is not installed, so the Makefile's `dep` target fails silently
+  ("Error 127 (ignored)") and `DEPEND` stays a 0-byte file - there are
+  no header->object dependencies at all. Editing a `.C` file is safe
+  (timestamp rule), but after touching ANY header you must
+  `make clean` and rebuild, or you get stale objects. The failure mode
+  is usually a link error (undefined reference to a new global), which
+  is benign; the dangerous case is a changed struct layout, which links
+  fine and is undefined behaviour at runtime. Discovered 2026-07-30
+  when a new `EXTERN` in global_data.h failed to link because enzo.C
+  (which defines the storage) was never rebuilt.
 - Builds: `make machine-nasa-aitken-milan-mpich && make grackle-yes &&
   make opt-high && make -j8`. Cached per-sha builds live in
   `~/foggie_bench_root/builds/<sha12>/`. When building a historical ref,

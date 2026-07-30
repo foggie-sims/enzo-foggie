@@ -242,6 +242,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 
   fprintf(fptr, "NumberOfGhostZones    = %"ISYM"\n", NumberOfGhostZones);
   fprintf(fptr, "LoadBalancing          = %"ISYM"\n", LoadBalancing);
+  fprintf(fptr, "LoadBalanceParticleWeight = %"FSYM"\n",
+	  LoadBalanceParticleWeight);
   fprintf(fptr, "ResetLoadBalancing     = %"ISYM"\n", ResetLoadBalancing);
   fprintf(fptr, "LoadBalancingCycleSkip = %"ISYM"\n", LoadBalancingCycleSkip);
   fprintf(fptr, "LoadBalancingMinLevel  = %"ISYM"\n", LoadBalancingMinLevel);

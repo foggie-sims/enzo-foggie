@@ -246,6 +246,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
     ret += sscanf(line, "NumberOfGhostZones = %"ISYM, &NumberOfGhostZones);
     ret += sscanf(line, "LoadBalancing = %"ISYM, &LoadBalancing);
+    ret += sscanf(line, "LoadBalanceParticleWeight = %"FSYM,
+		  &LoadBalanceParticleWeight);
     ret += sscanf(line, "ResetLoadBalancing = %"ISYM, &ResetLoadBalancing);
     ret += sscanf(line, "LoadBalancingCycleSkip = %"ISYM, &LoadBalancingCycleSkip);
     ret += sscanf(line, "LoadBalancingMinLevel = %"ISYM, &LoadBalancingMinLevel);

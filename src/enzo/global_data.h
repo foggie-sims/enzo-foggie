@@ -41,6 +41,13 @@ class EnzoProblemType;
 */
 EXTERN int NumberOfGhostZones;
 EXTERN int LoadBalancing;
+/* Work attributed to one particle, in units of one cell, when the load
+   balancers estimate per-grid work.  0 reproduces the historical
+   cells-only estimate exactly.  See audit T2.1: for deep zooms the
+   cells-only estimate is blind to the particle concentration, and
+   particle count also proxies the chemistry cost (dense star-forming
+   gas takes the most Grackle iterations). */
+EXTERN float LoadBalanceParticleWeight;
 EXTERN int LoadBalancingCycleSkip;
 EXTERN int ResetLoadBalancing;
 EXTERN int CoresPerNode;

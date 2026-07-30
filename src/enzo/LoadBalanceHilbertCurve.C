@@ -128,10 +128,13 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
   TotalWork = 0;
   for (i = 0; i < NumberOfGrids; i++) {
     GridHierarchyPointer[HilbertData[i].grid_num]->GridData->
-      CollectGridInformation(GridMemory, GridVolume, NumberOfCells, 
+      CollectGridInformation(GridMemory, GridVolume, NumberOfCells,
 			     AxialRatio, CellsTotal, NumberOfParticles);
-    GridWork[i] = CellsTotal;
-    TotalWork += CellsTotal;
+    /* Particle-weighted work estimate (audit T2.1); weight 0 is the
+       historical cells-only behaviour. */
+    GridWork[i] = CellsTotal +
+      (int) (LoadBalanceParticleWeight * float(NumberOfParticles));
+    TotalWork += GridWork[i];
   }
 
   /* Partition into nearly equal workloads */
@@ -434,10 +437,13 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
   TotalWork = 0;
   for (i = 0; i < NumberOfGrids; i++) {
     GridPointers[HilbertData[i].grid_num]->
-      CollectGridInformation(GridMemory, GridVolume, NumberOfCells, 
+      CollectGridInformation(GridMemory, GridVolume, NumberOfCells,
 			     AxialRatio, CellsTotal, NumberOfParticles);
-    GridWork[i] = CellsTotal;
-    TotalWork += CellsTotal;
+    /* Particle-weighted work estimate (audit T2.1); weight 0 is the
+       historical cells-only behaviour. */
+    GridWork[i] = CellsTotal +
+      (int) (LoadBalanceParticleWeight * float(NumberOfParticles));
+    TotalWork += GridWork[i];
   }
 
   /* Partition into nearly equal workloads */
