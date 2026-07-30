@@ -128,9 +128,10 @@ tiers:
         title: "Gate ComputeCoolingTime on StarMakerThermalCrit; right-size AllocateNewParticles"
         ref: "5.1"
         class: C0
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
+        tests: ["Local serial A/B vs T1.6 build: feedback logs byte-identical, all dump payloads h5diff-identical", "CI + production bench stamp pending"]
+        note: "Creation prologue (fake grid + 0.25*size particle buffers + cooling time) now gated on a maker branch actually executing this call - for FOGGIE (H2REG + StarFormationOncePerRootGridTimeStep=1) that is the once-per-root-step SF window instead of every subcycle. ComputeCoolingTime computed only for makers that read it, verified per call site (star_maker2 only under StarMakerThermalCrit; MOM/UNIGRID/POP3/STAR_CLUSTER/INSTANT/DISTR; NOT H2REG/KRAVTSOV/SSN) - for FOGGIE it is eliminated entirely (the audit's hidden near-doubling of the cooling budget). MHD_RK energy re-add deliberately left outside the gate (its paired subtraction is unconditional). The 0.25*size cap itself left as-is: shrinking it could alter star formation if hit (C0 contract)."
       - id: T1.6
         title: "Make star_feedback6.F grid arrays allocatable + early return when no feedback; seed the RNG"
         ref: "5.1"
