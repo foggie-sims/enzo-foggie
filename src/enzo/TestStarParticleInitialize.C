@@ -60,6 +60,9 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
   char *DIName    = "DI_Density";
   char *DIIName   = "DII_Density";
   char *HDIName   = "HDI_Density";
+  char *MachName    = "Mach";
+  char *PSTempName   = "PreShock_Temperature";
+  char *PSDenName   = "PreShock_Density";
 
   char *TracerFluidO1Name = "TracerFluid01";
   char *TracerFluidO2Name = "TracerFluid02";
@@ -214,7 +217,8 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
       DataLabel[count++] = DIIName;
       DataLabel[count++] = HDIName;
     }
-  }
+  } 
+
   if (TestProblemData.UseMetallicityField)
     DataLabel[count++] = MetalName;
     if (StarMakerTypeIaSNe || StarFeedbackTrackMetalSources)
@@ -224,6 +228,14 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
       DataLabel[count++] = MetalAGBName;
       DataLabel[count++] = MetalNSMName;
     }
+
+  if(ShockMethod){
+    DataLabel[count++] = MachName;
+    if(StorePreShockFields){
+      DataLabel[count++] = PSTempName;
+      DataLabel[count++] = PSDenName;
+    }
+  }  
 
   if(UseTracerFluid){
     if(NumberOfTracerFluidFields >= 1) DataLabel[count++] = TracerFluidO1Name;

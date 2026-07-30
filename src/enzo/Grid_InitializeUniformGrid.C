@@ -41,6 +41,8 @@ int grid::InitializeUniformGrid(float UniformDensity,
   int CINum, CIINum, OINum, OIINum, SiINum, SiIINum, SiIIINum, CHINum, CH2INum, 
     CH3IINum, C2INum, COINum, HCOIINum, OHINum, H2OINum, O2INum;
 
+  int MachNum, PSTempNum, PSDenNum;
+
   int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
 
   int ExtraField[2];
@@ -99,7 +101,7 @@ int grid::InitializeUniformGrid(float UniformDensity,
       FieldType[DIINum  = NumberOfBaryonFields++] = DIIDensity;
       FieldType[HDINum  = NumberOfBaryonFields++] = HDIDensity;
     }
-  }
+  }  
 
   //  Metal fields, including the standard 'metallicity' as well 
   // as two extra fields
@@ -181,6 +183,14 @@ int grid::InitializeUniformGrid(float UniformDensity,
     }
 
   } //   if(TestProblemData.GloverChemistryModel)
+
+  if(ShockMethod){
+    FieldType[MachNum = NumberOfBaryonFields++] = Mach;
+    if(StorePreShockFields){
+      FieldType[PSTempNum = NumberOfBaryonFields++] = PreShockTemperature;
+      FieldType[PSDenNum = NumberOfBaryonFields++] = PreShockDensity;
+    }
+  }  
 
   if(UseTracerFluid){ /* if you add more tracer fluid fields make sure to update
 			 MAX_NUMBER_OF_TRACER_FIELDS in macros_and_parameters.h */
@@ -382,6 +392,14 @@ int grid::InitializeUniformGrid(float UniformDensity,
       }
 
     } // if(TestProblemData.GloverChemistryModel)
+
+  if (ShockMethod){
+      BaryonField[MachNum][i] = tiny_number;
+      if (StorePreShockFields) {
+	BaryonField[PSTempNum][i] = tiny_number;
+	BaryonField[PSDenNum][i] = tiny_number;
+      }
+    }
     
     if(UseTracerFluid){  /* if you add more tracer fluid fields make sure to update
 			    MAX_NUMBER_OF_TRACER_FIELDS in macros_and_parameters.h */
