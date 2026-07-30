@@ -210,3 +210,36 @@ vice versa. Note T0.2 (Hilbert balancing) measured as wall-neutral
 The timers themselves landed in instrumentation passes 2–4 (shas
 `dc98ab91`, `ed40e892`, `f62e1945`); they are permanent, cost 0.05% or
 less, and are validated bitwise.
+
+## Addendum 2026-07-30: the deadlock risk is not theoretical
+
+While implementing T2.1 (particle-aware load balancing) the exact hazard
+described under risk 1 was hit for real, which makes it worth recording
+concretely here.
+
+`CommunicationLoadBalanceGrids` runs from `RebuildHierarchy.C:606`,
+**before** the `CommunicationCollectParticles` sync at line 628. At that
+point a newly created subgrid's particle count is known only to its
+owning rank; non-owners hold zero or a stale value. Feeding that count
+into the work estimate made each rank compute a different `ComputeTime`,
+so ranks disagreed about which grids to move and the transfers
+mismatched — "MPI communication error" a few seconds into the run, at
+every non-zero weight, while the weight-0 control ran clean.
+
+Two transferable lessons for the SPFinalize work:
+
+1. **Cell counts are replicated metadata; particle counts are not.** Any
+   collective decision built on particle state needs an explicit
+   agreement step first. In T2.1 that is one `MPI_Allreduce` (owner
+   reports, others report zero, MPI_SUM) before the estimate is formed.
+2. **Serial tests cannot catch this class of bug**, and neither can a
+   single-rank bitwise check. It first appears at np>1. Validate any
+   skip-the-collective change at np=4 minimum before spending a
+   128-rank bench slot.
+
+Also note the affordability argument that made the extra reduction
+acceptable in T2.1, since it applies in reverse here: `RebuildHierarchy`
+measures max/mean = 1.01, i.e. ranks are already in lockstep inside it,
+so an added collective there costs little. The per-subcycle collective
+in `StarParticleFinalize` is expensive for precisely the opposite
+reason — it sits where ranks arrive at wildly different times.

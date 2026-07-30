@@ -76,20 +76,41 @@ int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
  
   /* Compute work for each grid. */
  
+  /* Per-grid particle counts, needed only for the particle-weighted
+     estimate.  These are NOT replicated across ranks here: this routine
+     runs from RebuildHierarchy before CommunicationCollectParticles
+     syncs the counts, so a non-owning rank holds a stale or zero value.
+     Cell counts, by contrast, come from replicated grid metadata -
+     which is why the historical estimate could use them directly.
+     Every rank must agree on the work estimate or they make different
+     move decisions and the grid transfers mismatch, so have each owner
+     report its count and sum. */
+
+  Eint32 *GridParticleCount = new Eint32[NumberOfGrids];
   for (i = 0; i < NumberOfGrids; i++) {
     proc = GridHierarchyPointer[i]->GridData->ReturnProcessorNumber();
     GridHierarchyPointer[i]->GridData->CollectGridInformation
       (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles);
-    //    ComputeTime[i] = GridMemory; // roughly speaking
-    /* Cells-only unless LoadBalanceParticleWeight is set (audit T2.1):
-       CollectGridInformation already returns the particle count, it was
-       simply discarded here.  Weight 0 reproduces the historical
-       estimate bit-for-bit. */
-    ComputeTime[i] = float(NumberOfCells)
-      + LoadBalanceParticleWeight * float(Particles);
-    ProcessorComputeTime[proc] += ComputeTime[i];
+    ComputeTime[i] = float(NumberOfCells);
+    GridParticleCount[i] = (proc == MyProcessorNumber) ? Eint32(Particles) : 0;
     NewProcessorNumber[i] = proc;
   }
+
+  if (LoadBalanceParticleWeight > 0)
+    CommunicationAllReduceValues(GridParticleCount, NumberOfGrids, MPI_SUM);
+
+  /* Compute work for each grid. */
+
+  for (i = 0; i < NumberOfGrids; i++) {
+    //    ComputeTime[i] = GridMemory; // roughly speaking
+    /* Cells-only unless LoadBalanceParticleWeight is set (audit T2.1):
+       CollectGridInformation already returned the particle count, it
+       was simply discarded here.  Weight 0 reproduces the historical
+       estimate bit-for-bit and skips the reduction above. */
+    ComputeTime[i] += LoadBalanceParticleWeight * float(GridParticleCount[i]);
+    ProcessorComputeTime[NewProcessorNumber[i]] += ComputeTime[i];
+  }
+  delete [] GridParticleCount;
 
  // Mode 1: Load balance over all processors.  Mode 2/3: Load balance
  // only within a node.  Assumes scheduling in blocks (2) or

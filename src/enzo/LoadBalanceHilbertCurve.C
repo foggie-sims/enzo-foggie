@@ -125,17 +125,30 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
 
   //qsort(HilbertData, NumberOfGrids, sizeof(hilbert_data), compare_hkey);
   std::sort(HilbertData, HilbertData+NumberOfGrids, cmp_hkey());
+  /* Particle counts are not replicated across ranks at this point (see
+     the long comment in CommunicationLoadBalanceGrids.C): have each
+     owner report and sum, so every rank computes the same work. */
+  Eint32 *GridParticleCount = new Eint32[NumberOfGrids];
+  for (i = 0; i < NumberOfGrids; i++) {
+    grid *g = GridHierarchyPointer[HilbertData[i].grid_num]->GridData;
+    g->CollectGridInformation(GridMemory, GridVolume, NumberOfCells,
+			      AxialRatio, CellsTotal, NumberOfParticles);
+    GridWork[i] = CellsTotal;
+    GridParticleCount[i] =
+      (g->ReturnProcessorNumber() == MyProcessorNumber)
+      ? Eint32(NumberOfParticles) : 0;
+  }
+  if (LoadBalanceParticleWeight > 0)
+    CommunicationAllReduceValues(GridParticleCount, NumberOfGrids, MPI_SUM);
   TotalWork = 0;
   for (i = 0; i < NumberOfGrids; i++) {
-    GridHierarchyPointer[HilbertData[i].grid_num]->GridData->
-      CollectGridInformation(GridMemory, GridVolume, NumberOfCells,
-			     AxialRatio, CellsTotal, NumberOfParticles);
     /* Particle-weighted work estimate (audit T2.1); weight 0 is the
        historical cells-only behaviour. */
-    GridWork[i] = CellsTotal +
-      (int) (LoadBalanceParticleWeight * float(NumberOfParticles));
+    GridWork[i] +=
+      (int) (LoadBalanceParticleWeight * float(GridParticleCount[i]));
     TotalWork += GridWork[i];
   }
+  delete [] GridParticleCount;
 
   /* Partition into nearly equal workloads */
 
@@ -434,17 +447,29 @@ int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids,
 
   //qsort(HilbertData, NumberOfGrids, sizeof(hilbert_data), compare_hkey);
   std::sort(HilbertData, HilbertData+NumberOfGrids, cmp_hkey());
+  /* See the note in the overload above: particle counts must be agreed
+     across ranks before they can enter the work estimate. */
+  Eint32 *GridParticleCount = new Eint32[NumberOfGrids];
+  for (i = 0; i < NumberOfGrids; i++) {
+    grid *g = GridPointers[HilbertData[i].grid_num];
+    g->CollectGridInformation(GridMemory, GridVolume, NumberOfCells,
+			      AxialRatio, CellsTotal, NumberOfParticles);
+    GridWork[i] = CellsTotal;
+    GridParticleCount[i] =
+      (g->ReturnProcessorNumber() == MyProcessorNumber)
+      ? Eint32(NumberOfParticles) : 0;
+  }
+  if (LoadBalanceParticleWeight > 0)
+    CommunicationAllReduceValues(GridParticleCount, NumberOfGrids, MPI_SUM);
   TotalWork = 0;
   for (i = 0; i < NumberOfGrids; i++) {
-    GridPointers[HilbertData[i].grid_num]->
-      CollectGridInformation(GridMemory, GridVolume, NumberOfCells,
-			     AxialRatio, CellsTotal, NumberOfParticles);
     /* Particle-weighted work estimate (audit T2.1); weight 0 is the
        historical cells-only behaviour. */
-    GridWork[i] = CellsTotal +
-      (int) (LoadBalanceParticleWeight * float(NumberOfParticles));
+    GridWork[i] +=
+      (int) (LoadBalanceParticleWeight * float(GridParticleCount[i]));
     TotalWork += GridWork[i];
   }
+  delete [] GridParticleCount;
 
   /* Partition into nearly equal workloads */
 
