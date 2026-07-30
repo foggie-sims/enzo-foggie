@@ -307,22 +307,23 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 	}
       }
 
-      /* Deposit sink particles (only) to field using CIC or NGP. 
+      /* Deposit sink particles (only) to field using CIC or NGP.
          (only use NGP if cellsize > cloudsize - i.e. source is subgrid) */
-      
+
       if (ParticleSubgridDepositMode == NGP_DEPOSIT && CellSize > 1.5*CloudSize) {
 	PFORTRAN_NAME(ngp_deposit)(
-           ParticlePosition[0], ParticlePosition[1], ParticlePosition[2], 
-	   &GridRank, &NumberOfParticles, ParticleMassPointerSink, DepositFieldPointer, 
+           ParticlePosition[0], ParticlePosition[1], ParticlePosition[2],
+	   &GridRank, &NumberOfParticles, ParticleMassPointerSink, DepositFieldPointer,
 	   LeftEdge, Dimension, Dimension+1, Dimension+2, &FCellSize);
       } else {
 	PFORTRAN_NAME(cic_deposit)(
-           ParticlePosition[0], ParticlePosition[1], ParticlePosition[2], 
-	   &GridRank, &NumberOfParticles, ParticleMassPointerSink, DepositFieldPointer, 
+           ParticlePosition[0], ParticlePosition[1], ParticlePosition[2],
+	   &GridRank, &NumberOfParticles, ParticleMassPointerSink, DepositFieldPointer,
 	   LeftEdge, Dimension, Dimension+1, Dimension+2, &FCellSize, &FCloudSize);
       }
 
-      delete [] ParticleMassPointerSink;
+      /* ParticleMassPointerSink is still needed below to restore the
+         zeroed sink masses; it is freed there, not here. */
 
     }
  
