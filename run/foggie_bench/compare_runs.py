@@ -96,8 +96,98 @@ def parse_hierarchy(hpath):
     return levels
 
 
+def grid_geometry(hpath):
+    """Per-grid geometry from the .hierarchy file, keyed by HDF5 group name.
+
+    The HDF5 grid groups carry NO attributes in this Enzo build, so the
+    cell volume cannot be read from there - it must come from the
+    hierarchy.  Returns {group_name: dict(level, dx, vol, left, right,
+    start, end, dims)}.
+    """
+    text = open(hpath).read()
+    ptr_next = re.findall(
+        r"Pointer:\s*Grid\[(\d+)\]->NextGridNextLevel\s*=\s*(\d+)", text)
+    ptr_this = re.findall(
+        r"Pointer:\s*Grid\[(\d+)\]->NextGridThisLevel\s*=\s*(\d+)", text)
+    level_of = {1: 0}
+    links = [(int(a), int(b), 1) for a, b in ptr_next if int(b)] + \
+            [(int(a), int(b), 0) for a, b in ptr_this if int(b)]
+    changed = True
+    while changed:
+        changed = False
+        for a, b, dl in links:
+            if a in level_of and b not in level_of:
+                level_of[b] = level_of[a] + dl
+                changed = True
+
+    out = {}
+    for block in re.split(r"\n(?=Grid = )", text):
+        m = re.match(r"Grid = (\d+)", block)
+        if not m:
+            continue
+        gid = int(m.group(1))
+
+        def vec(name, cast):
+            mm = re.search(rf"{name}\s*=\s*([-\d\. eE+]+)", block)
+            return [cast(x) for x in mm.group(1).split()] if mm else None
+
+        le = vec("GridLeftEdge", float)
+        re_ = vec("GridRightEdge", float)
+        st = vec("GridStartIndex", int)
+        en = vec("GridEndIndex", int)
+        dm = vec("GridDimension", int)
+        if not (le and re_ and st and en and dm):
+            continue
+        nactive = en[0] - st[0] + 1
+        dx = (re_[0] - le[0]) / max(nactive, 1)
+        out["Grid%08d" % gid] = {
+            "level": level_of.get(gid, 0), "dx": dx, "vol": dx ** 3,
+            "left": le, "right": re_, "start": st, "end": en, "dims": dm,
+        }
+    return out
+
+
+def child_mask(gg, finer):
+    """1.0 where this grid's active cells are NOT covered by a finer grid.
+
+    Returned array is indexed [k][j][i] to match the HDF5 field layout.
+    """
+    import numpy as np
+    nz, ny, nx = gg["shape"]
+    keep = np.ones((nz, ny, nx), dtype=float)
+    if not finer:
+        return keep
+    le, dx = gg["left"], gg["dx"]
+    dims = (nx, ny, nz)
+    for _, ch in finer:
+        # index range of the child's footprint within this grid
+        lo = [int(round((ch["left"][d] - le[d]) / dx)) for d in range(3)]
+        hi = [int(round((ch["right"][d] - le[d]) / dx)) for d in range(3)]
+        lo = [max(0, v) for v in lo]
+        hi = [min(dims[d], hi[d]) for d in range(3)]
+        if any(hi[d] <= lo[d] for d in range(3)):
+            continue
+        keep[lo[2]:hi[2], lo[1]:hi[1], lo[0]:hi[0]] = 0.0
+    return keep
+
+
 def mass_sums(param_path):
-    """Global mass sums from the dump's .cpu files. Needs h5py."""
+    """Global mass sums from the dump's .cpu files. Needs h5py.
+
+    Cell volumes come from the .hierarchy geometry (the HDF5 groups have
+    no attributes).  Baryon sums are child-masked: cells covered by a
+    finer grid are excluded, so the total is a true volume integral
+    rather than a sum that double-counts refined regions.  Particle
+    masses are stored by Enzo as densities relative to the HOST grid's
+    cell volume, so they are multiplied by that grid's dx^3 - without
+    this a particle that merely moves to a different level appears to
+    change mass by the refinement factor cubed.
+
+    Both corrections matter only when the two runs have DIFFERENT
+    refinement structure (a C2-class change).  For same-structure
+    comparisons the errors cancel and the older uncorrected sums were
+    still valid as change detectors.
+    """
     if not HAVE_H5PY:
         return None
     text = open(param_path).read()
@@ -106,8 +196,13 @@ def mass_sums(param_path):
         m = re.search(rf"^\s*{re.escape(name)}\s*=\s*([\dEe+.\-]+)", text, re.M)
         return float(m.group(1)) if m else default
 
-    # Level-aware cell volume needs per-grid dx; we sum per grid using the
-    # grid's own spacing from the hierarchy-companion attributes in the HDF5.
+    geom = grid_geometry(param_path + ".hierarchy")
+
+    # Group grids by level so each grid can be masked against finer grids.
+    by_level = {}
+    for gname, gg in geom.items():
+        by_level.setdefault(gg["level"], []).append((gname, gg))
+
     sums = {"baryon_mass": 0.0, "metal_mass": 0.0,
             "stellar_mass": 0.0, "dm_mass": 0.0, "star_count": 0,
             "metal_fields": {}}
@@ -116,21 +211,18 @@ def mass_sums(param_path):
             for gname, g in f.items():
                 if not gname.startswith("Grid"):
                     continue
+                gg = geom.get(gname)
+                if gg is None:
+                    continue
+                vol = gg["vol"]
                 dens = g.get("Density")
                 if dens is not None:
-                    # dx^rank from grid attributes if present; Enzo packed-AMR
-                    # stores dx implicitly - reconstruct from Grid attrs.
-                    le = g.attrs.get("GridLeftEdge")
-                    re_ = g.attrs.get("GridRightEdge")
-                    dims = g.attrs.get("GridDimension")
-                    if le is not None and re_ is not None and dims is not None:
-                        vol = 1.0
-                        for lo, hi, n in zip(le, re_, dims):
-                            vol *= (hi - lo) / max(int(n), 1)
-                    else:
-                        vol = 1.0
                     d = dens[()]
-                    sums["baryon_mass"] += float(d.sum()) * vol
+                    # The HDF5 field arrays hold ACTIVE zones only (no
+                    # ghosts), so the whole array is the active region.
+                    gg["shape"] = d.shape
+                    keep = child_mask(gg, by_level.get(gg["level"]+1, []))
+                    sums["baryon_mass"] += float((d*keep).sum()) * vol
                     # Sum every metal-like field individually as well as in
                     # total: code versions name/split these differently
                     # (e.g. split-star-particles vs enzo-performance), and a
@@ -140,7 +232,7 @@ def mass_sums(param_path):
                         if ((("etal" in mf or "olou" in mf or "olor" in mf)
                              and "Density" in mf)
                                 or mf == "SN_Colour"):
-                            v = float(g[mf][()].sum()) * vol
+                            v = float((g[mf][()]*keep).sum()) * vol
                             sums["metal_mass"] += v
                             sums["metal_fields"][mf] = \
                                 sums["metal_fields"].get(mf, 0.0) + v
@@ -149,13 +241,9 @@ def mass_sums(param_path):
                 if pm is not None and pt is not None:
                     m = pm[()]
                     t = pt[()]
-                    dx = None
-                    dims = g.attrs.get("GridDimension")
-                    le = g.attrs.get("GridLeftEdge")
-                    re_ = g.attrs.get("GridRightEdge")
-                    if dims is not None and le is not None and re_ is not None:
-                        dx = (re_[0] - le[0]) / max(int(dims[0]), 1)
-                    vol = dx ** len(dims) if dx else 1.0
+                    # particle_mass is a density w.r.t. THIS grid's cell
+                    # volume; without the dx^3 a particle that changes
+                    # level appears to change mass by RefineBy^3.
                     star = (t == 2)
                     sums["stellar_mass"] += float(m[star].sum()) * vol
                     sums["dm_mass"] += float(m[t == 1].sum()) * vol
