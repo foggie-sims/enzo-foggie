@@ -1,0 +1,62 @@
+{
+  "id": "t03-subgrid-r1",
+  "date": "2026-07-30",
+  "purpose": "T0.3: does subgrid sizing drive FOGGIE's load imbalance? Tests the audit's recommendation AND the opposite direction.",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5,
+    "note": "4 arms run concurrently on separate nodes; node scatter ~1.6% against effects of 24-70%."
+  },
+  "build": "ee9d6d10f3f3 (no code change - pure parameter experiment)",
+  "arms": {
+    "A_control": {
+      "params": "production: SubgridSizeAutoAdjust=1, MinimumSubgridEdge=4, MaximumSubgridSize=2000",
+      "wall_s": 2260.0,
+      "barrier_s": 1418.9,
+      "barrier_pct": 62.8,
+      "L10_grids": 195,
+      "chem_max_over_mean": 2.81
+    },
+    "B_audit_as_written": {
+      "params": "SubgridSizeAutoAdjust=0, MinimumSubgridEdge=16, MaximumSubgridSize=260000",
+      "wall_s": 3853.3,
+      "barrier_s": 2786.0,
+      "barrier_pct": 72.3,
+      "L10_grids": 136,
+      "chem_max_over_mean": 4.59
+    },
+    "C_cap400": {
+      "params": "SubgridSizeAutoAdjust=0, MinimumSubgridEdge=4, MaximumSubgridSize=400",
+      "wall_s": 1715.9,
+      "barrier_s": 763.9,
+      "barrier_pct": 44.5,
+      "L10_grids": 436,
+      "chem_max_over_mean": 2.04
+    },
+    "D_cap1000": {
+      "params": "SubgridSizeAutoAdjust=0, MinimumSubgridEdge=4, MaximumSubgridSize=1000",
+      "wall_s": 1955.8,
+      "barrier_s": 1090.3,
+      "barrier_pct": 55.7,
+      "L10_grids": 261,
+      "chem_max_over_mean": 2.74
+    }
+  },
+  "headline": "Arm C is 24% faster than control (1715.9 vs 2260.0 s) with the barrier down 46% (1418.9 -> 763.9 s). Perfectly monotonic in grid count: more, smaller grids -> better balance -> less barrier -> less wall.",
+  "audit_recommendation_INVERTED": "The audit's T0.3 (arm B) is 70% SLOWER. Its rationale - per-grid overhead and O(S^2) sibling searches - predates T1.9, which removed the sibling cost. Recommend the OPPOSITE direction.",
+  "why_it_works": {
+    "granularity": "L10 has 195 grids over 128 ranks = 1.52 grids/rank, with sizes 24-15552 cells (648x spread). Fair share is 846880/128 = 6616 cells, so the largest single grid is 2.35x a fair share and is INDIVISIBLE - no balancer of any kind can fix that. Measured per-subcycle max/mean work is 2.71x, matching.",
+    "second_effect": "Smaller boxes fit the flagged region more tightly, so less unflagged padding gets refined: total active cells at L>=8 drop 2,675,416 -> 2,270,288 (-15%). Flagged cells remain covered, so this is efficiency, not lost resolution."
+  },
+  "root_cause_in_code": "DetermineSubgridSizeExtrema already computes the right answer - NumberOfCells/(NumberOfProcessors*OptimalSubgridsPerProcessor) = 846880/(128*16) = 413 cells, essentially arm C - and then throws it away via max(413, MINIMUM_SIZE) with a hard-coded '#define MINIMUM_SIZE 2000'. That constant predates high core counts and is the actual defect.",
+  "headroom_remaining": "A cap of 400 should give ~2117 grids at L10; only 436 appeared (~20% of theoretical). ProtoSubgrid_AcceptableGrid rejects oversized grids, but Berger-Rigoutsos splits on signature zero-crossings and a SOLIDLY flagged region (the galaxy centre) has no feature to split on. Forced/geometric bisection when oversized - the audit's T2.10 - is now a quantified opportunity.",
+  "correctness": {
+    "class": "C2 (changes refinement structure by design)",
+    "result": "Conserved quantities conserved: baryon 5.9e-10, dark matter 9.3e-16 (machine precision). Star formation differs: 1,423,057 vs 1,421,808 stars (-0.088%), stellar mass 1.3e-3.",
+    "self_consistency": "The 1249 missing stars leave their gas baryonic: stellar deficit 8.5e-11 absolute against baryon total 0.1618 predicts a baryon excess of 5.3e-10; measured 5.9e-10. The books balance.",
+    "IMPORTANT": "These numbers required fixing compare_runs.py (commit 92e436d0). The previous metric reported baryon 9.6e-3 and DM 2.4e-2, which are impossible - DM particle counts are bit-identical at 19,195,353. It had no cell volume, no particle dx^3, and double-counted refined regions. Same-structure (C0/C1) verdicts are unaffected because the errors cancel there."
+  },
+  "recommendation": "Do NOT hard-code MaximumSubgridSize=400 in the production deck - it is anchored to this problem size and rank count. Make MINIMUM_SIZE a parameter defaulting to 2000, so DetermineSubgridSizeExtrema's existing adaptive formula is honoured at any rank count. Then re-measure."
+}
