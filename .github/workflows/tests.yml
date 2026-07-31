@@ -1,0 +1,288 @@
+name: Enzo Tests
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+env:
+  HOME: /home/runner/work
+  LD_LIBRARY_PATH: /home/runner/work/local/lib:${LD_LIBRARY_PATH}
+  ENZOTEST_DIR: /home/runner/work/enzo_test
+  ANSWER_NAME: push_suite
+  HYPRE: 2.20.0
+
+defaults:
+  run:
+    shell: bash -el {0}
+
+jobs:
+  test-compile-options:
+    name: Test Compile Options
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y csh libhdf5-serial-dev libopenmpi-dev openmpi-bin gfortran libtool-bin xutils-dev
+
+      # Even though Python isn't used for the compile steps, setting this up allows for a uniform set of dependencies
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          python-version: '3.11'
+          channels: conda-forge
+          channel-priority: strict
+          activate-environment: enzo-ci
+          auto-activate-base: false
+
+      - name: Fetch tags
+        run: |
+          git fetch --tags --force https://github.com/foggie-sims/enzo-foggie
+          git tag tip
+
+      - name: Restore dependencies cache
+        id: restore-deps
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.conda/pkgs
+            ~/local
+          key: dependencies-v1
+
+      # pip install h5py to avoid duplicating HDF5 libraries
+      - name: Create conda environment
+        if: steps.restore-deps.outputs.cache-hit != 'true'
+        run: |
+          conda install -y -c conda-forge \
+            cython numpy fastcache flake8 nose girder-client matplotlib pytest gitpython pip
+            pip install h5py yt-astro-analysis
+
+      - name: Install HYPRE
+        if: steps.restore-deps.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ${HOME}/local
+          if [ ! -f ${HOME}/local/lib/libHYPRE.a ]; then
+            cd ${HOME}
+            wget https://github.com/hypre-space/hypre/archive/refs/tags/v${HYPRE}.tar.gz
+            tar xvfz v${HYPRE}.tar.gz
+            cd hypre-${HYPRE}/src
+            ./configure --with-MPI --with-MPI-include=/usr/include/mpi --with-MPI-libs=mpi --with-MPI-lib-dirs=/usr/lib --prefix=${HOME}/local
+            make install
+          fi
+
+      - name: Install Grackle
+        if: steps.restore-deps.outputs.cache-hit != 'true'
+        run: |
+          git clone -b main https://github.com/grackle-project/grackle ${HOME}/grackle
+          cd ${HOME}/grackle
+          cmake -DCMAKE_INSTALL_PREFIX=${HOME}/local -B build
+          cmake --build build
+          cmake --install build
+
+      - name: Test compilation configurations
+        run: |
+          ./configure
+          cd src/enzo
+          make machine-ubuntu
+          # test various baryon/particle precisions
+          for prec in 32 64
+          do for part in 32 128
+          do
+          # skip the test-suite configuration
+          if [[ $prec == 64 && $part == 64 ]]; then
+          continue
+          fi
+          make precision-$prec
+          make particles-$part
+          make clean
+          make -j 4 || (make show-config ; exit 1)
+          done ; done
+          # return this to default
+          make precision-64
+          make particles-64
+          # test various integer/particle-id precisions
+          for inte in 64
+          do for pids in 64
+          do
+          # skip the test-suite configuration
+          if [[ $inte == 32 && $pids == 32 ]]; then
+          continue
+          fi
+          make integers-$inte
+          make particle-id-$pids
+          make clean
+          make -j 4 || (make show-config ; exit 1)
+          done ; done
+          make integers-64
+          make particle-id-64
+          # test without mpi
+          make use-mpi-no
+          make clean
+          make -j 4 || (make show-config ; exit 1)
+          make use-mpi-yes
+          # test ray-tracing
+          make photon-no
+          make clean
+          make -j 4 || (make show-config ; exit 1)
+
+      - name: Upload compilation output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: compile-output
+          path: src/enzo/out.compile
+
+  test-suite:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 1200
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y csh libhdf5-serial-dev libopenmpi-dev openmpi-bin gfortran libtool-bin xutils-dev
+
+      - name: Fetch tags
+        run: |
+          git fetch --tags --force https://github.com/foggie-sims/enzo-foggie
+          git tag tip
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          python-version: '3.11'
+          channels: conda-forge
+          channel-priority: strict
+          activate-environment: enzo-ci
+          auto-activate-base: false
+
+      - name: Restore dependencies cache
+        id: restore-deps
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.conda/pkgs
+            ~/local
+          key: dependencies-v1
+
+       # pip install h5py to avoid duplicating HDF5 libraries
+      - name: Create conda environment
+        if: steps.restore-deps.outputs.cache-hit != 'true'
+        run: |
+          conda install -y -c conda-forge \
+            cython numpy fastcache flake8 nose girder-client matplotlib pytest gitpython pip 
+            pip install h5py yt-astro-analysis
+
+      - name: Install HYPRE
+        if: steps.restore-deps.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ${HOME}/local
+          if [ ! -f ${HOME}/local/lib/libHYPRE.a ]; then
+            cd ${HOME}
+            wget https://github.com/hypre-space/hypre/archive/refs/tags/v${HYPRE}.tar.gz
+            tar xvfz v${HYPRE}.tar.gz
+            cd hypre-${HYPRE}/src
+            ./configure --with-MPI --with-MPI-include=/usr/include/mpi --with-MPI-libs=mpi --with-MPI-lib-dirs=/usr/lib --prefix=${HOME}/local
+            make install
+          fi
+
+      - name: Install Grackle
+        if: steps.restore-deps.outputs.cache-hit != 'true'
+        run: |
+          git clone -b main https://github.com/grackle-project/grackle ${HOME}/grackle
+          cd ${HOME}/grackle
+          cmake -DCMAKE_INSTALL_PREFIX=${HOME}/local -B build
+          cmake --build build
+          cmake --install build
+
+      - name: Download test data
+        run: |
+          girder-cli --api-url https://girder.hub.yt/api/v1 download 5af9ef42ec1bd30001fcd001 $GITHUB_WORKSPACE/run/CosmologySimulation
+
+      - name: Restore test answers cache
+        id: restore-answers
+        uses: actions/cache@v5
+        with:
+          path: ${HOME}/enzo_test/push_suite
+          key: foggie-test-answers-v1
+
+      - name: Build and test (gold standard)
+        if: steps.restore-answers.outputs.cache-hit != 'true'
+        run: |
+          if [ ! -e ${HOME}/enzo_test/push_suite ]; then
+            git checkout foggie-gold-standard-v1
+            ./configure
+            cd src/enzo
+            make machine-ubuntu
+            make load-config-test-suite
+            make clean
+            make -j 4
+            cd ../../run
+            python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --answer-store
+          fi
+
+      - name: Build and test (tip)
+        continue-on-error: true
+        id: build-test-tip
+        run: |
+          git checkout tip
+          ./configure
+          cd src/enzo
+          make machine-ubuntu
+          make load-config-test-suite
+          make clean
+          make -j 4
+          cd ../../run
+          python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --clobber
+
+      - name: Upload compilation output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-suite-compile-output
+          path: src/enzo/out.compile
+
+  docs-build:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          python-version: '3.11'
+          channels: conda-forge
+          channel-priority: strict
+          activate-environment: enzo-ci
+          auto-activate-base: false
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dvipng texlive-latex-extra
+
+      - name: Create conda environment
+        run: |
+          conda install -y -c conda-forge sphinx
+
+      - name: Build documentation
+        run: |
+          cd doc/manual/source
+          python -m sphinx -M html "." "_build" -W
