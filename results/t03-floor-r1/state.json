@@ -1,0 +1,66 @@
+{
+  "id": "t03-floor-r1",
+  "date": "2026-07-31",
+  "purpose": "T0.3 proper fix: parameterise the subgrid auto-adjust floor and find its optimum",
+  "build": "c73ee4b6c213 (SubgridSizeAutoAdjustMinimum, default 2000 = bit-identical to prior behaviour)",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5,
+    "note": "4 arms run concurrently on separate nodes; the winning arm repeated for timing confidence."
+  },
+  "arms": {
+    "floor=2000 (control, historical hard-coded value)": {
+      "wall_s": 2272.5,
+      "barrier_s": 1408.8,
+      "L9_grids": 222,
+      "L10_grids": 195,
+      "chem_max_over_mean": 2.86
+    },
+    "floor=1000": {
+      "wall_s": 2013.7,
+      "barrier_s": 1174.0,
+      "L9_grids": 278,
+      "L10_grids": 259,
+      "chem_max_over_mean": 2.89
+    },
+    "floor=512  (OPTIMUM)": {
+      "wall_s": 1670.7,
+      "wall_s_repeat": 1700.7,
+      "wall_s_mean": 1685.7,
+      "barrier_s": 789.0,
+      "barrier_s_repeat": 808.1,
+      "L9_grids": 348,
+      "L10_grids": 378,
+      "chem_max_over_mean": 2.14
+    },
+    "floor=256  (fully adaptive)": {
+      "wall_s": 1775.0,
+      "barrier_s": 762.2,
+      "L9_grids": 474,
+      "L10_grids": 504,
+      "chem_max_over_mean": 1.87
+    }
+  },
+  "headline": "floor=512 is 25.8% faster than the historical default (1685.7 s two-sample mean vs 2272.5 s), barrier -43% (798.6 vs 1408.8 s). Repeat spread 1.8%, i.e. within node scatter.",
+  "optimum_is_real_not_noise": {
+    "observation": "floor=256 balances BETTER (barrier 762 s, chem skew 1.87) yet runs SLOWER than 512.",
+    "mechanism": "Per-grid overhead overtakes the balance gain. Measured section totals as the floor drops 2000 -> 512 -> 256: SetBoundaryConditions 107 -> 133 -> 153 s, PrepareDensityField 82 -> 119 -> 143 s, CommReceiveHandler 102 -> 152 -> 182 s, SolveHydroEquations 110 -> 124 -> 131 s. Going 512 -> 256 buys only 27 s of barrier for ~81 s of extra overhead. This is the classic AMR granularity trade-off, measured end to end."
+  },
+  "correctness": {
+    "class": "C2 (changes refinement structure by design)",
+    "method": "CORRECTED comparator (commit 92e436d0): hierarchy-derived cell volumes, child-masked baryon sums, particle dx^3.",
+    "DD0399_floor512_vs_control": {
+      "baryon_mass_rel": 4.533e-10,
+      "dm_mass_rel": 3.973e-16,
+      "stellar_mass_rel": 0.001209,
+      "metal_mass_rel": 0.0002883,
+      "star_count": "1423057 vs 1421994, -1063 (0.075%)"
+    },
+    "reading": "Conserved quantities conserved - dark matter at machine precision, baryon at 4.5e-10. Star formation differs 0.075% from the altered refinement: a real but small C2 difference, consistent with gas not converted to stars remaining baryonic."
+  },
+  "why_this_beats_pinning_MaximumSubgridSize": "The adaptive formula keeps large grids where granularity is already fine (L4-L7 stay ~1000-2000 cells, 5-7 grids/rank) and shrinks only the starved deep levels. The earlier flat cap of 400 (t03-subgrid-r1) shrank every level indiscriminately and gained less (24% vs 25.8%) while paying ghost-zone overhead it did not need to.",
+  "recommendation": "Adopt SubgridSizeAutoAdjustMinimum = 512 for FOGGIE production at 128 ranks. The parameter defaults to 2000 so no other Enzo user is affected. NOTE the optimum is scale-dependent: it is where the formula's per-level answer (364-413 cells here) meets rising per-grid overhead, so it should be re-measured if the rank count or refinement depth changes materially.",
+  "remaining_headroom": "Berger-Rigoutsos still cannot split solidly-flagged regions, so the deep-level grid counts remain below what the cap requests. Audit T2.10 (forced/geometric bisection when a grid exceeds the cap) is the next lever."
+}
