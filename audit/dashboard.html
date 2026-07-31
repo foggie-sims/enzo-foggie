@@ -61,6 +61,13 @@
   td:first-child { font-weight:650; white-space:nowrap; }
   tr.row-done td { opacity:0.75; }
   .note-line { color:var(--mist); font-size:0.78rem; margin-top:0.2rem; }
+  .findings { margin:1.6rem 0; }
+  .finding-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+                   gap:0.75rem; margin-top:0.6rem; }
+  .finding { border:1px solid var(--line); border-radius:8px; padding:0.7rem 0.85rem;
+              background:var(--card); }
+  .finding-title { font-weight:600; font-size:0.9rem; margin-bottom:0.3rem; }
+  .finding-detail { color:var(--mist); font-size:0.8rem; line-height:1.45; }
   .chip { display:inline-block; font-size:0.64rem; font-weight:700; text-transform:uppercase;
     letter-spacing:0.07em; border-radius:999px; padding:0.1rem 0.55rem; white-space:nowrap; }
   .chip.st-done { background:var(--good); color:var(--paper); }
@@ -78,12 +85,18 @@
 <div class="wrap">
   <p class="eyebrow">enzo-performance &#183; audit remediation</p>
   <h1>Audit Remediation Dashboard</h1>
-  <p class="gen-line">Generated 2026-07-31 20:46 UTC from <code>audit/status.yml</code>
+  <p class="gen-line">Generated 2026-07-31 21:06 UTC from <code>audit/status.yml</code>
     &#183; overall 19/46 done, 1 in progress</p>
   <p class="ci-line">Latest branch CI: <a class="ci-badge ok" href="https://github.com/foggie-sims/enzo-foggie/actions/runs/30657304097">success</a> at <code>c73ee4b6c</code> (2026-07-31T19:21:36Z) &#183; <a href="https://github.com/foggie-sims/enzo-foggie/actions?query=branch%3Aenzo-performance">all runs</a></p>
   <div class="cards">
 <a class="card" href="#tier0"><div class="card-name">Tier 0 - parameter files and build flags</div><div class="card-num"><span class="big">5</span>/9 done</div><div class="bar" role="img" aria-label="5 of 9 done"><div class="bar-done" style="width:55.6%"></div><div class="bar-prog" style="width:0.0%"></div></div></a><a class="card" href="#tier1"><div class="card-name">Tier 1 - trivial-to-low-effort code fixes</div><div class="card-num"><span class="big">8</span>/14 done</div><div class="bar" role="img" aria-label="8 of 14 done"><div class="bar-done" style="width:57.1%"></div><div class="bar-prog" style="width:0.0%"></div></div></a><a class="card" href="#tier2"><div class="card-name">Tier 2 - medium efforts</div><div class="card-num"><span class="big">0</span>/12 done &#183; 1 in progress</div><div class="bar" role="img" aria-label="0 of 12 done"><div class="bar-done" style="width:0.0%"></div><div class="bar-prog" style="width:8.3%"></div></div></a><a class="card" href="#tier3"><div class="card-name">Tier 3 - architectural</div><div class="card-num"><span class="big">0</span>/5 done</div><div class="bar" role="img" aria-label="0 of 5 done"><div class="bar-done" style="width:0.0%"></div><div class="bar-prog" style="width:0.0%"></div></div></a><a class="card" href="#ci"><div class="card-name">CI harness - branch test infrastructure</div><div class="card-num"><span class="big">6</span>/6 done</div><div class="bar" role="img" aria-label="6 of 6 done"><div class="bar-done" style="width:100.0%"></div><div class="bar-prog" style="width:0.0%"></div></div></a>
   </div>
+<section class="findings"><h2 id="findings">Measured findings</h2><p class="tier-desc">Anchor: halo 008508 RD0016, 5 root steps, 1 Aitken Milan node x 128 ranks (mil_ait); node scatter ~1.6%</p><div class="finding-grid"><div class="finding"><div class="finding-title">62% of wall clock is one MPI_Allreduce</div><div class="finding-detail">CommunicationUpdateStarParticleCount runs once per subcycle of every level (4327 times per 5-step run). Payload is 1-8 kB among 128 ranks on a single node - tens of microseconds against 320 ms measured per call. It is not communication, it is ranks waiting. Design for removing it: SPFinalize_Edits.md.</div></div>
+<div class="finding"><div class="finding-title">The cause is grid granularity, not work estimation</div><div class="finding-detail">L10 carries 195 grids over 128 ranks (1.52/rank) with sizes spanning 24-15552 cells. A fair share is 6616 cells, so the largest single grid is 2.35x a fair share and indivisible - matching the measured 2.71x per-subcycle max/mean work. No weighting scheme can split an oversized grid.</div></div>
+<div class="finding"><div class="finding-title">T0.3: -25.8% wall, and the audit had the direction backwards</div><div class="finding-detail">SubgridSizeAutoAdjustMinimum=512 gives 1685.7 s (two-sample mean) vs 2272.5 s; barrier -43%. The audit&#x27;s recommendation as written (bigger grids) is +70%. Root cause was a hard-coded &#x27;#define MINIMUM_SIZE 2000&#x27; discarding Enzo&#x27;s own correct adaptive cap. 512 is an optimum: 256 balances better but runs slower as per-grid overhead overtakes the balance gain.</div></div>
+<div class="finding"><div class="finding-title">Particle-weighted load balancing is a measured negative</div><div class="finding-detail">+65% to +196% wall. Total chemistry work is constant across weights while its skew explodes 2.85 -&gt; 14.88 - weighting particles relocates cells onto the wrong ranks. Directly measured particle work is 0.6% of wall. Keep LoadBalanceParticleWeight=0.</div></div>
+<div class="finding"><div class="finding-title">Wall-clock accounting is closed at 99.8%</div><div class="finding-detail">Instrumentation passes 2-4 took attribution from 37% to 99.8%. Run run/foggie_bench/time_budget.py on any bench run. Overhead 0.05%.</div></div>
+<div class="finding"><div class="finding-title">compare_runs mass sums were wrong until 2026-07-31</div><div class="finding-detail">HDF5 grid groups carry no attributes, so cell volume defaulted to 1.0 - no volume weighting, no particle dx^3, refined regions double-counted. It reported impossible 2.4% dark-matter differences. Same-structure (C0/C1) verdicts are unaffected because the errors cancel; C2 verdicts need the corrected metric (commit 92e436d0).</div></div></div><p class="tier-desc">Full prioritised plan: <a href="ROADMAP.md">ROADMAP.md</a> &#183; deferred barrier work: <a href="SPFinalize_Edits.md">SPFinalize_Edits.md</a></p></section>
 
   <h2 id="tier0">Tier 0 - parameter files and build flags</h2>
   <p class="tier-desc">No code changes; try first &#8212; 5/9 done</p>
