@@ -44,9 +44,10 @@ tiers:
         title: "SubgridSizeAutoAdjust = 0; MinimumSubgridEdge = 16; MaximumSubgridSize ~ 2.6e5"
         ref: "3.4"
         class: C2
-        status: todo
+        status: in-progress
         prs: []
-        tests: []
+        tests: ["FOGGIE-bench t03-subgrid-r1: 4-arm sweep. The audit's recommendation as written is 70% SLOWER (3853 vs 2260 s). The OPPOSITE direction (MaximumSubgridSize=400) is 24% FASTER (1716 s), barrier -46%."]
+        note: "RECOMMENDATION INVERTED - the audit's direction (bigger grids) is actively harmful; its rationale (per-grid overhead, O(S^2) sibling searches) predates T1.9 which removed the sibling cost. Granularity, not weighting, is what drives FOGGIE's imbalance: L10 runs 195 grids over 128 ranks (1.52/rank) with sizes spanning 24-15552 cells, so the largest single grid is 2.35x a fair share and INDIVISIBLE - matching the measured 2.71x per-subcycle max/mean work. Capping subgrid size gives 436 grids, chem skew 2.81->2.04, and refines 15% less wasted padding (2.68M -> 2.27M cells at L>=8). C2 correctness (with the FIXED comparator, commit 92e436d0): baryon 5.9e-10, DM 9.3e-16, star count -0.088%, and the baryon excess matches the stellar deficit. ROOT CAUSE: DetermineSubgridSizeExtrema already computes the right cap (NumberOfCells/(nprocs*16) = 413 here) then discards it via max(., MINIMUM_SIZE) with a hard-coded '#define MINIMUM_SIZE 2000'. NEXT: make that floor a parameter (default 2000) so the existing adaptive formula is honoured at any rank count, rather than pinning 400 in the deck. Further headroom in T2.10: cap 400 should yield ~2117 grids, only 436 appear, because Berger-Rigoutsos cannot split a solidly-flagged region. Archive: results/t03-subgrid-r1/."
       - id: T0.4
         title: "Set MaximumGravityRefinementLevel = L_max - 2 (validate forces)"
         ref: "5.2"
