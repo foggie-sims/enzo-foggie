@@ -61,5 +61,11 @@
     "resolution": "Measured separately via RH_PERF loadbal phase: 13 s (w=0) -> 79.6 / 103 / 151 s. The added collective costs ~67 s at w=1 against a +1492 s regression, i.e. ~4%. RebuildHierarchy total 183 -> 213 / 249 / 333 s. The regression is dominated by the barrier (imbalance), not by the added collective."
   },
   "recommendation": "Abandon the linear particle-weighted estimate. The audit's own T2.1 phrasing is 'particle-aware (THEN measured-work)' - go straight to measured-work: use actual per-grid elapsed time from the previous cycle as the weight, which captures chemistry variation, particle work and everything else without guessing a ratio. Enzo already has the plumbing: LoadBalanceHilbertCurve(grid*[], int, float *InputGridWork, int*) accepts externally supplied per-grid work. The code landed here is retained because the parameter defaults to 0 (bit-for-bit historical behaviour) and the rank-agreement Allreduce is a prerequisite for ANY data-dependent weighting, measured-work included.",
-  "implication_for_SPFinalize": "The 62.9% barrier is NOT reachable by fixing the work estimate this way. audit/SPFinalize_Edits.md remains the largest identified opportunity, and this experiment did not shrink it."
+  "implication_for_SPFinalize": "The 62.9% barrier is NOT reachable by fixing the work estimate this way. audit/SPFinalize_Edits.md remains the largest identified opportunity, and this experiment did not shrink it.",
+  "correctness": {
+    "check": "compare_runs w=0 vs w=10, class C0 vs the 3-pair envelope floor",
+    "result": "FAIL - DD0397 metal_mass 2.152e-07 vs gate 5.052e-08, baryon_mass 2.346e-08 vs gate 2.303e-08 (marginal).",
+    "reading": "Load-balance changes are C1/C2 by nature (they change FP accumulation order via grid ownership), so exceeding a C0 envelope floor is not alarming - but it is larger than the T0.2 Hilbert change produced, which passed C0. Recorded for completeness; the arm is abandoned on performance grounds regardless.",
+    "note": "An earlier draft of this file described the arms as answer-neutral before this check completed. That was premature and is corrected here."
+  }
 }
