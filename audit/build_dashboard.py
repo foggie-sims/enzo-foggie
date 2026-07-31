@@ -122,6 +122,29 @@ def main():
         ci_block = (f'<p class="ci-line">Generated locally (no CI context) &#183; '
                     f'<a href="{REPO_URL}/actions?query=branch%3Aenzo-performance">branch CI runs</a></p>')
 
+    # Headline measured results (status.yml: findings). These are the
+    # conclusions the ledger rows cannot convey on their own - several
+    # overturn the original audit's ranking, so they lead the page.
+    findings = data.get("findings") or {}
+    fitems = findings.get("items") or []
+    if fitems:
+        cards = "\n".join(
+            f'<div class="finding"><div class="finding-title">{esc(fi.get("title",""))}</div>'
+            f'<div class="finding-detail">{esc(fi.get("detail",""))}</div></div>'
+            for fi in fitems)
+        anchor = findings.get("anchor", "")
+        findings_block = (
+            '<section class="findings">'
+            '<h2 id="findings">Measured findings</h2>'
+            + (f'<p class="tier-desc">Anchor: {esc(anchor)}</p>' if anchor else "")
+            + f'<div class="finding-grid">{cards}</div>'
+            '<p class="tier-desc">Full prioritised plan: '
+            '<a href="ROADMAP.md">ROADMAP.md</a> &#183; '
+            'deferred barrier work: <a href="SPFinalize_Edits.md">SPFinalize_Edits.md</a></p>'
+            '</section>')
+    else:
+        findings_block = ""
+
     tier_sections = []
     summary_cards = []
     for t in tiers:
@@ -211,6 +234,13 @@ def main():
   td:first-child {{ font-weight:650; white-space:nowrap; }}
   tr.row-done td {{ opacity:0.75; }}
   .note-line {{ color:var(--mist); font-size:0.78rem; margin-top:0.2rem; }}
+  .findings {{ margin:1.6rem 0; }}
+  .finding-grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+                   gap:0.75rem; margin-top:0.6rem; }}
+  .finding {{ border:1px solid var(--line); border-radius:8px; padding:0.7rem 0.85rem;
+              background:var(--card); }}
+  .finding-title {{ font-weight:600; font-size:0.9rem; margin-bottom:0.3rem; }}
+  .finding-detail {{ color:var(--mist); font-size:0.8rem; line-height:1.45; }}
   .chip {{ display:inline-block; font-size:0.64rem; font-weight:700; text-transform:uppercase;
     letter-spacing:0.07em; border-radius:999px; padding:0.1rem 0.55rem; white-space:nowrap; }}
   .chip.st-done {{ background:var(--good); color:var(--paper); }}
@@ -234,6 +264,7 @@ def main():
   <div class="cards">
 {''.join(summary_cards)}
   </div>
+{findings_block}
 {''.join(tier_sections)}
   <footer>
     <p>Rebuilt automatically on every change to <code>audit/status.yml</code> on the

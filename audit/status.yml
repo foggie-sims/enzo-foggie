@@ -19,6 +19,49 @@
 # BRANCH POLICY (2026-07-28): no PRs to main until further notice - all
 # remediation work lands on enzo-performance only.
 
+# Headline measured results, rendered as a panel at the top of the
+# dashboard. Keep this in sync with audit/ROADMAP.md - status.yml stays
+# the single source of truth for anything the dashboard displays.
+findings:
+  anchor: "halo 008508 RD0016, 5 root steps, 1 Aitken Milan node x 128 ranks (mil_ait); node scatter ~1.6%"
+  items:
+    - title: "62% of wall clock is one MPI_Allreduce"
+      detail: >-
+        CommunicationUpdateStarParticleCount runs once per subcycle of every level
+        (4327 times per 5-step run). Payload is 1-8 kB among 128 ranks on a single
+        node - tens of microseconds against 320 ms measured per call. It is not
+        communication, it is ranks waiting. Design for removing it: SPFinalize_Edits.md.
+    - title: "The cause is grid granularity, not work estimation"
+      detail: >-
+        L10 carries 195 grids over 128 ranks (1.52/rank) with sizes spanning
+        24-15552 cells. A fair share is 6616 cells, so the largest single grid is
+        2.35x a fair share and indivisible - matching the measured 2.71x
+        per-subcycle max/mean work. No weighting scheme can split an oversized grid.
+    - title: "T0.3: -25.8% wall, and the audit had the direction backwards"
+      detail: >-
+        SubgridSizeAutoAdjustMinimum=512 gives 1685.7 s (two-sample mean) vs 2272.5 s;
+        barrier -43%. The audit's recommendation as written (bigger grids) is +70%.
+        Root cause was a hard-coded '#define MINIMUM_SIZE 2000' discarding Enzo's own
+        correct adaptive cap. 512 is an optimum: 256 balances better but runs slower
+        as per-grid overhead overtakes the balance gain.
+    - title: "Particle-weighted load balancing is a measured negative"
+      detail: >-
+        +65% to +196% wall. Total chemistry work is constant across weights while its
+        skew explodes 2.85 -> 14.88 - weighting particles relocates cells onto the
+        wrong ranks. Directly measured particle work is 0.6% of wall. Keep
+        LoadBalanceParticleWeight=0.
+    - title: "Wall-clock accounting is closed at 99.8%"
+      detail: >-
+        Instrumentation passes 2-4 took attribution from 37% to 99.8%. Run
+        run/foggie_bench/time_budget.py on any bench run. Overhead 0.05%.
+    - title: "compare_runs mass sums were wrong until 2026-07-31"
+      detail: >-
+        HDF5 grid groups carry no attributes, so cell volume defaulted to 1.0 - no
+        volume weighting, no particle dx^3, refined regions double-counted. It
+        reported impossible 2.4% dark-matter differences. Same-structure (C0/C1)
+        verdicts are unaffected because the errors cancel; C2 verdicts need the
+        corrected metric (commit 92e436d0).
+
 tiers:
   - id: tier0
     name: "Tier 0 - parameter files and build flags"
