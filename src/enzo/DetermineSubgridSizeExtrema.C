@@ -45,9 +45,14 @@ int DetermineSubgridSizeExtrema(long_int NumberOfCells, int level, int MaximumSt
   int grids_per_proc = (level > MaximumStaticSubgridLevel) ?
     OptimalSubgridsPerProcessor : 8;
 
-  MaximumSubgridSize = NumberOfCells / 
+  MaximumSubgridSize = NumberOfCells /
     (NumberOfProcessors * grids_per_proc);
-  MaximumSubgridSize = max(MaximumSubgridSize, MINIMUM_SIZE);
+  /* Floor is a parameter (default MINIMUM_SIZE = 2000, the historical
+     hard-coded value).  See audit T0.3 - at high rank counts on a deep
+     zoom this floor overrides the formula above at exactly the levels
+     where load-balance granularity is worst. */
+  MaximumSubgridSize = max(MaximumSubgridSize,
+			   (long_int) SubgridSizeAutoAdjustMinimum);
   MinimumSubgridEdge = nint(pow(MaximumSubgridSize, 0.33333) * 0.25);
   MinimumSubgridEdge += MinimumSubgridEdge % 2;
   MinimumSubgridEdge = max(MinimumSubgridEdge, MINIMUM_EDGE);

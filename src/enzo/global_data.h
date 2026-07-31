@@ -40,6 +40,15 @@ class EnzoProblemType;
                          2 = Load balance only on a node
 */
 EXTERN int NumberOfGhostZones;
+/* Smallest MaximumSubgridSize that SubgridSizeAutoAdjust is allowed to
+   choose.  The auto-adjust formula is NumberOfCells / (NumberOfProcessors
+   * OptimalSubgridsPerProcessor), which is the right answer; this floor
+   exists to stop it picking absurdly small grids on small runs.  The
+   historical hard-coded value of 2000 predates high core counts and, on a
+   deep zoom at 128+ ranks, discards the formula's answer entirely at the
+   levels that matter (audit T0.3: it wants ~400 at L9/L10 and is forced to
+   2000, leaving 1.5 grids per rank and an indivisible largest grid). */
+EXTERN int SubgridSizeAutoAdjustMinimum;
 EXTERN int LoadBalancing;
 /* Work attributed to one particle, in units of one cell, when the load
    balancers estimate per-grid work.  0 reproduces the historical

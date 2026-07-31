@@ -358,6 +358,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &ConservativeInterpolation);
     ret += sscanf(line, "MinimumEfficiency      = %"FSYM, &MinimumEfficiency);
     ret += sscanf(line, "SubgridSizeAutoAdjust  = %"ISYM, &SubgridSizeAutoAdjust);
+    ret += sscanf(line, "SubgridSizeAutoAdjustMinimum = %"ISYM,
+		  &SubgridSizeAutoAdjustMinimum);
     ret += sscanf(line, "OptimalSubgridsPerProcessor = %"ISYM,
 		  &OptimalSubgridsPerProcessor);
     ret += sscanf(line, "MinimumSubgridEdge     = %"ISYM, &MinimumSubgridEdge);
