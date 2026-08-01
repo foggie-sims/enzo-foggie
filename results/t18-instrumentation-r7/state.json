@@ -70,5 +70,25 @@
     "dt_limiter": "Baryons (CFL) is the binding dt constraint on every level in every root cycle; L10 runs ~410-460 subcycles per root cycle",
     "mg_solver": "1.29-1.42M subgrid solves per root cycle, avg 1.18-1.20 V-cycles, zero fallbacks",
     "scaling_observation": "5 root steps take ~2413 s at 128 ranks vs ~2360 s at 512 ranks: 4x cores bought ~2% - the audit's strong-scaling ceiling measured directly at the anchor"
+  },
+  "noise_floor_CORRECTED_2026_07_31": {
+    "envelope": "noise_floor_envelope_A123_fixed.json",
+    "pairs": [
+      "noise_floor_A1_vs_A2_fixed.json",
+      "floor_A1_vs_A3_fixed.json",
+      "floor_A2_vs_A3_fixed.json"
+    ],
+    "why": "Regenerated with the fixed compare_runs mass metric (commit 92e436d0). The ORIGINAL floor files in this directory were computed with the broken metric: HDF5 grid groups carry no attributes, so cell volume defaulted to 1.0 - no volume weighting, no particle dx^3, and refined regions double-counted.",
+    "envelope_at_DD0399": {
+      "baryon_mass": 8.065e-15,
+      "dm_mass": 0.0,
+      "metal_mass": 6.981e-08,
+      "stellar_mass": 1.808e-08,
+      "star_count_delta": 1,
+      "particle_level_migrations": 1
+    },
+    "validation": "dm_mass is EXACTLY 0.0 at every dump - identical code, same particles, same levels, so dark matter mass must match bit-for-bit. That it now does is the proof the dx^3 and child-masking corrections are right. Baryon at 8e-15 is machine precision: total mass is conserved regardless of message ordering; the old metric was picking up solution differences and mislabelling them as non-conservation.",
+    "comparison_to_old": "DD0399 old vs corrected: baryon 2.894e-08 -> 8.065e-15, metal 1.376e-07 -> 6.981e-08, stellar 2.584e-08 -> 1.808e-08, dm nonzero -> 0.",
+    "USE": "Gate all future runs with noise_floor_envelope_A123_fixed.json. C0/C1 gating is now far sharper. NOTE for C2 items: they change the answer by design and will legitimately exceed this floor - compare against it as a reference scale and apply judgement, do not treat it as pass/fail."
   }
 }
