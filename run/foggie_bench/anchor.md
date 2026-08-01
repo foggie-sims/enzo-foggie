@@ -42,7 +42,17 @@ production configuration.
   mesh exactly and the migration/star channels as counts. Wall-clock
   noise ~0.5%. Archived at
   `results/t18-instrumentation-r7/noise_floor_envelope_A123.json` on
-  `bench-results` - use this for all 1x128 gating. Single-pair floors
+  `bench-results`. **SUPERSEDED 2026-07-31 - use
+  `noise_floor_envelope_A123_fixed.json` instead.** The original was
+  computed with the broken `compare_runs` mass metric (no cell volume, no
+  particle dx^3, refined regions double-counted; fixed in commit
+  92e436d0). Corrected envelope at DD0399: baryon 8.1e-15, dark matter
+  exactly 0.0, metal 7.0e-08, stellar 1.8e-08, +-1 star, 1 particle
+  migration. DM matching bit-for-bit between identical-code runs is the
+  proof the correction is right. C0/C1 gating is now far sharper; C2
+  items change the answer by design and will legitimately exceed the
+  floor, so treat it there as a reference scale, not pass/fail.
+  Single-pair floors
   scatter ~5x at step 5; always gate against a multi-pair envelope. A noise
   floor is config-specific: gate runs only with a floor measured at the
   same rank count and node model.
