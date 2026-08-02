@@ -51,6 +51,22 @@ Important Parameters
   processors.  The basic idea behind increasing the subgrid sizes
   (i.e. coalescing grids) is to reduce communication between grids.
 
+* ``SubgridSizeAutoAdjustMinimum``: Default 2000.  The floor applied to
+  the automatic estimate above, which is ``NumberOfCells /
+  (NumberOfProcessors * OptimalSubgridsPerProcessor)``.  It exists to
+  stop the estimate selecting very small subgrids on modest processor
+  counts.  On large processor counts with deep refinement the estimate
+  can fall well below 2000 -- for a deeply refined level with ~10\
+  :sup:`6` cells on 128 processors it is a few hundred -- and clamping
+  to the default leaves only one or two subgrids per processor, which is
+  too coarse a unit for the load balancer to distribute evenly, since a
+  subgrid cannot be split across processors.  Lowering this floor lets
+  the automatic estimate apply and can improve load balance
+  substantially, at the cost of more ghost-zone and boundary-exchange
+  work per cell.  The two effects trade off against each other, so the
+  best value is problem- and processor-count-dependent and worth a short
+  scan.
+
 * ``MinimumSubgridEdge`` and ``MaximumSubgridSize``: *Unused if
   SubgridAutoAdjust is ON*.  Increase both of these parameters to
   increase the average subgrid size, which might reduce communication
