@@ -11,7 +11,7 @@ results, so date any change).
 | Halo | 008508 |
 | Run | H2regulated / H2mech_tab_cont_ff |
 | Snapshot | RD0016 |
-| Restart parameter file | `/home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff/RD0016/RD0016` |
+| Restart parameter file | `/home1/jtumlins/nobackup/halo_008508/H2regulated/H2mech_tab_cont_ff_DONE/RD0016/RD0016` |
 | Rank count | 128 |
 | Node model | mil_ait (1 node, 128 cores) |
 | Star particles | ~1.42 million (from the T1.9 bench comparisons) |
@@ -56,6 +56,20 @@ production configuration.
   scatter ~5x at step 5; always gate against a multi-pair envelope. A noise
   floor is config-specific: gate runs only with a floor measured at the
   same rank count and node model.
+
+
+## Anchor fragility (2026-08-02)
+
+The anchor snapshot lives inside a **user-managed production directory**,
+not a protected location. It has already moved once: the parent run was
+renamed `H2mech_tab_cont_ff` -> `H2mech_tab_cont_ff_DONE`, which broke
+every bench submission until the path was updated here.
+
+If that directory is ever deleted, **every prior bench result loses its
+baseline** and cross-comparability with the whole audit is gone. The
+snapshot is 8.6 GB. Consider preserving a copy under
+`foggie_bench_root/` (or another location not subject to production
+housekeeping) before relying on it for further work.
 
 ## Notes
 
