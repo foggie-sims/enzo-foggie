@@ -354,6 +354,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "ConservativeInterpolation      = %"ISYM"\n", ConservativeInterpolation);
   fprintf(fptr, "MinimumEfficiency              = %"GSYM"\n", MinimumEfficiency);
   fprintf(fptr, "SubgridSizeAutoAdjust          = %"ISYM"\n", SubgridSizeAutoAdjust);
+  fprintf(fptr, "SubgridSizeAutoAdjustMinimum   = %"ISYM"\n",
+	  SubgridSizeAutoAdjustMinimum);
   fprintf(fptr, "OptimalSubgridsPerProcessor    = %"ISYM"\n", 
 	  OptimalSubgridsPerProcessor);
   fprintf(fptr, "MinimumSubgridEdge             = %"ISYM"\n", MinimumSubgridEdge);
