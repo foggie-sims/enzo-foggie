@@ -218,6 +218,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   SubgridSizeAutoAdjust     = TRUE; // true for adjusting maxsize and minedge
   OptimalSubgridsPerProcessor = 16;    // Subgrids per processor
+  SubgridSizeAutoAdjustMinimum = 2000; // floor on the auto-adjusted maxsize
   NumberOfBufferZones       = 1;
  
   for (i = 0; i < MAX_FLAGGING_METHODS; i++) {

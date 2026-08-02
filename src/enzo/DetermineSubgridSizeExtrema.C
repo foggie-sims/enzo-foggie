@@ -47,7 +47,12 @@ int DetermineSubgridSizeExtrema(long_int NumberOfCells, int level, int MaximumSt
 
   MaximumSubgridSize = NumberOfCells / 
     (NumberOfProcessors * grids_per_proc);
-  MaximumSubgridSize = max(MaximumSubgridSize, MINIMUM_SIZE);
+  /* The floor is settable (SubgridSizeAutoAdjustMinimum, default
+     MINIMUM_SIZE).  On large processor counts with deep refinement the
+     estimate above falls well below 2000, and clamping to it leaves too
+     few subgrids per processor for the load balancer to work with. */
+  MaximumSubgridSize = max(MaximumSubgridSize,
+			   (long_int) SubgridSizeAutoAdjustMinimum);
   MinimumSubgridEdge = nint(pow(MaximumSubgridSize, 0.33333) * 0.25);
   MinimumSubgridEdge += MinimumSubgridEdge % 2;
   MinimumSubgridEdge = max(MinimumSubgridEdge, MINIMUM_EDGE);
