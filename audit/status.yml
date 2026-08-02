@@ -117,9 +117,10 @@ tiers:
         title: "Restore -xAVX/-march and -ip on Pleiades (after T1.6 stack fix); add -heap-arrays"
         ref: "5.1"
         class: C1
-        status: todo
+        status: in-progress
         prs: []
         tests: []
+        note: "SCOPE REDUCED 2026-08-02. The audit's headline here (1.5-3x on all Fortran kernels) was entirely about restoring vectorisation to Make.mach.pleiades-mpich, cut to -g -O2 in June 2025. Pleiades is DECOMMISSIONED and its machine files are being removed in a separate PR, so that benefit is moot - do NOT restore those flags. What remains is the Aitken half, and it is small: Make.mach.nasa-aitken-milan-mpich already carries -march=core-avx2, so we are vectorised; and Grackle (8.5% of wall, the largest compute item) is external and unreachable from Enzo's flags - split out as T0.10. So -ip / -heap-arrays reach only Enzo's own Fortran, mainly hydro at ~5% of wall. Variants built (-O2 -ip and -O3 -ip, both with -heap-arrays); expectation low single digits. NOTE -march=core-avx2 is deliberately kept over -xCORE-AVX2 on Milan: the -x form triggers Intel vendor dispatch, which can select a slow path on non-Intel CPUs."
       - id: T0.8
         title: "Verify CONFIG_FAST_SIB = yes and CONFIG_PFLOAT_16 not set in production builds"
         ref: "3.3"
@@ -128,6 +129,14 @@ tiers:
         prs: []
         tests: ["CI: 'Guard build configuration' step in enzo-performance-ci.yml"]
         note: "Enforced automatically by the branch CI on every push/PR"
+      - id: T0.10
+        title: "Rebuild Grackle with vectorisation (-march/-xHost); currently built -O3 with no ISA flags"
+        ref: "5.1"
+        class: C1
+        status: todo
+        prs: []
+        tests: []
+        note: "NEW 2026-08-02, split out of T0.7. ChemistryCooling is the largest single compute item in the measured budget (8.5% of wall, ~190 s per 5 root steps at the anchor) and it sits ENTIRELY outside Enzo's build: Grackle is linked as a prebuilt external library (LOCAL_GRACKLE_INSTALL=/u/jtumlins/grackle/grackle-3.3.1-dev/build, -lgrackle), so no Enzo compiler flag can reach it. That build's CMakeCache shows CMAKE_BUILD_TYPE=Release, C flags -O3 -DNDEBUG, Fortran flags -O3 -DNDEBUG -O3, and ZERO occurrences of -march / -x / -xHost - so its Fortran kernels target the generic x86-64 baseline (SSE2) rather than the AVX2 the Milan nodes support. Same defect class the audit flagged for Pleiades (5.1.6, a plausible 1.5-3x slowdown), except live on Aitken and inside the largest compute item we have. Grackle is also built with /usr/bin/gfortran while Enzo uses Intel 2020.4.304 - hence the libgfortran.so.3 dependency on the executable. EXPERIMENT: rebuild Grackle with -O3 -march=core-avx2 (or -mtune=znver3), relink, bench. Ceiling ~8.5% of wall if the kernels fully vectorise; realistically less. Cheap, and touches no Enzo source. CAUTION: this changes chemistry results at roundoff, so it is C1 and needs the noise-floor comparison, not a bitwise gate."
       - id: T0.9
         title: "Check in a FOGGIE production parameter deck under run/"
         ref: "4.1"

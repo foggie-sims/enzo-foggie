@@ -148,6 +148,34 @@ overload. Captures chemistry variation without guessing a ratio. Sequence
 subdivided. The rank-agreement `Allreduce` added for T2.1 is a
 prerequisite for any data-dependent weighting and is already in place.
 
+### 5.3b T0.10 — Grackle is built without vectorisation *(new, 2026-08-02)*
+
+ChemistryCooling is the **largest single compute item** in the measured
+budget — 8.5% of wall — and it is entirely outside Enzo's build. Grackle
+is linked as a prebuilt external library, so no Enzo compiler flag
+reaches it. Its build config:
+
+    CMAKE_BUILD_TYPE            = Release
+    CMAKE_C_FLAGS_RELEASE       = -O3 -DNDEBUG
+    CMAKE_Fortran_FLAGS_RELEASE = -O3 -DNDEBUG -O3
+    -march / -x / -xHost        = ZERO occurrences
+
+So its Fortran kernels target the generic x86-64 baseline (SSE2), not the
+AVX2 the Milan nodes support. This is the **same defect the audit flagged
+for Pleiades** (5.1.6, "a plausible 1.5-3x slowdown") — except that one is
+now moot (Pleiades decommissioned) while this one is live, on the biggest
+compute item we have.
+
+It is also built with `/usr/bin/gfortran` while Enzo uses Intel
+2020.4.304, which is why the executable carries a `libgfortran.so.3`
+dependency.
+
+Experiment: rebuild Grackle with `-O3 -march=core-avx2`, relink, bench.
+Ceiling is ~8.5% of wall if the kernels fully vectorise; realistically
+less. Touches no Enzo source. **C1, not C0** — it changes chemistry
+results at roundoff, so it needs the noise-floor comparison rather than a
+bitwise gate.
+
 ### 5.4 OPEN ISSUE — T0.3's systematic star-particle deficit
 
 The 20-step de-risk run (`results/t03-long-r1`) confirmed the speedup
@@ -189,8 +217,11 @@ one, to see whether restoring the refined volume closes the deficit and
 how much of the 24.8% survives.
 
 ### 5.5 Smaller / unsequenced
-- **T0.7** compiler flags (`-march`, `-ip`) — unblocked now that T1.6 moved
-  the big arrays off the stack; could move the compute-bound remainder.
+- **T0.7** compiler flags — SCOPE REDUCED. Its headline benefit was
+  Pleiades-only and is moot (decommissioned); Aitken is already
+  vectorised and Grackle is unreachable (see 5.3b), so `-ip` /
+  `-heap-arrays` reach only ~5% of wall. Variants built and queued;
+  expect low single digits.
 - **T0.4, T0.5, T0.9**, T1.7, T1.10, T1.12 — untouched.
 - Re-stamp **T1.9** at 1×128 (its production stamp predates the config fix).
 - Longer-baseline bench (10+ root steps) before committing a production
