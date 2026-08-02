@@ -1,0 +1,81 @@
+{
+  "id": "t03-long-r1",
+  "date": "2026-08-02",
+  "purpose": "De-risk T0.3 over a longer baseline: does the 25.8% hold, and does the answer difference compound?",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 20,
+    "note": "20 root steps from RD0016 cycle 2110 to 2130, both arms concurrent on separate nodes. Dumps landed every root step (21 each) - the CycleSkipDataDump=5 override did not gate because make_bench_run.py strips CycleLastDataDump from the restart deck. Unplanned, but it gave a per-step divergence trace, which is better for the question."
+  },
+  "build": "c73ee4b6c213",
+  "jobs": {
+    "f2000": 24935338,
+    "f512": 24935339
+  },
+  "timing": {
+    "floor2000_wall_s": 9352.9,
+    "floor2000_barrier_s": 5972.8,
+    "floor2000_barrier_pct": 63.9,
+    "floor512_wall_s": 7029.4,
+    "floor512_barrier_s": 3480.7,
+    "floor512_barrier_pct": 49.5,
+    "speedup_pct": 24.8,
+    "verdict": "HOLDS. 24.8% at 20 steps vs 25.8% at 5 steps - the 1-point difference is inside the ~1.6% node scatter, and the barrier reduction reproduces (62.0->47.2% at 5 steps, 63.9->49.5% at 20). The short-run result was not an artifact of the one-time restart-layout transition."
+  },
+  "divergence_trend": {
+    "columns": "root step | baryon rel | dm rel | stellar rel | stars(control) | stars(512) | delta stars %",
+    "rows": [
+      [
+        1,
+        1.709e-10,
+        1.324e-15,
+        0.0004418,
+        1418504,
+        1418304,
+        0.014
+      ],
+      [
+        5,
+        4.533e-10,
+        3.973e-16,
+        0.001209,
+        1423057,
+        1421994,
+        0.075
+      ],
+      [
+        10,
+        1.029e-09,
+        6.622e-16,
+        0.002726,
+        1429207,
+        1426902,
+        0.161
+      ],
+      [
+        15,
+        9.11e-10,
+        1.457e-15,
+        0.002567,
+        1435493,
+        1431866,
+        0.253
+      ],
+      [
+        20,
+        1.262e-09,
+        2.649e-16,
+        0.003597,
+        1441921,
+        1437105,
+        0.334
+      ]
+    ],
+    "conservation": "Impeccable. Dark matter stays at machine precision (1e-15/1e-16) with no trend; baryon mass 1e-9. Nothing leaks.",
+    "star_deficit": "SYSTEMATIC and LINEAR. The 512 arm forms fewer stars at every checkpoint - the sign never flips, so this is not chaotic divergence. Rate is constant at 0.015/0.017/0.018/0.016 % per root step, reaching 0.334% (4816 stars) by step 20. That is ~1000x the identical-code noise floor (+-1 star)."
+  },
+  "OPEN_ISSUE": "See audit/status.yml T0.3 note and ROADMAP.md section 5.5 - the star deficit is an unresolved follow-up, NOT a blocker for short runs but unquantified for long campaigns.",
+  "recommendation": "The speedup is real and durable. Do NOT adopt for a long production campaign on the speedup alone until the star deficit is understood: naive linear extrapolation gives ~1.7% at 100 root steps and ~8% at 500, but 20 steps is far too short to know whether it saturates. Short runs and testing are unaffected."
+}

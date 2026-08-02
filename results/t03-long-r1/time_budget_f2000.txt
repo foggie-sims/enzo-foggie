@@ -1,0 +1,48 @@
+
+=== /nobackupnfs1/jtumlins/foggie_bench_root/runs/t03-long-r1/bench_f2000 ===
+Total wall: 9352.9 s
+
+  attributed sections (exclusive):
+       5973.0 s   63.9%  SPFinalize
+        758.7 s    8.1%  ChemistryCooling
+        722.0 s    7.7%  RebuildHierarchy
+        448.9 s    4.8%  SetBoundaryConditions
+        448.1 s    4.8%  SolveHydroEquations
+        307.9 s    3.3%  PrepareDensityField
+        208.0 s    2.2%  SetLevelTimeStep
+        150.5 s    1.6%  Group_WriteAllData
+         71.4 s    0.8%  SetAccelBoundary
+         50.0 s    0.5%  StarParticleHandler
+         40.8 s    0.4%  UpdateFromFinerGrids
+         30.0 s    0.3%  GravityAccel
+         24.0 s    0.3%  SPInitialize
+         23.4 s    0.3%  CopyToOldBaryon
+         14.8 s    0.2%  CreateSiblingList
+          2.7 s    0.0%  ComputePotentialFieldLevelZero
+          2.3 s    0.0%  CommunicationTranspose
+          1.9 s    0.0%  ParticleUpdate
+       9278.2 s   99.2%  ATTRIBUTED
+         74.7 s    0.8%  unattributed
+
+  cross-cutting (already inside the above):
+       5972.8 s   63.9%  SPCommUpdateCount
+        398.7 s    4.3%  CommReceiveHandler
+        346.1 s    3.7%  MPIWaitReceive
+        200.0 s    2.1%  SolveForPotential
+         14.9 s    0.2%  SPFindTotalParticles
+          8.9 s    0.1%  SPRecordStarCount
+          6.7 s    0.1%  CommBufferedSend
+
+  per-level decomposition (exclusive of recursion; a separate axis - do NOT add to the sections above):
+         49.2 s    0.5%  Level_00
+          5.7 s    0.1%  Level_01
+          5.7 s    0.1%  Level_02
+          8.8 s    0.1%  Level_03
+         33.8 s    0.4%  Level_04
+        117.8 s    1.3%  Level_05
+        310.6 s    3.3%  Level_06
+        494.2 s    5.3%  Level_07
+        933.4 s   10.0%  Level_08
+       2191.6 s   23.4%  Level_09
+       4028.2 s   43.1%  Level_10
+       8179.1 s   87.4%  sum of levels (remainder is rebuild + I/O, outside the level brackets)
