@@ -123,7 +123,47 @@ overload. Captures chemistry variation without guessing a ratio. Sequence
 subdivided. The rank-agreement `Allreduce` added for T2.1 is a
 prerequisite for any data-dependent weighting and is already in place.
 
-### 5.4 Smaller / unsequenced
+### 5.4 OPEN ISSUE — T0.3's systematic star-particle deficit
+
+The 20-step de-risk run (`results/t03-long-r1`) confirmed the speedup
+holds (24.8% at 20 steps vs 25.8% at 5) but surfaced an unresolved
+problem: **`SubgridSizeAutoAdjustMinimum = 512` forms systematically
+fewer star particles.**
+
+| root step | stars (floor 2000) | stars (floor 512) | deficit |
+|---|---|---|---|
+| 1 | 1,418,504 | 1,418,304 | 0.014% |
+| 5 | 1,423,057 | 1,421,994 | 0.075% |
+| 10 | 1,429,207 | 1,426,902 | 0.161% |
+| 15 | 1,435,493 | 1,431,866 | 0.253% |
+| 20 | 1,441,921 | 1,437,105 | 0.334% |
+
+Why this is a real effect and not noise:
+
+- **The sign never flips.** Chaotic divergence wanders both ways; a
+  consistent deficit at every checkpoint means a systematic cause.
+- **The rate is constant** — 0.015/0.017/0.018/0.016 % per root step —
+  i.e. linear, with no sign of saturating over this window.
+- It is **~1000x the identical-code noise floor**, which is +-1 star.
+- Conservation is impeccable throughout (dark matter at machine
+  precision, baryon 1e-9), so nothing is leaking. This is a change in
+  how many stars *form*, not a bookkeeping error.
+
+Likely mechanism: smaller subgrids fit the flagged region more tightly
+and refine 15% less unflagged padding, which changes how many marginal
+cells cross the star-formation density threshold.
+
+**Status: not a blocker for short runs or testing; unquantified for long
+production campaigns.** Naive linear extrapolation gives ~1.7% at 100
+root steps and ~8% at 500, but 20 steps is far too short to know whether
+it saturates, and that arithmetic should not be trusted. Do not commit a
+long campaign to this setting on the strength of the speedup alone.
+
+Testable next step: a floor=512 arm with `NumberOfBufferZones` raised by
+one, to see whether restoring the refined volume closes the deficit and
+how much of the 24.8% survives.
+
+### 5.5 Smaller / unsequenced
 - **T0.7** compiler flags (`-march`, `-ip`) — unblocked now that T1.6 moved
   the big arrays off the stack; could move the compute-bound remainder.
 - **T0.4, T0.5, T0.9**, T1.7, T1.10, T1.12 — untouched.
