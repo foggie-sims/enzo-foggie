@@ -97,22 +97,47 @@ star count −0.075%.
 
 ## 5. Prioritised remaining work
 
-### 5.1 T2.10 — forced bisection in Berger-Rigoutsos *(highest expected value)*
-A cap of 400 should yield ~2117 grids at L10; only 436 appear.
-`ProtoSubgrid_AcceptableGrid` rejects oversized grids, but Berger-Rigoutsos
-splits on signature zero-crossings and a **solidly flagged region** — the
-galaxy centre — offers none, so it returns one oversized grid regardless
-of the cap. Adding a geometric bisection fallback when a grid exceeds the
-cap would unlock the granularity we are currently asking for and not
-getting. Given 195→436 grids bought 25.8%, this is the clearest remaining
-lever.
+### 5.1 T2.10 — signature reuse *(RETRACTED as a granularity lever, 2026-08-02)*
 
-### 5.2 `SPFinalize` — skip the per-subcycle collective
-Full analysis and design in **`SPFinalize_Edits.md`**. Still the largest
-single line item (62%), but **re-measure first**: T0.3 already cut the
-barrier 43% without touching this code, because the barrier is a
-*symptom* of granularity. Its remaining value shrinks as §5.1 lands, and
-it is the riskiest change on the board — a rank-divergent skip condition
+**An earlier version of this roadmap claimed T2.10 was the highest-value
+remaining item, on the grounds that a cap of 400 "should yield ~2117
+grids at L10" but only produced 436, supposedly because Berger-Rigoutsos
+cannot split a solidly flagged region. Both halves of that were wrong.**
+
+- A geometric bisection fallback **already exists**:
+  `IdentifyNewSubgridsBySignature.C` calls
+  `LargeAxisRatioCheck(StrongestDim, GridEnds, 0.0)` when no inflection
+  point yields sufficiently thick grids, which splits along the long
+  axis unconditionally.
+- The 2117 figure was a unit error. `MaximumSubgridSize` is compared
+  against the ProtoSubgrid size in **parent** cells, while the child
+  grid created is 8x larger (RefineBy=2 in 3D) — see the telltale
+  commented-out `//size *= 8;` in `ProtoSubgrid_AcceptableGrid.C`.
+
+Measured directly from the 20-step dumps, the cap is enforced exactly:
+
+| config | L10 grids | largest grid | 8 x cap |
+|---|---|---|---|
+| floor 2000 | 208 | 15,120 cells | 16,000 |
+| floor 512 | 378 | 4,032 cells | 4,096 |
+
+Largest grids sit at 95-98% of the limit. The splitter is working
+correctly and there is **no hidden granularity headroom** behind it.
+
+Consequence: the granularity avenue is essentially exhausted. It is
+controlled entirely by the cap, and the sweep already located the
+optimum (512; 256 balances better but loses to per-grid overhead).
+T2.10's actual content — signature reuse and the multi-dimensional
+inflection search — remains a legitimate but ordinary optimisation of
+the regridding cost, not a route to better load balance. RebuildHierarchy
+is ~8% of wall, so it is bounded accordingly.
+
+### 5.2 `SPFinalize` — skip the per-subcycle collective *(now the top lever)*
+Full analysis and design in **`SPFinalize_Edits.md`**. With §5.1
+retracted, this is the top remaining lever. T0.3 cut the barrier from
+~63% to ~49% of wall by fixing granularity, but **49% is still the
+single largest item** and granularity has no more to give. It remains
+the riskiest change on the board — a rank-divergent skip condition
 **hangs** the run, a failure mode T2.1 demonstrated for real.
 
 ### 5.3 Measured-work load balancing (T2.1's remaining half)
