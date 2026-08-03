@@ -1,6 +1,6 @@
 # FOGGIE/Enzo performance roadmap
 
-**Status as of 2026-07-31.** This is the *measured* plan. The original
+**Status as of 2026-08-03.** This is the *measured* plan. The original
 audit (`PERFORMANCE_AUDIT.md`) ranked its recommendations by inspection;
 several of those rankings have since been overturned by benchmarking at
 the production anchor. Where the two disagree, this file wins — and says
@@ -60,6 +60,9 @@ negative results below.
 | T0.8, CI.1–CI.6 | build guards and CI harness |
 
 ### T0.3 — the audit's recommendation was backwards
+*Upstreamed as **PR #73** (branch `subgrid-autoadjust-floor`, commit
+`5f507d80`), an isolated branch off `main` carrying only this change. PR
+text: `foggie_bench_root/PR_subgrid_autoadjust_floor.md`.*
 
 The audit said `MinimumSubgridEdge=16, MaximumSubgridSize~2.6e5`, i.e.
 *bigger* grids, to cut per-grid overhead and O(S²) sibling searches. That
@@ -152,13 +155,85 @@ where imbalance is paid do not. T0.3 succeeded because it eliminated
 indivisible oversized grids; particle-weighted balancing failed because
 it worsened the imbalance.
 
-### 5.3 Measured-work load balancing (T2.1's remaining half)
-Per-grid elapsed time from the previous cycle, via the existing
-`LoadBalanceHilbertCurve(grid*[], int, float *InputGridWork, int*)`
-overload. Captures chemistry variation without guessing a ratio. Sequence
-**after** §5.1 — it is bounded by granularity until grids can actually be
-subdivided. The rank-agreement `Allreduce` added for T2.1 is a
-prerequisite for any data-dependent weighting and is already in place.
+### 5.3 Measured-work load balancing (T2.1's remaining half) *(measured 2026-08-03)*
+
+**Why chemistry is the only target left.** After T0.3 every section whose
+cost is proportional to cell count is already well balanced — rebuild
+1.01, boundaries 1.18, density 1.20, hydro 1.23 max/mean. `ChemistryCooling`
+alone sits at **2.13**, because Grackle's cost per cell tracks gas state,
+which is precisely what a cell-count weight cannot see.
+
+**Design finding: the obvious implementation does not work.** The
+`InputGridWork` overload is not sufficient by itself, because grid objects
+do **not** survive `RebuildHierarchy` — it deletes the old subgrids
+(`:370`), creates new ones from the flagging (`:449`), and only then
+balances them (`:606`). At the moment the balancer needs an estimate, the
+grids it is balancing did not exist during the cycle that was measured.
+Per-grid history has no referent; work is a property of a *region of
+space*, not of an object, so an estimate can only be carried across a
+rebuild **spatially**.
+
+The implementation that follows from this is a **per-cell work field**,
+handled like density or temperature: filled during the subcycle, then
+carried onto the new grids by machinery that already exists —
+`InterpolateFieldValues` (`:546`) from the parent, `CopyZonesFromGrid`
+(`:562`) from the old same-level grids, both of which run *before* the
+balancer at `:606`, with the old grids still alive until `:634`. Freshly
+refined regions inherit the parent's measured density rather than a
+level average. Two constraints: it must be skipped by the hydro solver
+(it is a diagnostic density, not a fluid quantity, and advecting it would
+smear the signal), and it is filled uniformly per grid at `work/cells`,
+since Grackle is called per grid — which is exactly the resolution the
+balancer needs, because grids are its atoms.
+
+**Measured ceiling** (`GridWorkMapOutput=1`, offline replay of a greedy
+balancer scored against *actual* work, `harness/analyze_workmap.py`):
+
+| balancer input | chemistry imbalance |
+|---|---|
+| cells (today) | 2.57× |
+| measured work | 2.16× |
+| perfect foreknowledge | 2.12× |
+
+The slow-evolution premise holds: interval-to-interval correlation is
+**0.91–0.99**, and the design recovers **89%** of the available room.
+But the room is small — perfect foreknowledge still leaves 2.12×.
+Revised payoff estimate: **~4% of wall**, not the 15–25% estimated from
+the skew alone, because most of the skew is granularity-bound rather than
+weight-bound.
+
+**What the oracle floor points at instead.** The limit is the largest
+single grid's share of a level's work: 4.26% at L8 (floor 5.46×), 4.03%
+at L9 (5.16×), against 0.75% at L6 (0.96×, effectively perfect). The
+natural successor to T0.3 is therefore to make
+`DetermineSubgridSizeExtrema` cap **predicted work** rather than cell
+count — splitting dense regions finer and leaving diffuse ones coarse.
+The same work field would drive both the sizing and the balancing. T0.3
+shrank the atom uniformly for 25–41%; this is the targeted version of the
+same move, and on these numbers it is the larger lever of the two.
+
+*Sampling caveat:* the first run recorded only at root-step boundaries and
+captured **5.9%** of chemistry — grids die at every rebuild and take their
+accumulated time with them, biasing against the deepest levels, which
+rebuild most. Recording moved to the top of `RebuildHierarchy`, before
+destruction. Correlations and per-level results are unaffected (like-for-like
+within a level); the cross-level aggregate above is pending re-measurement.
+The per-cell field design makes this failure mode structurally impossible,
+since work then accumulates in space rather than on an object.
+
+**Not a constraint:** subgrids are *not* pinned to their parent's rank.
+`LoadBalancing=1` balances over the full rank range (`StartProc=0`,
+`EndProc=NumberOfProcessors`), and measurement confirms it — L10's 350
+grids occupy all 128 ranks, with only 9 of 350 on a rank that also owns
+the root tile they sit in and 171 on ranks owning no root tile at all.
+(`LoadBalancing=2` *would* restrict to a `CoresPerNode` window.) The cost
+of that freedom is that nearly every parent-child exchange crosses ranks,
+which is what T0.2's Hilbert ordering tried to recover — and plausibly why
+it came out wall-neutral, since a space-filling curve hands the
+concentrated expensive region to a single rank.
+
+The rank-agreement `Allreduce` added for T2.1 is a prerequisite for any
+data-dependent weighting and is already in place.
 
 ### 5.3b T0.10 — Grackle is built without vectorisation *(new, 2026-08-02)*
 

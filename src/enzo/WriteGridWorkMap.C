@@ -37,11 +37,21 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
 
-int WriteGridWorkMap(LevelHierarchyEntry *LevelArray[], int cycle)
+int WriteGridWorkMap(LevelHierarchyEntry *LevelArray[], int cycle,
+		     int minlevel)
 {
 
   if (GridWorkMapOutput == 0)
     return SUCCESS;
+
+  /* Records must be written before RebuildHierarchy destroys the grids
+     they describe, otherwise the accumulated time dies with the object
+     and the deepest levels - which rebuild most often - are sampled
+     least.  Every call is collective, so this counter stays in step
+     across ranks and orders the intervals globally. */
+
+  static int sequence = 0;
+  sequence++;
 
   char name[MAX_LINE_LENGTH];
   sprintf(name, "gridwork_rank%4.4"ISYM".txt", MyProcessorNumber);
@@ -54,10 +64,10 @@ int WriteGridWorkMap(LevelHierarchyEntry *LevelArray[], int cycle)
   /* One header per file, written when it is still empty. */
 
   if (ftell(fptr) == 0)
-    fprintf(fptr, "# cycle level rank cells chemwork_sec subcycles "
+    fprintf(fptr, "# seq cycle level rank cells chemwork_sec subcycles "
 	    "xl yl zl xr yr zr\n");
 
-  for (int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
+  for (int level = minlevel; level < MAX_DEPTH_OF_HIERARCHY; level++)
     for (LevelHierarchyEntry *Temp = LevelArray[level]; Temp != NULL;
 	 Temp = Temp->NextGridThisLevel) {
 
@@ -69,9 +79,9 @@ int WriteGridWorkMap(LevelHierarchyEntry *LevelArray[], int cycle)
       Temp->GridData->ReturnGridInfo(&Rank, Dims, Left, Right);
 
       fprintf(fptr,
-	      "%"ISYM" %"ISYM" %"ISYM" %"ISYM" %.10e %"ISYM" "
+	      "%"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %.10e %"ISYM" "
 	      "%.10e %.10e %.10e %.10e %.10e %.10e\n",
-	      cycle, level, MyProcessorNumber,
+	      sequence, cycle, level, MyProcessorNumber,
 	      Temp->GridData->GetActiveSize(),
 	      Temp->GridData->ReturnChemWorkTime(),
 	      Temp->GridData->ReturnChemWorkCalls(),

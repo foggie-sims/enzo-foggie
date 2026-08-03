@@ -43,6 +43,8 @@
  
 void AddLevel(LevelHierarchyEntry *LevelArray[], HierarchyEntry *Grid,
 	      int level);
+int WriteGridWorkMap(LevelHierarchyEntry *LevelArray[], int cycle,
+		     int minlevel);
 int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
 		 int &FlaggedGrids);
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
@@ -347,8 +349,19 @@ int RebuildHierarchy(TopGridData *MetaData,
   ReportMemoryUsage("Rebuild pos 3");
   if (MetaData->StaticHierarchy == FALSE) {
 
+    /* 0) Record what the grids about to be destroyed cost in chemistry
+       (T2.1 diagnostic; inert unless GridWorkMapOutput is set).  This
+       has to happen here rather than at the end of the root step: every
+       grid from level+1 down is deleted below, and with it the time it
+       accumulated.  Recording at the root step alone captured under 6%
+       of chemistry, biased against the deepest levels because those
+       rebuild most often. */
+
+    if (WriteGridWorkMap(LevelArray, MetaData->CycleNumber, level+1) == FAIL)
+      ENZO_FAIL("Error in WriteGridWorkMap.\n");
+
 //    if (debug) ReportMemoryUsage("Memory usage report: Rebuild 1");
- 
+
     /* 1) Create a new TempLevelArray in which to keep the old grids. */
  
     LevelHierarchyEntry* TempLevelArray[MAX_DEPTH_OF_HIERARCHY];
