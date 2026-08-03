@@ -284,6 +284,28 @@ bitwise gate.
 
 ### 5.4 OPEN ISSUE — T0.3's systematic star-particle deficit
 
+> **Update 2026-08-03 — the padding mechanism is refuted, the deficit is
+> still unexplained.** The buffer-zone test proposed below has been run
+> (`t03-buffer-r1`, 20 steps, floor 512 with `NumberOfBufferZones=3`;
+> note FOGGIE already runs 2, not the Enzo default of 1, so this was
+> 2→3). It fails on both counts. Restoring refined padding did **not**
+> close the deficit — it widened slightly, −0.373% vs −0.334% at step 20
+> — and it erased the speedup entirely: on the same metric (exclusive
+> `Level_NN` time summed over 20 root steps) the control is 8179.1 s,
+> floor 512 with buffer 2 is 5821.4 s (−28.8%), and buffer 3 is
+> **8665.5 s, +5.9% — slower than the control**, because the extra
+> refined volume costs more than the granularity gain returns.
+>
+> So the hypothesis stated below — that tighter grids refine ~15% less
+> unflagged padding and thereby change how many marginal cells cross the
+> star-formation threshold — is **measured and wrong**. Restoring the
+> padding does not restore the stars. PR #73's disclosure stands as
+> written *except* for that mechanism claim, which should be corrected.
+>
+> Untested candidates: the SF density threshold interacting with
+> cell-size-dependent density estimates, or changed subgrid boundaries
+> altering where feedback is deposited.
+
 The 20-step de-risk run (`results/t03-long-r1`) confirmed the speedup
 holds (24.8% at 20 steps vs 25.8% at 5) but surfaced an unresolved
 problem: **`SubgridSizeAutoAdjustMinimum = 512` forms systematically
