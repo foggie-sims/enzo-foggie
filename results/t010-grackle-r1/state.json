@@ -1,0 +1,31 @@
+{
+  "id": "t010-grackle-r1",
+  "date": "2026-08-02",
+  "purpose": "T0.10: does vectorising Grackle help? Its production build has -O3 but ZERO -march/-x flags.",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5,
+    "note": "IDENTICAL Enzo binary (c73ee4b6) in both arms - libgrackle resolves via LD_LIBRARY_PATH, so only the library differs. Verified: enzo.exe has no RPATH/RUNPATH, and ldd resolves to the AVX2 library with the prepend and the production one without."
+  },
+  "build": {
+    "location": "foggie_bench_root/grackle-avx2 (out-of-source; production build at /u/jtumlins/grackle/... left untouched, verified by unchanged CMakeCache md5 and .so mtimes)",
+    "flags": "GRACKLE_OPTIMIZATION_FLIST=-march=core-avx2, all other options matched to production (Release, double, OpenMP off, shared, same compilers, same HDF5)",
+    "instruction_level_proof": "production .so: 0 %ymm, 0 FMA, 0 vector ops. AVX2 .so: 386 %ymm, 453 FMA, 1568 vector ops."
+  },
+  "arms": {
+    "base (production scalar grackle)": {
+      "wall_s": 1693.1,
+      "chem_s": 168.7
+    },
+    "avx2 (vectorised grackle)": {
+      "wall_s": 1675.6,
+      "chem_s": 165.7
+    }
+  },
+  "verdict": "NULL RESULT. Wall -1.0%, ChemistryCooling -1.8% - both inside the noise floor. Vectorising the chemistry kernels does essentially nothing.",
+  "why": "Surprising given the instruction counts, and worth recording so nobody repeats it: Grackle's chemistry solve is an implicit ODE integration with per-cell sub-cycling and convergence tests. Iteration counts are data-dependent, so neighbouring cells exit at different times and the SIMD lanes cannot stay in lockstep. The kernel is branch- and latency-bound, not arithmetic-bound; vectorisation only helps the latter.",
+  "recommendation": "Close T0.10 as a negative. Do NOT rebuild production Grackle expecting the audit's 1.5-3x - that figure was for scalar hydro kernels on Pleiades, and does not transfer to an implicit chemistry solver. If chemistry is ever revisited, the lever is algorithmic (fewer sub-cycles / looser tolerance / gating the solve), not the ISA.",
+  "caveat": "One sample per arm. Effect sizes are small enough that repeats would only narrow 'nothing' to 'nothing', but no repeat was run."
+}

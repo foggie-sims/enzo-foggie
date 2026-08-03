@@ -1,0 +1,20 @@
+{
+  "id": "t07-flags-r1",
+  "date": "2026-08-02",
+  "purpose": "T0.7 (rescoped): do -ip / -O3 / -heap-arrays help on Aitken, where we are already vectorised?",
+  "config": {
+    "nodes": 1,
+    "model": "mil_ait",
+    "ranks": 128,
+    "nsteps": 5,
+    "note": "All arms at SubgridSizeAutoAdjustMinimum=512, same source (c73ee4b6), concurrent on separate nodes."
+  },
+  "arms": {
+    "ctrl (-g -O2 -march=core-avx2)": 1681.8,
+    "ip (-g -O2 -march=core-avx2 -ip, FFLAGS -heap-arrays)": 1702.3,
+    "o3ip (-g -O3 -march=core-avx2 -ip, FFLAGS -heap-arrays)": 1710.3
+  },
+  "verdict": "NULL RESULT. Both variants are marginally SLOWER than control (+1.2%, +1.7%), inside the ~1.6% node scatter. Neither -ip nor -O3 buys anything.",
+  "why": "The audit's headline for T0.7 (1.5-3x on Fortran kernels) was about restoring vectorisation to Make.mach.pleiades-mpich, which had been cut to -g -O2. Pleiades is decommissioned, and Aitken already carries -march=core-avx2. The remaining surface for -ip is Enzo's own Fortran, mainly hydro at ~5% of wall, so there was never much to win.",
+  "recommendation": "Close T0.7. Do not restore Pleiades flags (machine gone). Keep -march=core-avx2 over -xCORE-AVX2 on Milan: the -x form triggers Intel vendor dispatch, which can select a slow path on non-Intel CPUs."
+}
