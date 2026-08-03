@@ -689,7 +689,9 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       /* Update particle positions (if present). */
 
       TIMER_START("ParticleUpdate");
-      UpdateParticlePositions(Grids[grid1]->GridData);
+      { double _gw0 = ReturnWallTime();
+        UpdateParticlePositions(Grids[grid1]->GridData);
+        Grids[grid1]->GridData->AddGravWorkTime(ReturnWallTime()-_gw0); }
       TIMER_STOP("ParticleUpdate");
 
     /*Trying after solving for radiative transfer */

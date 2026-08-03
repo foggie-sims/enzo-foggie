@@ -64,8 +64,8 @@ int WriteGridWorkMap(LevelHierarchyEntry *LevelArray[], int cycle,
   /* One header per file, written when it is still empty. */
 
   if (ftell(fptr) == 0)
-    fprintf(fptr, "# seq cycle level rank cells chemwork_sec subcycles "
-	    "xl yl zl xr yr zr\n");
+    fprintf(fptr, "# seq cycle level rank cells chemwork_sec gravwork_sec "
+	    "subcycles xl yl zl xr yr zr\n");
 
   for (int level = minlevel; level < MAX_DEPTH_OF_HIERARCHY; level++)
     for (LevelHierarchyEntry *Temp = LevelArray[level]; Temp != NULL;
@@ -79,11 +79,12 @@ int WriteGridWorkMap(LevelHierarchyEntry *LevelArray[], int cycle,
       Temp->GridData->ReturnGridInfo(&Rank, Dims, Left, Right);
 
       fprintf(fptr,
-	      "%"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %.10e %"ISYM" "
+	      "%"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %.10e %.10e %"ISYM" "
 	      "%.10e %.10e %.10e %.10e %.10e %.10e\n",
 	      sequence, cycle, level, MyProcessorNumber,
 	      Temp->GridData->GetActiveSize(),
 	      Temp->GridData->ReturnChemWorkTime(),
+	      Temp->GridData->ReturnGravWorkTime(),
 	      Temp->GridData->ReturnChemWorkCalls(),
 	      (double) Left[0],  (double) Left[1],  (double) Left[2],
 	      (double) Right[0], (double) Right[1], (double) Right[2]);

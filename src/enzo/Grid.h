@@ -95,6 +95,11 @@ class grid
                                        //   only lives from one rebuild to the
                                        //   next, so the interval varies; the
                                        //   count makes records comparable.
+  double GravWorkTime;                 // measured particle-gravity wall time
+                                       //   (deposit, potential solve,
+                                       //   accelerations, particle update).
+                                       //   Kept separate from chemistry so the
+                                       //   two can be weighed independently.
   float dtFixed;                       // current (fixed) timestep
   FLOAT Time;                          // current problem time
   FLOAT OldTime;                       // time corresponding to OldBaryonField
@@ -277,7 +282,10 @@ class grid
    void   AddChemWorkTime(double dt) {ChemWorkTime += dt; ChemWorkCalls++;};
    double ReturnChemWorkTime() {return ChemWorkTime;};
    int    ReturnChemWorkCalls() {return ChemWorkCalls;};
-   void   ClearChemWorkTime() {ChemWorkTime = 0.0; ChemWorkCalls = 0;};
+   void   AddGravWorkTime(double dt) {GravWorkTime += dt;};
+   double ReturnGravWorkTime() {return GravWorkTime;};
+   void   ClearChemWorkTime() {ChemWorkTime = 0.0; ChemWorkCalls = 0;
+                               GravWorkTime = 0.0;};
 
 /* Read grid data from a file (returns: success/failure) */
 

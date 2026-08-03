@@ -46,6 +46,7 @@
 
 /* function prototypes */
  
+double ReturnWallTime(void);
 int DepositParticleMassField(HierarchyEntry *Grid, FLOAT Time = -1.0);
 
 int CommunicationBufferPurge(void);
@@ -149,7 +150,9 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
-      DepositParticleMassField(Grids[grid1], EvaluateTime);
+      { double _gw0 = ReturnWallTime();
+        DepositParticleMassField(Grids[grid1], EvaluateTime);
+        Grids[grid1]->GridData->AddGravWorkTime(ReturnWallTime()-_gw0); }
 
 #ifdef FORCE_MSG_PROGRESS 
     CommunicationBarrier();
@@ -163,7 +166,9 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 
     CommunicationDirection = COMMUNICATION_SEND;
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
-      DepositParticleMassField(Grids[grid1], EvaluateTime);
+      { double _gw0 = ReturnWallTime();
+        DepositParticleMassField(Grids[grid1], EvaluateTime);
+        Grids[grid1]->GridData->AddGravWorkTime(ReturnWallTime()-_gw0); }
 
     /* Finally, receive the data and process it. */
     
@@ -420,7 +425,9 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 
  
       for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
-	Grids[grid1]->GridData->SolveForPotential(level, EvaluateTime);
+	{ double _gw0 = ReturnWallTime();
+	  Grids[grid1]->GridData->SolveForPotential(level, EvaluateTime);
+	  Grids[grid1]->GridData->AddGravWorkTime(ReturnWallTime()-_gw0); }
 	if (CopyGravPotential)
 	  Grids[grid1]->GridData->CopyPotentialToBaryonField();
       }
