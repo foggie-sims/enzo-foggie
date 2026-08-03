@@ -88,6 +88,13 @@ class grid
   FLOAT GridLeftEdge[MAX_DIMENSION];   // starting pos (active problem space)
   FLOAT GridRightEdge[MAX_DIMENSION];  // ending pos (active problem space)
   int GridLevel;                       // hierarchy level where this grid lives
+  double ChemWorkTime;                 // measured chemistry/cooling wall time
+                                       //   accumulated over this grid's subcycles
+                                       //   since the last clear (T2.1 work map)
+  int ChemWorkCalls;                   // subcycles that time covers.  A grid
+                                       //   only lives from one rebuild to the
+                                       //   next, so the interval varies; the
+                                       //   count makes records comparable.
   float dtFixed;                       // current (fixed) timestep
   FLOAT Time;                          // current problem time
   FLOAT OldTime;                       // time corresponding to OldBaryonField
@@ -262,6 +269,15 @@ class grid
 /* Grid deconstructor (free up memory usage) */
 
    ~grid();
+
+/* Measured chemistry/cooling work on this grid (T2.1 work map).  The
+   accumulator is summed over every subcycle this grid takes and is
+   cleared once its contents have been recorded. */
+
+   void   AddChemWorkTime(double dt) {ChemWorkTime += dt; ChemWorkCalls++;};
+   double ReturnChemWorkTime() {return ChemWorkTime;};
+   int    ReturnChemWorkCalls() {return ChemWorkCalls;};
+   void   ClearChemWorkTime() {ChemWorkTime = 0.0; ChemWorkCalls = 0;};
 
 /* Read grid data from a file (returns: success/failure) */
 

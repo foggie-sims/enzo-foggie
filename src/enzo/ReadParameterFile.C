@@ -360,6 +360,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "SubgridSizeAutoAdjust  = %"ISYM, &SubgridSizeAutoAdjust);
     ret += sscanf(line, "SubgridSizeAutoAdjustMinimum = %"ISYM,
 		  &SubgridSizeAutoAdjustMinimum);
+    ret += sscanf(line, "GridWorkMapOutput      = %"ISYM, &GridWorkMapOutput);
     ret += sscanf(line, "OptimalSubgridsPerProcessor = %"ISYM,
 		  &OptimalSubgridsPerProcessor);
     ret += sscanf(line, "MinimumSubgridEdge     = %"ISYM, &MinimumSubgridEdge);

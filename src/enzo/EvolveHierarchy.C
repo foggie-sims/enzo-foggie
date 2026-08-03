@@ -119,6 +119,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				int FluxFlag = FALSE,
 				TopGridData* MetaData = NULL);
 double ReturnWallTime(void);
+int WriteGridWorkMap(LevelHierarchyEntry *LevelArray[], int cycle);
 int Enzo_Dims_create(int nnodes, int ndims, int *dims);
 int FOF(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[], 
 	int WroteData, int FOFOnly=FALSE);
@@ -550,6 +551,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
         }
         return FAIL;
     }
+
+    /* Record what each grid cost in chemistry this root step (T2.1
+       diagnostic; inert unless GridWorkMapOutput is set). */
+
+    if (WriteGridWorkMap(LevelArray, MetaData.CycleNumber) == FAIL)
+      ENZO_FAIL("Error in WriteGridWorkMap.\n");
 
 /* Now that we've formed stars, reset this to original value if we changed it */
 if (MultiRefineRegionSpatiallyVaryingStarMass > 0){

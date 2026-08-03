@@ -183,6 +183,22 @@ Two traps for anyone reading performance.out directly:
   fine and is undefined behaviour at runtime. Discovered 2026-07-30
   when a new `EXTERN` in global_data.h failed to link because enzo.C
   (which defines the storage) was never rebuilt.
+- **The compiler is not on PATH in a non-interactive shell.** A tool-run
+  `make` dies with `icpc: command not found` on every object, which looks
+  alarming but is only a missing module environment. Prefix any scripted
+  build with:
+
+      source /usr/share/modules/init/bash
+      module use -a /nasa/modulefiles/testing
+      module load comp-intel/2020.4.304 hdf5/1.8.18_serial
+
+- **`enzo.exe` does not run on the login node**, and this is pre-existing,
+  not a symptom of your change: MPICH's `libmpifort` wants
+  `libgfortran.so.3`, which is present on compute nodes but not on the
+  front end. `ldd enzo.exe | grep "not found"` reports it for any build,
+  including known-good ones - check a previous executable before
+  investigating. Smoke tests therefore have to go through PBS; the login
+  node can only build and link.
 - Builds: `make machine-nasa-aitken-milan-mpich && make grackle-yes &&
   make opt-high && make -j8`. Cached per-sha builds live in
   `~/foggie_bench_root/builds/<sha12>/`. When building a historical ref,

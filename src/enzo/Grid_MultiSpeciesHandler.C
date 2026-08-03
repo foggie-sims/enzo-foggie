@@ -22,13 +22,21 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
- 
+
+double ReturnWallTime(void);
+
 int grid::MultiSpeciesHandler()
 {
-  if ((!MultiSpecies) && (!RadiativeCooling)) return SUCCESS; 
+  if ((!MultiSpecies) && (!RadiativeCooling)) return SUCCESS;
   if (GadgetEquilibriumCooling != 0) return SUCCESS;
 
   LCAPERF_START("grid_MultiSpeciesHandler");
+
+  /* Measure this grid's chemistry/cooling cost for the T2.1 work map.
+     Only the owning rank does real work here (the solvers return
+     immediately otherwise), so only it accumulates. */
+
+  double chem_t0 = ReturnWallTime();
 
 #ifdef USE_GRACKLE
   if (grackle_data->use_grackle == TRUE) {
@@ -36,6 +44,8 @@ int grid::MultiSpeciesHandler()
     if (this->GrackleWrapper() == FAIL) {
       ENZO_FAIL("Error in GrackleWrapper.\n");
     }
+    if (ProcessorNumber == MyProcessorNumber)
+      this->AddChemWorkTime(ReturnWallTime() - chem_t0);
     return SUCCESS;
   }
 #endif
@@ -52,6 +62,9 @@ int grid::MultiSpeciesHandler()
 
   if (ProblemType == 62)
     this->CoolingTestResetEnergies();
+
+  if (ProcessorNumber == MyProcessorNumber)
+    this->AddChemWorkTime(ReturnWallTime() - chem_t0);
 
   LCAPERF_STOP("grid_MultiSpeciesHandler");
   return SUCCESS;

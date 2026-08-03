@@ -984,6 +984,7 @@ OBJS_CONFIG_LIB = \
         WriteConfigure.o \
         WriteDataCubes.o \
         WriteDataHierarchy.o \
+        WriteGridWorkMap.o \
         WriteHDF5HierarchyFile.o \
 	WriteMemoryMap.o \
         WriteParameterFile.o \

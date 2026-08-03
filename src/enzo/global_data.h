@@ -49,6 +49,14 @@ EXTERN int NumberOfGhostZones;
    levels that matter (audit T0.3: it wants ~400 at L9/L10 and is forced to
    2000, leaving 1.5 grids per rank and an indivisible largest grid). */
 EXTERN int SubgridSizeAutoAdjustMinimum;
+/* Diagnostic (audit T2.1): when non-zero, each rank appends a record of
+   every grid it owns - level, extent, active cells, and the wall time
+   that grid spent in chemistry/cooling - once per root step, to
+   gridwork_rank<NNNN>.txt.  Measurement only; it does not affect the
+   balancer.  Its purpose is to test whether the chemistry cost of a
+   region of space is predictable from one root step to the next, which
+   is the premise measured-work balancing rests on. */
+EXTERN int GridWorkMapOutput;
 EXTERN int LoadBalancing;
 /* Work attributed to one particle, in units of one cell, when the load
    balancers estimate per-grid work.  0 reproduces the historical
