@@ -1,0 +1,24 @@
+{
+  "id": "spf-measure-r1",
+  "date": "2026-08-02",
+  "purpose": "Size the CEILING for the SPFinalize change before building it: what does removing the per-subcycle star-count Allreduce actually buy?",
+  "method": "Identical enzo-performance binary, skip toggled purely by -genv ENZO_MEASURE_SKIP_STARCOUNT 1. Throwaway measurement build - the skip leaves particle IDs unassigned, so the skip arm's dumps are scientifically INVALID and were used for timing only. Both arms at SubgridSizeAutoAdjustMinimum=512, 5 root steps, 128 ranks.",
+  "result": {
+    "keep2_wall_s": 1704.6,
+    "skip2_wall_s": 1626.2,
+    "saving_s": 78.4,
+    "saving_pct": 4.6,
+    "barrier_removed_s": 832.1,
+    "barrier_in_skip_arm_s": 0.0
+  },
+  "verdict": "DECISIVE NEGATIVE - DO NOT BUILD. Removing 832 s of measured barrier saved only 78 s of wall (4.6%). ~90% of it relocated to other synchronisation points.",
+  "where_it_went": {
+    "MPIWaitReceive": "130.8 -> 519.7 (+388.9)",
+    "SetBoundaryConditions": "129.2 -> 489.5 (+360.3)",
+    "SetLevelTimeStep_dt_reduce": "37.6 -> 201.9 (+164.3)",
+    "real_work_unchanged": "ChemistryCooling +1.6, SolveHydroEquations -0.3, RebuildHierarchy -0.9, PrepareDensityField +2.6"
+  },
+  "why_the_earlier_reasoning_was_wrong": "SPFinalize_Edits.md argued from max(sum) <= sum(max) that removing the per-subcycle barrier would let fluctuating imbalance cancel across subcycles. That premise required this to be the ONLY synchronisation point. It is not: SetBoundaryConditions exchanges ghost zones every subcycle and the dt reduction is global, so ranks re-synchronise regardless. Removing one barrier of several just hands the wait to the next one. The 62% was never 'the cost of a collective' - it was where real work imbalance happened to be paid.",
+  "implication": "The only levers that work are ones that REDUCE the imbalance (or the work), not ones that move where it is paid. This is exactly why T0.3 succeeded (it removed indivisible oversized grids) and why particle-weighted balancing failed (it made the imbalance worse). Risk-wise this is a good outcome: the correct implementation would have deferred ID assignment across subcycles, where a bookkeeping slip means duplicate particle IDs - silent data corruption - for 4.6%.",
+  "branch": "starcount-sync-on-output was created off main but NEVER committed to; nothing to roll back."
+}
