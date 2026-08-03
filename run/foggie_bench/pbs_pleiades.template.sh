@@ -30,4 +30,15 @@ cd @OUT@
 status=$?
 
 echo "exit=$status" > bench_exit_status
+
+# Load-balance report for every dump this run produced.  Reads rank
+# ownership straight out of the grouped HDF5 (each grid lives in the
+# .cpuNNNN file of the rank that owned it), so it needs nothing enabled
+# at run time and works the same on runs finished years ago.  Never
+# allowed to affect the run's exit status.
+if [ -f @HARNESS@/load_balance.py ]; then
+  python3 @HARNESS@/load_balance.py . --ranks @RANKS@ \
+      --csv load_balance.csv > load_balance.txt 2>&1 || true
+fi
+
 exit $status

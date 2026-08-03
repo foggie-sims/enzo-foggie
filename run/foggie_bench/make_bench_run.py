@@ -146,6 +146,8 @@ def main():
               .replace("@GROUP@", args.group)
               .replace("@ENZO@", enzo)
               .replace("@MPIEXEC@", args.mpiexec)
+              # so the post-run load-balance report can find itself
+              .replace("@HARNESS@", os.path.dirname(os.path.abspath(__file__)))
               .replace("@RESTART_REL@", restart_rel))
     launch_path = os.path.join(out, "launch.sh")
     open(launch_path, "w").write(launch)
