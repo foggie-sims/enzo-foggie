@@ -215,6 +215,92 @@ def report(stats, label, nranks=None, quiet=False):
 
 # --------------------------------------------------------------------------
 
+def per_rank(stats, metric, nranks):
+    v = np.zeros(nranks)
+    for (r, l), d in stats.items():
+        if r < nranks:
+            v[r] += d.get(metric, 0.0)
+    return v
+
+
+def plot(runs, outpath, nranks, sort=False):
+    """Per-rank distribution for each metric, one panel each.
+
+    runs is [(label, stats), ...]; several overlay for comparison.
+    Ranks are plotted in index order by default, because that is what the
+    balancer sees; --sort reorders each series independently by descending
+    load, which makes the shape of the imbalance easier to read but
+    breaks the correspondence between series at a given x.
+    """
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    metrics = [("cells", "active cells"),
+               ("particles", "particles (DM + stars)"),
+               ("stars", "star particles")]
+    if any("chem_s" in s[k] for _, s in runs for k in s):
+        metrics.append(("chem_s", "measured chemistry (s)"))
+    if any("grav_s" in s[k] for _, s in runs for k in s):
+        metrics.append(("grav_s", "measured particle gravity (s)"))
+
+    fig, axes = plt.subplots(len(metrics), 1,
+                             figsize=(11, 2.6 * len(metrics)), sharex=True)
+    if len(metrics) == 1:
+        axes = [axes]
+    colours = ["#1f77b4", "#d62728", "#2ca02c", "#9467bd"]
+
+    def fmt(x):
+        if x >= 1e6:
+            return "%.2fM" % (x / 1e6)
+        if x >= 1e3:
+            return "%.1fk" % (x / 1e3)
+        return "%.3g" % x
+
+    for ax, (m, title) in zip(axes, metrics):
+        notes = []
+        for i, (label, stats) in enumerate(runs):
+            v = per_rank(stats, m, nranks)
+            if v.sum() <= 0:
+                continue
+            y = np.sort(v)[::-1] if sort else v
+            mean, med = v.mean(), np.median(v)
+            ratio = v.max() / mean if mean > 0 else float("nan")
+            c = colours[i % 4]
+            ax.plot(np.arange(nranks), y, lw=1.0, color=c,
+                    label="%s  (max/mean %.2f)" % (label, ratio))
+            ax.axhline(mean, color=c, ls=":", lw=0.9, alpha=0.8)
+            ax.axhline(med, color=c, ls="--", lw=0.9, alpha=0.5)
+
+            # mean vs median says WHERE the imbalance is: mean well above
+            # median means a few heavy ranks; below means a few idle ones
+            idle = int((v == 0).sum())
+            cv = v.std() / mean if mean > 0 else float("nan")
+            notes.append(
+                "%s\n  mean %s   median %s\n  min %s   max %s\n"
+                "  max/mean %.2f   max/median %.2f\n  CV %.2f   idle ranks %d"
+                % (label, fmt(mean), fmt(med), fmt(v.min()), fmt(v.max()),
+                   ratio, (v.max() / med if med > 0 else float("nan")),
+                   cv, idle))
+
+        if notes:
+            ax.text(0.005, 0.97, "\n".join(notes), transform=ax.transAxes,
+                    fontsize=6.6, va="top", ha="left", family="monospace",
+                    bbox=dict(boxstyle="round,pad=0.35", fc="white",
+                              ec="0.7", alpha=0.85))
+        ax.set_ylabel(title, fontsize=9)
+        ax.legend(fontsize=7.5, loc="upper right")
+        ax.grid(alpha=0.25, lw=0.5)
+        ax.margins(x=0.01)
+
+    axes[-1].set_xlabel("MPI rank" + (" (sorted by load)" if sort else ""))
+    axes[0].set_title("Per-rank load balance   -   dotted line = mean "
+                      "(the even share),  dashed = median", fontsize=11)
+    fig.tight_layout()
+    fig.savefig(outpath, dpi=130)
+    print("  wrote %s" % outpath)
+
+
 def find_dumps(path):
     if os.path.isdir(path) and glob.glob(os.path.join(path, "*.cpu*")):
         return [path]
@@ -231,11 +317,37 @@ def main():
     ap.add_argument("--csv", help="append per-level rows here, for trends")
     ap.add_argument("--ranks", type=int,
                     help="expected rank count (so idle ranks are counted)")
+    ap.add_argument("--plot", metavar="PNG",
+                    help="write a per-rank plot here")
+    ap.add_argument("--compare", nargs="*", default=[], metavar="DUMP",
+                    help="overlay these dumps on the plot, for A/B")
+    ap.add_argument("--sort", action="store_true",
+                    help="sort ranks by load in the plot (shape, not identity)")
     ap.add_argument("--watch", action="store_true",
                     help="poll for new dumps and report each as it lands")
     ap.add_argument("--interval", type=float, default=60.0,
                     help="seconds between polls with --watch (default 60)")
     args = ap.parse_args()
+
+    if args.plot:
+        runs = []
+        for p in [args.path] + args.compare:
+            for d in find_dumps(p):
+                s = scan_dump(d)
+                if not s:
+                    continue
+                add_work_map(s, os.path.dirname(d.rstrip("/")) or ".")
+                # label by run directory when comparing arms, since the
+                # dump name is usually identical across them
+                parent = os.path.basename(os.path.dirname(d.rstrip("/")))
+                runs.append(("%s/%s" % (parent, os.path.basename(d.rstrip("/"))), s))
+                report(s, runs[-1][0], nranks=args.ranks)
+        if not runs:
+            sys.exit("no dumps found to plot")
+        nranks = args.ranks or max(
+            (r for _, s in runs for r, _ in s), default=0) + 1
+        plot(runs, args.plot, nranks, sort=args.sort)
+        return
 
     seen = set()
     allrows = []
