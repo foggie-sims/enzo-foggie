@@ -191,20 +191,32 @@ balancer scored against *actual* work, `harness/analyze_workmap.py`):
 
 | balancer input | chemistry imbalance |
 |---|---|
-| cells (today) | 2.57× |
-| measured work | 2.16× |
-| perfect foreknowledge | 2.12× |
+| cells (today) | 3.89× |
+| measured work | 3.36× |
+| perfect foreknowledge | 3.35× |
 
-The slow-evolution premise holds: interval-to-interval correlation is
-**0.91–0.99**, and the design recovers **89%** of the available room.
-But the room is small — perfect foreknowledge still leaves 2.12×.
-Revised payoff estimate: **~4% of wall**, not the 15–25% estimated from
-the skew alone, because most of the skew is granularity-bound rather than
-weight-bound.
+The slow-evolution premise holds decisively: interval-to-interval
+correlation is **0.99** at every level from L5 down, which is 98% of all
+chemistry work. The design is then essentially optimal — it recovers
+**98%** of the room between the cells-based estimate and perfect
+foreknowledge.
 
-**What the oracle floor points at instead.** The limit is the largest
-single grid's share of a level's work: 4.26% at L8 (floor 5.46×), 4.03%
-at L9 (5.16×), against 0.75% at L6 (0.96×, effectively perfect). The
+**But the room itself is only 13.9%.** The chemistry critical path goes
+680.3 s → 587.5 s over 5 root steps, against a bench wall of ~1670 s.
+Because this model sums per-level maxima (different ranks can be the
+slowest at different levels), it overstates what any single rank
+experiences, so **~5% of wall is an optimistic bound and ~3–5% is the
+honest range** — not the 15–25% first estimated from the raw skew.
+Measured-work balancing is worth doing, but it is a single-digit item:
+the estimate was never the main problem.
+
+**What the oracle floor points at instead.** The limit is granularity
+again, and it is worst exactly where the work is. Weighted by share of
+total chemistry, the oracle floor per level is: L10 **2.97×** (45.9% of
+chemistry), L9 **5.26×** (21.2%), L8 **4.85×** (12.0%), against L6
+**1.01×** (7.8%, effectively perfect). Two thirds of all chemistry sits
+at levels whose *best achievable* imbalance is 3–5×, set by the largest
+single grid's share of that level's work. The
 natural successor to T0.3 is therefore to make
 `DetermineSubgridSizeExtrema` cap **predicted work** rather than cell
 count — splitting dense regions finer and leaving diffuse ones coarse.
@@ -212,14 +224,21 @@ The same work field would drive both the sizing and the balancing. T0.3
 shrank the atom uniformly for 25–41%; this is the targeted version of the
 same move, and on these numbers it is the larger lever of the two.
 
-*Sampling caveat:* the first run recorded only at root-step boundaries and
-captured **5.9%** of chemistry — grids die at every rebuild and take their
-accumulated time with them, biasing against the deepest levels, which
-rebuild most. Recording moved to the top of `RebuildHierarchy`, before
-destruction. Correlations and per-level results are unaffected (like-for-like
-within a level); the cross-level aggregate above is pending re-measurement.
-The per-cell field design makes this failure mode structurally impossible,
-since work then accumulates in space rather than on an object.
+*Measurement history, since two of these were wrong before they were
+right.* The first run recorded only at root-step boundaries and captured
+**5.9%** of chemistry — grids die at every rebuild and take their
+accumulated time with them, biasing hardest against the deepest levels,
+which rebuild most. Recording moved to the top of `RebuildHierarchy`,
+before destruction: capture went to ~100% (23038 s against a section-timer
+scale of 22812 s), across 876 rebuild intervals. The offline replay then
+had two bugs of its own — `argmin` on an all-zero load array piles every
+zero-weight grid onto rank 0, and the two dump sites interleave, so some
+"intervals" were a rebuild dump followed immediately by a root-step dump
+with near-zero elapsed work. Fixed by tie-breaking on grid count and
+dropping degenerate pairs (50 of 1628). The tell was a self-contradiction:
+82× imbalance reported alongside 0.99 correlation. The per-cell field
+design makes the *sampling* failure structurally impossible, since work
+then accumulates in space rather than on an object.
 
 **Not a constraint:** subgrids are *not* pinned to their parent's rank.
 `LoadBalancing=1` balances over the full rank range (`StartProc=0`,
