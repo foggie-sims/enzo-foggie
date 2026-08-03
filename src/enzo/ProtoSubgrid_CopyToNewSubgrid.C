@@ -58,6 +58,11 @@ int ProtoSubgrid::CopyToNewSubgrid(int GridDim, int GridStart, int GridEnd,
  
   /* Allocate new FlaggingField. */
  
+  /* the split pieces index into the same parent arrays */
+  NewSubgrid->ParentWorkField = ParentWorkField;
+  for (int wdim = 0; wdim < MAX_DIMENSION; wdim++)
+    NewSubgrid->ParentDimension[wdim] = ParentDimension[wdim];
+
   NewSubgrid->GridFlaggingField = new int[NewSubgrid->GridDimension[0]*
 					  NewSubgrid->GridDimension[1]*
 					  NewSubgrid->GridDimension[2]];

@@ -31,6 +31,9 @@ ProtoSubgrid::ProtoSubgrid()
   }
  
   GridFlaggingField = NULL;
+  ParentWorkField   = NULL;
+  for (int wdim = 0; wdim < MAX_DIMENSION; wdim++)
+    ParentDimension[wdim] = 0;
  
   NumberFlagged = INT_UNDEFINED;
 }

@@ -33,6 +33,14 @@ class ProtoSubgrid
   int  *GridFlaggingField;
   int  *Signature[MAX_DIMENSION];
 
+  /* Work-capped Berger-Rigoutsos (SubgridMaximumWorkFraction).  A
+     ProtoSubgrid already indexes into the parent's arrays via
+     StartIndex/GridDimension, so its predicted work can be summed
+     straight from the parent's WorkField - no parallel array has to be
+     copied through every split.  Both are NULL when the feature is off. */
+  float *ParentWorkField;
+  int    ParentDimension[MAX_DIMENSION];
+
  public:
 
   ProtoSubgrid();
@@ -50,6 +58,7 @@ class ProtoSubgrid
   int LargeAxisRatioCheck(int &dim, int GridEnds[MAX_DIMENSION*2][2], 
 			  float CriticalRatio);
   int CopyFlaggedZonesFromGrid(grid *Grid);
+  float ComputeWork();
   int ShrinkToMinimumSize();
   int CleanUp();
 

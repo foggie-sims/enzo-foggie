@@ -211,6 +211,14 @@ class grid
 //  Rebuild Hierarchy Temporaries
 //
   int   *FlaggingField;             // Boolean flagging field (for refinement)
+  float *WorkField;                 // Per-cell work density for a work-capped
+                                    //   Berger-Rigoutsos (SubgridMaximumWorkFraction).
+                                    //   Temporary, exactly like FlaggingField:
+                                    //   painted from the outgoing subgrids at the
+                                    //   start of a rebuild and freed with the
+                                    //   flagging field.  Deliberately NOT a
+                                    //   BaryonField - it must not be advected,
+                                    //   written to disk, or outlive the rebuild.
   float *MassFlaggingField;         // Used by mass flagging criteria
   float *ParticleMassFlaggingField; // Used by particle mass flagging criteria
 //

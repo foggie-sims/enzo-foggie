@@ -220,6 +220,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SubgridSizeAutoAdjust     = TRUE; // true for adjusting maxsize and minedge
   SubgridSizeAutoAdjustMinimum = 2000;  // historical floor; see global_data.h
   GridWorkMapOutput         = 0;       // T2.1 work-map diagnostic; off
+  SubgridMaximumWorkFraction = 0.0;    // 0 = historical cell-only cap
+  MaximumSubgridWork        = 0.0;     // set per level during rebuild
   OptimalSubgridsPerProcessor = 16;    // Subgrids per processor
   NumberOfBufferZones       = 1;
  

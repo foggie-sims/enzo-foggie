@@ -811,6 +811,7 @@ OBJS_CONFIG_LIB = \
         prolong_tsc.o \
         ProtostellarCollapseInitialize.o \
         ProtoSubgrid_AcceptableGrid.o \
+        ProtoSubgrid_ComputeWork.o \
         ProtoSubgrid_CleanUp.o \
         ProtoSubgrid_ComputeSecondDerivative.o \
         ProtoSubgrid_ComputeSignature.o \

@@ -142,6 +142,7 @@ grid::grid()
   ParticleMassFlaggingField     = NULL;
   MassFlaggingField             = NULL;
   FlaggingField                 = NULL;
+  WorkField                     = NULL;
 
 #ifdef TRANSFER
   NumberOfPhotonPackages = 0;

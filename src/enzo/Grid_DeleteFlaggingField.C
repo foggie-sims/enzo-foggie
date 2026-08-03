@@ -29,4 +29,8 @@ void grid::DeleteFlaggingField()
   else
     delete [] FlaggingField;
   FlaggingField = NULL;
+
+  /* the work field is a temporary of the same lifetime */
+  delete [] WorkField;
+  WorkField = NULL;
 }

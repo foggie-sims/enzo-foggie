@@ -57,6 +57,13 @@ int ProtoSubgrid::CopyFlaggedZonesFromGrid(grid *Grid)
  
   /* Allocate and copy GridFlaggingField. */
  
+  /* Work-capped B-R: remember where the parent's work field lives, and
+     the dimensions needed to index it.  NULL when the feature is off. */
+
+  ParentWorkField = Grid->WorkField;
+  for (int wdim = 0; wdim < MAX_DIMENSION; wdim++)
+    ParentDimension[wdim] = Grid->GridDimension[wdim];
+
   GridFlaggingField = new int[size];
  
   FORTRAN_NAME(copy3dint)(Grid->FlaggingField, GridFlaggingField,

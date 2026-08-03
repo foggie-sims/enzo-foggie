@@ -57,6 +57,18 @@ EXTERN int SubgridSizeAutoAdjustMinimum;
    region of space is predictable from one root step to the next, which
    is the premise measured-work balancing rests on. */
 EXTERN int GridWorkMapOutput;
+/* Work-capped Berger-Rigoutsos.  A subgrid is split when its predicted
+   work exceeds this multiple of one rank's even share of its level's
+   work, instead of only when its CELL count exceeds MaximumSubgridSize.
+   0 disables it and reproduces the historical behaviour exactly.
+
+   Expressed as a fraction of the even share rather than an absolute cost
+   so that it is dimensionless and scales itself with rank count and
+   refinement depth - the failure mode of the hard-coded MINIMUM_SIZE
+   2000 that audit T0.3 had to fix.  Simulated on measured work, a cap of
+   1.0 takes the achievable imbalance from 3.02x to 1.04x for ~5% more
+   grids, because only a handful of grids are oversized in work. */
+EXTERN float SubgridMaximumWorkFraction;
 EXTERN int LoadBalancing;
 /* Work attributed to one particle, in units of one cell, when the load
    balancers estimate per-grid work.  0 reproduces the historical
@@ -253,6 +265,10 @@ EXTERN int MinimumSubgridEdge;
 /* This is the maximum allowable size for a new subgrid (>=2000) */
 
 EXTERN int MaximumSubgridSize;
+/* One rank's even share of the current level's work, times
+   SubgridMaximumWorkFraction.  Recomputed per level during the
+   rebuild; 0 means the work cap is off, which is the default. */
+EXTERN float MaximumSubgridWork;
 
 /* This is the maximum allowed ratio for a new subgrid */
 

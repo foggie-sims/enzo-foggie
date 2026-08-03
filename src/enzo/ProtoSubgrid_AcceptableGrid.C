@@ -69,6 +69,18 @@ int ProtoSubgrid::AcceptableSubgrid()
  
   if (size > MaximumSubgridSize && NumberOfProcessors > 1)
     return FALSE;
+
+  /* Work cap (audit T2.1/T0.3 successor).  The cell cap above cannot see
+     that a grid is expensive rather than merely large, which is what
+     leaves a handful of grids holding several ranks' worth of a level's
+     work - and a grid cannot be split across ranks.  MaximumSubgridWork
+     is one rank's even share of this level's work times
+     SubgridMaximumWorkFraction, and is zero when the feature is off, so
+     this test is skipped entirely by default. */
+
+  if (MaximumSubgridWork > 0 && NumberOfProcessors > 1 &&
+      ParentWorkField != NULL && this->ComputeWork() > MaximumSubgridWork)
+    return FALSE;
  
   if (efficiency > MinimumEfficiency)
     return TRUE;
