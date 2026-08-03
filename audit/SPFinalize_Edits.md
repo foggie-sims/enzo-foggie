@@ -1,6 +1,39 @@
 # StarParticleFinalize: the per-subcycle Allreduce barrier
 
-**Status: analysed and measured, NOT implemented.** Deferred 2026-07-30 in
+> **CLOSED 2026-08-02 — DO NOT IMPLEMENT. Measured ceiling is 4.6%.**
+>
+> Before building the (intricate, corruption-prone) deferred-sync design
+> below, we measured the upper bound directly: an env-gated throwaway build
+> that skips the collective entirely, identical binary otherwise
+> (`results/spf-measure-r1` on bench-results).
+>
+> | | wall | SPCommUpdateCount |
+> |---|---|---|
+> | keep | 1704.6 s | 832.1 s |
+> | skip | 1626.2 s | 0.0 s |
+>
+> **832 s of barrier removed; 78 s of wall saved.** ~90% relocated:
+> `MPIWaitReceive` +389 s, `SetBoundaryConditions` +360 s, the dt reduction
+> +164 s. Real work sections moved by less than 3 s.
+>
+> **Why the analysis below was wrong.** It argued from `max(Σ) ≤ Σ max` that
+> removing the per-subcycle barrier would let fluctuating imbalance cancel
+> across subcycles. That requires this to be the *only* synchronisation
+> point. It is not — `SetBoundaryConditions` exchanges ghost zones every
+> subcycle and the dt reduction is global — so ranks re-synchronise anyway
+> and the wait simply moves to the next barrier. The 62% was never "the cost
+> of a collective"; it was *where real work imbalance happened to be paid*.
+>
+> **The transferable lesson:** only changes that reduce the imbalance (or the
+> work) help. Moving where it is paid does nothing. This is why T0.3 worked
+> (it removed indivisible oversized grids) and why particle-weighted
+> balancing failed (it worsened the imbalance).
+>
+> The rest of this document is retained as the record of the analysis and of
+> the code facts it established, which remain accurate.
+
+
+**Status: CLOSED as a measured negative (see banner).** Originally deferred 2026-07-30 in
 favour of experimenting with particle-aware load balancing (T2.1) first,
 because the two interact — see "Relationship to T2.1" below.
 

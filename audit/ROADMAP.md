@@ -132,13 +132,25 @@ inflection search — remains a legitimate but ordinary optimisation of
 the regridding cost, not a route to better load balance. RebuildHierarchy
 is ~8% of wall, so it is bounded accordingly.
 
-### 5.2 `SPFinalize` — skip the per-subcycle collective *(now the top lever)*
-Full analysis and design in **`SPFinalize_Edits.md`**. With §5.1
-retracted, this is the top remaining lever. T0.3 cut the barrier from
-~63% to ~49% of wall by fixing granularity, but **49% is still the
-single largest item** and granularity has no more to give. It remains
-the riskiest change on the board — a rank-divergent skip condition
-**hangs** the run, a failure mode T2.1 demonstrated for real.
+### 5.2 `SPFinalize` — CLOSED, measured ceiling 4.6% *(2026-08-02)*
+
+Measured before building: skipping the per-subcycle star-count Allreduce
+entirely removed **832 s of barrier and saved 78 s of wall (4.6%)**. About
+90% relocated to `MPIWaitReceive` (+389 s), `SetBoundaryConditions`
+(+360 s) and the dt reduction (+164 s); real work was unchanged.
+
+The 62% figure was never the cost of a collective — it was where real
+work imbalance happened to be paid. Remove that barrier and the next one
+absorbs it. See `SPFinalize_Edits.md` for the full record and for why the
+`max(Σ) ≤ Σ max` argument did not hold (it assumed a single
+synchronisation point; ghost-zone exchange and the dt reduction are
+others).
+
+**The transferable lesson for everything remaining:** only changes that
+reduce the *imbalance itself* — or the work — pay off. Changes that move
+where imbalance is paid do not. T0.3 succeeded because it eliminated
+indivisible oversized grids; particle-weighted balancing failed because
+it worsened the imbalance.
 
 ### 5.3 Measured-work load balancing (T2.1's remaining half)
 Per-grid elapsed time from the previous cycle, via the existing
