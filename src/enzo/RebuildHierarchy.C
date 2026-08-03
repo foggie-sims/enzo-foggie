@@ -45,6 +45,8 @@ void AddLevel(LevelHierarchyEntry *LevelArray[], HierarchyEntry *Grid,
 	      int level);
 int WriteGridWorkMap(LevelHierarchyEntry *LevelArray[], int cycle,
 		     int minlevel);
+int PaintWorkField(LevelHierarchyEntry *ParentLevel,
+		   LevelHierarchyEntry *OldChildLevel, int level);
 int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
 		 int &FlaggedGrids);
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
@@ -413,6 +415,14 @@ int RebuildHierarchy(TopGridData *MetaData,
         ncells = NumberOfCells[i+1];
 
       DetermineSubgridSizeExtrema(ncells, i+1, MaximumStaticSubgridLevel+1);
+
+      /* Work cap for this level, and the per-cell work map the cap is
+         read from.  Inert unless SubgridMaximumWorkFraction is set.  The
+         outgoing children are in TempLevelArray - they are still alive
+         here and hold the measurement. */
+
+      if (PaintWorkField(LevelArray[i], TempLevelArray[i+1], i) == FAIL)
+        ENZO_FAIL("Error in PaintWorkField.\n");
 
       /* 3a) Generate an array of grids on this level. */
  

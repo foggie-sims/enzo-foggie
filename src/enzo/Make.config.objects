@@ -775,6 +775,7 @@ OBJS_CONFIG_LIB = \
 	OutputCoolingTimeOnly.o \
 	OutputDustTemperatureOnly.o \
         OutputFromEvolveLevel.o\
+        PaintWorkField.o \
         OutputLevelInformation.o \
 	OutputPotentialFieldOnly.o \
 	OutputSmoothedDarkMatterOnly.o \

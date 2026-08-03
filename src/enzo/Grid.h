@@ -291,6 +291,18 @@ class grid
    double ReturnChemWorkTime() {return ChemWorkTime;};
    int    ReturnChemWorkCalls() {return ChemWorkCalls;};
    void   AddGravWorkTime(double dt) {GravWorkTime += dt;};
+
+/* Per-cell work map used by the work-capped Berger-Rigoutsos.  Allocated
+   by PaintWorkField at the start of a rebuild and freed with the
+   flagging field; NULL means the feature is off. */
+
+   float *ReturnWorkField() {return WorkField;};
+   float *AllocateWorkField(int size) {
+     delete [] WorkField;
+     WorkField = new float[size];
+     for (int n = 0; n < size; n++) WorkField[n] = 0.0;
+     return WorkField;
+   };
    double ReturnGravWorkTime() {return GravWorkTime;};
    void   ClearChemWorkTime() {ChemWorkTime = 0.0; ChemWorkCalls = 0;
                                GravWorkTime = 0.0;};
