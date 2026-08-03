@@ -104,27 +104,82 @@ Relevant code:
   owned grids; for non-owned grids it updates `NumberOfStarParticles`,
   `NumberOfOtherParticles` and calls `SetNumberOfParticles`.
 
-## Proposed change
+## Proposed change (REVISED 2026-08-02 - supersedes the earlier sketch)
 
-Skip `CommunicationUpdateStarParticleCount` on subcycles where no new star
-particle can exist, gated by a parameter defaulting to current behaviour
-so other Enzo users are unaffected until it is proven.
+### Why the first design was wrong
 
-Sketch:
+The original sketch keyed the skip on `StarFormationOncePerRootGridTimeStep`,
+reasoning that new stars can only appear in the first subcycle of each level
+per root cycle. **That is FOGGIE-specific, not a fix.** Not all FOGGIE
+production runs set that parameter, and with it unset star creation can occur
+on any subcycle, so no predicate built from replicated state can decide the
+question. Predicting from parameters is the wrong axis.
 
-    // Replicated state only - see the DEADLOCK risk below.
-    int StarCountSyncNeeded =
-        !StarFormationOncePerRootGridTimeStep   // other users: unchanged
-        || <this is the first subcycle of this level since the
-            level-0 SetMakeStars reset>
-        || <any maker that can create outside the window is enabled>;
+### The right axis: sync before consumers, not on a cadence
 
-    if (StarCountSyncNeeded)
-      CommunicationUpdateStarParticleCount(...);
+The Allreduce's real job is `SetNewParticleIndex` (Grid_SetNewParticleIndex.C):
+walk each grid and assign `ParticleNumber` to particles still flagged
+`INT_UNDEFINED`, using running global counters. So it is needed only
 
-The window test must be computed from state that is **identical on every
-rank** — level, subcycle counters, and global parameters — never from grid
-ownership or local particle counts.
+  (a) when new particles exist anywhere, and
+  (b) before something consumes the resulting indices or counts.
+
+Condition (b) is the useful one, because it is parameter-independent.
+Investigation of the consumers:
+
+| consumer | needs the sync? | evidence |
+|---|---|---|
+| particle migration between grids/ranks | **No** | `Grid_CommunicationSendParticles.C` copies `ParticleNumber` into an opaque `buffer[].id` and restores it; `INT_UNDEFINED` travels intact and is never interpreted |
+| `RebuildHierarchy` | **No** | it performs its own `CommunicationSyncNumberOfParticles` |
+| data output | **YES** | `Grid_Group_WriteGrid.C` writes `ParticleNumber` to disk; unassigned IDs would corrupt the dump |
+
+Ordering within an EvolveLevel subcycle (line numbers as of `86616544`):
+
+    398  SetLevelTimeStep      <- global dt reduction, ranks in lockstep here
+    447  StarParticleInitialize
+    716  StarParticleHandler   <- particles created here
+    796  StarParticleFinalize  <- the 62% Allreduce
+    851  recurse to level+1
+    867  OutputFromEvolveLevel <- the real consumer
+    1002 RebuildHierarchy      <- does its own count sync
+
+### Design
+
+Move the count sync from *every* `StarParticleFinalize` call to *before data
+output*, gated by a parameter defaulting to current behaviour.
+
+- Output is rare in production (at most once per root cycle), versus 4327
+  subcycles per 5 root steps, so this is a ~1000x reduction in occurrences
+  rather than the ~2x that syncing at rebuild cadence would give.
+- The call site moves to an event that is **already global and already
+  synchronised**, which is why it should be cheap: our own data shows position
+  dominates cost far more than the collective itself. `SetLevelTimeStep`'s
+  `CommunicationMinValue` runs at the *same per-subcycle cadence* and costs
+  **50 s against 1388 s** - a 28x difference - purely because it sits at the
+  start of a subcycle where ranks are still in lockstep, while the star-count
+  Allreduce sits at the end and absorbs all the imbalanced work.
+- **No rank-divergence risk.** There is no predicate to disagree about: every
+  rank syncs at the same global event. This removes the deadlock hazard that
+  killed the parameter-based design and that T2.1 demonstrated for real.
+
+### The bookkeeping hazard this creates
+
+`SetNewParticleIndex` assigns IDs from running counters
+(`NumberOfStarParticles`, `NumberOfOtherParticles`). `StarParticleInitialize`
+recomputes `NumberOfOtherParticles` from `NumberOfStarParticles` **every
+subcycle**, so deferring the sync leaves those globals stale in between.
+
+That is tolerable **only if nothing consumes the stale values**. The one
+consumer identified is `SetNewParticleIndex` itself, which runs inside the
+deferred sync - so counters and assignment move together and stay mutually
+consistent. **This is the single most important thing to verify before
+trusting the change**: if any other code path reads `NumberOfStarParticles` or
+`NumberOfOtherParticles` between syncs and acts on it, IDs can collide, and a
+duplicate particle ID is a silent data-corruption bug rather than a crash.
+
+Verification plan for that specific hazard: assert ID uniqueness across the
+whole hierarchy at each output (cheap, and catches collisions directly rather
+than inferring their absence).
 
 ## Risks (in order of severity)
 
