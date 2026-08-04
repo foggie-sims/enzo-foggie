@@ -199,7 +199,12 @@ c
              geslice(i,j) = max((geslice(i,j)*dslice(i,j) +
      $            (gef(i,j) - gef(i+1,j)) + ges(i,j)) * dnuinv(i)
      $            ,0.5_RKIND*geslice(i,j))
-c             if (geslice(i,j) .lt. tiny) geslice(i,j) = tiny
+c            Floor the gas energy rather than aborting on roundoff-
+c            level negatives.  Values of order 1e-15 to 1e-31, i.e.
+c            machine epsilon relative to the local energy scale, were
+c            killing every rank on the test below.  eslice is floored
+c            the same way at the end of this routine.
+             if (geslice(i,j) .lt. tiny) geslice(i,j) = tiny
              if (geslice(i,j) .lt. 0._RKIND) then
                 write(6,*) i,j,dslice(i,j),dnu(i),pcent(i),eslice(i,j),
      &               gef(i,j), gef(i+1,j), ges(i,j),
