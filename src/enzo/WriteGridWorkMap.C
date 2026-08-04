@@ -37,6 +37,13 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
 
+/* Cost of the work-field reduction (PaintWorkField).  Reported rather
+   than assumed: the whole justification for placing it among the
+   rebuild's existing collectives is that ranks are already synchronised
+   there, so it should cost latency and not a fresh barrier. */
+extern double WorkFieldReduceTime;
+extern int    WorkFieldReduceCount;
+
 int WriteGridWorkMap(LevelHierarchyEntry *LevelArray[], int cycle,
 		     int minlevel)
 {
@@ -96,6 +103,15 @@ int WriteGridWorkMap(LevelHierarchyEntry *LevelArray[], int cycle,
     }
 
   fclose(fptr);
+
+  /* Once per root step, from one rank: what the work-field reduction has
+     cost so far.  Compare against total wall, not against nothing. */
+
+  if (minlevel == 0 && MyProcessorNumber == ROOT_PROCESSOR &&
+      WorkFieldReduceCount > 0)
+    fprintf(stderr, "WorkFieldReduce: %"ISYM" calls, %g s cumulative "
+	    "(%g s/call)\n", WorkFieldReduceCount, WorkFieldReduceTime,
+	    WorkFieldReduceTime / WorkFieldReduceCount);
 
   return SUCCESS;
 }
