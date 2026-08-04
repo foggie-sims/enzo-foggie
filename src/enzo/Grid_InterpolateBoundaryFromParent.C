@@ -422,9 +422,26 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 			      &Zero, &Zero, &Zero, &Zero, &Zero, &Zero,
 			      &Zero, &Zero, &Zero, &TempSize, &Zero, &Zero);
  
+      /* Enforce positivity on the interpolated internal energy.  See the
+	 companion comment in Grid_InterpolateFieldValues.C: with
+	 InterpolationMethod = SecondOrderA the SecondOrderBFlag[] positivity
+	 constraint above is never populated and interp3d runs unconstrained,
+	 so the interpolant can undershoot below zero across a steep gradient
+	 and leave a tiny negative gas energy in the ghost zones.  Nothing
+	 downstream clamps it, and it eventually trips the fatal
+	 "stop in euler with geslice < 0" test in euler.F.
+
+	 Applied after the conservative-to-physical division so the clamp is
+	 on the physical variable. */
+
+      if (FieldType[field] == InternalEnergy)
+	for (int n = 0; n < TempSize; n++)
+	  if (TemporaryField[n] < tiny_number)
+	    TemporaryField[n] = tiny_number;
+
       /* Set FieldPointer to either the correct field (density or the one we
 	 just interpolated to). */
- 
+
       if (FieldType[field] == Density)
 	FieldPointer = TemporaryDensityField;
       else 
