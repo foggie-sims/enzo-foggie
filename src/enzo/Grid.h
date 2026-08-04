@@ -95,6 +95,14 @@ class grid
                                        //   only lives from one rebuild to the
                                        //   next, so the interval varies; the
                                        //   count makes records comparable.
+  double ChemWorkReported;             // watermark: how much of the above the
+  double GravWorkReported;             //   diagnostic has already written out.
+  int    ChemWorkCallsReported;        //   The accumulators themselves are the
+                                       //   grid's LIFETIME cost and must never
+                                       //   be reset by the diagnostic - the
+                                       //   work-capped rebuild reads them, and
+                                       //   a grid's lifetime is exactly one
+                                       //   rebuild interval.
   double GravWorkTime;                 // measured particle-gravity wall time
                                        //   (deposit, potential solve,
                                        //   accelerations, particle update).
@@ -305,7 +313,21 @@ class grid
    };
    double ReturnGravWorkTime() {return GravWorkTime;};
    void   ClearChemWorkTime() {ChemWorkTime = 0.0; ChemWorkCalls = 0;
-                               GravWorkTime = 0.0;};
+                               GravWorkTime = 0.0;
+                               ChemWorkReported = 0.0; GravWorkReported = 0.0;
+                               ChemWorkCallsReported = 0;};
+
+/* Hand the diagnostic what has accrued since it last looked, without
+   disturbing the accumulators the rebuild depends on. */
+
+   void ReportChemWork(double &dchem, double &dgrav, int &dcalls) {
+     dchem  = ChemWorkTime  - ChemWorkReported;
+     dgrav  = GravWorkTime  - GravWorkReported;
+     dcalls = ChemWorkCalls - ChemWorkCallsReported;
+     ChemWorkReported = ChemWorkTime;
+     GravWorkReported = GravWorkTime;
+     ChemWorkCallsReported = ChemWorkCalls;
+   };
 
 /* Read grid data from a file (returns: success/failure) */
 

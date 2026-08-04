@@ -81,6 +81,12 @@ int WriteGridWorkMap(LevelHierarchyEntry *LevelArray[], int cycle,
       if (Temp->GridData->ReturnProcessorNumber() != MyProcessorNumber)
 	continue;
 
+      /* what accrued since the last record: disjoint intervals, without
+	 clearing what the work-capped rebuild reads */
+      double dchem, dgrav;
+      int dcalls;
+      Temp->GridData->ReportChemWork(dchem, dgrav, dcalls);
+
       int Rank, Dims[MAX_DIMENSION];
       FLOAT Left[MAX_DIMENSION], Right[MAX_DIMENSION];
       Temp->GridData->ReturnGridInfo(&Rank, Dims, Left, Right);
@@ -90,16 +96,9 @@ int WriteGridWorkMap(LevelHierarchyEntry *LevelArray[], int cycle,
 	      "%.10e %.10e %.10e %.10e %.10e %.10e\n",
 	      sequence, cycle, level, MyProcessorNumber,
 	      Temp->GridData->GetActiveSize(),
-	      Temp->GridData->ReturnChemWorkTime(),
-	      Temp->GridData->ReturnGravWorkTime(),
-	      Temp->GridData->ReturnChemWorkCalls(),
+	      dchem, dgrav, dcalls,
 	      (double) Left[0],  (double) Left[1],  (double) Left[2],
 	      (double) Right[0], (double) Right[1], (double) Right[2]);
-
-      /* The accumulator restarts each root step, so consecutive records
-	 describe disjoint intervals. */
-
-      Temp->GridData->ClearChemWorkTime();
     }
 
   fclose(fptr);

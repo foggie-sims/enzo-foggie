@@ -40,6 +40,9 @@ grid::grid()
   ChemWorkTime                          = 0.0;
   ChemWorkCalls                         = 0;
   GravWorkTime                          = 0.0;
+  ChemWorkReported                      = 0.0;
+  GravWorkReported                      = 0.0;
+  ChemWorkCallsReported                 = 0;
   NumberOfParticles                     = 0;
   GravitatingMassFieldCellSize          = FLOAT_UNDEFINED;
   GravitatingMassFieldParticlesCellSize = FLOAT_UNDEFINED;
