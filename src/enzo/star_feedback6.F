@@ -1037,7 +1037,15 @@ c     are oxygen atoms, for simplicity. Note that what is called "mu" here
 c     and in the mu_field passed to this function are actually the inverse
 c     mean molecular weight!!!
 c
-                        if (Z_cell .gt. 0.95_RKIND) 
+c     Z_cell comes from metal/d with no guard on either operand, so it can
+c     be NaN (0/0 in an evacuated cell) or negative (metal is a colour
+c     field and does go negative -- this run logged 25777 "negative colour"
+c     warnings from flux_hllc).  A bare ".gt. 0.95" test is false for a NaN,
+c     so the NaN used to survive the cap and then get baked into mu_cell by
+c     the band-aid below, which exists precisely to guarantee a finite mu.
+                        if (Z_cell .ne. Z_cell) Z_cell = 0._RKIND
+                        if (Z_cell .lt. 0._RKIND) Z_cell = 0._RKIND
+                        if (Z_cell .gt. 0.95_RKIND)
      &                    Z_cell = 0.95_RKIND
                         if ((mu_cell .lt. 0.0625_RKIND) .or. 
      &                    (mu_cell .gt. 2._RKIND) .or.
@@ -1443,8 +1451,25 @@ c
         Mej = mass_per_cell*real(distcells, RKIND) * 
      &     dunits*(x1*dx)**3._RKIND
         SN_energy = nsn*10**51._RKIND/Nnbors
-        chi_th = 69.58_RKIND*(nsn)**(-2._RKIND/17._RKIND) * 
-     &               (n_avg)**(-4._RKIND/17._RKIND) * 
+c
+c     n_avg is about to be raised to a negative REAL power, which the
+c     compiler evaluates as exp(y*log(n_avg)): that is NaN for n_avg < 0
+c     and +Inf for n_avg = 0.  Z_floor already has a max(...,0.01) guard
+c     and nsn is a positive count, but n_avg arrived with none -- it is a
+c     plain sum of d*mu over the 3x3x3 stencil, and mu_cell can come back
+c     NaN from the band-aid above (see the Z_cell guard there), which is
+c     enough to turn chi_th, then the momentum kick, then every velocity
+c     in the stencil into NaN.  Floor it at the density of one hydrogen
+c     atom per cc, far below any cell that hosts a supernova.
+c
+        if (n_avg .ne. n_avg .or. n_avg .lt. 1.0e-6_RKIND) then
+           write(6,*) 'star_feedback6: bad n_avg', n_avg,
+     &          ' at ic,jc,kc =', ic, jc, kc, ' nsn =', nsn,
+     &          ' Z_floor =', Z_floor
+           n_avg = 1.0e-6_RKIND
+        endif
+        chi_th = 69.58_RKIND*(nsn)**(-2._RKIND/17._RKIND) *
+     &               (n_avg)**(-4._RKIND/17._RKIND) *
      &               (Z_floor)**(-0.28_RKIND)
 #ifdef FORTRAN_DEBUG
         write(7,*) 'chi_th:',chi_th

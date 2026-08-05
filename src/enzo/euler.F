@@ -126,7 +126,33 @@ c
        do i=i1, i2
           qc = dt/dx(i)
           dnu(i) = dslice(i,j) + (df(i,j) - df(i+1,j))
-          dnuinv(i) = 1._RKIND/dnu(i)
+c
+c     Trap a non-finite updated density here, before the floor below can
+c     hide it.  max() compiles to vmaxsd, which returns its SECOND operand
+c     whenever either operand is a NaN (Intel SDM, MAXSD); the generated
+c     code holds dfloor in the second slot, so max(dnu, dfloor) silently
+c     replaces a NaN density with exactly dfloor and leaves
+c     dnuinv = 1/dfloor = 1e30.  The cell then looks merely evacuated --
+c     density exactly SmallRho -- while every quantity derived from it is
+c     NaN, and because "dnu .le. 0" is also false for a NaN the Riemann
+c     solvers do not report it or fall back to HLL either.  That is how
+c     halo42189/L2-gas reached ApplyBoundsToBaryonFields with
+c     D = 1.0000000000000001e-30, GE finite, and TE and all three
+c     velocities NaN, having printed no hydro diagnostic at all.
+c
+          if (dnu(i) .ne. dnu(i)) then
+             write(6,*) 'euler: non-finite dnu at i,j =', i, j
+             write(6,*) 'euler: dslice, df(i), df(i+1) =',
+     &            dslice(i,j), df(i,j), df(i+1,j)
+             write(6,*) 'euler: dslice(i-1,i,i+1) =',
+     &            dslice(i-1,j), dslice(i,j), dslice(i+1,j)
+             write(6,*) 'euler: uslice(i-1,i,i+1) =',
+     &            uslice(i-1,j), uslice(i,j), uslice(i+1,j)
+             write(6,*) 'euler: eslice(i-1,i,i+1) =',
+     &            eslice(i-1,j), eslice(i,j), eslice(i+1,j)
+             write(6,*) 'euler: dt, dx =', dt, dx(i)
+             ERROR_MESSAGE
+          endif
 c          write(21,*) i, dnu(i), dub(i), db(i), ub(i)
 c          uadvect = (dnu(i)-dslice(i,j))/(qc*(db(i+1)-db(i)))
 c          if (uslice(i,j)/(uadvect) .gt. 1.8 .and. uadvect .ne. 0.0)
@@ -140,8 +166,8 @@ c  Apply density floor (if used) and update inv density
 c
           if (dfloor .gt. 0._RKIND) then
               dnu(i)    = max( dnu(i), dfloor)
-              dnuinv(i) = 1._RKIND / dnu(i)
           endif
+          dnuinv(i) = 1._RKIND / dnu(i)
 
           uold(i)     = uslice(i,j)
 c          write(20,*) i, uslice(i,j), (uslice(i,j)*dslice(i,j) +
