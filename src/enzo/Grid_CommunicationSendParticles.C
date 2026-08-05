@@ -122,7 +122,7 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
   /* Allocate Number field on from processor. */
  
   FLOAT *TempPos[MAX_DIMENSION];
-  float  *TempVel[MAX_DIMENSION], *TempMass, *TempInitialMass,
+  float  *TempVel[MAX_DIMENSION], *TempMass, *TempInitialMass = NULL,
         *TempAttribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
   PINT *TempNumber;
   int NewNumber = FromNumber, *TempType;
@@ -186,6 +186,9 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
 	
       delete [] TempNumber;
       delete [] TempMass;
+      /* Saved above from ToGrid->ParticleInitialMass and orphaned by
+	 AllocateNewParticles(); it was the one saved array not freed here. */
+      delete [] TempInitialMass;
       delete [] TempType;
       for (dim = 0; dim < GridRank; dim++) {
 	delete [] TempPos[dim];

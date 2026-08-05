@@ -122,7 +122,17 @@ grid::~grid()
   delete BoundaryFluxes;
  
   delete [] ParticleMass;
-  if (StarMakerStoreInitialMass) delete [] ParticleInitialMass;
+  /* ParticleInitialMass is allocated alongside ParticleMass by
+     AllocateNewParticles() whenever StarMakerStoreInitialMass is set, but was
+     missing here while every other particle array was freed.  Every grid
+     destruction leaked 4*NumberOfParticles bytes; the dominant source is the
+     temporary "fake" grid that Grid::StarParticleHandler() creates and
+     deletes for every grid on every subcycle on every level, which allocates
+     0.25*size+5 particle slots and so leaked ~size bytes per call.  Summed
+     over a root-grid cycle that is of order the total cell-update count in
+     bytes -- tens of GB per cycle for a deep hierarchy -- and it exhausted
+     the node before the run could reach its next output. */
+  delete [] ParticleInitialMass;
   delete [] ParticleNumber;
   delete [] ParticleType;
   delete [] PotentialField;
