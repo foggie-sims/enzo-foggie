@@ -51,12 +51,13 @@ int grid::ApplyGalaxyParticleGravity(ActiveParticleType** ThisParticle){
   FLOAT xx, yy, zz;
 
   int SNColourNum, MetalNum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum,
-    MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum;
+    MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum, DustDensityNum;
   int MetallicityField = FALSE;
 
   if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum,
-                                 MetalIINum, MetalAGBNum, MetalNSMNum, MBHColourNum, 
-                                 Galaxy1ColourNum, Galaxy2ColourNum) == FAIL) {
+                                 MetalIINum, MetalAGBNum, MetalNSMNum, MBHColourNum,
+                                 Galaxy1ColourNum, Galaxy2ColourNum,
+                                 DustDensityNum) == FAIL) {
     ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
   }
   MetallicityField = (MetalNum > 0) ? TRUE : FALSE;
@@ -68,7 +69,7 @@ int grid::ApplyGalaxyParticleGravity(ActiveParticleType** ThisParticle){
    }
 
   rad2dx = (rad + dx) * (rad + dx);
-  
+
   printf("I would be applying gravity to this grid:\n");
   printf("%f %f %f : %f %f %f\n", GravitatingMassFieldLeftEdge[0],
     GravitatingMassFieldLeftEdge[1], GravitatingMassFieldLeftEdge[2],

@@ -992,8 +992,24 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 	  StarMakerPlanetaryNebulae);
   fprintf(fptr, "StarMakerStoreInitialMass             = %"ISYM"\n",
 	  StarMakerStoreInitialMass);
-  fprintf(fptr, "MultiMetals                           = %"ISYM"\n\n",
+  fprintf(fptr, "MultiMetals                           = %"ISYM"\n",
           MultiMetals);
+  fprintf(fptr, "UseDustDensityField                   = %"ISYM"\n",
+          UseDustDensityField);
+  fprintf(fptr, "InitialDustToGasRatio                 = %"FSYM"\n",
+          InitialDustToGasRatio);
+  fprintf(fptr, "UseSNeRateField                       = %"ISYM"\n",
+          UseSNeRateField);
+  fprintf(fptr, "UseDustSpeciesTrack                   = %"ISYM"\n",
+          UseDustSpeciesTrack);
+  fprintf(fptr, "InitialDustSilicateFraction           = %"FSYM"\n",
+          InitialDustSilicateFraction);
+  fprintf(fptr, "InitialDustMgSilicateFraction         = %"FSYM"\n",
+          InitialDustMgSilicateFraction);
+  fprintf(fptr, "InitialDustFeSilicateFraction         = %"FSYM"\n",
+          InitialDustFeSilicateFraction);
+  fprintf(fptr, "InitialDustCarbonaceousFraction       = %"FSYM"\n\n",
+          InitialDustCarbonaceousFraction);
   fprintf(fptr, "IsotropicConduction                   = %"ISYM"\n", IsotropicConduction);
   fprintf(fptr, "AnisotropicConduction                 = %"ISYM"\n", AnisotropicConduction);
   fprintf(fptr, "IsotropicConductionSpitzerFraction    = %"FSYM"\n", IsotropicConductionSpitzerFraction);

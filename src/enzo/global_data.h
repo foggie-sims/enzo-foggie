@@ -441,6 +441,42 @@ EXTERN int GloverChemistryModel;  // 0 is off, on is 1-7, excluding 6
 
 EXTERN int MultiMetals;
 
+/* Dust density field flag and initial dust-to-gas ratio */
+EXTERN int UseDustDensityField;
+EXTERN float InitialDustToGasRatio;
+
+/* Per-cell SN-event count field (BaryonField with FieldType SNeRate).
+   Populated each timestep by star_feedback2; consumed by Grackle when
+   use_sne_field = 1 (Li+ 2019 dust destruction). Units: SNe per cell
+   per dt. */
+EXTERN int UseSNeRateField;
+
+/* Species-resolved dust tracking (dust_species_track = 1 in Grackle).
+   When enabled, allocates 5 gas-phase element fields (C, O, Mg, Si, Fe) as
+   subsets of Metallicity, plus 3 dust species fields (Mg-silicate,
+   Fe-silicate, carbonaceous). */
+EXTERN int UseDustSpeciesTrack;
+
+/* Canonical MW diffuse-ISM split of bulk dust into species, used to seed
+   the dust species fields from InitialDustToGasRatio. Draine 2003 /
+   COLIBRE equal-molecule Mg2SiO4/Fe2SiO4. */
+EXTERN float InitialDustSilicateFraction;       // silicate / dust_total
+EXTERN float InitialDustMgSilicateFraction;     // mg_sil   / silicate
+EXTERN float InitialDustFeSilicateFraction;     // fe_sil   / silicate
+EXTERN float InitialDustCarbonaceousFraction;   // carb     / dust_total
+
+/* Solar mass fractions of the five tracked elements relative to the total
+   solar metal mass, used to seed the gas-phase element fields from the
+   metallicity field and to apportion stellar metal ejecta. Fixed at solar
+   to keep the model simple (values from gracklepy
+   utilities.convenience.solar_metal_mass_fractions(); the five elements
+   account for ~76% of solar metal mass). */
+#define SOLAR_METAL_FRACTION_C  0.1585
+#define SOLAR_METAL_FRACTION_O  0.4222
+#define SOLAR_METAL_FRACTION_MG 0.0454
+#define SOLAR_METAL_FRACTION_SI 0.0525
+#define SOLAR_METAL_FRACTION_FE 0.0848
+
 /* Cosmic Ray Model
  * 0: Off - default
  * 1: On, (two fluid model)

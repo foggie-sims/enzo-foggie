@@ -126,6 +126,16 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *MetalIaName = "MetalSNIa_Density";
   char *MetalAGBName = "MetalAGB_Density";
   char *MetalNSMName = "MetalNSM_Density";
+  char *DustDensityName = "Dust_Density";
+  char *SNeRateName     = "SNe_Rate";
+  char *MetalDensityCarbonName     = "Metal_Density_Carbon";
+  char *MetalDensityOxygenName     = "Metal_Density_Oxygen";
+  char *MetalDensityMagnesiumName  = "Metal_Density_Magnesium";
+  char *MetalDensitySiliconName    = "Metal_Density_Silicon";
+  char *MetalDensityIronName       = "Metal_Density_Iron";
+  char *DustDensityMgSilicateName  = "Dust_Density_MgSilicate";
+  char *DustDensityFeSilicateName  = "Dust_Density_FeSilicate";
+  char *DustDensityCarbonaceousName= "Dust_Density_Carbonaceous";
   char *ForbidName = "ForbiddenRefinement";
   char *MachName   = "Mach";
   char *PSTempName = "PreShock_Temperature";
@@ -757,7 +767,23 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       DataLabel[i++] = ExtraNames[1];
     }
   }
- 
+  /* With UseDustSpeciesTrack the bulk dust density (and the silicate sum)
+     are not carried as fields; they are derived from the species on demand. */
+  if (UseDustDensityField && !UseDustSpeciesTrack)
+    DataLabel[i++] = DustDensityName;
+  if (UseSNeRateField)
+    DataLabel[i++] = SNeRateName;
+  if (UseDustSpeciesTrack) {
+    DataLabel[i++] = MetalDensityCarbonName;
+    DataLabel[i++] = MetalDensityOxygenName;
+    DataLabel[i++] = MetalDensityMagnesiumName;
+    DataLabel[i++] = MetalDensitySiliconName;
+    DataLabel[i++] = MetalDensityIronName;
+    DataLabel[i++] = DustDensityMgSilicateName;
+    DataLabel[i++] = DustDensityFeSilicateName;
+    DataLabel[i++] = DustDensityCarbonaceousName;
+  }
+
   if(STARMAKE_METHOD(COLORED_POP3_STAR)){
     DataLabel[i++] = ForbidName;
   }

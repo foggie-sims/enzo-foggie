@@ -189,7 +189,9 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
   /* declarations */
 
   int dim, i, j, k, m, field, disk, size, MetalNum, MetalIaNum, vel;
-  int MetalIINum, MetalAGBNum, MetalNSMNum;
+  int MetalIINum, MetalAGBNum, MetalNSMNum, DustNum, SNeRateNum;
+  int MetalCNum, MetalONum, MetalMgNum, MetalSiNum, MetalFeNum,
+    DustMgNum, DustFeNum, DustCNum;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum,
     H2IINum, DINum, DIINum, HDINum, B1Num, B2Num, B3Num, PhiNum;
   double DiskDensity, DiskVelocityMag;
@@ -283,6 +285,22 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
     FieldType[MetalIINum = NumberOfBaryonFields++] = MetalSNIIDensity;
     FieldType[MetalAGBNum = NumberOfBaryonFields++] = MetalAGBDensity;
     FieldType[MetalNSMNum = NumberOfBaryonFields++] = MetalNSMDensity;
+  }
+  /* With UseDustSpeciesTrack the bulk dust density (and the silicate sum)
+     are not carried as fields; they are derived from the species on demand. */
+  if (UseDustDensityField && !UseDustSpeciesTrack)
+    FieldType[DustNum = NumberOfBaryonFields++] = DustDensity;
+  if (UseSNeRateField)
+    FieldType[SNeRateNum = NumberOfBaryonFields++] = SNeRate;
+  if (UseDustSpeciesTrack) {
+    FieldType[MetalCNum  = NumberOfBaryonFields++] = MetalDensityCarbon;
+    FieldType[MetalONum  = NumberOfBaryonFields++] = MetalDensityOxygen;
+    FieldType[MetalMgNum = NumberOfBaryonFields++] = MetalDensityMagnesium;
+    FieldType[MetalSiNum = NumberOfBaryonFields++] = MetalDensitySilicon;
+    FieldType[MetalFeNum = NumberOfBaryonFields++] = MetalDensityIron;
+    FieldType[DustMgNum  = NumberOfBaryonFields++] = DustDensityMgSilicate;
+    FieldType[DustFeNum  = NumberOfBaryonFields++] = DustDensityFeSilicate;
+    FieldType[DustCNum   = NumberOfBaryonFields++] = DustDensityCarbonaceous;
   }
 
   /* Return if this doesn't concern us. */
@@ -621,7 +639,47 @@ int grid::GalaxySimulationInitializeGrid(double DiskRadius,
     BaryonField[MetalAGBNum][n] = tiny_number;
     BaryonField[MetalNSMNum][n] = tiny_number;
   }
-   
+
+  if (UseDustDensityField && !UseDustSpeciesTrack) {
+    if (UseMetallicityField)
+      BaryonField[DustNum][n] = InitialDustToGasRatio * BaryonField[0][n];
+    else
+      BaryonField[DustNum][n] = tiny_number;
+  }
+
+  if (UseSNeRateField)
+    BaryonField[SNeRateNum][n] = 0.0;
+
+  /* Species-resolved dust tracking: seed dust species from the bulk dust
+     budget (InitialDustToGasRatio * gas density, computed per cell; the
+     bulk field itself is not carried) and gas-phase element fields from
+     metal_density. */
+  if (UseDustSpeciesTrack) {
+    if (UseMetallicityField) {
+      float fsil_mg = InitialDustSilicateFraction * InitialDustMgSilicateFraction;
+      float fsil_fe = InitialDustSilicateFraction * InitialDustFeSilicateFraction;
+      float dustseed = InitialDustToGasRatio * BaryonField[0][n];
+      BaryonField[DustMgNum][n]  = fsil_mg * dustseed;
+      BaryonField[DustFeNum][n]  = fsil_fe * dustseed;
+      BaryonField[DustCNum][n]   = InitialDustCarbonaceousFraction *
+                                   dustseed;
+      BaryonField[MetalCNum][n]  = SOLAR_METAL_FRACTION_C    * BaryonField[MetalNum][n];
+      BaryonField[MetalONum][n]  = SOLAR_METAL_FRACTION_O    * BaryonField[MetalNum][n];
+      BaryonField[MetalMgNum][n] = SOLAR_METAL_FRACTION_MG * BaryonField[MetalNum][n];
+      BaryonField[MetalSiNum][n] = SOLAR_METAL_FRACTION_SI   * BaryonField[MetalNum][n];
+      BaryonField[MetalFeNum][n] = SOLAR_METAL_FRACTION_FE      * BaryonField[MetalNum][n];
+    } else {
+      BaryonField[DustMgNum][n]  = tiny_number;
+      BaryonField[DustFeNum][n]  = tiny_number;
+      BaryonField[DustCNum][n]   = tiny_number;
+      BaryonField[MetalCNum][n]  = tiny_number;
+      BaryonField[MetalONum][n]  = tiny_number;
+      BaryonField[MetalMgNum][n] = tiny_number;
+      BaryonField[MetalSiNum][n] = tiny_number;
+      BaryonField[MetalFeNum][n] = tiny_number;
+    }
+  }
+
 	for (dim = 0; dim < GridRank; dim++)
 	  BaryonField[vel+dim][n] = Velocity[dim] + UniformVelocity[dim];
 
