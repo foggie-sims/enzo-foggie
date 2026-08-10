@@ -23,5 +23,10 @@ double *pop_age;
 double *mass_yield;
 double *metm_yield;
 double *mom_rate;
+double *kdiss_H2; //Local Radiation Fields - CWT 06/07/2026
+double *kdet_HM;
+double *kdiss_CO;
+double *kion_CI;
+double *kion_OI;
 
 };

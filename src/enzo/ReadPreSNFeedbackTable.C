@@ -205,6 +205,104 @@ int ReadPreSNFeedbackTable(char *name)
       return FAIL;
     }
 
+    if (UseLocalStellarRadiation) {  // CWT 06/07/2026
+        /* Read H2 Photodissociation Fields */
+        pSNFBTable.kdiss_H2 = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+        dset_id = H5Dopen(file_id, "/SB99_models/h2_photodissociation_rate");
+        if (dset_id == h5_error) {
+          fprintf(stderr,"Can't open /SB99_models/h2_photodissociation_rate in %s.\n", name);
+          return FAIL;
+        }
+        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
+                          H5S_ALL, H5P_DEFAULT, pSNFBTable.kdiss_H2);
+        if (status == h5_error) {
+          fprintf(stderr, "Failed to read /SB99_models/h2_photodissociation_rate in %s.\n",name);
+          return FAIL;
+        }
+        status = H5Dclose(dset_id);
+        if (status == h5_error) {
+          fprintf(stderr,"Failed to close /SB99_models/h2_photodissociation_rate in %s.\n",name);
+          return FAIL;
+        }
+
+        /* Read HM Photodetatchment Fields */
+        pSNFBTable.kdet_HM = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+        dset_id = H5Dopen(file_id, "/SB99_models/hm_photodetatchment_rate");
+        if (dset_id == h5_error) {
+          fprintf(stderr,"Can't open /SB99_models/hm_photodetatchment_rate in %s.\n", name);
+          return FAIL;
+        }
+        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
+                          H5S_ALL, H5P_DEFAULT, pSNFBTable.kdet_HM);
+        if (status == h5_error) {
+          fprintf(stderr, "Failed to read /SB99_models/hm_photodetatchment_rate in %s.\n",name);
+          return FAIL;
+        }
+        status = H5Dclose(dset_id);
+        if (status == h5_error) {
+          fprintf(stderr,"Failed to close /SB99_models/hm_photodetatchment_rate in %s.\n",name);
+          return FAIL;
+        }
+
+        /* Read CO Photodissocation Fields */
+        pSNFBTable.kdiss_CO = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+        dset_id = H5Dopen(file_id, "/SB99_models/co_photodissociation_rate");
+        if (dset_id == h5_error) {
+          fprintf(stderr,"Can't open /SB99_models/co_photodissociation_rate in %s.\n", name);
+          return FAIL;
+        }
+        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
+                          H5S_ALL, H5P_DEFAULT, pSNFBTable.kdiss_CO);
+        if (status == h5_error) {
+          fprintf(stderr, "Failed to read /SB99_models/co_photodissociation_rate in %s.\n",name);
+          return FAIL;
+        }
+        status = H5Dclose(dset_id);
+        if (status == h5_error) {
+          fprintf(stderr,"Failed to close /SB99_models/co_photodissociation_rate in %s.\n",name);
+          return FAIL;
+        }
+
+        /* Read C I -> C II Photoionization Fields */
+        pSNFBTable.kion_CI = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+        dset_id = H5Dopen(file_id, "/SB99_models/ci_photoionization_rate");
+        if (dset_id == h5_error) {
+          fprintf(stderr,"Can't open /SB99_models/ci_photoionization_rate in %s.\n", name);
+          return FAIL;
+        }
+        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
+                          H5S_ALL, H5P_DEFAULT, pSNFBTable.kion_CI);
+        if (status == h5_error) {
+          fprintf(stderr, "Failed to read /SB99_models/ci_photoionization_rate in %s.\n",name);
+          return FAIL;
+        }
+        status = H5Dclose(dset_id);
+        if (status == h5_error) {
+          fprintf(stderr,"Failed to close /SB99_models/ci_photoionization_rate in %s.\n",name);
+          return FAIL;
+        }
+
+        /* Read O I -> O II Photoionization Fields */
+        pSNFBTable.kion_OI = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+        dset_id = H5Dopen(file_id, "/SB99_models/oi_photoionization_rate");
+        if (dset_id == h5_error) {
+          fprintf(stderr,"Can't open /SB99_models/oi_photoionization_rate in %s.\n", name);
+          return FAIL;
+        }
+        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
+                          H5S_ALL, H5P_DEFAULT, pSNFBTable.kion_OI);
+        if (status == h5_error) {
+          fprintf(stderr, "Failed to read /SB99_models/oi_photoionization_rate in %s.\n",name);
+          return FAIL;
+        }
+        status = H5Dclose(dset_id);
+        if (status == h5_error) {
+          fprintf(stderr,"Failed to close /SB99_models/oi_photoionization_rate in %s.\n",name);
+          return FAIL;
+        }
+
+    }
+
     /* Close file */
     status = H5Fclose (file_id);
     if (status == h5_error) {
@@ -218,6 +316,15 @@ int ReadPreSNFeedbackTable(char *name)
     pSNFBTable.mass_yield = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     pSNFBTable.metm_yield = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     pSNFBTable.mom_rate = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+    //Local Radiation Fields - CWT 06/07/2026
+    if (UseLocalStellarRadiation) {
+        pSNFBTable.kdiss_H2 = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+        pSNFBTable.kdet_HM = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+        pSNFBTable.kdiss_CO = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+        pSNFBTable.kion_CI = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+        pSNFBTable.kion_OI = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+
+    }
 
   } // end not root
 
@@ -228,6 +335,13 @@ int ReadPreSNFeedbackTable(char *name)
   MPI_Bcast(pSNFBTable.mass_yield, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
   MPI_Bcast(pSNFBTable.metm_yield, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
   MPI_Bcast(pSNFBTable.mom_rate, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+  if (UseLocalStellarRadiation) {
+    MPI_Bcast(pSNFBTable.kdiss_H2, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+    MPI_Bcast(pSNFBTable.kdet_HM, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+    MPI_Bcast(pSNFBTable.kdiss_CO, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+    MPI_Bcast(pSNFBTable.kion_CI, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+    MPI_Bcast(pSNFBTable.kion_OI, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+  }
 #endif
   
   return SUCCESS;
