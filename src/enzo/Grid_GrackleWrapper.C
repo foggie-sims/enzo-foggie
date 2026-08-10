@@ -288,7 +288,11 @@ int grid::GrackleWrapper()
   float *k_diss_CO_grid = NULL;
   float *k_ion_CI_grid = NULL;
   float *k_ion_OI_grid = NULL;
-  float *EmptyRtArray = NULL;
+  float *EmptyRtArray0 = NULL;
+  float *EmptyRtArray1 = NULL;
+  float *EmptyRtArray2 = NULL;
+  float *EmptyRtArray3 = NULL;
+
   if (UseLocalStellarRadiation){
     /* Estimate local radiation field from new Stars - CWT 06/07/26 */
     //Sum all the mass of all young star particles on the grid
@@ -318,7 +322,7 @@ int grid::GrackleWrapper()
           float t_age = (age - pSNFBTable.pop_age[0]) / dt_table;
           int aa = (int)floor(t_age);
           if (aa>=pSNFBTable.n_age){
-            aa=pSNFBTable.n_age-1;
+            aa=pSNFBTable.n_age-2;
             t_age = 1;
           }
           else if (aa<0){
@@ -331,16 +335,16 @@ int grid::GrackleWrapper()
 
           float metallicity = this->ParticleAttribute[2][i];
          // int zz = search_lower_bound((float*)metallicity_bins, metallicity, 0, 6, 6);
-          int zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met+1, pSNFBTable.n_met+1);
+          int zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met, pSNFBTable.n_met);
 
           //fprintf(stdout, "Age %"ESYM", ", age);
           //fprintf(stdout, "aa %"ISYM",", aa);
-          //fprintf(stdout, "Z %"ESYM", ", metallicity);
-          //fprintf(stdout, "zz %"ISYM"\n", zz);
+          fprintf(stdout, "Z %"ESYM", ", metallicity);
+          fprintf(stdout, "zz %"ISYM"\n", zz);
 
           float t_z=0.5f;
-          if (zz>=pSNFBTable.n_met){
-            zz=pSNFBTable.n_met-1;
+          if (zz>=pSNFBTable.n_met-1){
+            zz=pSNFBTable.n_met-2;
             t_z = 1;
           }
           else if (zz<0){
@@ -437,15 +441,22 @@ int grid::GrackleWrapper()
 #endif
 
     // Need to set the other fields to the same 0 array for now
-    EmptyRtArray  = new float[size];
+    EmptyRtArray0  = new float[size];
+    EmptyRtArray1  = new float[size];
+    EmptyRtArray2  = new float[size];
+    EmptyRtArray3  = new float[size];
+
     for (int i = 0; i < size; i++){
-      EmptyRtArray[i] = 0;
+      EmptyRtArray0[i] = 0;
+      EmptyRtArray1[i] = 0;
+      EmptyRtArray2[i] = 0;
+      EmptyRtArray3[i] = 0;
     }
 
-    my_fields.RT_HI_ionization_rate   = EmptyRtArray;
-    my_fields.RT_HeI_ionization_rate  = EmptyRtArray;
-    my_fields.RT_HeII_ionization_rate = EmptyRtArray;
-    my_fields.RT_heating_rate = EmptyRtArray;
+    my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
+    my_fields.RT_HeI_ionization_rate  = EmptyRtArray1;
+    my_fields.RT_HeII_ionization_rate = EmptyRtArray2;
+    my_fields.RT_heating_rate = EmptyRtArray3;
   } // UseLocalStellarRadiation
   /*                                              */
 
@@ -498,7 +509,11 @@ int grid::GrackleWrapper()
       delete[] k_diss_CO_grid;
       delete[] k_ion_CI_grid;
       delete[] k_ion_OI_grid;
-      delete[] EmptyRtArray;
+      delete[] EmptyRtArray0;
+      delete[] EmptyRtArray1;
+      delete[] EmptyRtArray2;
+      delete[] EmptyRtArray3;
+
     }
 
 
