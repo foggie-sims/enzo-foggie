@@ -193,7 +193,7 @@ c
      &      pSNmom_grid(nx,ny,nz), pSNup_grid(nx,ny,nz),
      &      pSNvp_grid(nx,ny,nz), pSNwp_grid(nx,ny,nz)
       R_PREC up_avg, vp_avg, wp_avg, up_avg_w, vp_avg_w, wp_avg_w
-      R_PREC wind_mass, wind_metal, wind_mom
+      R_PREC wind_mass, wind_metal, wind_mom, dt_pSN
       R_PREC ke_b_wind(2*distrad+1,2*distrad+1,2*distrad+1)
       R_PREC mass_b_wind, kin_energy_b_wind, mom_b_wind,
      &       mass_per_cell_w, mom_per_cell_w, metal_per_cell_w,
@@ -302,15 +302,17 @@ c     If using pre-SN feedback, get the wind mass, metals, and momentum
 c     from Starburst99 tables if the particle is young enough
 c
             if (preSN .eq. 1_IKIND .and. age .lt. 4.e6_RKIND) then
+c              Cap timestep at 4 Myr so winds are not integrated beyond that
+               dt_pSN = min(dt, (4.e6_RKIND - age)*yr_s/t1)
                call pSN_mass(wind_mass, minit(n), metalf(n),
-     &                          age, dt, t1, pSNtabMass, pSNtabZ,
+     &                          age, dt_pSN, t1, pSNtabMass, pSNtabZ,
      &                          pSNtabAge, pSNntabZ, pSNntabAge)
                call pSN_metal(wind_metal, minit(n), metalf(n),
-     &                          age, dt, t1, pSNtabMetal, pSNtabZ,
+     &                          age, dt_pSN, t1, pSNtabMetal, pSNtabZ,
      &                          pSNtabAge, pSNntabZ, pSNntabAge)
                if (preSNmom .eq. 1_IKIND) then
                   call pSN_mom(wind_mom, minit(n), metalf(n), age,
-     &                          dt, t1, vunits, pSNtabMom, pSNtabZ,
+     &                          dt_pSN, t1, vunits, pSNtabMom, pSNtabZ,
      &                          pSNtabAge, pSNntabZ, pSNntabAge)
                else
                   wind_mom = 0._RKIND
@@ -457,7 +459,23 @@ c
                   nsn_ii = nsn_ii_sto
                   nsn_ia = nsn_ia_sto
                   nsn = nsn_sto
-               endif ! end stochastic SNe
+               else ! end stochastic SNe
+c
+c     Make sure ejected mass is not larger than particle mass
+c     in continuous case as well
+c
+                  if (m_eject .gt. mp(n)) then
+c     Keep the same ratio of Type II to Type Ia masses and metals
+                     if (imetal .eq. 1_IKIND) then
+                        mzeject_ii = mzeject_ii/mz_eject*yield*mp(n)
+                        mzeject_ia = mzeject_ia/mz_eject*yield*mp(n)
+                        mz_eject = mzeject_ii + mzeject_ia
+                     endif
+                     meject_ii = meject_ii/m_eject * m_eject_frac*mp(n)
+                     meject_ia = meject_ia/m_eject * m_eject_frac*mp(n)
+                     m_eject = meject_ii + meject_ia
+                  endif
+               endif ! end mass and metal ejection determination
 c
                energy = nsn * 10._RKIND**51._RKIND / (dunits*
      &                  x1**3._RKIND*vunits**2._RKIND*dx**3._RKIND)
@@ -482,7 +500,13 @@ c     Subtract ejected mass from particle
 c
                mp(n) = mp(n) - m_eject
                minitial = minit(n)
-               if (preSN .eq. 1_IKIND) mp(n) = mp(n) - wind_mass
+               if (preSN .eq. 1_IKIND) then
+                  if (wind_mass .gt. mp(n)) then
+                     wind_mass = m_eject_frac*mp(n)
+                     wind_metal = yield*mp(n)
+                  endif
+                  mp(n) = mp(n) - wind_mass
+               endif
 c
 c     End tabulated feedback
 c
