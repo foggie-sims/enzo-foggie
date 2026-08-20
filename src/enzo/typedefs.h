@@ -341,6 +341,14 @@ const enum_type
   TabAGB = 2,
   TabNSM = 3;
 
+/* Chemical feedback element indexes */
+const enum_type
+  TabC = 0,
+  TabO = 1,
+  TabMg = 2,
+  TabSi = 3,
+  TabFe = 4;
+
 /* Define a float/int union. */
 
 union float_int {
