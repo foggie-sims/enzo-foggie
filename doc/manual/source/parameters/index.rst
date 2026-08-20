@@ -1193,6 +1193,18 @@ Hierarchy Control Parameters
     signature.  Default: 3.0
 ``SubgridSizeAutoAdjust`` (external)
     See :ref:`running_large_simulations`.  Default: 1 (TRUE)
+``SubgridSizeAutoAdjustMinimum`` (external)
+    The smallest value of ``MaximumSubgridSize`` that
+    ``SubgridSizeAutoAdjust`` is permitted to select. The automatic
+    estimate is ``NumberOfCells / (NumberOfProcessors *
+    OptimalSubgridsPerProcessor)``; this floor stops it choosing very
+    small subgrids on modest processor counts. On large processor counts
+    with deep refinement the estimate can fall well below the default,
+    and clamping to the default leaves too few subgrids per processor to
+    load balance. Lowering it lets the automatic estimate apply, at the
+    cost of more ghost-zone and boundary-exchange work per cell, so the
+    best value is problem- and processor-count-dependent.
+    See :ref:`running_large_simulations`.  Default: 2000
 ``OptimalSubgridsPerProcessor`` (external)
     See :ref:`running_large_simulations`.  Default: 16
 ``LoadBalancing`` (external)
