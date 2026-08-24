@@ -932,6 +932,7 @@ void my_exit(int status)
         delete [] pSNFBTable.kdiss_CO;
         delete [] pSNFBTable.kion_CI;
         delete [] pSNFBTable.kion_OI;
+        delete [] pSNFBTable.isrf;
     }
   }
 

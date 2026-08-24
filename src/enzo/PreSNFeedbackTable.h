@@ -28,5 +28,6 @@ double *kdet_HM;
 double *kdiss_CO;
 double *kion_CI;
 double *kion_OI;
+double *isrf;
 
 };

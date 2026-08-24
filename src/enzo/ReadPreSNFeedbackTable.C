@@ -301,6 +301,26 @@ int ReadPreSNFeedbackTable(char *name)
           return FAIL;
         }
 
+        /* Read ISRF Fields */
+        pSNFBTable.isrf = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+        dset_id = H5Dopen(file_id, "/SB99_models/habing_luminosity");
+        if (dset_id == h5_error) {
+          fprintf(stderr,"Can't open /SB99_models/habing_luminosity in %s.\n", name);
+          return FAIL;
+        }
+        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
+                          H5S_ALL, H5P_DEFAULT, pSNFBTable.isrf);
+        if (status == h5_error) {
+          fprintf(stderr, "Failed to read /SB99_models/habing_luminosity in %s.\n",name);
+          return FAIL;
+        }
+        status = H5Dclose(dset_id);
+        if (status == h5_error) {
+          fprintf(stderr,"Failed to close /SB99_models/habing_luminosity in %s.\n",name);
+          return FAIL;
+        }
+
+
     }
 
     /* Close file */
@@ -323,7 +343,7 @@ int ReadPreSNFeedbackTable(char *name)
         pSNFBTable.kdiss_CO = new double[pSNFBTable.n_met*pSNFBTable.n_age];
         pSNFBTable.kion_CI = new double[pSNFBTable.n_met*pSNFBTable.n_age];
         pSNFBTable.kion_OI = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-
+        pSNFBTable.isrf = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     }
 
   } // end not root
@@ -341,6 +361,8 @@ int ReadPreSNFeedbackTable(char *name)
     MPI_Bcast(pSNFBTable.kdiss_CO, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
     MPI_Bcast(pSNFBTable.kion_CI, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
     MPI_Bcast(pSNFBTable.kion_OI, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+    MPI_Bcast(pSNFBTable.isrf, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+
   }
 #endif
   

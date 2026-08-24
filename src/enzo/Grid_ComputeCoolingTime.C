@@ -327,6 +327,7 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
   float *k_diss_CO_grid = NULL;
   float *k_ion_CI_grid = NULL;
   float *k_ion_OI_grid = NULL;
+  float *isrf_grid = NULL;
   float *EmptyRtArray0 = NULL;
   float *EmptyRtArray1 = NULL;
   float *EmptyRtArray2 = NULL;
@@ -339,6 +340,7 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     k_diss_CO_grid  = new float[size];
     k_ion_CI_grid  = new float[size];
     k_ion_OI_grid  = new float[size];
+    isrf_grid = new float[size];
 
     for (i = 0; i < size; i++){
       k_diss_H2_grid[i] = k_diss_H2I_grid_sum;
@@ -346,6 +348,7 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
       k_diss_CO_grid[i] = k_diss_COI_grid_sum;
       k_ion_CI_grid[i] = k_ion_CI_grid_sum;
       k_ion_OI_grid[i] = k_ion_OI_grid_sum;
+      isrf_grid[i] = isrf_grid_sum;
     }
   
     my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;
@@ -356,6 +359,9 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     //my_fields.RT_CI_ionization_rate   =  k_ion_CI_grid; 
     //my_fields.RT_OI_ionization_rate   =  k_ion_OI_grid; 
 #endif
+    if (grackle_data->use_isrf_field){
+      my_fields.isrf_habing = isrf_grid;
+    }
     // Need to set the other fields to the same 0 array for now
     EmptyRtArray0  = new float[size];
     EmptyRtArray1  = new float[size];
@@ -408,6 +414,7 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
       delete[] k_diss_CO_grid;
       delete[] k_ion_CI_grid;
       delete[] k_ion_OI_grid;
+      delete[] isrf_grid;
       delete[] EmptyRtArray0;
       delete[] EmptyRtArray1;
       delete[] EmptyRtArray2;

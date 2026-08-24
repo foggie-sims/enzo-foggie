@@ -288,11 +288,13 @@ int grid::GrackleWrapper()
   float *k_diss_CO_grid = NULL;
   float *k_ion_CI_grid = NULL;
   float *k_ion_OI_grid = NULL;
+  float *isrf_grid = NULL;
   float *EmptyRtArray0 = NULL;
   float *EmptyRtArray1 = NULL;
   float *EmptyRtArray2 = NULL;
   float *EmptyRtArray3 = NULL;
 
+  //fprintf(stdout, "UseLocalStellarRadiation  = %"ISYM"\n", UseLocalStellarRadiation);
   if (UseLocalStellarRadiation){
     /* Estimate local radiation field from new Stars - CWT 06/07/26 */
     //Sum all the mass of all young star particles on the grid
@@ -313,6 +315,7 @@ int grid::GrackleWrapper()
     k_diss_COI_grid_sum = 0;
     k_ion_CI_grid_sum = 0;
     k_ion_OI_grid_sum = 0;
+    isrf_grid_sum = 0;
     for (i = 0; i < this->NumberOfParticles; i++) {
       if (this->ParticleType[i] == PARTICLE_TYPE_STAR) {
         float age = (this->Time - this->ParticleAttribute[0][i]) * TimeUnits / years_to_seconds; //Convert to yr
@@ -339,8 +342,8 @@ int grid::GrackleWrapper()
 
           //fprintf(stdout, "Age %"ESYM", ", age);
           //fprintf(stdout, "aa %"ISYM",", aa);
-          fprintf(stdout, "Z %"ESYM", ", metallicity);
-          fprintf(stdout, "zz %"ISYM"\n", zz);
+          //fprintf(stdout, "Z %"ESYM", ", metallicity);
+          //fprintf(stdout, "zz %"ISYM"\n", zz);
 
           float t_z=0.5f;
           if (zz>=pSNFBTable.n_met-1){
@@ -362,11 +365,11 @@ int grid::GrackleWrapper()
 
           /* In Units Hz/cm^2 per Solar Mass*/
           float k_diss_H2_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kdiss_H2[ii0] + t_age * (1-t_z) * pSNFBTable.kdiss_H2[ii1] + (1-t_age) * t_z * pSNFBTable.kdiss_H2[ii2] + t_age * t_z * pSNFBTable.kdiss_H2[ii3];
-          float k_det_HM_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kdet_HM[ii0] + t_age * (1-t_z) * pSNFBTable.kdet_HM[ii1] + (1-t_age) * t_z * pSNFBTable.kdet_HM[ii2] + t_age * t_z * pSNFBTable.kdet_HM[ii3];
+          float k_det_HM_sb99_interp  = (1-t_age) * (1-t_z) * pSNFBTable.kdet_HM[ii0] + t_age * (1-t_z) * pSNFBTable.kdet_HM[ii1] + (1-t_age) * t_z * pSNFBTable.kdet_HM[ii2] + t_age * t_z * pSNFBTable.kdet_HM[ii3];
           float k_diss_CO_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kdiss_CO[ii0] + t_age * (1-t_z) * pSNFBTable.kdiss_CO[ii1] + (1-t_age) * t_z * pSNFBTable.kdiss_CO[ii2] + t_age * t_z * pSNFBTable.kdiss_CO[ii3];
-          float k_ion_CI_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kion_CI[ii0] + t_age * (1-t_z) * pSNFBTable.kion_CI[ii1] + (1-t_age) * t_z * pSNFBTable.kion_CI[ii2] + t_age * t_z * pSNFBTable.kion_CI[ii3];
-          float k_ion_OI_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kion_OI[ii0] + t_age * (1-t_z) * pSNFBTable.kion_OI[ii1] + (1-t_age) * t_z * pSNFBTable.kion_OI[ii2] + t_age * t_z * pSNFBTable.kion_OI[ii3];
-
+          float k_ion_CI_sb99_interp  = (1-t_age) * (1-t_z) * pSNFBTable.kion_CI[ii0] + t_age * (1-t_z) * pSNFBTable.kion_CI[ii1] + (1-t_age) * t_z * pSNFBTable.kion_CI[ii2] + t_age * t_z * pSNFBTable.kion_CI[ii3];
+          float k_ion_OI_sb99_interp  = (1-t_age) * (1-t_z) * pSNFBTable.kion_OI[ii0] + t_age * (1-t_z) * pSNFBTable.kion_OI[ii1] + (1-t_age) * t_z * pSNFBTable.kion_OI[ii2] + t_age * t_z * pSNFBTable.kion_OI[ii3];
+          float isrf_sb99_interp      = (1-t_age) * (1-t_z) * pSNFBTable.isrf[ii0] + t_age * (1-t_z) * pSNFBTable.isrf[ii1] + (1-t_age) * t_z * pSNFBTable.isrf[ii2] + t_age * t_z * pSNFBTable.isrf[ii3];
 
           float dx = this->CellWidth[0][0];
           float ParticleMass_Msun = this->ParticleMass[i] * dx * dx * dx *  MassUnits / SolarMass; //Convert from code mass to Msun
@@ -376,6 +379,8 @@ int grid::GrackleWrapper()
           k_diss_COI_grid_sum += k_diss_CO_sb99_interp * ParticleMass_Msun;
           k_ion_CI_grid_sum += k_ion_CI_sb99_interp * ParticleMass_Msun;
           k_ion_OI_grid_sum += k_ion_OI_sb99_interp * ParticleMass_Msun;
+          isrf_grid_sum += isrf_sb99_interp * ParticleMass_Msun;
+
 
 
         }
@@ -387,6 +392,7 @@ int grid::GrackleWrapper()
     k_diss_COI_grid_sum = k_diss_COI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
     k_ion_CI_grid_sum = k_ion_CI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
     k_ion_OI_grid_sum = k_ion_OI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
+    isrf_grid_sum = isrf_grid_sum / (LengthUnits * LengthUnits); //Convert from G0 cm^2 to G0 code length^2
 
     float grid_dx = this->GridRightEdge[0]-this->GridLeftEdge[0];
     float grid_dy = this->GridRightEdge[1]-this->GridLeftEdge[1];
@@ -402,6 +408,7 @@ int grid::GrackleWrapper()
     k_diss_COI_grid_sum = k_diss_COI_grid_sum  / (4.0 * 3.14159 * dilRad2);
     k_ion_CI_grid_sum = k_ion_CI_grid_sum  / (4.0 * 3.14159 * dilRad2);
     k_ion_OI_grid_sum = k_ion_OI_grid_sum  / (4.0 * 3.14159 * dilRad2);
+    isrf_grid_sum = isrf_grid_sum  / (4.0 * 3.14159 * dilRad2); //Convert to G0
 
     /* Define Grid */
     k_diss_H2_grid  = new float[size];
@@ -409,6 +416,7 @@ int grid::GrackleWrapper()
     k_diss_CO_grid  = new float[size];
     k_ion_CI_grid  = new float[size];
     k_ion_OI_grid  = new float[size];
+    isrf_grid = new float[size];
 
     for (int i = 0; i < size; i++){
       k_diss_H2_grid[i] = k_diss_H2I_grid_sum;
@@ -416,17 +424,18 @@ int grid::GrackleWrapper()
       k_diss_CO_grid[i] = k_diss_COI_grid_sum;
       k_ion_CI_grid[i] = k_ion_CI_grid_sum;
       k_ion_OI_grid[i] = k_ion_OI_grid_sum;
-
+      isrf_grid[i] = isrf_grid_sum;
     }
 
     if (k_diss_H2I_grid_sum>0){
       fprintf(stdout, "Grid %"ISYM",", this->ID);
       fprintf(stdout, "Time %"ESYM",", this->Time);
       fprintf(stdout, " k_diss_H2 = %"ESYM" 1/CodeTime,", k_diss_H2_grid[0]);
-      fprintf(stdout, " k_det_HM  = %"ESYM" 1/CodeTime", k_det_HM_grid[0]);
-      fprintf(stdout, " k_diss_CO  = %"ESYM" 1/CodeTime", k_diss_CO_grid[0]);
-      fprintf(stdout, " k_ion_CI  = %"ESYM" 1/CodeTime", k_ion_CI_grid[0]);
-      fprintf(stdout, " k_ion_OI  = %"ESYM" 1/CodeTime\n", k_ion_OI_grid[0]);
+      fprintf(stdout, " k_det_HM  = %"ESYM" 1/CodeTime,", k_det_HM_grid[0]);
+      fprintf(stdout, " k_diss_CO  = %"ESYM" 1/CodeTime,", k_diss_CO_grid[0]);
+      fprintf(stdout, " k_ion_CI  = %"ESYM" 1/CodeTime,", k_ion_CI_grid[0]);
+      fprintf(stdout, " k_ion_OI  = %"ESYM" 1/CodeTime,", k_ion_OI_grid[0]);
+      fprintf(stdout, " isrf  = %"ESYM" (Habing Units)\n", isrf_grid[0]);
 
     }
 
@@ -439,6 +448,11 @@ int grid::GrackleWrapper()
     //my_fields.RT_CI_ionization_rate   =  k_ion_CI_grid; 
     //my_fields.RT_OI_ionization_rate   =  k_ion_OI_grid; 
 #endif
+    if (grackle_data->use_isrf_field){
+      my_fields.isrf_habing = isrf_grid;
+      //fprintf(stdout, " setting isrf_habing  = %"ESYM" (Habing Units)\n", isrf_grid[0]);
+
+    }
 
     // Need to set the other fields to the same 0 array for now
     EmptyRtArray0  = new float[size];
@@ -459,6 +473,8 @@ int grid::GrackleWrapper()
     my_fields.RT_heating_rate = EmptyRtArray3;
   } // UseLocalStellarRadiation
   /*                                              */
+
+  //fprintf(stdout, "Calling Grackle - %"ISYM"\n", UseLocalStellarRadiation);
 
   /* Call the chemistry solver. */
   if (solve_chemistry(&grackle_units, &my_fields, (double) dt_cool) == FAIL){
@@ -509,6 +525,7 @@ int grid::GrackleWrapper()
       delete[] k_diss_CO_grid;
       delete[] k_ion_CI_grid;
       delete[] k_ion_OI_grid;
+      delete[] isrf_grid;
       delete[] EmptyRtArray0;
       delete[] EmptyRtArray1;
       delete[] EmptyRtArray2;

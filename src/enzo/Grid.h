@@ -99,6 +99,7 @@ class grid
   float k_diss_COI_grid_sum;
   float k_ion_CI_grid_sum;
   float k_ion_OI_grid_sum;
+  float isrf_grid_sum;                 // End Local Radiation Implementation
 
 //
 //  Baryon grid data
