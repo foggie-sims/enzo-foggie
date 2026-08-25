@@ -457,18 +457,27 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
  
     // Find where to put this new grid
  
-    int ParentGrid = INT_UNDEFINED;
-    for (i = 0; i < gridnum; i++)
-      if (CosmologySimulationGridLevel[i] ==
+    // The parent must contain this grid in every dimension; several
+    // grids may share a level, so candidates that fail any dimension
+    // must be discarded entirely.
+
+    int ParentGrid = INT_UNDEFINED, contained;
+    for (i = 0; i < gridnum && ParentGrid == INT_UNDEFINED; i++) {
+      if (CosmologySimulationGridLevel[i] !=
 	  CosmologySimulationGridLevel[gridnum]-1)
-	for (dim = 0; dim < MetaData.TopGridRank; dim++) {
-	  if (CosmologySimulationGridLeftEdge[gridnum][dim] <
-	      CosmologySimulationGridLeftEdge[i][dim]       ||
-	      CosmologySimulationGridRightEdge[gridnum][dim] >
-	      CosmologySimulationGridRightEdge[i][dim]       )
-	    break;
-	  ParentGrid = i;
+	continue;
+      contained = TRUE;
+      for (dim = 0; dim < MetaData.TopGridRank; dim++)
+	if (CosmologySimulationGridLeftEdge[gridnum][dim] <
+	    CosmologySimulationGridLeftEdge[i][dim]       ||
+	    CosmologySimulationGridRightEdge[gridnum][dim] >
+	    CosmologySimulationGridRightEdge[i][dim]       ) {
+	  contained = FALSE;
+	  break;
 	}
+      if (contained == TRUE)
+	ParentGrid = i;
+    }
  
     if (ParentGrid == INT_UNDEFINED) {
       ENZO_VFAIL("Grid %"ISYM" has no valid parent.\n", gridnum)
