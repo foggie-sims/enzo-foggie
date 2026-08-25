@@ -90,7 +90,7 @@ static int   CosmologySimulationCalculatePositions   = FALSE;
 
 static float CosmologySimulationInitialUniformBField[MAX_DIMENSION];  // in proper Gauss
 
-#define MAX_INITIAL_GRIDS 10
+#define MAX_INITIAL_GRIDS 64
  
 static  int   CosmologySimulationGridDimension[MAX_INITIAL_GRIDS][MAX_DIMENSION];
 static  int   CosmologySimulationGridLevel[MAX_INITIAL_GRIDS];

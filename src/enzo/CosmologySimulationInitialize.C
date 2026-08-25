@@ -96,7 +96,7 @@ static float CosmologySimulationInitialUniformBField[MAX_DIMENSION];  // in prop
 static float RadHydroInitialRadiationEnergy = 1.0e-32;
 #endif
 
-#define MAX_INITIAL_GRIDS 10
+#define MAX_INITIAL_GRIDS 64
  
  
  
