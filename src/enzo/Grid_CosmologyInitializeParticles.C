@@ -104,7 +104,7 @@ int grid::CosmologyInitializeParticles(
 	if (max(StaticRefineRegionLeftEdge[region][dim],  GridLeftEdge[dim]) >=
 	    min(StaticRefineRegionRightEdge[region][dim], GridRightEdge[dim]))
 	  skip = true;
-      if (skip) break;
+      if (skip) continue;  // a non-overlapping region must not end the scan
       for (dim = 0; dim < MAX_DIMENSION; dim++) {
 	StartRegion[dim] = (int) nint((StaticRefineRegionLeftEdge[region][dim] - 
 				       GridLeftEdge[dim]) / CellWidth[dim][0]);
