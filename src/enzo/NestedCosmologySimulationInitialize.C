@@ -388,6 +388,15 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       printf("magnetic field: dim %"ISYM", %"FSYM" %"ESYM" \n", dim, MagneticUnits, 
 	     CosmologySimulationInitialUniformBField[dim]);
   }
+  // Record the deepest initial grid level for the must-refine mask
+  // conversion; with several nested grids per level it is no longer
+  // NumberOfInitialGrids-1.
+
+  CosmologySimulationMaximumInitialLevel = 0;
+  for (gridnum = 1; gridnum < CosmologySimulationNumberOfInitialGrids; gridnum++)
+    if (CosmologySimulationGridLevel[gridnum] > CosmologySimulationMaximumInitialLevel)
+      CosmologySimulationMaximumInitialLevel = CosmologySimulationGridLevel[gridnum];
+
   // Generate the grids and set-up the hierarchy
  
   HierarchyEntry *GridsList[MAX_INITIAL_GRIDS];

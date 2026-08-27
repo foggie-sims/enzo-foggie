@@ -448,6 +448,15 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
  
   HierarchyEntry *GridsList[MAX_INITIAL_GRIDS];
   GridsList[0] = &TopGrid;
+  // Record the deepest initial grid level for the must-refine mask
+  // conversion; with several nested grids per level it is no longer
+  // NumberOfInitialGrids-1.
+
+  CosmologySimulationMaximumInitialLevel = 0;
+  for (gridnum = 1; gridnum < CosmologySimulationNumberOfInitialGrids; gridnum++)
+    if (CosmologySimulationGridLevel[gridnum] > CosmologySimulationMaximumInitialLevel)
+      CosmologySimulationMaximumInitialLevel = CosmologySimulationGridLevel[gridnum];
+
   for (gridnum = 1; gridnum < CosmologySimulationNumberOfInitialGrids;
        gridnum++) {
  

@@ -321,7 +321,14 @@ int grid::CosmologyInitializeParticles(
 	  if (mask[index]) {
 
 	    if (MustRefineParticlesCreateParticles >= 2){
-	      if (types[index] == 0 && CosmologySimulationNumberOfInitialGrids - 1 == level){
+	      // The deepest initial grids carry the must-refine mask.  With
+	      // several nested grids per level the finest level is no longer
+	      // NumberOfInitialGrids-1, so the initializer records it.
+	      int FinestInitialLevel = (CosmologySimulationMaximumInitialLevel
+					!= INT_UNDEFINED) ?
+		CosmologySimulationMaximumInitialLevel :
+		CosmologySimulationNumberOfInitialGrids - 1;
+	      if (types[index] == 0 && FinestInitialLevel == level){
 		ParticleType[count] = PARTICLE_TYPE_MUST_REFINE;
 		num_flip++;
 	      } else {

@@ -608,6 +608,7 @@ EXTERN int First_Pass;
 EXTERN int UnigridTranspose;
 EXTERN int NumberOfRootGridTilesPerDimensionPerProcessor;
 EXTERN int CosmologySimulationNumberOfInitialGrids;
+EXTERN int CosmologySimulationMaximumInitialLevel;  // deepest initial grid level; with several nested grids per level this is no longer NumberOfInitialGrids-1
 EXTERN int UserDefinedRootGridLayout[3];
 
 /* Parameters that control density dex output */

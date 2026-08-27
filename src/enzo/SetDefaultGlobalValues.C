@@ -353,6 +353,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   ParallelParticleIO          = FALSE;
   Unigrid                     = FALSE;
   UnigridTranspose            = 2;
+  CosmologySimulationMaximumInitialLevel = INT_UNDEFINED;
   NumberOfRootGridTilesPerDimensionPerProcessor = 1;
   PartitionNestedGrids        = FALSE;
   ExtractFieldsOnly           = TRUE;
