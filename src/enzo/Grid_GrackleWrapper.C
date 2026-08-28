@@ -324,7 +324,7 @@ int grid::GrackleWrapper()
           float dt_table = pSNFBTable.pop_age[1] - pSNFBTable.pop_age[0];
           float t_age = (age - pSNFBTable.pop_age[0]) / dt_table;
           int aa = (int)floor(t_age);
-          if (aa>=pSNFBTable.n_age){
+          if (aa>=pSNFBTable.n_age-1){
             aa=pSNFBTable.n_age-2;
             t_age = 1;
           }
