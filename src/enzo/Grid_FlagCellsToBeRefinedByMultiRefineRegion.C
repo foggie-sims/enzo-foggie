@@ -40,11 +40,14 @@ int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
   /* declarations */
   int i, j, k, index, dim, region, size = 1;
   FLOAT CellSize, xpos, ypos, zpos;
-  int LocalMaximumRefinementLevel = 0;
-  int LocalMinimumRefinementLevel = 0;
   int Start[MAX_DIMENSION], End[MAX_DIMENSION], NIter = 0;
   int NumberOfFlaggedCells = 0;
   int NRegions;
+
+  /* LocalMinimum/MaximumRefinementLevel are declared inside the cell loop
+     below, not here.  At function scope they were never reset between cells,
+     so the first cell falling inside a region imposed that region's levels on
+     every later cell in the grid, including cells outside every region. */
 
 
   /* Default values */
@@ -90,6 +93,12 @@ int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
         ypos = GridLeftEdge[1] + (FLOAT(j-Start[1])+0.5 )*CellSize;
         zpos = GridLeftEdge[2] + (FLOAT(k-Start[2])+0.5 )*CellSize;
         
+        /* Per-cell refinement constraints.  These MUST be reset for every
+           cell: see the note at the top of the function. */
+        int LocalMinimumRefinementLevel = 0;
+        int LocalMaximumRefinementLevel = 0;
+        int LocalUnlimited = FALSE;
+
         NRegions = 0;
         /* Loop over multirefinement regions */
         for (region = 0; region < MAX_STATIC_REGIONS + NIter; region++){
@@ -97,32 +106,45 @@ int grid::FlagCellsToBeRefinedByMultiRefineRegion(int level)
           if( (MultiRefineRegionLeftEdge[region][0] <= xpos) && (xpos <= MultiRefineRegionRightEdge[region][0]) &&
               (MultiRefineRegionLeftEdge[region][1] <= ypos) && (ypos <= MultiRefineRegionRightEdge[region][1]) &&
               (MultiRefineRegionLeftEdge[region][2] <= zpos) && (zpos <= MultiRefineRegionRightEdge[region][2]) ){
-            /* Of those regions the cell is within, adopt refinement constraints of refine regions with maximum allowed refinement */
-            if (LocalMaximumRefinementLevel < MultiRefineRegionMaximumLevel[region]){
-                if(debug && MyProcessorNumber == ROOT_PROCESSOR){
-                  fprintf(stderr,"Maximum cell refinement level updated from %"ISYM" to %"ISYM"\n",LocalMaximumRefinementLevel,MultiRefineRegionMaximumLevel[region]);
-                }
+            /* Where regions overlap the most permissive constraint wins, so
+               that a deeply-refined target inside a shallower one keeps its
+               own level.  MultiRefineRegionMaximumLevel < 0 is the default
+               and means "no ceiling", which is maximally permissive. */
+            if (MultiRefineRegionMaximumLevel[region] < 0){
+                LocalUnlimited = TRUE;
+            } else if (LocalMaximumRefinementLevel < MultiRefineRegionMaximumLevel[region]){
                 LocalMaximumRefinementLevel = MultiRefineRegionMaximumLevel[region];
             }
             if (LocalMinimumRefinementLevel < MultiRefineRegionMinimumLevel[region]){
-                if(debug && MyProcessorNumber == ROOT_PROCESSOR){
-                  fprintf(stderr,"Minimum cell refinement level updated from %"ISYM" to %"ISYM"\n",LocalMinimumRefinementLevel,MultiRefineRegionMinimumLevel[region]);
-                }
                 LocalMinimumRefinementLevel = MultiRefineRegionMinimumLevel[region];
             }
             NRegions ++;
           }
         }
-        /* Flag for refinement if cell is below minimum level allowed */
-        if ((LocalMaximumRefinementLevel > 0) || (LocalMinimumRefinementLevel > 0)){ // if cell is inside of at least one refine region
-          if (level<LocalMinimumRefinementLevel){
-            FlaggingField[index] = 1;
-          }
-        else
-          if (level<MultiRefineRegionMinimumOuterLevel){
-            FlaggingField[index] = 1;
-          }
-            
+
+        /* Cells outside every region take the outer constraints.  The old
+           code applied MinimumOuterLevel to cells INSIDE a region (a
+           misplaced else) and applied nothing at all outside. */
+        if (NRegions == 0){
+          LocalMinimumRefinementLevel = MultiRefineRegionMinimumOuterLevel;
+          if (MultiRefineRegionMaximumOuterLevel < 0)
+            LocalUnlimited = TRUE;
+          else
+            LocalMaximumRefinementLevel = MultiRefineRegionMaximumOuterLevel;
+        }
+
+        /* Force refinement up to the minimum level. */
+        if (level < LocalMinimumRefinementLevel){
+          FlaggingField[index] = 1;
+        }
+
+        /* Enforce the ceiling.  Refining this cell would create level+1, so
+           the cell may only be flagged while level < the maximum.  Nothing
+           previously unflagged here, which is why a per-region maximum had no
+           effect: it was computed and then discarded.  Method 20 must appear
+           LAST in CellFlaggingMethod for this to override the other methods. */
+        if (!LocalUnlimited && level >= LocalMaximumRefinementLevel){
+          FlaggingField[index] = 0;
         }
       }
     }
