@@ -412,8 +412,9 @@ class EnzoTestCollection(object):
         f.close()
 
         all_failures = len(self.plugins[1].failures)
+        all_errors = len(getattr(self.plugins[1], 'errors', []))
         dnfs = len(self.sims_not_finished)
-        if all_failures > 0 or dnfs > 0:
+        if all_failures > 0 or all_errors > 0 or dnfs > 0:
             self.any_failures = True
         else:
             self.any_failures = False

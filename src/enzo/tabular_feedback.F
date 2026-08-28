@@ -244,7 +244,6 @@ c      Note that the initial mass is expressed as a mass density
      &            metal_table, metal_array, age_array,
      &            metal_size, age_size, 4_IKIND, iSNII)
 c 
-c            Convert erg per Msun to erg
       fracII_yield = fracII_yield * mass_init
       end subroutine
 c 
@@ -285,7 +284,6 @@ c      Note that the initial mass is expressed as a mass density
      &            metal_table, metal_array, age_array,
      &            metal_size, age_size, 4_IKIND, iSNIa)
 c 
-c            Convert erg per Msun to erg
       fracIa_yield = fracIa_yield * mass_init
       end subroutine
 c 
@@ -688,6 +686,206 @@ c
       fracNSM_yield = fracNSM_yield * mass_init
       end subroutine
 c
+c  ===============================================
+c  
+c      Return carbon metal fraction yielded by all sources
+c 
+      subroutine carbon_fraction(fracC_yield,
+     &                    mass_init, metal_frac, age, 
+     &                    dt, t1,
+     &                    elem_table, metal_array, age_array,
+     &                    metal_size, age_size)
+c 
+      implicit none
+#include "fortran_types.def"
+c 
+c      Arguments
+c 
+      R_PREC fracC_yield
+      R_PREC mass_init, metal_frac, age
+      R_PREC dt, t1
+      INTG_PREC metal_size, age_size
+      R_PREC elem_table(5, age_size, metal_size)
+      R_PREC metal_array(metal_size), age_array(age_size)
+c 
+c      Locals
+c 
+      R_PREC dt_yr
+      INTG_PREC iC
+c 
+c     I'm not clever enough to auto sync these with typedefs.h
+      iC = 0_IKIND
+      dt_yr = dt*t1/yr_s
+c 
+c      SNe numbers are are rates (per year) per initial population mass
+c      Note that the initial mass is expressed as a mass density
+       call integrate_yields(fracC_yield, metal_frac, age, dt_yr,
+     &            elem_table, metal_array, age_array,
+     &            metal_size, age_size, 5_IKIND, iC)
+c 
+      fracC_yield = fracC_yield * mass_init
+      end subroutine
+c 
+c  ===============================================
+c  
+c      Return oxygen metal fraction yielded by all sources
+c 
+      subroutine oxygen_fraction(fracO_yield,
+     &                    mass_init, metal_frac, age, 
+     &                    dt, t1,
+     &                    elem_table, metal_array, age_array,
+     &                    metal_size, age_size)
+c 
+      implicit none
+#include "fortran_types.def"
+c 
+c      Arguments
+c 
+      R_PREC fracO_yield
+      R_PREC mass_init, metal_frac, age
+      R_PREC dt, t1
+      INTG_PREC metal_size, age_size
+      R_PREC elem_table(5, age_size, metal_size)
+      R_PREC metal_array(metal_size), age_array(age_size)
+c 
+c      Locals
+c 
+      R_PREC dt_yr
+      INTG_PREC iO
+c 
+c     I'm not clever enough to auto sync these with typedefs.h
+      iO = 1_IKIND
+      dt_yr = dt*t1/yr_s
+c 
+c      SNe numbers are are rates (per year) per initial population mass
+c      Note that the initial mass is expressed as a mass density
+       call integrate_yields(fracO_yield, metal_frac, age, dt_yr,
+     &            elem_table, metal_array, age_array,
+     &            metal_size, age_size, 5_IKIND, iO)
+c 
+      fracO_yield = fracO_yield * mass_init
+      end subroutine
+c 
+c  ===============================================
+c  
+c      Return magnesium metal fraction yielded by all sources
+c 
+      subroutine magnesium_fraction(fracMg_yield,
+     &                    mass_init, metal_frac, age, 
+     &                    dt, t1,
+     &                    elem_table, metal_array, age_array,
+     &                    metal_size, age_size)
+c 
+      implicit none
+#include "fortran_types.def"
+c 
+c      Arguments
+c 
+      R_PREC fracMg_yield
+      R_PREC mass_init, metal_frac, age
+      R_PREC dt, t1
+      INTG_PREC metal_size, age_size
+      R_PREC elem_table(5, age_size, metal_size)
+      R_PREC metal_array(metal_size), age_array(age_size)
+c 
+c      Locals
+c 
+      R_PREC dt_yr
+      INTG_PREC iMg
+c 
+c     I'm not clever enough to auto sync these with typedefs.h
+      iMg = 2_IKIND
+      dt_yr = dt*t1/yr_s
+c 
+c      SNe numbers are are rates (per year) per initial population mass
+c      Note that the initial mass is expressed as a mass density
+       call integrate_yields(fracMg_yield, metal_frac, age, dt_yr,
+     &            elem_table, metal_array, age_array,
+     &            metal_size, age_size, 5_IKIND, iMg)
+c 
+      fracMg_yield = fracMg_yield * mass_init
+      end subroutine
+c 
+c  ===============================================
+c  
+c      Return silicon metal fraction yielded by all sources
+c 
+      subroutine silicon_fraction(fracSi_yield,
+     &                    mass_init, metal_frac, age, 
+     &                    dt, t1,
+     &                    elem_table, metal_array, age_array,
+     &                    metal_size, age_size)
+c 
+      implicit none
+#include "fortran_types.def"
+c 
+c      Arguments
+c 
+      R_PREC fracSi_yield
+      R_PREC mass_init, metal_frac, age
+      R_PREC dt, t1
+      INTG_PREC metal_size, age_size
+      R_PREC elem_table(5, age_size, metal_size)
+      R_PREC metal_array(metal_size), age_array(age_size)
+c 
+c      Locals
+c 
+      R_PREC dt_yr
+      INTG_PREC iSi
+c 
+c     I'm not clever enough to auto sync these with typedefs.h
+      iSi = 3_IKIND
+      dt_yr = dt*t1/yr_s
+c 
+c      SNe numbers are are rates (per year) per initial population mass
+c      Note that the initial mass is expressed as a mass density
+       call integrate_yields(fracSi_yield, metal_frac, age, dt_yr,
+     &            elem_table, metal_array, age_array,
+     &            metal_size, age_size, 5_IKIND, iSi)
+c 
+      fracSi_yield = fracSi_yield * mass_init
+      end subroutine
+c 
+c  ===============================================
+c  
+c      Return iron metal fraction yielded by all sources
+c 
+      subroutine iron_fraction(fracFe_yield,
+     &                    mass_init, metal_frac, age, 
+     &                    dt, t1,
+     &                    elem_table, metal_array, age_array,
+     &                    metal_size, age_size)
+c 
+      implicit none
+#include "fortran_types.def"
+c 
+c      Arguments
+c 
+      R_PREC fracFe_yield
+      R_PREC mass_init, metal_frac, age
+      R_PREC dt, t1
+      INTG_PREC metal_size, age_size
+      R_PREC elem_table(5, age_size, metal_size)
+      R_PREC metal_array(metal_size), age_array(age_size)
+c 
+c      Locals
+c 
+      R_PREC dt_yr
+      INTG_PREC iFe
+c 
+c     I'm not clever enough to auto sync these with typedefs.h
+      iFe = 4_IKIND
+      dt_yr = dt*t1/yr_s
+c 
+c      SNe numbers are are rates (per year) per initial population mass
+c      Note that the initial mass is expressed as a mass density
+       call integrate_yields(fracFe_yield, metal_frac, age, dt_yr,
+     &            elem_table, metal_array, age_array,
+     &            metal_size, age_size, 5_IKIND, iFe)
+c 
+      fracFe_yield = fracFe_yield * mass_init
+      end subroutine
+c 
 c  ===============================================
 c
 c      Interpolate and return the yield from particular source type

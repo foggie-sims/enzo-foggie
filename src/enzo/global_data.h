@@ -391,6 +391,7 @@ EXTERN EquilibriumTableType EquilibriumTable;
 /* Table of stellar feedback yields */
 
 EXTERN FeedbackTableType FBTable;
+EXTERN ChemFeedbackTableType ChemFBTable;
 
 /* Table of pre-SN stellar feedback yields */
 

@@ -1821,6 +1821,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
   if (STARFEED_METHOD(MECH_STAR)) {
 
     //---- MOMENTUM FEEDBACK
+    if (StarFeedbackUseTabularYields && 
+      (StarFeedbackTabularSNIaEnergy != 1e51 || StarFeedbackTabularSNIIEnergy != 1e51))
+      ENZO_FAIL("Mechanical feedback (StarParticleFeedback = 64) does not support supernova energies other than 1e51 ergs.\n")
 
     // Compute mu across grid.  star_feedback6 reads mu only inside its
     // particle loop (type == PARTICLE_TYPE_STAR), so grids without star

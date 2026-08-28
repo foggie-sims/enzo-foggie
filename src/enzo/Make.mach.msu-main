@@ -1,0 +1,138 @@
+#=======================================================================
+#
+# FILE:        Make.mach.msu-main
+#
+# DESCRIPTION: Makefile settings for MSU HPC machines
+#
+# AUTHOR:      Brian O'Shea (oshea@msu.edu)
+#
+# DATE:        2009-04-06
+#
+#=======================================================================
+
+MACH_TEXT  = MSU Main
+MACH_VALID = 1
+MACH_FILE  = Make.mach.msu-main
+
+
+MACH_LIBTOOL   = libtool
+
+#-----------------------------------------------------------------------
+## Install paths (local variables)
+##-----------------------------------------------------------------------
+
+HOMEDIR = /mnt/home/scottm59
+
+LOCAL_HYPRE_INSTALL = $(HOMEDIR)/local
+
+LOCAL_GRACKLE_INSTALL =  $(HOMEDIR)/local
+LOCAL_INCLUDES_GRACKLE = -I$(LOCAL_GRACKLE_INSTALL)/include
+MACH_INCLUDES_GRACKLE = $(LOCAL_INCLUDES_GRACKLE)
+LOCAL_LIBS_GRACKLE = -L$(LOCAL_GRACKLE_INSTALL)/lib -lgrackle
+MACH_LIBS_GRACKLE = $(LOCAL_LIBS_GRACKLE)
+
+LOCAL_HDF5_INSTALL = $(HOMEDIR)/local
+
+#-----------------------------------------------------------------------
+# Compiler settings
+#-----------------------------------------------------------------------
+
+MACH_CPP       = /usr/bin/cpp
+
+# With MPI
+
+MACH_CC_MPI    = mpicc
+MACH_CXX_MPI   = mpiCC
+MACH_FC_MPI    = mpif90
+MACH_F90_MPI   = mpif90
+MACH_LD_MPI    = mpiCC
+
+# Without MPI
+
+MACH_CC_NOMPI  = gcc
+MACH_CXX_NOMPI = g++
+MACH_FC_NOMPI  = gfortran
+MACH_F90_NOMPI = gfortran
+MACH_LD_NOMPI  = g++
+
+#-----------------------------------------------------------------------
+# Machine-dependent defines
+#-----------------------------------------------------------------------
+
+MACH_DEFINES   = -DLINUX -DH5_USE_16_API -DMEM_TRACE
+
+#-----------------------------------------------------------------------
+# Compiler flag settings
+#-----------------------------------------------------------------------
+
+MACH_CPPFLAGS = -P -traditional 
+MACH_CFLAGS   = 
+MACH_CXXFLAGS = 
+MACH_FFLAGS   = -extend-source -fallow-argument-mismatch
+MACH_F90FLAGS = -extend-source -fallow-argument-mismatch
+#MACH_LDFLAGS  = -Wl,-noinhibit-exec -lifcore -lifport -lpthread -ldl
+MACH_LDFLAGS = -lgfortran -lstdc++ -lc
+
+#-----------------------------------------------------------------------
+# Precision-related flags
+#-----------------------------------------------------------------------
+
+MACH_FFLAGS_INTEGER_32 = -i4
+MACH_FFLAGS_INTEGER_64 = -i8
+MACH_FFLAGS_REAL_32    = -r4
+MACH_FFLAGS_REAL_64    = -r8
+
+#-----------------------------------------------------------------------
+# Optimization flags
+#-----------------------------------------------------------------------
+
+MACH_OPT_WARN        = -w2 -g
+MACH_OPT_DEBUG       = -g
+MACH_OPT_HIGH        = -O2
+MACH_OPT_AGGRESSIVE  = -O3
+
+#-----------------------------------------------------------------------
+# Includes
+#-----------------------------------------------------------------------
+
+LOCAL_INCLUDES_MPI    = 
+LOCAL_INCLUDES_HDF5   = -I$(LOCAL_HDF5_INSTALL)/include
+LOCAL_INCLUDES_HYPRE  = -I$(LOCAL_HYPRE_INSTALL)/include
+LOCAL_INCLUDES_JBPERF = 
+LOCAL_INCLUDES_PAPI   = 
+
+MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
+
+MACH_INCLUDES_MPI     = $(LOCAL_INCLUDES_MPI)
+MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)
+MACH_INCLUDES_JBPERF  = $(LOCAL_INCLUDES_JBPERF)
+MACH_INCLUDES_PAPI    = $(LOCAL_INCLUDES_PAPI)
+
+#-----------------------------------------------------------------------
+# Libraries
+#-----------------------------------------------------------------------
+
+LOCAL_LIBS_MPI    = 
+LOCAL_LIBS_HDF5   = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5
+LOCAL_LIBS_HYPRE  = -L$(LOCAL_HYPRE_INSTALL)/lib -lHYPRE
+LOCAL_LIBS_JBPERF = 
+LOCAL_LIBS_PAPI   = 
+
+LOCAL_LIBS_MACH   = 
+
+MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
+
+MACH_LIBS_MPI     = $(LOCAL_LIBS_MPI)
+MACH_LIBS_HYPRE   = $(LOCAL_LIBS_HYPRE)
+MACH_LIBS_JBPERF  = $(LOCAL_LIBS_JBPERF)
+MACH_LIBS_PAPI    = $(LOCAL_LIBS_PAPI)
+
+#-----------------------------------------------------------------------
+## Installation
+##-----------------------------------------------------------------------
+#
+MACH_INSTALL_PREFIX = $(HOMEDIR)/local
+MACH_INSTALL_LIB_DIR =
+MACH_INSTALL_INCLUDE_DIR =
+
+

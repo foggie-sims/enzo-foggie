@@ -48,12 +48,12 @@ int ReadFeedbackTable(char *name)
       return FAIL;
     }
     status = H5Aread(attr_id, HDF5_I8, type2_index);
-    if (attr_id == h5_error) {
+    if (status == h5_error) {
       fprintf(stderr,"Failed to read type2_index in indexer group of %s.\n",name);
       return FAIL;
     }
     status = H5Aclose(attr_id);
-    if (attr_id == h5_error) {
+    if (status == h5_error) {
       fprintf(stderr,"Failed to close type2_index in indexer group of %s.\n",name);
       return FAIL;
     }
@@ -64,13 +64,13 @@ int ReadFeedbackTable(char *name)
       return FAIL;
     }
     status = H5Aread(attr_id, HDF5_I8, type1a_index);
-    if (attr_id == h5_error) {
-      fprintf(stderr,"Failed to read type2_index in indexer group of %s.\n",name);
+    if (status == h5_error) {
+      fprintf(stderr,"Failed to read type1a_index in indexer group of %s.\n",name);
       return FAIL;
     }
     status = H5Aclose(attr_id);
-    if (attr_id == h5_error) {
-      fprintf(stderr,"Failed to close type2_index in indexer group of %s.\n",name);
+    if (status == h5_error) {
+      fprintf(stderr,"Failed to close type1a_index in indexer group of %s.\n",name);
       return FAIL;
     }
 
@@ -80,13 +80,13 @@ int ReadFeedbackTable(char *name)
       return FAIL;
     }
     status = H5Aread(attr_id, HDF5_I8, agb_index);
-    if (attr_id == h5_error) {
-      fprintf(stderr,"Failed to read type2_index in indexer group of %s.\n",name);
+    if (status == h5_error) {
+      fprintf(stderr,"Failed to read agb_index in indexer group of %s.\n",name);
       return FAIL;
     }
     status = H5Aclose(attr_id);
-    if (attr_id == h5_error) {
-      fprintf(stderr,"Failed to close type2_index in indexer group of %s.\n",name);
+    if (status == h5_error) {
+      fprintf(stderr,"Failed to close agb_index in indexer group of %s.\n",name);
       return FAIL;
     }
   
@@ -96,13 +96,13 @@ int ReadFeedbackTable(char *name)
       return FAIL;
     }
     status = H5Aread(attr_id, HDF5_I8, nsm_index);
-    if (attr_id == h5_error) {
-      fprintf(stderr,"Failed to read type2_index in indexer group of %s.\n",name);
+    if (status == h5_error) {
+      fprintf(stderr,"Failed to read nsm_index in indexer group of %s.\n",name);
       return FAIL;
     }
     status = H5Aclose(attr_id);
-    if (attr_id == h5_error) {
-      fprintf(stderr,"Failed to close type2_index in indexer group of %s.\n",name);
+    if (status == h5_error) {
+      fprintf(stderr,"Failed to close nsm_index in indexer group of %s.\n",name);
       return FAIL;
     }
     /* finished reading source indexes */
