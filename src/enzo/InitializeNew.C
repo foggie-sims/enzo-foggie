@@ -260,12 +260,32 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 
  
 // Character strings
- 
+
 char outfilename[] = "amr.out";
- 
- 
- 
- 
+
+
+// Snapshot the initial-grid hierarchy into a flat list.  Recurses both
+// hierarchy links because sibling grids on a level hang off different
+// parents once several nested grids share a level.
+
+static void CollectInitialGrids(HierarchyEntry *Grid, int level,
+				HierarchyEntry **List, int *Levels,
+				int *Count)
+{
+  while (Grid != NULL) {
+    if (List != NULL) {
+      List[*Count] = Grid;
+      Levels[*Count] = level;
+    }
+    (*Count)++;
+    if (Grid->NextGridNextLevel != NULL)
+      CollectInitialGrids(Grid->NextGridNextLevel, level+1,
+			  List, Levels, Count);
+    Grid = Grid->NextGridThisLevel;
+  }
+}
+
+
 int InitializeNew(char *filename, HierarchyEntry &TopGrid,
 		  TopGridData &MetaData, ExternalBoundary &Exterior,
 		  float *Initialdt)
@@ -958,33 +978,37 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   if (debug)
     printf("InitializeNew: Initial grid hierarchy set\n");
   
-  // Walk the grids
-  
-  HierarchyEntry *CurrentGrid;
+  // Walk the grids.  Partitioning splices new siblings into the
+  // hierarchy chains, so snapshot the initial grids first and then
+  // partition each one from the list.
+
   FLOAT WT = -1.0;
   int GP = 1;
   int gridcounter = 0;
-  
-  CurrentGrid = &TopGrid;
 
+  int NumberOfInitialGrids = 0;
+  CollectInitialGrids(&TopGrid, 0, NULL, NULL, &NumberOfInitialGrids);
+  HierarchyEntry **InitialGridList =
+    new HierarchyEntry*[NumberOfInitialGrids];
+  int *InitialGridLevels = new int[NumberOfInitialGrids];
+  int CollectedGrids = 0;
+  CollectInitialGrids(&TopGrid, 0, InitialGridList, InitialGridLevels,
+		      &CollectedGrids);
 
- 
-  while (CurrentGrid != NULL) {
-    
+  for (gridcounter = 0; gridcounter < CollectedGrids; gridcounter++) {
+
+    if (!PartitionNestedGrids && InitialGridLevels[gridcounter] > 0)
+      continue;
+
     if (debug)
       printf("InitializeNew: Partition Initial Grid %"ISYM"\n", gridcounter);
-    
-    if (CurrentGrid->NextGridThisLevel == NULL)     
-      CommunicationPartitionGrid(CurrentGrid, gridcounter);
-    
-    gridcounter++;
-    
-    if (PartitionNestedGrids)
-      CurrentGrid = CurrentGrid->NextGridNextLevel;
-    else
-      CurrentGrid = NULL;
-    
+
+    CommunicationPartitionGrid(InitialGridList[gridcounter], gridcounter);
+
   }
+
+  delete [] InitialGridList;
+  delete [] InitialGridLevels;
   
   // For problem 30, using ParallelGridIO,
   // read in data only after partitioning the grid

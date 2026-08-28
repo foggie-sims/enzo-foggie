@@ -104,7 +104,7 @@ int grid::CosmologyInitializeParticles(
 	if (max(StaticRefineRegionLeftEdge[region][dim],  GridLeftEdge[dim]) >=
 	    min(StaticRefineRegionRightEdge[region][dim], GridRightEdge[dim]))
 	  skip = true;
-      if (skip) break;
+      if (skip) continue;  // a non-overlapping region must not end the scan
       for (dim = 0; dim < MAX_DIMENSION; dim++) {
 	StartRegion[dim] = (int) nint((StaticRefineRegionLeftEdge[region][dim] - 
 				       GridLeftEdge[dim]) / CellWidth[dim][0]);
@@ -321,7 +321,14 @@ int grid::CosmologyInitializeParticles(
 	  if (mask[index]) {
 
 	    if (MustRefineParticlesCreateParticles >= 2){
-	      if (types[index] == 0 && CosmologySimulationNumberOfInitialGrids - 1 == level){
+	      // The deepest initial grids carry the must-refine mask.  With
+	      // several nested grids per level the finest level is no longer
+	      // NumberOfInitialGrids-1, so the initializer records it.
+	      int FinestInitialLevel = (CosmologySimulationMaximumInitialLevel
+					!= INT_UNDEFINED) ?
+		CosmologySimulationMaximumInitialLevel :
+		CosmologySimulationNumberOfInitialGrids - 1;
+	      if (types[index] == 0 && FinestInitialLevel == level){
 		ParticleType[count] = PARTICLE_TYPE_MUST_REFINE;
 		num_flip++;
 	      } else {

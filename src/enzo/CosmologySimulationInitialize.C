@@ -96,7 +96,7 @@ static float CosmologySimulationInitialUniformBField[MAX_DIMENSION];  // in prop
 static float RadHydroInitialRadiationEnergy = 1.0e-32;
 #endif
 
-#define MAX_INITIAL_GRIDS 10
+#define MAX_INITIAL_GRIDS 64
  
  
  
@@ -448,6 +448,15 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
  
   HierarchyEntry *GridsList[MAX_INITIAL_GRIDS];
   GridsList[0] = &TopGrid;
+  // Record the deepest initial grid level for the must-refine mask
+  // conversion; with several nested grids per level it is no longer
+  // NumberOfInitialGrids-1.
+
+  CosmologySimulationMaximumInitialLevel = 0;
+  for (gridnum = 1; gridnum < CosmologySimulationNumberOfInitialGrids; gridnum++)
+    if (CosmologySimulationGridLevel[gridnum] > CosmologySimulationMaximumInitialLevel)
+      CosmologySimulationMaximumInitialLevel = CosmologySimulationGridLevel[gridnum];
+
   for (gridnum = 1; gridnum < CosmologySimulationNumberOfInitialGrids;
        gridnum++) {
  
@@ -457,18 +466,27 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
  
     // Find where to put this new grid
  
-    int ParentGrid = INT_UNDEFINED;
-    for (i = 0; i < gridnum; i++)
-      if (CosmologySimulationGridLevel[i] ==
+    // The parent must contain this grid in every dimension; several
+    // grids may share a level, so candidates that fail any dimension
+    // must be discarded entirely.
+
+    int ParentGrid = INT_UNDEFINED, contained;
+    for (i = 0; i < gridnum && ParentGrid == INT_UNDEFINED; i++) {
+      if (CosmologySimulationGridLevel[i] !=
 	  CosmologySimulationGridLevel[gridnum]-1)
-	for (dim = 0; dim < MetaData.TopGridRank; dim++) {
-	  if (CosmologySimulationGridLeftEdge[gridnum][dim] <
-	      CosmologySimulationGridLeftEdge[i][dim]       ||
-	      CosmologySimulationGridRightEdge[gridnum][dim] >
-	      CosmologySimulationGridRightEdge[i][dim]       )
-	    break;
-	  ParentGrid = i;
+	continue;
+      contained = TRUE;
+      for (dim = 0; dim < MetaData.TopGridRank; dim++)
+	if (CosmologySimulationGridLeftEdge[gridnum][dim] <
+	    CosmologySimulationGridLeftEdge[i][dim]       ||
+	    CosmologySimulationGridRightEdge[gridnum][dim] >
+	    CosmologySimulationGridRightEdge[i][dim]       ) {
+	  contained = FALSE;
+	  break;
 	}
+      if (contained == TRUE)
+	ParentGrid = i;
+    }
  
     if (ParentGrid == INT_UNDEFINED) {
       ENZO_VFAIL("Grid %"ISYM" has no valid parent.\n", gridnum)
