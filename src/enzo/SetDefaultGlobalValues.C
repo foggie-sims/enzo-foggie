@@ -258,6 +258,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   }
   if( MAX_DIMENSION > 0 ) DiskGravityAngularMomentum[MAX_DIMENSION-1] = 1.0; 
 
+  MetalDensityFloor = 0.0;   // off unless set
   MultiRefineRegionMaximumOuterLevel = INT_UNDEFINED;
   MultiRefineRegionMinimumOuterLevel = INT_UNDEFINED;
   MultiRefineRegionSpatiallyVaryingStarMass = 0;

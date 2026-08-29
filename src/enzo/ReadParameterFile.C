@@ -395,6 +395,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     /* Parameters for the MultiRefineRegion mechanics */
 
     ret += sscanf(line, "MultiRefineRegionSpatiallyVaryingStarMass = %"ISYM, &MultiRefineRegionSpatiallyVaryingStarMass);
+    ret += sscanf(line, "MetalDensityFloor = %"FSYM, &MetalDensityFloor);
     ret += sscanf(line, "MultiRefineRegionMaximumOuterLevel  = %"ISYM, &MultiRefineRegionMaximumOuterLevel);
     ret += sscanf(line, "MultiRefineRegionMinimumOuterLevel  = %"ISYM, &MultiRefineRegionMinimumOuterLevel);
     if (sscanf(line, "MultiRefineRegionMaximumLevel[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2){
