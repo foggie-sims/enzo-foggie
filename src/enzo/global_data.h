@@ -263,6 +263,13 @@ EXTERN int RefineRegionAutoAdjust;
 EXTERN int MultiRefineRegion;
 EXTERN FLOAT MultiRefineRegionLeftEdge[MAX_STATIC_REGIONS+MAX_TRACKS][MAX_DIMENSION];
 EXTERN FLOAT MultiRefineRegionRightEdge[MAX_STATIC_REGIONS+MAX_TRACKS][MAX_DIMENSION];
+/* Absolute floor applied to metal density fields before interpolation.
+   Second-order interpolation fails its positivity check when a metal
+   field spans ~10 decades across neighbouring cells, which happens at
+   high z where metals are isolated spikes on a numerically-zero
+   background.  0 disables it, preserving previous behaviour. */
+EXTERN float MetalDensityFloor;
+
 EXTERN int MultiRefineRegionMaximumLevel[MAX_STATIC_REGIONS+MAX_TRACKS];
 EXTERN int MultiRefineRegionMinimumLevel[MAX_STATIC_REGIONS+MAX_TRACKS];
 EXTERN float MultiRefineRegionMinimumStarMass[MAX_STATIC_REGIONS+MAX_TRACKS];

@@ -337,6 +337,31 @@ int grid::InterpolateFieldValues(grid *ParentGrid
     }
 
  
+    /* Floor the metal density fields before interpolating them.
+
+       Second-order interpolation carries a positivity check (interp3d.F:247):
+       with all parent values positive it still fails when the reconstructed
+       slope exceeds the cell mean, which would put a negative value in the
+       child.  At high redshift the metal fields are isolated spikes from a
+       handful of star particles sitting on a numerically-zero background, so
+       neighbouring cells can differ by ten decades (1e-21 next to 1e-31) and
+       the check trips.  Raising the numerical dust to a floor far below any
+       physically meaningful metal density bounds the dynamic range without
+       touching any cell that carries real metals.
+
+       MetalDensityFloor = 0 disables this entirely. */
+
+    if (MetalDensityFloor > 0.0)
+      for (field = 0; field < NumberOfBaryonFields; field++)
+        if (FieldType[field] == Metallicity      ||
+            FieldType[field] == MetalSNIaDensity ||
+            FieldType[field] == MetalSNIIDensity ||
+            FieldType[field] == MetalAGBDensity  ||
+            FieldType[field] == MetalNSMDensity)
+          for (int ii = 0; ii < ParentTempSize; ii++)
+            if (ParentTemp[field][ii] < MetalDensityFloor)
+              ParentTemp[field][ii] = MetalDensityFloor;
+
     /* Loop over all the fields. */
  
     for (field = 0; field < NumberOfBaryonFields; field++) {
