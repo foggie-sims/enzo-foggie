@@ -981,6 +981,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
     StarMakerSelfBoundCrit);
   fprintf(fptr, "StarMakerThermalCrit                  = %"ISYM"\n",
     StarMakerThermalCrit);
+  fprintf(fptr, "CoolingWorkEstimate            = %"ISYM"\n", CoolingWorkEstimate);
   fprintf(fptr, "StarMakerH2Crit                       = %"ISYM"\n",
     StarMakerH2Crit);
   fprintf(fptr, "StarMakerTemperatureThreshold         = %"GSYM"\n",

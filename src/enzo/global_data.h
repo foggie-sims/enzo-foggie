@@ -436,6 +436,10 @@ EXTERN float SGScoeffSSemf;
 /* Multi-species rate equation flag and associated data. */
 
 EXTERN int MultiSpecies;
+
+/* Load-balance work estimation: 0 = off (default, behaviour unchanged),
+   1 = reduce the cooling-time field to work proxies and dump them. */
+EXTERN int CoolingWorkEstimate;
 EXTERN int NoMultiSpeciesButColors;
 EXTERN int ThreeBodyRate;
 EXTERN RateDataType RateData;

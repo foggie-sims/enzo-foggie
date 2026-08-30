@@ -975,6 +975,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       &StarMakerSelfBoundCrit);
     ret += sscanf(line, "StarMakerThermalCrit = %"ISYM,
       &StarMakerThermalCrit);
+    ret += sscanf(line, "CoolingWorkEstimate = %"ISYM, &CoolingWorkEstimate);
     ret += sscanf(line, "StarMakerUseJeansMass = %"ISYM,
 		  &StarMakerUseJeansMass);
     ret += sscanf(line, "StarMakerH2Crit = %"ISYM,

@@ -89,6 +89,16 @@ class grid
   FLOAT GridRightEdge[MAX_DIMENSION];  // ending pos (active problem space)
   int GridLevel;                       // hierarchy level where this grid lives
   float dtFixed;                       // current (fixed) timestep
+//
+//  Load-balance work proxies.  DIAGNOSTIC ONLY -- these are filled by
+//  ReduceCoolingWork() from a cooling-time field and are consumed only by
+//  the load balancer and the calibration dump.  They must never be fed
+//  into hydro, chemistry, feedback or the timestep.
+//
+  float CoolingWorkRowMax;             // sum over rows of nx*n_iter_max
+  float CoolingWorkCellSum;            // sum over cells of n_iter
+  int   CoolingWorkDenseCells;         // cells with t_cool < dt
+  float CoolingWorkMeasured;           // measured seconds in MultiSpeciesHandler
   FLOAT Time;                          // current problem time
   FLOAT OldTime;                       // time corresponding to OldBaryonField
   int   SubgridsAreStatic;             // 
@@ -620,6 +630,14 @@ gradient force to gravitational force for one-zone collapse test. */
 /* Baryons: compute the cooling time. */
 
    int ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly=FALSE);
+
+/* Reduce a cooling-time field to load-balance work proxies (diagnostic). */
+   int ReduceCoolingWork(float *cooling_time);
+   float ReturnCoolingWorkRowMax()  { return CoolingWorkRowMax; }
+   float ReturnCoolingWorkCellSum() { return CoolingWorkCellSum; }
+   int   ReturnCoolingWorkDenseCells() { return CoolingWorkDenseCells; }
+   float ReturnCoolingWorkMeasured() { return CoolingWorkMeasured; }
+   void  SetCoolingWorkMeasured(float t) { CoolingWorkMeasured = t; }
 
 /* Baryons: compute cooling rate for user supplied data */
 

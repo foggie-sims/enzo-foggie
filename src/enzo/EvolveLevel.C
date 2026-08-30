@@ -683,8 +683,46 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
  
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
       TIMER_START("ChemistryCooling");
+      /* Per-grid wall time for the cooling solve.  The TIMER_ macros
+         aggregate over every grid on the rank, which is why they cannot
+         calibrate a per-grid work model.  DIAGNOSTIC ONLY. */
+      double cw_t0 = (CoolingWorkEstimate > 0) ? MPI_Wtime() : 0.0;
       Grids[grid1]->GridData->MultiSpeciesHandler();
+      if (CoolingWorkEstimate > 0)
+        Grids[grid1]->GridData->SetCoolingWorkMeasured(float(MPI_Wtime() - cw_t0));
       TIMER_STOP("ChemistryCooling");
+
+      /* Calibration record: measured time against the candidate proxies.
+         One file PER RANK -- all ranks appending to a shared file is the
+         filesystem-serializing pattern the audit flags in
+         Grid_StarParticleHandler.C:1801-1829.  Written every 10th root
+         cycle to keep the volume sane. */
+      if (CoolingWorkEstimate > 0 && MetaData->CycleNumber % 10 == 0 &&
+          Grids[grid1]->GridData->ReturnProcessorNumber() == MyProcessorNumber) {
+        static FILE *cw_fptr = NULL;
+        if (cw_fptr == NULL) {
+          char cw_name[MAX_LINE_LENGTH];
+          snprintf(cw_name, MAX_LINE_LENGTH, "cooling_work_%04"ISYM".dat",
+                   MyProcessorNumber);
+          cw_fptr = fopen(cw_name, "a");
+          if (cw_fptr != NULL)
+            fprintf(cw_fptr, "# cycle level ncells nparticles measured_s "
+                             "rowmax cellsum densecells dt\n");
+        }
+        if (cw_fptr != NULL) {
+          grid *cwg = Grids[grid1]->GridData;
+          fprintf(cw_fptr,
+                  "%"ISYM" %"ISYM" %"ISYM" %"ISYM" %.6e %.6e %.6e %"ISYM" %.6e\n",
+                  MetaData->CycleNumber, level,
+                  cwg->GetGridSize(), cwg->ReturnNumberOfParticles(),
+                  cwg->ReturnCoolingWorkMeasured(),
+                  cwg->ReturnCoolingWorkRowMax(),
+                  cwg->ReturnCoolingWorkCellSum(),
+                  cwg->ReturnCoolingWorkDenseCells(),
+                  cwg->ReturnTimeStep());
+          fflush(cw_fptr);
+        }
+      }
 
       /* Update particle positions (if present). */
 

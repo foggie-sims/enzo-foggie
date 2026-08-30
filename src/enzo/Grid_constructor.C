@@ -37,6 +37,10 @@ grid::grid()
   OldTime                               = 0.0;
   NumberOfBaryonFields                  = 0;
   dtFixed                               = 0.0;
+  CoolingWorkRowMax     = 0.0;
+  CoolingWorkCellSum    = 0.0;
+  CoolingWorkDenseCells = 0;
+  CoolingWorkMeasured   = 0.0;
   NumberOfParticles                     = 0;
   GravitatingMassFieldCellSize          = FLOAT_UNDEFINED;
   GravitatingMassFieldParticlesCellSize = FLOAT_UNDEFINED;

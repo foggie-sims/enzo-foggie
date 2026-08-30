@@ -619,6 +619,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   StarMakerVelDivCrit              = TRUE;
   StarMakerSelfBoundCrit           = FALSE;
   StarMakerThermalCrit             = TRUE;
+  CoolingWorkEstimate              = 0;   // off: behaviour unchanged
   StarMakerUseJeansMass            = TRUE;
   StarMakerH2Crit                  = FALSE;
   StarMakerTemperatureThreshold    = 1.1e4;        // in K

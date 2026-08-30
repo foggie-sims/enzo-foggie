@@ -860,6 +860,16 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
     float *cooling_time = new float[size];
     this->ComputeCoolingTime(cooling_time);
+
+    /* Reduce the cooling-time field to load-balance work proxies before it
+       is discarded.  This is free: the array is already computed here for
+       every grid on every subcycle, and star_maker_h2reg (the active maker
+       when StarParticleCreation = 2048) never consumes it.  DIAGNOSTIC ONLY
+       -- see Grid_ReduceCoolingWork.C; nothing derived here may re-enter
+       physics. */
+
+    if (CoolingWorkEstimate > 0)
+      this->ReduceCoolingWork(cooling_time);
  
     /* Call FORTRAN routine to do the actual work. */
  
