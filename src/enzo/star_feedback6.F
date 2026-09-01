@@ -24,7 +24,7 @@ c
      &               tabZ, tabAge, tabMass, tabMetal, tabEvents,
      &               stochastic, preSN, preSNmom, pSNntabZ, pSNntabAge,
      &               pSNtabZ, pSNtabAge, pSNtabMass, pSNtabMetal,
-     &               pSNtabMom, useAGB)
+     &               pSNtabMom, useAGB, metalAGB)
 c
 c  RELEASES "STAR" PARTICLE MOMENTUM, MASS AND METALS
 c
@@ -87,7 +87,7 @@ c    use_tab_fdbk - flag to use tabular feedback
 c    minit     - initial particle mass
 c    ergSNII   - energy in ergs per SNII event
 c    ergSNIa   - energy in ergs per SNIa event
-c    itracksrc - track SNII & SNIa metals separately?
+c    itracksrc - track SNII, SNIa, & AGB metals separately?
 c    metalSNII - field for SNII metals
 c    metalSNIa - field for SNIa metals
 c    ntabZ     - number of initial metallicities
@@ -111,6 +111,7 @@ c
 c    useAGB    - flag to deposit AGB wind mass and metals (from tables)
 c                into the star particle's host cell, with no momentum
 c                or energy injection. Requires use_tabfbk.
+c    metalAGB  - field for AGB wind metals (only updated if itracksrc)
 c
 c  OUTPUTS:
 c    d,u,v,w,ge,e - modified field
@@ -147,7 +148,7 @@ c
       INTG_PREC itracksrc, ntabZ, ntabAge, use_tabfbk, stochastic
       INTG_PREC preSN, preSNmom, pSNntabZ, pSNntabAge, useAGB
       R_PREC    metalSNII(nx,ny,nz), metalSNIa(nx,ny,nz)
-      R_PREC    tabZ(ntabZ), tabAge(ntabAge)
+      R_PREC    tabZ(ntabZ), tabAge(ntabAge), metalAGB(nx,ny,nz)
       R_PREC    tabMass(4, ntabAge, ntabZ), tabMetal(4, ntabAge, ntabZ)
       R_PREC    tabEvents(2, ntabAge, ntabZ)
       R_PREC    pSNtabZ(pSNntabZ), pSNtabAge(pSNntabAge)
@@ -1451,11 +1452,19 @@ c
                if (useAGB .eq. 1_IKIND .and.
      &             agbmass_grid(ic,jc,kc) .gt. 0._RKIND) then
                   if (imetal .eq. 1_IKIND) then
-                     metal(ic,jc,kc) = (metal(ic,jc,kc)*d(ic,jc,kc) + 
+                     metal(ic,jc,kc) = (metal(ic,jc,kc)*d(ic,jc,kc) +
      &                 agbmetal_grid(ic,jc,kc))
      &                     / (d(ic,jc,kc) + agbmass_grid(ic,jc,kc))
                      if (metal(ic,jc,kc) .gt. 0.95_RKIND)
      &                  metal(ic,jc,kc) = 0.95_RKIND
+                     if (itracksrc .eq. 1_IKIND) then
+                        metalAGB(ic,jc,kc) =
+     &                    (metalAGB(ic,jc,kc)*d(ic,jc,kc) +
+     &                    agbmetal_grid(ic,jc,kc))
+     &                    / (d(ic,jc,kc) + agbmass_grid(ic,jc,kc))
+                        if (metalAGB(ic,jc,kc) .gt. 0.95_RKIND)
+     &                    metalAGB(ic,jc,kc) = 0.95_RKIND
+                     endif
                      endif
                      d(ic,jc,kc) = d(ic,jc,kc) + agbmass_grid(ic,jc,kc)
                endif ! end AGB wind feedback

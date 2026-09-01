@@ -383,7 +383,7 @@ extern "C" void FORTRAN_NAME(star_feedback6)(int *nx, int *ny, int *nz,
              double *tabMass, double *tabMetal, double *tabEvents, int *stochastic,
              int *preSN, int *preSNmom, int *pSNntabZ, int *pSNntabAge, double *pSNtabZ,
              double *pSNtabAge, double *pSNtabMass, double *pSNtabMetal, double *pSNtabMom,
-             int *useAGB);
+             int *useAGB, float *metalAGB);
 
 extern "C" void FORTRAN_NAME(star_feedback3)(int *nx, int *ny, int *nz,
              float *d, float *dm, float *te, float *ge, float *u, float *v,
@@ -1863,7 +1863,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        FBTable.mass_yield, FBTable.metm_yield, FBTable.event_rate, &StarFeedbackStochasticSNe,
        &StarFeedbackPreSNFeedback, &StarFeedbackPreSNMomentum, &pSNFBTable.n_met, &pSNFBTable.n_age, pSNFBTable.ini_met, pSNFBTable.pop_age,
        pSNFBTable.mass_yield, pSNFBTable.metm_yield, pSNFBTable.mom_rate,
-       &StarFeedbackAGB);
+       &StarFeedbackAGB, BaryonField[MetalAGBNum]);
 
     delete [] mu_field;
  
