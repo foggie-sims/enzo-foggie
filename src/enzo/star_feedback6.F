@@ -24,7 +24,9 @@ c
      &               tabZ, tabAge, tabMass, tabMetal, tabEvents,
      &               stochastic, preSN, preSNmom, pSNntabZ, pSNntabAge,
      &               pSNtabZ, pSNtabAge, pSNtabMass, pSNtabMetal,
-     &               pSNtabMom)
+     &               pSNtabMom, sphere, distrad_ii, distrad_ia,
+     &               distrad_presn, distrad_max, radius_ii, radius_ia,
+     &               radius_presn)
 c
 c  RELEASES "STAR" PARTICLE MOMENTUM, MASS AND METALS
 c
@@ -108,6 +110,18 @@ c    pSNtabMass - table of pre-SN wind mass injection rates
 c    pSNtabMetal - table of pre-SN wind metal injection rates
 c    pSNtabMom  - table of pre-SN wind + Lbol momentum injection rates
 c
+c    sphere    - flag (StarFeedbackSphere): when 0, distrad/diststep
+c                control the SNII, SNIa, and pre-SN region;
+c                when 1, each gets its own region computed from
+c                a physical radius (StarFeedbackSNIIRadius/SNIaRadius/
+c                PreSNRadius), floored at a 3x3x3 cube
+c    distrad_ii, distrad_ia, distrad_presn - per-type region half-width
+c                in cells (equal to distrad when sphere = 0); computed
+c                per grid in Grid_StarParticleHandler.C since it depends
+c                on dx
+c    distrad_max - the largest of distrad_ii/distrad_ia/distrad_presn
+c                (and distrad); sizes the shared work arrays below
+c
 c  OUTPUTS:
 c    d,u,v,w,ge,e - modified field
 c
@@ -151,6 +165,9 @@ c
       R_PREC    pSNtabMetal(pSNntabAge, pSNntabZ)
       R_PREC    pSNtabMom(pSNntabAge, pSNntabZ)
       INTG_PREC distrad, diststep, distcells
+      INTG_PREC sphere, distrad_ii, distrad_ia, distrad_presn,
+     &     distrad_max
+      R_PREC    radius_ii, radius_ia, radius_presn
 c
 c  Locals
 c
@@ -167,9 +184,11 @@ c
      &     kin_energy_dummy
       R_PREC xfcshift, yfcshift, zfcshift, xfc, yfc, zfc,
      &     xpos, ypos, zpos
-      R_PREC ke_before(2*distrad+1,2*distrad+1,2*distrad+1)
-      R_PREC mom_per_cell(2*distrad+1,2*distrad+1,2*distrad+1)
-      R_PREC energy_per_cell(2*distrad+1,2*distrad+1,2*distrad+1)
+      R_PREC ke_before(2*distrad_max+1,2*distrad_max+1,2*distrad_max+1)
+      R_PREC mom_per_cell(2*distrad_max+1,2*distrad_max+1,
+     &                     2*distrad_max+1)
+      R_PREC energy_per_cell(2*distrad_max+1,2*distrad_max+1,
+     &                        2*distrad_max+1)
       R_PREC energy_per_cell1(2*distrad+1,2*distrad+1,2*distrad+1)
       R_PREC Z_avg, n_avg, Z_floor,
      &	  realmass, mu_cell, add_therm
@@ -178,28 +197,53 @@ c
      &     mass_term, vel_mag, delta_ge, add_ge
       R_PREC mz_eject, mzeject_ii, mzeject_ia
       R_PREC metal_per_cell, metal_ii_per_cell, metal_ia_per_cell
-      R_PREC u1(2*distrad+1,2*distrad+1,2*distrad+1)
-      R_PREC v1(2*distrad+1,2*distrad+1,2*distrad+1)
-      R_PREC w1(2*distrad+1,2*distrad+1,2*distrad+1)
-      R_PREC d1(2*distrad+1,2*distrad+1,2*distrad+1)
-      R_PREC te1(2*distrad+1,2*distrad+1,2*distrad+1)
-      R_PREC ge1(2*distrad+1,2*distrad+1,2*distrad+1)
-      R_PREC metal1(2*distrad+1,2*distrad+1,2*distrad+1)
+      R_PREC u1(2*distrad_max+1,2*distrad_max+1,2*distrad_max+1)
+      R_PREC v1(2*distrad_max+1,2*distrad_max+1,2*distrad_max+1)
+      R_PREC w1(2*distrad_max+1,2*distrad_max+1,2*distrad_max+1)
+      R_PREC d1(2*distrad_max+1,2*distrad_max+1,2*distrad_max+1)
+      R_PREC te1(2*distrad_max+1,2*distrad_max+1,2*distrad_max+1)
+      R_PREC ge1(2*distrad_max+1,2*distrad_max+1,2*distrad_max+1)
+      R_PREC metal1(2*distrad_max+1,2*distrad_max+1,2*distrad_max+1)
       R_PREC nsn_grid(nx,ny,nz), meject_grid(nx,ny,nz),
      &     mzeject_grid(nx,ny,nz), mzeject_ii_grid(nx,ny,nz),
      &     mzeject_ia_grid(nx,ny,nz), up_grid(nx,ny,nz),
      &     vp_grid(nx,ny,nz), wp_grid(nx,ny,nz)
+c
+c     Channel-split grids for the StarFeedbackSphere method: nsn_grid,
+c     meject_grid, up_grid/vp_grid/wp_grid above stay the combined
+c     (SNII+SNIa) totals used when sphere = 0 or the SN channel count
+c     is 1; these are the per-type equivalents used when SNII and SNIa
+c     get split into separate regions. Populated whenever tabular
+c     yields are used, regardless of the sphere flag.
+c
+      R_PREC nsn_ii_grid(nx,ny,nz), nsn_ia_grid(nx,ny,nz)
+      R_PREC meject_ii_grid(nx,ny,nz), meject_ia_grid(nx,ny,nz)
+      R_PREC up_ii_grid(nx,ny,nz), vp_ii_grid(nx,ny,nz),
+     &     wp_ii_grid(nx,ny,nz)
+      R_PREC up_ia_grid(nx,ny,nz), vp_ia_grid(nx,ny,nz),
+     &     wp_ia_grid(nx,ny,nz)
       R_PREC pSNmass_grid(nx,ny,nz), pSNmetal_grid(nx,ny,nz),
      &      pSNmom_grid(nx,ny,nz), pSNup_grid(nx,ny,nz),
      &      pSNvp_grid(nx,ny,nz), pSNwp_grid(nx,ny,nz)
       R_PREC up_avg, vp_avg, wp_avg, up_avg_w, vp_avg_w, wp_avg_w
       R_PREC wind_mass, wind_metal, wind_mom, dt_pSN
-      R_PREC ke_b_wind(2*distrad+1,2*distrad+1,2*distrad+1)
+      R_PREC ke_b_wind(2*distrad_max+1,2*distrad_max+1,2*distrad_max+1)
       R_PREC mass_b_wind, kin_energy_b_wind, mom_b_wind,
      &       mass_per_cell_w, mom_per_cell_w, metal_per_cell_w,
      &       mass_dummy_w, kin_energy_dummy_w, mom_dummy_w, mass_end_w,
      &       kin_energy_end_w, mom_end_w, kin_energy_inj_w, add_therm_w,
      &       ke_after_w, delta_ke_w
+c
+c     SN feedback channel loop: iterates over the legacy
+c     combined region (nchan=1) or SNII+SNIa split regions (nchan=2)
+c
+      INTG_PREC nchan, ich, distrad_ch, diststep_ch, distcells_ch
+      INTG_PREC diststep_ii, diststep_ia, diststep_presn
+      INTG_PREC distcells_ii, distcells_ia, distcells_presn
+      R_PREC nsn_ch, meject_ch, mzeject_ch, mzeject_ii_ch, mzeject_ia_ch
+      R_PREC sphererad2_ii, sphererad2_ia, sphererad2_presn,
+     &       sphererad2_ch
+      LOGIC_PREC inregion
 
       character*32 feedbacklog_particles
       character*32 feedbacklog_grid
@@ -255,6 +299,16 @@ c
                up_grid(i,j,k) = 0._RKIND
                vp_grid(i,j,k) = 0._RKIND
                wp_grid(i,j,k) = 0._RKIND
+               nsn_ii_grid(i,j,k) = 0._RKIND
+               nsn_ia_grid(i,j,k) = 0._RKIND
+               meject_ii_grid(i,j,k) = 0._RKIND
+               meject_ia_grid(i,j,k) = 0._RKIND
+               up_ii_grid(i,j,k) = 0._RKIND
+               vp_ii_grid(i,j,k) = 0._RKIND
+               wp_ii_grid(i,j,k) = 0._RKIND
+               up_ia_grid(i,j,k) = 0._RKIND
+               vp_ia_grid(i,j,k) = 0._RKIND
+               wp_ia_grid(i,j,k) = 0._RKIND
                if (preSN .eq. 1_IKIND) then
                   pSNmass_grid(i,j,k) = 0._RKIND
                   pSNmetal_grid(i,j,k) = 0._RKIND
@@ -266,6 +320,52 @@ c
             enddo
          enddo
       enddo
+c
+c-----------------------------------------------------------------------
+c
+c     Region shape for each per-type radius: when sphere = 0, uses
+c     StarFeedbackDistRadius and StarFeedbackDistCellStep.
+c     When sphere = 1, each region is a true Euclidean sphere of radius 
+c     radius_ii/ia/presn; diststep_ii/ia/presn are unused in that case 
+c     (distmode = sphere is passed straight to the shared subroutines
+c     below to select which mask to apply) but still given a sane value.
+c
+c     Number of SN channels handled per grid cell in the feedback loop
+c     below: SNII and SNIa split into their own regions when sphere = 1
+c     or kept combined when sphere = 0.
+c
+      if (sphere .eq. 0_IKIND) then
+         diststep_ii = diststep
+         diststep_ia = diststep
+         diststep_presn = diststep
+         sphererad2_ii = 0._RKIND
+         sphererad2_ia = 0._RKIND
+         sphererad2_presn = 0._RKIND
+         distcells_ii = distcells
+         distcells_ia = distcells
+         distcells_presn = distcells
+      else
+c
+c     Count the cells each sphere actually contains
+c
+         diststep_ii = 3_IKIND*distrad_ii
+         diststep_ia = 3_IKIND*distrad_ia
+         diststep_presn = 3_IKIND*distrad_presn
+         sphererad2_ii = radius_ii**2._RKIND
+         sphererad2_ia = radius_ia**2._RKIND
+         sphererad2_presn = radius_presn**2._RKIND
+         call count_sphere_cells(distrad_ii, sphererad2_ii,
+     &            distcells_ii)
+         call count_sphere_cells(distrad_ia, sphererad2_ia,
+     &            distcells_ia)
+         call count_sphere_cells(distrad_presn, sphererad2_presn,
+     &            distcells_presn)
+      endif
+      if (sphere .eq. 0_IKIND .or. use_tabfbk .eq. 0_IKIND) then
+         nchan = 1_IKIND
+      else
+         nchan = 2_IKIND
+      endif
 c
 c-----------------------------------------------------------------------
 c
@@ -622,7 +722,7 @@ c
             xfc = xp(n)
             yfc = yp(n)
             zfc = zp(n)
-            fbuff = ibuff + distrad
+            fbuff = ibuff + distrad_max
 c
 c     Check bounds - if star particle is near grid edge
 c     then shift center of feedback region
@@ -673,9 +773,10 @@ c
             jc = int(ypos) + 1_IKIND
             kc = int(zpos) + 1_IKIND
 c
-c     Clamp feedback center so feedback region [ic-distrad, ic+distrad]
-c     stays within the allocated array, regardless of floating-point
-c     rounding in the position-to-index conversion above or parameter values.
+c     Clamp feedback center so feedback region [ic-distrad_max,
+c     ic+distrad_max] stays within the allocated array, regardless of
+c     floating-point rounding in the position-to-index conversion
+c     above or parameter values.
 c
             ic = max(fbuff+1_IKIND, min(nx-fbuff, ic))
             jc = max(fbuff+1_IKIND, min(ny-fbuff, jc))
@@ -692,10 +793,26 @@ c
             if (imetal .eq. 1)
      &       mzeject_grid(ic,jc,kc) = mzeject_grid(ic,jc,kc) + mz_eject
             if (use_tabfbk .eq. 1_IKIND) then
-               mzeject_ii_grid(ic,jc,kc) = mzeject_ii_grid(ic,jc,kc) 
+               mzeject_ii_grid(ic,jc,kc) = mzeject_ii_grid(ic,jc,kc)
      &           + mzeject_ii
                mzeject_ia_grid(ic,jc,kc) = mzeject_ia_grid(ic,jc,kc)
      &           + mzeject_ia
+c
+c     Channel-split SN counts, ejected mass, and velocity weights for
+c     the StarFeedbackSphere method (used only when sphere = 1)
+c
+               nsn_ii_grid(ic,jc,kc) = nsn_ii_grid(ic,jc,kc) + nsn_ii
+               nsn_ia_grid(ic,jc,kc) = nsn_ia_grid(ic,jc,kc) + nsn_ia
+               meject_ii_grid(ic,jc,kc) = meject_ii_grid(ic,jc,kc)
+     &           + meject_ii
+               meject_ia_grid(ic,jc,kc) = meject_ia_grid(ic,jc,kc)
+     &           + meject_ia
+               up_ii_grid(ic,jc,kc) = up_ii_grid(ic,jc,kc)+up(n)*nsn_ii
+               vp_ii_grid(ic,jc,kc) = vp_ii_grid(ic,jc,kc)+vp(n)*nsn_ii
+               wp_ii_grid(ic,jc,kc) = wp_ii_grid(ic,jc,kc)+wp(n)*nsn_ii
+               up_ia_grid(ic,jc,kc) = up_ia_grid(ic,jc,kc)+up(n)*nsn_ia
+               vp_ia_grid(ic,jc,kc) = vp_ia_grid(ic,jc,kc)+vp(n)*nsn_ia
+               wp_ia_grid(ic,jc,kc) = wp_ia_grid(ic,jc,kc)+wp(n)*nsn_ia
             endif
 c
 c     If using pre-SN feedback, add values to grids. Weight average velocity
@@ -752,13 +869,14 @@ c     when translating the momentum into the particle frame.
 c
 c
 c     Loop over the feedback grids, avoiding the edges.
-c     The bounds ibuff+distrad+1 to n*-ibuff-distrad ensure that the
-c     feedback region [ic-distrad, ic+distrad] always stays within the
-c     allocated array for any distrad or ibuff value.
+c     The bounds ibuff+distrad_max+1 to n*-ibuff-distrad_max ensure
+c     that the feedback region [ic-distrad_max, ic+distrad_max] (the
+c     largest any channel's region can be) always stays within the
+c     allocated array.
 c
-      do kc=ibuff+distrad+1_IKIND, nz-ibuff-distrad
-         do jc=ibuff+distrad+1_IKIND, ny-ibuff-distrad
-            do ic=ibuff+distrad+1_IKIND, nx-ibuff-distrad
+      do kc=ibuff+distrad_max+1_IKIND, nz-ibuff-distrad_max
+         do jc=ibuff+distrad_max+1_IKIND, ny-ibuff-distrad_max
+            do ic=ibuff+distrad_max+1_IKIND, nx-ibuff-distrad_max
 c
 c ====================================================================
 c     BEGIN PRE-SUPERNOVA FEEDBACK
@@ -775,16 +893,25 @@ c     before momentum is added.  This
 c     is needed at the end of the calculation to update the
 c     total energy (te) field.
 c
-               ke_b_wind = 0._RKIND
-               do k = -distrad, +distrad
+               do k = -distrad_presn, +distrad_presn
                   stepk = abs(k)
-                  do j = -distrad, +distrad
+                  do j = -distrad_presn, +distrad_presn
                      stepj = stepk + abs(j)
-                     do i = -distrad, +distrad
-                        cellstep = stepj + abs(i)
-                        if (cellstep .le. diststep) then
-                           ke_b_wind(i+distrad+1, j+distrad+1,
-     &                        k+distrad+1)=
+                     do i = -distrad_presn, +distrad_presn
+                        if (sphere .eq. 1_IKIND) then
+                           inregion = real(i,RKIND)**2._RKIND +
+     &                        real(j,RKIND)**2._RKIND +
+     &                        real(k,RKIND)**2._RKIND
+     &                        .le. sphererad2_presn
+                        else
+                           cellstep = stepj + abs(i)
+                           inregion = cellstep .le. diststep_presn
+                        endif
+                        ke_b_wind(i+distrad_max+1, j+distrad_max+1,
+     &                     k+distrad_max+1) = 0._RKIND
+                        if (inregion) then
+                           ke_b_wind(i+distrad_max+1, j+distrad_max+1,
+     &                        k+distrad_max+1)=
      &                         0.5_RKIND*d(ic+i, jc+j, kc+k)*
      &                                 (u(ic+i ,jc+j ,kc+k)**2_IKIND +
      &                                  v(ic+i ,jc+j ,kc+k)**2_IKIND +
@@ -807,12 +934,14 @@ c
 c     Convert velocities into momenta and shift to frame of average velocity
                call momentum_convert(u, v, w, d, up_avg_w, vp_avg_w,
      &                    wp_avg_w, nx, ny, nz, ic, jc, kc,
-     &                    +1_IKIND, distrad, diststep)
+     &                    +1_IKIND, distrad_presn, diststep_presn, 
+     &                    sphere, sphererad2_presn)
 c     Sum mass, energy, and momentum before
                call sum_energy_mom(u, v, w, d, nx, ny, nz,
      &            ic, jc, kc,
      &            mass_b_wind, kin_energy_b_wind, mom_b_wind,
-     &            distrad, diststep)
+     &            distrad_presn, diststep_presn, sphere,
+     &                        sphererad2_presn)
 #ifdef FORTRAN_DEBUG
                write(7,*) 'up_w, vp_w, wp_w',
      &            up_avg_w*vunits/1e5_IKIND,
@@ -832,19 +961,26 @@ c
 c
 c     Zero dummy velocity, energy, and metallicity fields
 c
-               do k = -distrad, distrad
-                  do j = -distrad, distrad
-                     do i = -distrad, distrad
-                        u1(i+distrad+1,j+distrad+1,k+distrad+1)=0._RKIND
-                        v1(i+distrad+1,j+distrad+1,k+distrad+1)=0._RKIND
-                        w1(i+distrad+1,j+distrad+1,k+distrad+1)=0._RKIND
-                        d1(i+distrad+1,j+distrad+1,k+distrad+1) =
+               do k = -distrad_presn, distrad_presn
+                  do j = -distrad_presn, distrad_presn
+                     do i = -distrad_presn, distrad_presn
+                        u1(i+distrad_max+1,j+distrad_max+1,
+     &                     k+distrad_max+1)=0._RKIND
+                        v1(i+distrad_max+1,j+distrad_max+1,
+     &                     k+distrad_max+1)=0._RKIND
+                        w1(i+distrad_max+1,j+distrad_max+1,
+     &                     k+distrad_max+1)=0._RKIND
+                        d1(i+distrad_max+1,j+distrad_max+1,
+     &                     k+distrad_max+1) =
      &                     d(i+ic,j+jc,k+kc)
-                        ge1(i+distrad+1,j+distrad+1,k+distrad+1) = 
+                        ge1(i+distrad_max+1,j+distrad_max+1,
+     &                     k+distrad_max+1) =
      &                     0._RKIND
-                        te1(i+distrad+1,j+distrad+1,k+distrad+1) = 
+                        te1(i+distrad_max+1,j+distrad_max+1,
+     &                     k+distrad_max+1) =
      &                     0._RKIND
-                        metal1(i+distrad+1,j+distrad+1,k+distrad+1) =
+                        metal1(i+distrad_max+1,j+distrad_max+1,
+     &                     k+distrad_max+1) =
      &                     0._RKIND
                      enddo
                   enddo
@@ -852,32 +988,34 @@ c
 c
 c     Now add mass and momentum terms to local dummy fields
 c
-               mass_per_cell_w = pSNmass_grid(ic,jc,kc)/distcells
+               mass_per_cell_w = pSNmass_grid(ic,jc,kc)/distcells_presn
                mom_per_cell_w = pSNmom_grid(ic,jc,kc)
-     &                              /(distcells-1_IKIND)
-               metal_per_cell_w = pSNmetal_grid(ic,jc,kc)/distcells
+     &                              /(distcells_presn-1_IKIND)
+               metal_per_cell_w =pSNmetal_grid(ic,jc,kc)/distcells_presn
                call add_preSN_feedback(u1, v1, w1, d1, ge1, te1, metal1,
-     &                        2_IKIND*distrad+1_IKIND,
-     &                        2_IKIND*distrad+1_IKIND,
-     &                        2_IKIND*distrad+1_IKIND,
-     &                        distrad+1_IKIND, distrad+1_IKIND,
-     &                        distrad+1_IKIND,
+     &                        2_IKIND*distrad_max+1_IKIND,
+     &                        2_IKIND*distrad_max+1_IKIND,
+     &                        2_IKIND*distrad_max+1_IKIND,
+     &                        distrad_max+1_IKIND, distrad_max+1_IKIND,
+     &                        distrad_max+1_IKIND,
      &                        imetal, imulti_metals, idual,
      &                        kick_cap, preSNmom,
      &                        mass_per_cell_w, mom_per_cell_w,
      &                        metal_per_cell_w, dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+     &                        distrad_presn, diststep_presn, sphere,
+     &                        sphererad2_presn)
 c
 c     Calculate mass and energy in dummy fields
 c
                call sum_energy_mom(u1, v1, w1, d1,
-     &                        2_IKIND*distrad+1_IKIND,
-     &                        2_IKIND*distrad+1_IKIND,
-     &                        2_IKIND*distrad+1_IKIND,
-     &                        distrad+1_IKIND, distrad+1_IKIND,
-     &                        distrad+1_IKIND,
+     &                        2_IKIND*distrad_max+1_IKIND,
+     &                        2_IKIND*distrad_max+1_IKIND,
+     &                        2_IKIND*distrad_max+1_IKIND,
+     &                        distrad_max+1_IKIND, distrad_max+1_IKIND,
+     &                        distrad_max+1_IKIND,
      &                        mass_dummy_w, kin_energy_dummy_w,
-     &                        mom_dummy_w, distrad, diststep)
+     &                        mom_dummy_w, distrad_presn, 
+     &                        diststep_presn, sphere, sphererad2_presn)
 #ifdef FORTRAN_DEBUG
                write(7,*) "m dummy wind:", mass_dummy_w*
      &               (dunits*(x1*dx)**3._RKIND)/SolarMass
@@ -896,14 +1034,16 @@ c
      &                        mass_per_cell_w, mom_per_cell_w,
      &                        metal_per_cell_w,
      &                        dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+     &                        distrad_presn, diststep_presn, sphere,
+     &                        sphererad2_presn)
 c
 c     Calculate the mass and energy in the affected region again.
 c
                call sum_energy_mom(u, v, w, d, nx, ny, nz,
      &                         ic, jc, kc,
      &                         mass_end_w, kin_energy_end_w, mom_end_w,
-     &                         distrad, diststep)
+     &                         distrad_presn, diststep_presn, sphere,
+     &                        sphererad2_presn)
 #ifdef FORTRAN_DEBUG
                write(7,*) "m end wind:", mass_end_w*
      &               (dunits*(dx*x1)**3._RKIND)/SolarMass
@@ -937,24 +1077,34 @@ c           Convert momenta back to velocities and transform back to lab frame
 c
                call momentum_convert(u, v, w, d, up_avg_w, vp_avg_w,
      &               wp_avg_w, nx, ny, nz, ic, jc, kc, -1_IKIND,
-     &               distrad, diststep)
+     &               distrad_presn, diststep_presn, sphere,
+     &                        sphererad2_presn)
 c
 c           Add the change in the kinetic energy to the total energy field
 c
-               do k = -distrad, +distrad
+               do k = -distrad_presn, +distrad_presn
                   stepk = abs(k)
-                  do j = -distrad, +distrad
+                  do j = -distrad_presn, +distrad_presn
                      stepj = stepk + abs(j)
-                     do i = -distrad, +distrad
-                        cellstep = stepj + abs(i)
-                        if (cellstep .le. diststep) then
+                     do i = -distrad_presn, +distrad_presn
+                        if (sphere .eq. 1_IKIND) then
+                           inregion = real(i,RKIND)**2._RKIND +
+     &                        real(j,RKIND)**2._RKIND +
+     &                        real(k,RKIND)**2._RKIND
+     &                        .le. sphererad2_presn
+                        else
+                           cellstep = stepj + abs(i)
+                           inregion = cellstep .le. diststep_presn
+                        endif
+                        if (inregion) then
                            vel_mag = (u(ic+i ,jc+j ,kc+k)**2_IKIND +
      &                       v(ic+i ,jc+j ,kc+k)**2_IKIND +
      &                       w(ic+i ,jc+j ,kc+k)**2_IKIND)**0.5_RKIND
                            ke_after_w = 0.5_RKIND *
      &                       d(ic+i, jc+j, kc+k) * vel_mag**2_IKIND
                            delta_ke_w = ke_after_w -
-     &                    ke_b_wind(i+distrad+1,j+distrad+1,k+distrad+1)
+     &                    ke_b_wind(i+distrad_max+1,j+distrad_max+1,
+     &                       k+distrad_max+1)
                            te(ic+i,jc+j,kc+k) = te(ic+i,jc+j,kc+k) +
      &                        delta_ke_w/d(ic+i,jc+j,kc+k)
                         endif
@@ -973,13 +1123,14 @@ c     momentum, but we only care about mass for this debugging check
                call sum_energy_mom(u, v, w, d, nx, ny, nz,
      &            ic, jc, kc,
      &            mass_b_wind, kin_energy_b_wind, mom_b_wind,
-     &            distrad, diststep)
+     &            distrad_presn, diststep_presn, sphere,
+     &                        sphererad2_presn)
                write(7,*) "m before wind:", mass_b_wind*
      &               (dunits*(x1*dx)**3._RKIND)/SolarMass
 c
 #endif
-               mass_per_cell_w = pSNmass_grid(ic,jc,kc)/distcells
-               metal_per_cell_w = pSNmetal_grid(ic,jc,kc)/distcells
+               mass_per_cell_w = pSNmass_grid(ic,jc,kc)/distcells_presn
+               metal_per_cell_w=pSNmetal_grid(ic,jc,kc)/distcells_presn
                call add_preSN_feedback(u, v, w, d, ge, te, metal,
      &                         nx, ny, nz, ic, jc, kc,
      &                        imetal, imulti_metals, idual,
@@ -987,7 +1138,8 @@ c
      &                        mass_per_cell_w, 0._RKIND,
      &                        metal_per_cell_w,
      &                        dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+     &                        distrad_presn, diststep_presn, sphere,
+     &                        sphererad2_presn)
 #ifdef FORTRAN_DEBUG
 c     Sum mass, energy, and momentum after. Note mom and KE calculations
 c     will be wrong here because velocities haven't been converted to
@@ -995,7 +1147,8 @@ c     momentum, but we only care about mass for this debugging check
                call sum_energy_mom(u, v, w, d, nx, ny, nz,
      &            ic, jc, kc,
      &            mass_end_w, kin_energy_end_w, mom_end_w,
-     &            distrad, diststep)
+     &            distrad_presn, diststep_presn, sphere,
+     &                        sphererad2_presn)
                write(7,*) "mass_per_cell_w:", mass_per_cell_w*
      &               (dunits*(x1*dx)**3._RKIND)/SolarMass
                write(7,*) "m after wind:", mass_end_w*
@@ -1009,385 +1162,401 @@ c ====================================================================
 c     BEGIN SUPERNOVA FEEDBACK
 c
 c
-c     If no supernovae in this cell, skip
-               if (nsn_grid(ic,jc,kc) .eq. 0._RKIND) goto 100
+c     If no supernovae in this cell (any channel), skip entirely
+               if (nsn_grid(ic,jc,kc) .eq. 0._RKIND .and.
+     &             nsn_ii_grid(ic,jc,kc) .eq. 0._RKIND .and.
+     &             nsn_ia_grid(ic,jc,kc) .eq. 0._RKIND) goto 100
+c
+c     Inject each SN channel's mechanical feedback into its own region:
+c     the combined region (nchan=1, using distrad_ii/diststep_ii,
+c     which equal distrad/diststep exactly when sphere=0) or SNII and
+c     SNIa split into their own regions (nchan=2, only possible when
+c     sphere=1 and tabular yields are in use).
+c
+               do ich = 1_IKIND, nchan
+c
+c     Select this channel's SN count first, and skip to the
+c     next channel if there's nothing to inject
+c
+                  if (nchan .eq. 1_IKIND) then
+                     nsn_ch = nsn_grid(ic,jc,kc)
+                  else if (ich .eq. 1_IKIND) then
+                     nsn_ch = nsn_ii_grid(ic,jc,kc)
+                  else
+                     nsn_ch = nsn_ia_grid(ic,jc,kc)
+                  endif
+                  if (nsn_ch .eq. 0._RKIND) cycle
+c
+c     Set this channel's remaining inputs and injection region
+c
+                  if (nchan .eq. 1_IKIND) then
+                     meject_ch = meject_grid(ic,jc,kc)
+                     mzeject_ch = mzeject_grid(ic,jc,kc)
+                     mzeject_ii_ch = mzeject_ii_grid(ic,jc,kc)
+                     mzeject_ia_ch = mzeject_ia_grid(ic,jc,kc)
+                     up_avg = up_grid(ic,jc,kc)/nsn_ch
+                     vp_avg = vp_grid(ic,jc,kc)/nsn_ch
+                     wp_avg = wp_grid(ic,jc,kc)/nsn_ch
+                     distrad_ch = distrad_ii
+                     diststep_ch = diststep_ii
+                     distcells_ch = distcells_ii
+                     sphererad2_ch = sphererad2_ii
+                  else if (ich .eq. 1_IKIND) then
+                     meject_ch = meject_ii_grid(ic,jc,kc)
+                     mzeject_ch = mzeject_ii_grid(ic,jc,kc)
+                     mzeject_ii_ch = mzeject_ii_grid(ic,jc,kc)
+                     mzeject_ia_ch = 0._RKIND
+                     up_avg = up_ii_grid(ic,jc,kc)/nsn_ch
+                     vp_avg = vp_ii_grid(ic,jc,kc)/nsn_ch
+                     wp_avg = wp_ii_grid(ic,jc,kc)/nsn_ch
+                     distrad_ch = distrad_ii
+                     diststep_ch = diststep_ii
+                     distcells_ch = distcells_ii
+                     sphererad2_ch = sphererad2_ii
+                  else
+                     meject_ch = meject_ia_grid(ic,jc,kc)
+                     mzeject_ch = mzeject_ia_grid(ic,jc,kc)
+                     mzeject_ii_ch = 0._RKIND
+                     mzeject_ia_ch = mzeject_ia_grid(ic,jc,kc)
+                     up_avg = up_ia_grid(ic,jc,kc)/nsn_ch
+                     vp_avg = vp_ia_grid(ic,jc,kc)/nsn_ch
+                     wp_avg = wp_ia_grid(ic,jc,kc)/nsn_ch
+                     distrad_ch = distrad_ia
+                     diststep_ch = diststep_ia
+                     distcells_ch = distcells_ia
+                     sphererad2_ch = sphererad2_ia
+                  endif
+c
+c     ---- shared injection physics: identical for every channel ----
 c
 c     Compute average density and metallicity around this cell
-c     
-               Z_avg = 0._RKIND
-               n_avg = 0._RKIND
-               do k = -distrad, distrad
-                  stepk = abs(k)
-                  do j = -distrad, distrad
-                     stepj = stepk + abs(j)
-                     do i = -distrad, distrad
-                        cellstep = stepj + abs(i)
-                        if (cellstep .le. diststep) then
-                        Z_cell = metal(ic+i,jc+j,kc+k)
-                        mu_cell = mu(ic+i,jc+j,kc+k)
+c
+                  Z_avg = 0._RKIND
+                  n_avg = 0._RKIND
+                  do k = -distrad_ch, distrad_ch
+                     stepk = abs(k)
+                     do j = -distrad_ch, distrad_ch
+                        stepj = stepk + abs(j)
+                        do i = -distrad_ch, distrad_ch
+                           if (sphere .eq. 1_IKIND) then
+                              inregion = real(i,RKIND)**2._RKIND +
+     &                           real(j,RKIND)**2._RKIND +
+     &                           real(k,RKIND)**2._RKIND
+     &                           .le. sphererad2_ch
+                           else
+                              cellstep = stepj + abs(i)
+                              inregion = cellstep .le. diststep_ch
+                           endif
+                           if (inregion) then
+                           Z_cell = metal(ic+i,jc+j,kc+k)
+                           mu_cell = mu(ic+i,jc+j,kc+k)
 c
 c     The following adjustments to Z_cell and mu_cell are band-aids to
-c     handle situations when the chemistry gets weird and the metallicity
-c     is unphysically high or mu as calculated from the baryon fields in
-c     Grid_StarParticleHandler.C is somehow negative, NaN, or outside of the
-c     expected range from ~0.5 to ~16. The below calculation
-c     of mu assumes primordial relative abundance between H and He (He is
-c     1/3 of H), that the gas is completely neutral, and that all metals
-c     are oxygen atoms, for simplicity. Note that what is called "mu" here
-c     and in the mu_field passed to this function are actually the inverse
-c     mean molecular weight!!!
+c     handle situations when the chemistry gets weird and the
+c     metallicity is unphysically high or mu as calculated from the
+c     baryon fields in Grid_StarParticleHandler.C is somehow negative,
+c     NaN, or outside of the expected range from ~0.5 to ~16. The below
+c     calculation of mu assumes primordial relative abundance between
+c     H and He (He is 1/3 of H), that the gas is completely neutral,
+c     and that all metals are oxygen atoms, for simplicity. Note that
+c     what is called "mu" here and in the mu_field passed to this
+c     function are actually the inverse mean molecular weight!!!
 c
-                        if (Z_cell .gt. 0.95_RKIND) 
-     &                    Z_cell = 0.95_RKIND
-                        if ((mu_cell .lt. 0.0625_RKIND) .or. 
-     &                    (mu_cell .gt. 2._RKIND) .or.
-     &                    (mu_cell .ne. mu_cell))
-     &                    mu_cell = 0.8125_RKIND*(1._RKIND-Z_cell) + 
-     &                     Z_cell/16._RKIND
-c        Z_avg is average metallicity, so convert metal fraction to metallicity
-c        by assuming 0.02 is Zsun
-                        Z_avg = Z_avg + Z_cell/0.02_RKIND
-                        n_avg = n_avg +
-     &                     d(ic+i,jc+j,kc+k)*dunits*
-     &                     mu_cell/mass_h
-#ifdef FORTRAN_DEBUG
-                        write(7,*) 'mu, Z, d, n',
-     &                       mu_cell, Z_cell, d(ic+i,jc+j,kc+k)*dunits,
-     &                       d(ic+i,jc+j,kc+k)*dunits*mu_cell/mass_h
-#endif
-                        endif
+                           if (Z_cell .gt. 0.95_RKIND)
+     &                       Z_cell = 0.95_RKIND
+                           if ((mu_cell .lt. 0.0625_RKIND) .or.
+     &                       (mu_cell .gt. 2._RKIND) .or.
+     &                       (mu_cell .ne. mu_cell))
+     &                       mu_cell = 0.8125_RKIND*(1._RKIND-Z_cell) +
+     &                        Z_cell/16._RKIND
+c        Z_avg is average metallicity, so convert metal fraction to
+c        metallicity by assuming 0.02 is Zsun
+                           Z_avg = Z_avg + Z_cell/0.02_RKIND
+                           n_avg = n_avg +
+     &                        d(ic+i,jc+j,kc+k)*dunits*
+     &                        mu_cell/mass_h
+                           endif
+                        enddo
                      enddo
                   enddo
-               enddo
-c               
+c
 c     The Kimm & Cen (2014) scheme (eq A5) requires a floor on Z_avg
 c
-               Z_floor = max(Z_avg/distcells, 0.01_RKIND)
-               n_avg = n_avg/distcells
-#ifdef FORTRAN_DEBUG
-               write(7,*) 'Z_avg, n_avg', Z_floor, n_avg
-#endif
+                  Z_floor = max(Z_avg/distcells_ch, 0.01_RKIND)
+                  n_avg = n_avg/distcells_ch
 c
 c     Compute the mass and momentum that this cell is responsible for
-c     injecting
+c     injecting. Zero only the sub-cube this channel actually uses --
+c     mom_per_cell/energy_per_cell are sized to distrad_max, which can
+c     be bigger than distrad_ch.
 c
-               mass_per_cell = meject_grid(ic,jc,kc)/distcells
-               mom_per_cell = 0._RKIND
-               energy_per_cell = 0._RKIND
-               call get_mom_per_cell(d, mass_per_cell,
-     &                  distcells, mom_per_cell, energy_per_cell,
-     &                  nsn_grid(ic,jc,kc), d(ic,jc,kc), dx, x1,
-     &                  n_avg, Z_floor, dunits, vunits, t1,
-     &                  nx, ny, nz, ic, jc, kc,
-     &                  mom_mult, distrad, diststep)
-c           mom_per_cell has units of mass*velocity/volume
-#ifdef FORTRAN_DEBUG
-               write(7,*) 'energy_per_cell', energy_per_cell
-     &                  *dunits*(dx*x1)**3._RKIND*vunits**2._RKIND
-#endif
-c
-c     If not injecting any momentum or energy, skip
-c
-               mom_inj = 0._RKIND
-               energy_inj = 0._RKIND
-               do k = 1_IKIND,2_IKIND*distrad+1_IKIND
-                  do j = 1_IKIND,2_IKIND*distrad+1_IKIND
-                     do i = 1_IKIND,2_IKIND*distrad+1_IKIND
-                        mom_inj = mom_inj + mom_per_cell(i, j, k)
-                        energy_inj = energy_inj +
-     &                      energy_per_cell(i, j, k)
+                  mass_per_cell = meject_ch/distcells_ch
+                  do k = -distrad_ch, distrad_ch
+                     do j = -distrad_ch, distrad_ch
+                        do i = -distrad_ch, distrad_ch
+                           mom_per_cell(i+distrad_max+1,
+     &                        j+distrad_max+1,k+distrad_max+1) =
+     &                        0._RKIND
+                           energy_per_cell(i+distrad_max+1,
+     &                        j+distrad_max+1,k+distrad_max+1) =
+     &                        0._RKIND
+                        enddo
                      enddo
                   enddo
-               enddo
-#ifdef FORTRAN_DEBUG
-               write(7,*) 'energy_inj', energy_inj
-     &                  *dunits*(dx*x1)**3._RKIND*vunits**2._RKIND
-#endif
-               if (mom_inj .eq. 0._RKIND) then
-                  if (energy_inj .eq. 0._RKIND) then
-#ifdef FORTRAN_DEBUG
-                     write(7,*) 'no injection for cell', ic,jc,kc
-#endif
-                     goto 100
-                  endif
-               endif
+                  call get_mom_per_cell(d, mass_per_cell,
+     &                  distcells_ch, mom_per_cell, energy_per_cell,
+     &                  nsn_ch, d(ic,jc,kc), dx, x1,
+     &                  n_avg, Z_floor, dunits, vunits, t1,
+     &                  nx, ny, nz, ic, jc, kc,
+     &                  mom_mult, distrad_max, distrad_ch, diststep_ch,
+     &                  sphere, sphererad2_ch)
+c           mom_per_cell has units of mass*velocity/volume
 c
-c     Compute the kinetic energy in the affected region
-c     before momentum is added.  This
-c     is needed at the end of the calculation to update the
-c     total energy (te) field.
+c     If not injecting any momentum or energy, skip to the next channel
 c
-               ke_before = 0._RKIND
-               do k = -distrad, +distrad
-                  stepk = abs(k)
-                  do j = -distrad, +distrad
-                     stepj = stepk + abs(j)
-                     do i = -distrad, +distrad
-                        cellstep = stepj + abs(i)
-                        if (cellstep .le. diststep) then
-                           ke_before(i+distrad+1, j+distrad+1,
-     &                        k+distrad+1)=
+                  mom_inj = 0._RKIND
+                  energy_inj = 0._RKIND
+                  do k = -distrad_ch, distrad_ch
+                     do j = -distrad_ch, distrad_ch
+                        do i = -distrad_ch, distrad_ch
+                           mom_inj = mom_inj +
+     &                        mom_per_cell(i+distrad_max+1,
+     &                        j+distrad_max+1,k+distrad_max+1)
+                           energy_inj = energy_inj +
+     &                        energy_per_cell(i+distrad_max+1,
+     &                        j+distrad_max+1,k+distrad_max+1)
+                        enddo
+                     enddo
+                  enddo
+                  if (mom_inj .eq. 0._RKIND .and.
+     &                energy_inj .eq. 0._RKIND) cycle
+c
+c     Compute the kinetic energy in the affected region before
+c     momentum is added. This is needed at the end of the calculation
+c     to update the total energy (te) field.
+c
+                  do k = -distrad_ch, distrad_ch
+                     stepk = abs(k)
+                     do j = -distrad_ch, distrad_ch
+                        stepj = stepk + abs(j)
+                        do i = -distrad_ch, distrad_ch
+                           if (sphere .eq. 1_IKIND) then
+                              inregion = real(i,RKIND)**2._RKIND +
+     &                           real(j,RKIND)**2._RKIND +
+     &                           real(k,RKIND)**2._RKIND
+     &                           .le. sphererad2_ch
+                           else
+                              cellstep = stepj + abs(i)
+                              inregion = cellstep .le. diststep_ch
+                           endif
+                           ke_before(i+distrad_max+1, j+distrad_max+1,
+     &                        k+distrad_max+1) = 0._RKIND
+                           if (inregion) then
+                           ke_before(i+distrad_max+1, j+distrad_max+1,
+     &                        k+distrad_max+1)=
      &                         0.5_RKIND*d(ic+i, jc+j, kc+k)*
      &                                 (u(ic+i ,jc+j ,kc+k)**2_IKIND +
      &                                  v(ic+i ,jc+j ,kc+k)**2_IKIND +
      &                                  w(ic+i ,jc+j ,kc+k)**2_IKIND)
-                        endif
+                           endif
+                        enddo
                      enddo
                   enddo
-               enddo
-#ifdef FORTRAN_DEBUG
-               write(7,*) 'ke_before:',ke_before
-     &                  *dunits*(dx*x1)**3._RKIND*vunits**2._RKIND
-#endif
 c           ke_before has units of mass*velocity^2/volume
 c
-c     First convert velocities to momenta and transform
-c     into frame comoving with explosion-weighted average velocity of particles
+c     First convert velocities to momenta and transform into frame
+c     comoving with explosion-weighted average velocity of particles
 c     in this cell
 c
-               up_avg = up_grid(ic,jc,kc)/nsn_grid(ic,jc,kc)
-               vp_avg = vp_grid(ic,jc,kc)/nsn_grid(ic,jc,kc)
-               wp_avg = wp_grid(ic,jc,kc)/nsn_grid(ic,jc,kc)
-               call momentum_convert(u, v, w, d, up_avg, vp_avg,
-     &                    wp_avg, nx, ny, nz, ic, jc, kc,
-     &                    +1_IKIND, distrad, diststep)
+                  call momentum_convert(u, v, w, d, up_avg, vp_avg,
+     &                  wp_avg, nx, ny, nz, ic, jc, kc,
+     &                  +1_IKIND, distrad_ch, diststep_ch, sphere,
+     &                  sphererad2_ch)
 c
 c           u,v,w have units of mass*velocity/volume
 c           Now u,v,w are the explosion-relative *momentum* directions
 c
 c     Sum mass, energy, and momentum before
-               call sum_energy_mom(u, v, w, d, nx, ny, nz,
-     &            ic, jc, kc,
-     &            mass_before, kin_energy_before, mom_start,
-     &            distrad, diststep)
+                  call sum_energy_mom(u, v, w, d, nx, ny, nz,
+     &               ic, jc, kc,
+     &               mass_before, kin_energy_before, mom_start,
+     &               distrad_ch, diststep_ch, sphere,
+     &                  sphererad2_ch)
 c
-#ifdef FORTRAN_DEBUG
-               write(7,*) 'nsn,meject,mzeject,mzeject_ii,mzeject_ia',
-     &            nsn_grid(ic,jc,kc),
-     &            meject_grid(ic,jc,kc)*dunits*(dx*x1)**3_IKIND
-     &              /SolarMass,
-     &            mzeject_grid(ic,jc,kc)*dunits*(dx*x1)**3_IKIND
-     &              /SolarMass,
-     &            mzeject_ii_grid(ic,jc,kc)*dunits*(dx*x1)**3_IKIND
-     &              /SolarMass,
-     &            mzeject_ia_grid(ic,jc,kc)*dunits*(dx*x1)**3_IKIND
-     &              /SolarMass
-               write(7,*) 'up, vp, wp',
-     &            up_avg*vunits/1e5_IKIND,
-     &            vp_avg*vunits/1e5_IKIND,
-     &            wp_avg*vunits/1e5_IKIND
-               write(7,*) "m before:", mass_before*
-     &               (dunits*(x1*dx)**3._RKIND)/SolarMass
-               write(7,*) "ke before:", kin_energy_before*dunits*
-     &                  vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
-               write(7,*) 'mom_start:',mom_start*dunits*vunits
-     &                  *(dx*x1)**3._RKIND/SolarMass/1e5_RKIND
-c           mass_before has units of mass/volume
-c           kin_energy_before has units of mass*velocity^2/volume
-c           mom_start has units of mass*velocity/volume
-c
-#endif
 c     Zero dummy velocity, energy, and metallicity fields
 c
-               do k = -distrad, distrad
-                  do j = -distrad, distrad
-                     do i = -distrad, distrad
-                        u1(i+distrad+1,j+distrad+1,k+distrad+1)=0._RKIND
-                        v1(i+distrad+1,j+distrad+1,k+distrad+1)=0._RKIND
-                        w1(i+distrad+1,j+distrad+1,k+distrad+1)=0._RKIND
-                        d1(i+distrad+1,j+distrad+1,k+distrad+1) =
-     &                     d(i+ic,j+jc,k+kc)
-                        ge1(i+distrad+1,j+distrad+1,k+distrad+1) = 
-     &                     0._RKIND
-                        te1(i+distrad+1,j+distrad+1,k+distrad+1) = 
-     &                     0._RKIND
-                        metal1(i+distrad+1,j+distrad+1,k+distrad+1) = 
-     &                     0._RKIND
+                  do k = -distrad_ch, distrad_ch
+                     do j = -distrad_ch, distrad_ch
+                        do i = -distrad_ch, distrad_ch
+                           u1(i+distrad_max+1,j+distrad_max+1,
+     &                        k+distrad_max+1)=0._RKIND
+                           v1(i+distrad_max+1,j+distrad_max+1,
+     &                        k+distrad_max+1)=0._RKIND
+                           w1(i+distrad_max+1,j+distrad_max+1,
+     &                        k+distrad_max+1)=0._RKIND
+                           d1(i+distrad_max+1,j+distrad_max+1,
+     &                        k+distrad_max+1) =
+     &                        d(i+ic,j+jc,k+kc)
+                           ge1(i+distrad_max+1,j+distrad_max+1,
+     &                        k+distrad_max+1) = 0._RKIND
+                           te1(i+distrad_max+1,j+distrad_max+1,
+     &                        k+distrad_max+1) = 0._RKIND
+                           metal1(i+distrad_max+1,j+distrad_max+1,
+     &                        k+distrad_max+1) = 0._RKIND
+                        enddo
                      enddo
                   enddo
-               enddo
 c
-c     Now add mass and momentum terms to local dummy fields
-c     Metals and thermal energy zeroed out because we don't care about them in the dummy
+c     Now add mass and momentum terms to local dummy fields. Metals
+c     and thermal energy zeroed out because we don't care about them
+c     in the dummy.
 c
-               call add_feedback_mech(u1, v1, w1, d1, ge1, te1, metal1,
-     &                        2_IKIND*distrad+1_IKIND,
-     &                        2_IKIND*distrad+1_IKIND,
-     &                        2_IKIND*distrad+1_IKIND,
-     &                        distrad+1_IKIND, distrad+1_IKIND,
-     &                        distrad+1_IKIND,
-     &                        0_IKIND, imulti_metals, idual,
-     &                        itracksrc, kick_cap,
-     &                        0._RKIND, 0._RKIND, 0._RKIND,
-     &                        metalSNII, metalSNIa,
-     &                        mass_per_cell, mom_per_cell,
-     &                        dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+                  call add_feedback_mech(u1, v1, w1, d1, ge1, te1,
+     &                  metal1,
+     &                  2_IKIND*distrad_max+1_IKIND,
+     &                  2_IKIND*distrad_max+1_IKIND,
+     &                  2_IKIND*distrad_max+1_IKIND,
+     &                  distrad_max+1_IKIND, distrad_max+1_IKIND,
+     &                  distrad_max+1_IKIND,
+     &                  0_IKIND, imulti_metals, idual,
+     &                  itracksrc, kick_cap,
+     &                  0._RKIND, 0._RKIND, 0._RKIND,
+     &                  metalSNII, metalSNIa,
+     &                  mass_per_cell, mom_per_cell,
+     &                  dx, x1, dunits, vunits,
+     &                  distrad_max, distrad_ch, diststep_ch, sphere,
+     &                  sphererad2_ch)
 c
 c     Calculate mass and energy in dummy fields
 c
-               call sum_energy_mom(u1, v1, w1, d1,
-     &                        2_IKIND*distrad+1_IKIND,
-     &                        2_IKIND*distrad+1_IKIND,
-     &                        2_IKIND*distrad+1_IKIND,
-     &                        distrad+1_IKIND, distrad+1_IKIND,
-     &                        distrad+1_IKIND,
-     &                        mass_dummy, kin_energy_dummy, mom_dummy,
-     &                        distrad, diststep)
-#ifdef FORTRAN_DEBUG
-               write(7,*) "m dummy:", mass_dummy*
-     &               (dunits*(x1*dx)**3._RKIND)/SolarMass
-               write(7,*) "ke dummy:", kin_energy_dummy*dunits*
-     &                  vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
-               write(7,*) 'mom_dummy:',mom_dummy*dunits*vunits
-     &                  *(dx*x1)**3._RKIND/SolarMass/1e5_RKIND
-#endif
+                  call sum_energy_mom(u1, v1, w1, d1,
+     &                  2_IKIND*distrad_max+1_IKIND,
+     &                  2_IKIND*distrad_max+1_IKIND,
+     &                  2_IKIND*distrad_max+1_IKIND,
+     &                  distrad_max+1_IKIND, distrad_max+1_IKIND,
+     &                  distrad_max+1_IKIND,
+     &                  mass_dummy, kin_energy_dummy, mom_dummy,
+     &                  distrad_ch, diststep_ch, sphere,
+     &                  sphererad2_ch)
 c
 c     Now deposit the momentum, mass, and metals onto the actual grid.
 c
-               metal_per_cell = mzeject_grid(ic,jc,kc) / distcells
-               metal_ii_per_cell = mzeject_ii_grid(ic,jc,kc)/distcells
-               metal_ia_per_cell = mzeject_ia_grid(ic,jc,kc)/distcells
-               call add_feedback_mech(u, v, w, d, ge, te, metal,
-     &                         nx, ny, nz, ic, jc, kc,
-     &                        imetal, imulti_metals, idual,
-     &                        itracksrc, kick_cap,
-     &                        metal_per_cell,
-     &                        metal_ia_per_cell,
-     &                        metal_ii_per_cell,
-     &                        metalSNII, metalSNIa,
-     &                        mass_per_cell, mom_per_cell,
-     &                        dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+                  metal_per_cell = mzeject_ch/distcells_ch
+                  metal_ii_per_cell = mzeject_ii_ch/distcells_ch
+                  metal_ia_per_cell = mzeject_ia_ch/distcells_ch
+                  call add_feedback_mech(u, v, w, d, ge, te, metal,
+     &                  nx, ny, nz, ic, jc, kc,
+     &                  imetal, imulti_metals, idual,
+     &                  itracksrc, kick_cap,
+     &                  metal_per_cell,
+     &                  metal_ia_per_cell,
+     &                  metal_ii_per_cell,
+     &                  metalSNII, metalSNIa,
+     &                  mass_per_cell, mom_per_cell,
+     &                  dx, x1, dunits, vunits,
+     &                  distrad_max, distrad_ch, diststep_ch, sphere,
+     &                  sphererad2_ch)
 c
 c     Calculate the mass and energy in the affected region again.
 c
-               call sum_energy_mom(u, v, w, d, nx, ny, nz,
-     &                          ic, jc, kc,
-     &                          mass_end, kin_energy_end, mom_end,
-     &                          distrad, diststep)
-#ifdef FORTRAN_DEBUG
-               write(7,*) "m end:", mass_end*
-     &               (dunits*(dx*x1)**3._RKIND)/SolarMass
-               write(7,*) 'kin_energy_end:',kin_energy_end*dunits*
-     &                  vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
-               write(7,*) 'mom_end:',mom_end*dunits*vunits
-     &                  *(dx*x1)**3._RKIND/SolarMass/1e5_RKIND
-#endif
+                  call sum_energy_mom(u, v, w, d, nx, ny, nz,
+     &                  ic, jc, kc,
+     &                  mass_end, kin_energy_end, mom_end,
+     &                  distrad_ch, diststep_ch, sphere,
+     &                  sphererad2_ch)
 c
 c     If KE injected onto grid is less than what it was in the dummy
-c     (because of momentum cancellation due to non-static gas), calculate
-c     how much energy to inject as thermal.
+c     (because of momentum cancellation due to non-static gas),
+c     calculate how much energy to inject as thermal.
 c
-               kin_energy_inj = kin_energy_end - kin_energy_before
-               if (kin_energy_inj .lt. kin_energy_dummy) then
-                  add_therm = (kin_energy_dummy-kin_energy_inj)
-#ifdef FORTRAN_DEBUG
-                  write(7,*) "leftover energy injected as thermal:",
-     &                  add_therm*dunits*
-     &                  vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
-#endif
+                  kin_energy_inj = kin_energy_end - kin_energy_before
+                  if (kin_energy_inj .lt. kin_energy_dummy) then
+                     add_therm = (kin_energy_dummy-kin_energy_inj)
+                  else
+                     add_therm = 0._RKIND
+                  endif ! end lost kinetic -> thermal energy injection
 c
-               else
-                  add_therm = 0._RKIND
-               endif ! end lost kinetic -> thermal energy injection
+c     Convert momenta back to velocities and transform back to lab
+c     frame
 c
-c           Convert momenta back to velocities and transform back to lab frame
+                  call momentum_convert(u, v, w, d, up_avg, vp_avg,
+     &                  wp_avg, nx, ny, nz, ic, jc, kc, -1_IKIND,
+     &                  distrad_ch, diststep_ch, sphere,
+     &                  sphererad2_ch)
 c
-               call momentum_convert(u, v, w, d, up_avg, vp_avg,
-     &               wp_avg, nx, ny, nz, ic, jc, kc, -1_IKIND,
-     &               distrad, diststep)
+c     Add the change in the kinetic energy to the total energy field,
+c     and inject energy lost due to colliding flows (add_therm) and
+c     thermal energy from resolved Sedov-Taylor phase (energy_per_cell)
 c
-c           Add the change in the kinetic energy to the total energy field,
-c           and inject energy lost due to colliding flows (add_therm) and
-c           thermal energy from resolved Sedov-Taylor phase (energy_per_cell).
-c
-               ke_injected = 0._RKIND
-               te_sum = 0._RKIND
-               ge_sum = 0._RKIND
-               ke_sum = 0._RKIND
-               mom_sum = 0._RKIND
-               mass_sum = 0._RKIND
-               delta_ge = add_therm/distcells
-               do k = -distrad, +distrad
-                  stepk = abs(k)
-                  do j = -distrad, +distrad
-                     stepj = stepk + abs(j)
-                     do i = -distrad, +distrad
-                        cellstep = stepj + abs(i)
-                        if (cellstep .le. diststep) then
-                        add_ge = delta_ge +
-     &                     energy_per_cell(i+distrad+1,
-     &                     j+distrad+1,k+distrad+1)
-                        te(ic+i,jc+j,kc+k) = te(ic+i,jc+j,kc+k) +
-     &                    add_ge/d(ic+i,jc+j,kc+k)
-                        if (idual .eq. 1_IKIND) then
-                           ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k) +
+                  delta_ge = add_therm/distcells_ch
+                  do k = -distrad_ch, distrad_ch
+                     stepk = abs(k)
+                     do j = -distrad_ch, distrad_ch
+                        stepj = stepk + abs(j)
+                        do i = -distrad_ch, distrad_ch
+                           if (sphere .eq. 1_IKIND) then
+                              inregion = real(i,RKIND)**2._RKIND +
+     &                           real(j,RKIND)**2._RKIND +
+     &                           real(k,RKIND)**2._RKIND
+     &                           .le. sphererad2_ch
+                           else
+                              cellstep = stepj + abs(i)
+                              inregion = cellstep .le. diststep_ch
+                           endif
+                           if (inregion) then
+                           add_ge = delta_ge +
+     &                        energy_per_cell(i+distrad_max+1,
+     &                        j+distrad_max+1,k+distrad_max+1)
+                           te(ic+i,jc+j,kc+k) = te(ic+i,jc+j,kc+k) +
      &                       add_ge/d(ic+i,jc+j,kc+k)
-                           ge_sum = ge_sum +
-     &                       ge(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
-                        endif
-                        vel_mag = (u(ic+i ,jc+j ,kc+k)**2_IKIND +
-     &                    v(ic+i ,jc+j ,kc+k)**2_IKIND +
-     &                    w(ic+i ,jc+j ,kc+k)**2_IKIND)**0.5_RKIND
-                        ke_after = 0.5_RKIND * d(ic+i, jc+j, kc+k) *
-     &                    vel_mag**2_IKIND
-                        delta_ke = ke_after -
-     &                    ke_before(i+distrad+1,j+distrad+1,k+distrad+1)
-                        te(ic+i,jc+j,kc+k) = te(ic+i,jc+j,kc+k) +
-     &                     delta_ke/d(ic+i,jc+j,kc+k)
-                        ke_injected = ke_injected + delta_ke
-                        mass_term = d(ic+i,jc+j,kc+k)
-                        ke_sum = ke_sum + ke_after
-                        mom_sum = mom_sum + mass_term*vel_mag
-                        mass_sum = mass_sum + mass_term
-                        te_sum = te_sum +
-     &                    te(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
-c                       ke_after has units of mass*velocity^2/volume
-c                       te has units of mass*velocity^2/volume/mass*volume = velocity^2
-c                       te is *specific* energy (energy/mass)
-                        endif
+                           if (idual .eq. 1_IKIND)
+     &                       ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k) +
+     &                       add_ge/d(ic+i,jc+j,kc+k)
+                           vel_mag = (u(ic+i ,jc+j ,kc+k)**2_IKIND +
+     &                       v(ic+i ,jc+j ,kc+k)**2_IKIND +
+     &                       w(ic+i ,jc+j ,kc+k)**2_IKIND)**0.5_RKIND
+                           ke_after = 0.5_RKIND * d(ic+i, jc+j, kc+k) *
+     &                       vel_mag**2_IKIND
+                           delta_ke = ke_after -
+     &                       ke_before(i+distrad_max+1,j+distrad_max+1,
+     &                       k+distrad_max+1)
+                           te(ic+i,jc+j,kc+k) = te(ic+i,jc+j,kc+k) +
+     &                        delta_ke/d(ic+i,jc+j,kc+k)
+                           endif
+                        enddo
                      enddo
                   enddo
-               enddo
-#ifdef FORTRAN_DEBUG
-               write(7,*) 'mass, mom, KE_sum, KE_inj, GE, TE:',
-     &          mass_sum*dunits*(x1*dx)**3._RKIND/SolarMass,
-     &          mom_sum*dunits*(x1*dx)**3._RKIND*vunits/
-     &          SolarMass/1e5_RKIND,
-     &          ke_sum*dunits*(x1*dx)**3._RKIND*vunits**2._RKIND,
-     &          ke_injected*dunits*(x1*dx)**3._RKIND*vunits**2._RKIND,
-     &          ge_sum*dunits*(x1*dx)**3._RKIND*vunits**2._RKIND,
-     &          te_sum*dunits*(x1*dx)**3._RKIND*vunits**2._RKIND
-#endif
 c
-               if (feedback_log .eq. 1_IKIND) then
-                  write(5,*) t*t1/yr_s/1e6_RKIND, ic, jc, kc,
-     &             nsn_grid(ic,jc,kc), meject_grid(ic,jc,kc)*
-     &             (dunits*(x1*dx)**3._RKIND)/SolarMass,
-     &             mzeject_grid(ic,jc,kc)*(dunits*(x1*dx)**3._RKIND)/
-     &             SolarMass,
-     &             mom_inj*(dunits*(dx*x1)**3._RKIND)*
-     &             vunits/SolarMass/1e5_RKIND,
-     &             energy_inj*dunits*
-     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
-     &             add_therm*dunits*
-     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
-     &             kin_energy_dummy*dunits*
-     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
-     &             kin_energy_inj*dunits*
-     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
-     &             pSNmass_grid(ic,jc,kc)*
-     &             (dunits*(x1*dx)**3._RKIND)/SolarMass,
-     &             pSNmetal_grid(ic,jc,kc)*(dunits*(x1*dx)**3._RKIND)/
-     &             SolarMass,
-     &             pSNmom_grid(ic,jc,kc)*(dunits*(dx*x1)**3._RKIND)*
-     &             vunits/SolarMass/1e5_RKIND,
-     &             add_therm_w*dunits*
-     &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
-               endif
+                  if (feedback_log .eq. 1_IKIND) then
+                     write(5,*) t*t1/yr_s/1e6_RKIND, ic, jc, kc, ich,
+     &                nsn_ch, meject_ch*
+     &                (dunits*(x1*dx)**3._RKIND)/SolarMass,
+     &                mzeject_ch*(dunits*(x1*dx)**3._RKIND)/
+     &                SolarMass,
+     &                mom_inj*(dunits*(dx*x1)**3._RKIND)*
+     &                vunits/SolarMass/1e5_RKIND,
+     &                energy_inj*dunits*
+     &                vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
+     &                add_therm*dunits*
+     &                vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
+     &                kin_energy_dummy*dunits*
+     &                vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
+     &                kin_energy_inj*dunits*
+     &                vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
+     &                pSNmass_grid(ic,jc,kc)*
+     &                (dunits*(x1*dx)**3._RKIND)/SolarMass,
+     &                pSNmetal_grid(ic,jc,kc)*
+     &                (dunits*(x1*dx)**3._RKIND)/SolarMass,
+     &                pSNmom_grid(ic,jc,kc)*(dunits*(dx*x1)**3._RKIND)*
+     &                vunits/SolarMass/1e5_RKIND,
+     &                add_therm_w*dunits*
+     &                vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
+                  endif
+c
+               enddo ! end loop over SN channels
 c
  100           continue
+c
 c
             enddo
          enddo
@@ -1415,7 +1584,8 @@ c
      &               nsn, d_fbck_cell, dx, x1,
      &               n_avg, Z_floor, dunits, vunits, t1,
      &               nx, ny, nz, ic, jc, kc,
-     &               mom_mult, distrad, diststep)
+     &               mom_mult, distrad, distloop, diststep, distmode,
+     &               sphererad2)
 c
       implicit none
 #include "fortran_types.def"
@@ -1423,6 +1593,8 @@ c
 c     Arguments
 c
       INTG_PREC nx, ny, nz, ic, jc, kc, distrad, diststep, distcells
+      INTG_PREC distloop, distmode
+      R_PREC    sphererad2
       R_PREC    d(nx,ny,nz), dx
       R_PREC    t1, Z_floor, n_avg
       R_PREC    mom_per_cell(2*distrad+1, 2*distrad+1, 2*distrad+1)
@@ -1434,6 +1606,7 @@ c
 c     Locals
 c
       INTG_PREC i, j, k, dist, cellstep, stepk, stepj
+      LOGIC_PREC inregion
       R_PREC    dMswept, chi, chi_th, fe, pSN, ergs_51_sqr, ke_from_p
       R_PREC    den_cell, Mej, dMej, Nnbors, betaSN, SN_energy
 c
@@ -1449,13 +1622,20 @@ c
 #ifdef FORTRAN_DEBUG
         write(7,*) 'chi_th:',chi_th
 #endif
-        do k = -distrad, +distrad
+        do k = -distloop, +distloop
            stepk = abs(k)
-            do j = -distrad, +distrad
+            do j = -distloop, +distloop
                stepj = stepk + abs(j)
-               do i = -distrad, +distrad
-                  cellstep = stepj + abs(i)
-                  if (cellstep .le. diststep) then
+               do i = -distloop, +distloop
+                  if (distmode .eq. 1_IKIND) then
+                     inregion = real(i,RKIND)**2._RKIND +
+     &                  real(j,RKIND)**2._RKIND +
+     &                  real(k,RKIND)**2._RKIND .le. sphererad2
+                  else
+                     cellstep = stepj + abs(i)
+                     inregion = cellstep .le. diststep
+                  endif
+                  if (inregion) then
 c
 c       Compute the mass fraction of swept-up to ejected mass.
 c
@@ -1560,8 +1740,8 @@ c
 c     Convert velocities to momentum and back
 c
       subroutine momentum_convert(u, v, w, d, up, vp, wp,
-     &                    nx, ny, nz, ic, jc, kc, idir, 
-     &                    distrad, diststep)
+     &                    nx, ny, nz, ic, jc, kc, idir,
+     &                    distrad, diststep, distmode, sphererad2)
 c
       implicit none
 #include "fortran_types.def"
@@ -1569,7 +1749,8 @@ c
 c     Arguments
 c
       INTG_PREC nx, ny, nz, ic, jc, kc, distrad, diststep
-      INTG_PREC idir
+      INTG_PREC idir, distmode
+      R_PREC    sphererad2
       R_PREC    d(nx, ny, nz)
       R_PREC    u(nx,ny,nz), v(nx,ny,nz), w(nx,ny,nz)
       R_PREC    up, vp, wp
@@ -1577,6 +1758,7 @@ c
 c     Locals
 c
       INTG_PREC i, j, k, cellstep, stepk, stepj
+      LOGIC_PREC inregion
 c
 c     Error check
 c
@@ -1593,8 +1775,15 @@ c
          do j = -distrad, +distrad
             stepj = stepk + abs(j)
             do i = -distrad, +distrad
-               cellstep = stepj + abs(i)
-               if (cellstep .le. diststep) then
+               if (distmode .eq. 1_IKIND) then
+                  inregion = real(i,RKIND)**2._RKIND +
+     &               real(j,RKIND)**2._RKIND +
+     &               real(k,RKIND)**2._RKIND .le. sphererad2
+               else
+                  cellstep = stepj + abs(i)
+                  inregion = cellstep .le. diststep
+               endif
+               if (inregion) then
 c
 c              idir = +1: convert vel -> mom
 c
@@ -1634,7 +1823,8 @@ c
      &                           nx, ny, nz,
      &                           ic, jc, kc,
      &                           mass_sum, kin_energy_sum, mom_sum,
-     &                           distrad, diststep)
+     &                           distrad, diststep, distmode,
+     &                           sphererad2)
 c
       implicit none
 #include "fortran_types.def"
@@ -1642,6 +1832,8 @@ c
 c     Arguments
 c
       INTG_PREC nx, ny, nz, ic, jc, kc, distrad, diststep
+      INTG_PREC distmode
+      R_PREC    sphererad2
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz)
       R_PREC    d(nx,ny,nz)
       R_PREC    mass_sum, kin_energy_sum
@@ -1650,21 +1842,29 @@ c
 c     Locals
 c
       INTG_PREC i, j, k, cellstep, stepk, stepj
+      LOGIC_PREC inregion
       R_PREC    mass_term, mom_term, kin_energy
 c
       mass_sum = 0._RKIND
       kin_energy_sum = 0._RKIND
       mom_sum = 0._RKIND
 c
-c     Sum mass and energy      
+c     Sum mass and energy
 c
       do k = -distrad, +distrad
          stepk = abs(k)
          do j = -distrad, +distrad
             stepj = stepk + abs(j)
             do i = -distrad, +distrad
-               cellstep = stepj + abs(i)
-               if (cellstep .le. diststep) then
+               if (distmode .eq. 1_IKIND) then
+                  inregion = real(i,RKIND)**2._RKIND +
+     &               real(j,RKIND)**2._RKIND +
+     &               real(k,RKIND)**2._RKIND .le. sphererad2
+               else
+                  cellstep = stepj + abs(i)
+                  inregion = cellstep .le. diststep
+               endif
+               if (inregion) then
                mass_term = d(ic+i, jc+j, kc+k)
                mom_term = pu(ic+i, jc+j, kc+k)**2_IKIND +
      &                    pv(ic+i, jc+j, kc+k)**2_IKIND +
@@ -1702,7 +1902,8 @@ c
      &                        metalSNII, metalSNIa,
      &                        mass_per_cell, mom_per_cell,
      &                        dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+     &                        distrad, distloop, diststep, distmode,
+     &                        sphererad2)
 c
       implicit none
 #include "fortran_types.def"
@@ -1710,7 +1911,8 @@ c
 c     Arguments
 c
       INTG_PREC nx, ny, nz, ic, jc, kc, idual, dist, distrad, diststep
-      INTG_PREC imetal, imulti_metals, kick_cap
+      INTG_PREC imetal, imulti_metals, kick_cap, distloop, distmode
+      R_PREC    sphererad2
       R_PREC    d(nx, ny, nz), metal(nx,ny,nz), ge(nx,ny,nz)
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz), te(nx,ny,nz)
       R_PREC    mass_per_cell
@@ -1724,6 +1926,7 @@ c
 c     Locals
 c
       INTG_PREC i, j, k, i1, j1, k1, cellstep, stepk, stepj
+      LOGIC_PREC inregion
       R_PREC    delta_mass, delta_pu, delta_pv, delta_pw,
      &          delta_p, vel_kick, dratio, r
       R_PREC    pu_start, pu_deposit, pv_start, pv_deposit, pw_start,
@@ -1731,13 +1934,20 @@ c
 c
 c     Loop cells in particle-frame
 c
-      do k = -distrad, +distrad
+      do k = -distloop, +distloop
          stepk = abs(k)
-         do j = -distrad, +distrad
+         do j = -distloop, +distloop
             stepj = stepk + abs(j)
-            do i = -distrad, +distrad
-               cellstep = stepj + abs(i)
-               if (cellstep .le. diststep) then
+            do i = -distloop, +distloop
+               if (distmode .eq. 1_IKIND) then
+                  inregion = real(i,RKIND)**2._RKIND +
+     &               real(j,RKIND)**2._RKIND +
+     &               real(k,RKIND)**2._RKIND .le. sphererad2
+               else
+                  cellstep = stepj + abs(i)
+                  inregion = cellstep .le. diststep
+               endif
+               if (inregion) then
 c              Calculate distance of this cell from host cell
                dist = i**2_IKIND + j**2_IKIND + k**2_IKIND
 c              Decompose the radial momentum onto Cartesian axes using
@@ -1886,7 +2096,7 @@ c
      &                        mass_per_cell, mom_per_cell,
      &                        metal_per_cell,
      &                        dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+     &                        distrad, diststep, distmode, sphererad2)
 c
       implicit none
 #include "fortran_types.def"
@@ -1894,7 +2104,8 @@ c
 c     Arguments
 c
       INTG_PREC nx, ny, nz, ic, jc, kc, idual, dist, distrad, diststep
-      INTG_PREC imetal, imulti_metals, kick_cap, preSNmom
+      INTG_PREC imetal, imulti_metals, kick_cap, preSNmom, distmode
+      R_PREC    sphererad2
       R_PREC    d(nx, ny, nz), metal(nx,ny,nz), ge(nx,ny,nz)
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz), te(nx,ny,nz)
       R_PREC    mass_per_cell, mom_per_cell
@@ -1905,6 +2116,7 @@ c
 c     Locals
 c
       INTG_PREC i, j, k, i1, j1, k1, cellstep, stepk, stepj
+      LOGIC_PREC inregion
       R_PREC    delta_mass, delta_pu, delta_pv, delta_pw,
      &          delta_p, vel_kick, dratio, r
       R_PREC    pu_start, pu_deposit, pv_start, pv_deposit, pw_start,
@@ -1918,8 +2130,15 @@ c
          do j = -distrad, +distrad
             stepj = stepk + abs(j)
             do i = -distrad, +distrad
-               cellstep = stepj + abs(i)
-               if (cellstep .le. diststep) then
+               if (distmode .eq. 1_IKIND) then
+                  inregion = real(i,RKIND)**2._RKIND +
+     &               real(j,RKIND)**2._RKIND +
+     &               real(k,RKIND)**2._RKIND .le. sphererad2
+               else
+                  cellstep = stepj + abs(i)
+                  inregion = cellstep .le. diststep
+               endif
+               if (inregion) then
                if (preSNmom .eq. 1_IKIND) then
 c                 Calculate distance of this cell from host cell
                   dist = i**2_IKIND + j**2_IKIND + k**2_IKIND
@@ -2083,6 +2302,41 @@ c
       enddo
  30   continue
       nsn_ia = k
+c
+      return
+      end
+c
+c ==========================================================
+c
+c     Count the cells within a Euclidean sphere of radius
+c     sqrt(sphererad2) (in cells), searching the bounding cube
+c     [-distrad,distrad]^3 to get the exact cell count for the 
+c     StarFeedbackSphere method.
+c
+      subroutine count_sphere_cells(distrad, sphererad2, ncount)
+c
+      implicit none
+#include "fortran_types.def"
+c
+c     Arguments
+c
+      INTG_PREC distrad, ncount
+      R_PREC    sphererad2
+c
+c     Locals
+c
+      INTG_PREC i, j, k
+c
+      ncount = 0_IKIND
+      do k = -distrad, distrad
+         do j = -distrad, distrad
+            do i = -distrad, distrad
+               if (real(i,RKIND)**2._RKIND + real(j,RKIND)**2._RKIND +
+     &             real(k,RKIND)**2._RKIND .le. sphererad2)
+     &            ncount = ncount + 1_IKIND
+            enddo
+         enddo
+      enddo
 c
       return
       end
