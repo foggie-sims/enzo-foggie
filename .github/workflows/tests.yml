@@ -170,25 +170,14 @@ jobs:
           activate-environment: enzo-ci
           auto-activate-base: false
 
-      - name: Restore dependencies cache
-        id: restore-deps
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.conda/pkgs
-            ~/local
-          key: dependencies-v1
-
        # pip install h5py to avoid duplicating HDF5 libraries
       - name: Create conda environment
-        if: steps.restore-deps.outputs.cache-hit != 'true'
         run: |
           conda install -y -c conda-forge \
             cython numpy fastcache flake8 nose girder-client matplotlib pytest gitpython pip 
             pip install h5py yt-astro-analysis
 
       - name: Install HYPRE
-        if: steps.restore-deps.outputs.cache-hit != 'true'
         run: |
           mkdir -p ${HOME}/local
           if [ ! -f ${HOME}/local/lib/libHYPRE.a ]; then
@@ -201,7 +190,6 @@ jobs:
           fi
 
       - name: Install Grackle
-        if: steps.restore-deps.outputs.cache-hit != 'true'
         run: |
           git clone -b main https://github.com/grackle-project/grackle ${HOME}/grackle
           cd ${HOME}/grackle
@@ -221,7 +209,6 @@ jobs:
           key: foggie-test-answers-v1
 
       - name: Build and test (gold standard)
-        if: steps.restore-answers.outputs.cache-hit != 'true'
         run: |
           if [ ! -e ${HOME}/enzo_test/push_suite ]; then
             git checkout foggie-gold-standard-v1
