@@ -135,10 +135,7 @@ c     replaces a NaN density with exactly dfloor and leaves
 c     dnuinv = 1/dfloor = 1e30.  The cell then looks merely evacuated --
 c     density exactly SmallRho -- while every quantity derived from it is
 c     NaN, and because "dnu .le. 0" is also false for a NaN the Riemann
-c     solvers do not report it or fall back to HLL either.  That is how
-c     halo42189/L2-gas reached ApplyBoundsToBaryonFields with
-c     D = 1.0000000000000001e-30, GE finite, and TE and all three
-c     velocities NaN, having printed no hydro diagnostic at all.
+c     solvers do not report it or fall back to HLL either. 
 c
           if (dnu(i) .ne. dnu(i)) then
              write(6,*) 'euler: non-finite dnu at i,j =', i, j
