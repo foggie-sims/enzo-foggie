@@ -329,8 +329,15 @@ c
 c     Check here for negative densities and energies
 c
       do i=i1, i2
-         if (dslice(i,j)+df(i,j)-df(i+1,j) .le. 0._RKIND) then
-            if (eslice(i,j) .lt. 0._RKIND) then
+c     Negated .gt. rather than .le. so that a NaN enters this branch: every
+c     comparison against a NaN is false, so the original ".le. 0" test let a
+c     NaN density update through without a diagnostic and without the HLL
+c     fallback below, leaving euler.F to launder it into the density floor.
+         if (.not. (dslice(i,j)+df(i,j)-df(i+1,j) .gt. 0._RKIND)) then
+            if (dslice(i,j)+df(i,j)-df(i+1,j) .ne.
+     &           dslice(i,j)+df(i,j)-df(i+1,j)) then
+               write (6,*) 'flux_hllc: dnu is NaN:', i, j
+            else if (eslice(i,j) .lt. 0._RKIND) then
                write (6,*) 'flux_hllc: eslice < 0: ', i, j
                write (6,*) ef(i,j)-ef(i+1,j),
      &              eslice(i,j)*dslice(i,j)
