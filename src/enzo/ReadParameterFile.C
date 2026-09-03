@@ -356,6 +356,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &ConservativeInterpolation);
     ret += sscanf(line, "MinimumEfficiency      = %"FSYM, &MinimumEfficiency);
     ret += sscanf(line, "SubgridSizeAutoAdjust  = %"ISYM, &SubgridSizeAutoAdjust);
+    ret += sscanf(line, "SubgridSizeAutoAdjustMinimum = %"ISYM,
+		  &SubgridSizeAutoAdjustMinimum);
     ret += sscanf(line, "OptimalSubgridsPerProcessor = %"ISYM,
 		  &OptimalSubgridsPerProcessor);
     ret += sscanf(line, "MinimumSubgridEdge     = %"ISYM, &MinimumSubgridEdge);
@@ -1898,6 +1900,39 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
        }
       }
     }
+    if (MyProcessorNumber == ROOT_PROCESSOR) {
+      fprintf(stderr,"Total cells for star feedback smoothing: %"ISYM".\n",
+	      StarFeedbackDistTotalCells);
+    }
+  }
+
+  if (STARFEED_METHOD(MECH_STAR)) {
+    if (StarFeedbackDistRadius > 0) {
+
+    // Ensure cell step is not smaller than radius, to avoid eroding feedback region
+    if (StarFeedbackDistCellStep < StarFeedbackDistRadius) {
+      StarFeedbackDistCellStep = StarFeedbackDistRadius;
+    }
+      // Calculate number of cells in the shape over which to distribute feedback.
+    int i, j, k, cell_step;
+
+    StarFeedbackDistTotalCells = 0;
+    for (k = -StarFeedbackDistRadius;k <= StarFeedbackDistRadius;k++) {
+      for (j = -StarFeedbackDistRadius;j <= StarFeedbackDistRadius;j++) {
+	for (i = -StarFeedbackDistRadius;i <= StarFeedbackDistRadius;i++) {
+	  cell_step = ABS(k) + ABS(j) + ABS(i);
+	  if (cell_step <= StarFeedbackDistCellStep) {
+	    StarFeedbackDistTotalCells++;
+	  }
+       }
+      }
+    }
+  }
+  else {  // Default value needs to be 3x3x3 cube for this feedback method
+    StarFeedbackDistRadius = 1;
+    StarFeedbackDistCellStep = 3;
+    StarFeedbackDistTotalCells = 9;
+  }
     if (MyProcessorNumber == ROOT_PROCESSOR) {
       fprintf(stderr,"Total cells for star feedback smoothing: %"ISYM".\n",
 	      StarFeedbackDistTotalCells);

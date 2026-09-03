@@ -1193,6 +1193,18 @@ Hierarchy Control Parameters
     signature.  Default: 3.0
 ``SubgridSizeAutoAdjust`` (external)
     See :ref:`running_large_simulations`.  Default: 1 (TRUE)
+``SubgridSizeAutoAdjustMinimum`` (external)
+    The smallest value of ``MaximumSubgridSize`` that
+    ``SubgridSizeAutoAdjust`` is permitted to select. The automatic
+    estimate is ``NumberOfCells / (NumberOfProcessors *
+    OptimalSubgridsPerProcessor)``; this floor stops it choosing very
+    small subgrids on modest processor counts. On large processor counts
+    with deep refinement the estimate can fall well below the default,
+    and clamping to the default leaves too few subgrids per processor to
+    load balance. Lowering it lets the automatic estimate apply, at the
+    cost of more ghost-zone and boundary-exchange work per cell, so the
+    best value is problem- and processor-count-dependent.
+    See :ref:`running_large_simulations`.  Default: 2000
 ``OptimalSubgridsPerProcessor`` (external)
     See :ref:`running_large_simulations`.  Default: 16
 ``LoadBalancing`` (external)
@@ -2206,17 +2218,28 @@ General Star Formation
     deposited into the host cell and neighboring cells within this
     radius.  This results in feedback being distributed to a cube with
     a side of ``StarFeedbackDistRadius+1``. It is in units of cell
-    widths of the finest grid which hosts the star particle.  Only
-    implemented for ``StarParticleCreation`` method = 0 or 1 with ``StarParticleFeedback`` method =  1. (If ``StarParticleFeedback`` = 0, stellar feedback is only deposited into the cell in which the star particle lives).  Default: 0.
+    widths of the finest grid which hosts the star particle.  Implemented
+    for ``StarParticleCreation`` method = 0 or 1 with ``StarParticleFeedback``
+    method = 1, and for ``StarParticleFeedback`` method = 64 (Kimm & Cen
+    momentum feedback). (If ``StarParticleFeedback`` = 0, stellar feedback
+    is only deposited into the cell in which the star particle lives).
+    For method = 64, a value of 0 defaults to a 3x3x3 injection cube
+    (equivalent to ``StarFeedbackDistRadius = 1``).  Default: 0.
 
 ``StarFeedbackDistCellStep`` (external)
     In essence, this parameter controls the shape of the volume where
-    the feedback is applied, cropping the original cube.  This volume
-    that are within ``StarFeedbackDistCellSteps`` cells from the host
+    the feedback is applied, cropping the original cube.  Only cells
+    that are within ``StarFeedbackDistCellStep`` steps from the host
     cell, counted in steps in Cartesian directions, are injected with
     stellar feedback.  Its maximum value is ``StarFeedbackDistRadius``
-    * ``TopGridRank``.  Only implemented for ``StarParticleCreation`` method = 0
-    or 1  with ``StarParticleFeedback`` method =  1.  See :ref:`distributed_feedback` for an illustration.
+    * ``TopGridRank``.  Implemented for ``StarParticleCreation`` method = 0
+    or 1 with ``StarParticleFeedback`` method = 1, and for
+    ``StarParticleFeedback`` method = 64 (Kimm & Cen momentum feedback).
+    For method = 64, any value less than StarFeedbackDistRadius
+    defaults ``StarFeedbackDistCellStep = StarFeedbackDistRadius``, except for
+    a value of 0, which defaults to a value of 3 instead. Together with
+    the default value of ``StarFeedbackDistRadius``, this includes all 27 cells of a
+    3x3x3 cube.  See :ref:`distributed_feedback` for an illustration.
     Default: 0.
 
 ``StarMakerUseJeansMass`` (external)
@@ -2723,7 +2746,7 @@ The parameters below are currently considered in ``StarFeedback`` method 6.
 See :ref:`method_6`.
 
 ``StarFeedbackMomentumMultiplier`` (external)
-    This parameter is used to multiply the strength of the injected momentum. Default value is 1.0.
+    This parameter is used to multiply the strength of the injected momentum. If set to 0.0, thermal energy will instead be injected at a rate of 1e51 ergs per supernova. Default value is 1.0.
 ``StarFeedbackSNePerTimestepLimit`` (external)
     This parameter is used to limit how many supernovae must occur per cell per time step in order for feedback to be injected. Default value is 1e-3.
 ``StarFeedbackStochasticSNe`` (external)
