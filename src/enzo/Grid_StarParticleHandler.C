@@ -848,11 +848,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
     /* Will any maker branch below actually execute on this call?  If
        not (e.g. H2REG_STAR outside its once-per-root-step window, or
        only makers gated to other levels), skip the fake grid, the
-       0.25*size particle-buffer allocation, and the cooling time -
-       they were being paid on every grid at every subcycle (audit
-       5.1).  The MHD_RK magnetic-energy re-add stays outside this
-       guard: its matching subtraction at the top of this function
-       runs whenever StarParticleCreation > 0. */
+       0.25*size particle-buffer allocation, and the cooling time */ 
 
     int AnyMakerThisCall =
       ((STARMAKE_METHOD(NORMAL_STAR) || STARMAKE_METHOD(H2REG_STAR)) &&
@@ -887,9 +883,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
     /* Compute the cooling time - a full Grackle solve over the grid.
        Only these makers consume it, and star_maker2 reads it only
-       under StarMakerThermalCrit, so skip it otherwise (for e.g. a
-       pure H2REG_STAR configuration it was a wasted per-subcycle
-       Grackle solve on every grid). */
+       under StarMakerThermalCrit, so skip it otherwise */ 
 
     int CoolingTimeNeeded =
       (STARMAKE_METHOD(NORMAL_STAR) && StarMakerThermalCrit == 1 &&
