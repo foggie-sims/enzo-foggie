@@ -84,6 +84,7 @@ c     k-plane past the end of the array.  Note 2*shift - half is exactly
 c     1 - 0.5001 when refine == 1, so equal cloud and cell size deposits
 c     are unchanged.
 c
+c     fix inserted by JT and Claude 073026 
       edge1 = REAL(dim1,PKIND) - 1._PKIND + 2._PKIND*shift - half
       edge2 = REAL(dim2,PKIND) - 1._PKIND + 2._PKIND*shift - half
       edge3 = REAL(dim3,PKIND) - 1._PKIND + 2._PKIND*shift - half

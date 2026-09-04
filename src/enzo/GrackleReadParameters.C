@@ -201,16 +201,27 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
   grackle_data->UVbackground_redshift_off      = (double) CoolData.RadiationRedshiftOff;
   grackle_data->UVbackground_redshift_fullon   = (double) CoolData.RadiationRedshiftFullOn;
   grackle_data->UVbackground_redshift_drop     = (double) CoolData.RadiationRedshiftDropOff;
-  grackle_data->use_radiative_transfer         = (Eint32) RadiativeTransfer;
+  if (UseLocalStellarRadiation){
+    grackle_data->use_radiative_transfer         = TRUE; //CWT 06/07/2026
+    grackle_data->radiative_transfer_coupled_rate_solver = FALSE;
+    grackle_data->radiative_transfer_hydrogen_only       = FALSE;
+    grackle_data->radiative_transfer_intermediate_step = FALSE;
+  }
+  else{
+    grackle_data->use_radiative_transfer         = (Eint32) RadiativeTransfer;
+  }
+
+  //grackle_data->use_radiative_transfer         = (Eint32) RadiativeTransfer;
   // grackle_data->radiative_transfer_coupled_rate_solver set in RadiativeTransferReadParameters
   // grackle_data->radiative_transfer_hydrogen_only set in RadiativeTransferReadParameters
 
 
   // Error checking for behavior not implemented
-  if ( (grackle_data->photoelectric_heating == 2) ||
-       (grackle_data->use_isrf_field)){
-    ENZO_FAIL("Photoelectric heating model 2, and ISRF field, in Grackle is not yet implemented.\n");
-  }
+  //Editing out check, may break! CT 08/12/2026
+  //if ( (grackle_data->photoelectric_heating == 2) ||
+  //     (grackle_data->use_isrf_field)){
+  //  ENZO_FAIL("Photoelectric heating model 2, and ISRF field, in Grackle is not yet implemented.\n");
+  //}
 
   if ( grackle_data->use_dust_density_field ){
     ENZO_FAIL("Supplying dust density (use_dust_density_field) to Grackle is not yet implemented.\n");

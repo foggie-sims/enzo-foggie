@@ -1120,6 +1120,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   UseTracerFluidWithStarFormation = 0;
   UseTracerFluidWithStellarFeedback = 0;
 
+  /* Local Radiation Rates  - CWT 06/07/2026 */
+  UseLocalStellarRadiation = 0;
 
   return SUCCESS;
 }
