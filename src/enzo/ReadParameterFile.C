@@ -1017,6 +1017,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (sscanf(line, "StarFeedbackTabularFilename = %s", dummy) == 1)
       StarFeedbackTabularFilename = dummy;
     ret += sscanf(line, "StarFeedbackTrackMetalSources = %"ISYM, &StarFeedbackTrackMetalSources);
+    ret += sscanf(line, "StarFeedbackAGB = %"ISYM, &StarFeedbackAGB);
 
     ret += sscanf(line, "ApplyBoundsToBaryonFields = %"ISYM,
 		  &ApplyBoundsToBaryonFields);
@@ -2233,6 +2234,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       if (debug) fprintf(stderr, "Successfully read in feedback table %s.\n", StarFeedbackTabularFilename);
     }
   }
+
+  if (StarFeedbackAGB && !StarFeedbackUseTabularYields)
+    ENZO_FAIL("StarFeedbackAGB requires StarFeedbackUseTabularYields to be enabled.");
 
 
   if (StarFeedbackPreSNFeedback) {
