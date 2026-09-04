@@ -51,6 +51,29 @@ int GrackleWriteParameters(FILE *fptr)
   fprintf(fptr, "use_isrf_field              = %d\n",  grackle_data->use_isrf_field);
   fprintf(fptr, "use_dust_density_field      = %d\n",  grackle_data->use_dust_density_field);
 
+    /* New dust physics parameters (newchemcpp Grackle). Fixed microphysics constants
+       ride on the Grackle defaults defined in grackle_chemistry_data_fields.def, 
+       that file is the single source of truth for their values.
+       dust_silicate_mg_fraction is mapped from Enzo's
+       InitialDustMgSilicateFraction below so the Mg/Fe silicate split
+       used by feedback seeding and by Grackle can never disagree. */
+  fprintf(fptr, "dust_model                  = %d\n",  grackle_data->dust_model);
+  fprintf(fptr, "solver_method               = %d\n",  grackle_data->solver_method);
+  fprintf(fptr, "use_sne_field               = %d\n",  grackle_data->use_sne_field);
+  fprintf(fptr, "use_tau_dest_field          = %d\n",  grackle_data->use_tau_dest_field);
+  fprintf(fptr, "dust_destruction_eff        = %lf\n", grackle_data->dust_destruction_eff);
+  fprintf(fptr, "sne_coeff                   = %lf\n", grackle_data->sne_coeff);
+  fprintf(fptr, "dust_growth_tauref          = %lf\n", grackle_data->dust_growth_tauref);
+  fprintf(fptr, "dust_condensation_eff       = %lf\n", grackle_data->dust_condensation_eff);
+  fprintf(fptr, "sne_metal_yield             = %lf\n", grackle_data->sne_metal_yield);
+
+  /* Species-resolved dust tracking (Trayford+2026 MNRAS 545, staf2040).
+     dust_species_track is mapped from the Enzo flag UseDustSpeciesTrack,
+     written by WriteParameterFile. */
+  fprintf(fptr, "dust_growth_clumping_factor_max = %lf\n", grackle_data->dust_growth_clumping_factor_max);
+  fprintf(fptr, "dust_growth_clumping_nH_min = %lf\n", grackle_data->dust_growth_clumping_nH_min);
+  fprintf(fptr, "dust_growth_clumping_nH_max = %lf\n", grackle_data->dust_growth_clumping_nH_max);
+
 #endif
 
   return SUCCESS;
