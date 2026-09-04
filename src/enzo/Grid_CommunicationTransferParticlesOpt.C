@@ -207,8 +207,29 @@ int grid::CommunicationTransferParticles(grid* Grids[], int NumberOfGrids,
     int NumberOfNewParticles = EndIndex - StartIndex;
 
     TotalNumberOfParticles = NumberOfParticles + NumberOfNewParticles;
+    /* This test MUST be the exact logical complement of the keep-test the
+       copy loops below use, which is (ParticleMass[i] >= 0).  It used to be
+       (ParticleMass[i] == FLOAT_UNDEFINED), which is narrower: a particle
+       whose mass was negative but not exactly -99999 was not decremented
+       here -- so a slot was allocated for it -- yet was skipped by every
+       copy loop, leaving that slot holding raw heap bytes.  These arrays
+       come from plain new[], so nothing initialises them.  The grid was then
+       given NumberOfParticles = TotalNumberOfParticles and claimed particles
+       it had never written.
+         Measured on halo5348 at cycle 439, rank 70: 137594 old particles =
+       137409 non-negative + 180 marked FLOAT_UNDEFINED + 5 negative-but-not
+       -99999, so 137414 slots were allocated and only 137409 written.  One
+       stray slot held FLOAT_UNDEFINED in velocity_x, and
+       0.5*(a/256)/99999 = 5.684931e-07 -- the level-0 timestep collapse that
+       stalled the run, reproducible in roughly half of restarts because it
+       depended on what the uninitialised heap happened to contain.
+         The five are star particles (type 2) carrying small negative masses
+       (~ -1e-8); they were already excluded by the copy loops before this
+       change, so their fate is unaltered -- only the count is corrected.
+         Written as !(x >= 0) rather than (x < 0) so a NaN mass, which fails
+       both comparisons, is also excluded here, matching the copy. */
     for (i = 0; i < NumberOfParticles; i++)
-      if (ParticleMass[i] == FLOAT_UNDEFINED)
+      if (!(ParticleMass[i] >= 0))
 	TotalNumberOfParticles--;
  
     /* Allocate space for the particles. */
