@@ -222,6 +222,17 @@ EXTERN float MinimumEfficiency;
 EXTERN int SubgridSizeAutoAdjust;
 EXTERN int OptimalSubgridsPerProcessor;
 
+/* Smallest MaximumSubgridSize that SubgridSizeAutoAdjust may choose.
+   The auto-adjust estimate is NumberOfCells / (NumberOfProcessors *
+   OptimalSubgridsPerProcessor); this floor keeps it from selecting
+   very small subgrids on modest processor counts.  On large processor
+   counts with deep refinement the estimate can fall well below the
+   historical value of 2000, and clamping to it leaves too few subgrids
+   per processor to load balance.  Default 2000 reproduces the previous
+   hard-coded behaviour exactly. */
+
+EXTERN int SubgridSizeAutoAdjustMinimum;
+
 /* This is the minimum allowable edge size for a new subgrid (>=4) */
 
 EXTERN int MinimumSubgridEdge;
@@ -380,6 +391,7 @@ EXTERN EquilibriumTableType EquilibriumTable;
 /* Table of stellar feedback yields */
 
 EXTERN FeedbackTableType FBTable;
+EXTERN ChemFeedbackTableType ChemFBTable;
 
 /* Table of pre-SN stellar feedback yields */
 

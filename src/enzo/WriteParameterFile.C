@@ -354,6 +354,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "ConservativeInterpolation      = %"ISYM"\n", ConservativeInterpolation);
   fprintf(fptr, "MinimumEfficiency              = %"GSYM"\n", MinimumEfficiency);
   fprintf(fptr, "SubgridSizeAutoAdjust          = %"ISYM"\n", SubgridSizeAutoAdjust);
+  fprintf(fptr, "SubgridSizeAutoAdjustMinimum   = %"ISYM"\n",
+	  SubgridSizeAutoAdjustMinimum);
   fprintf(fptr, "OptimalSubgridsPerProcessor    = %"ISYM"\n", 
 	  OptimalSubgridsPerProcessor);
   fprintf(fptr, "MinimumSubgridEdge             = %"ISYM"\n", MinimumSubgridEdge);
@@ -954,6 +956,14 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
           StarFeedbackDistRadius);
   fprintf(fptr, "StarFeedbackDistCellStep              = %"ISYM"\n",
           StarFeedbackDistCellStep);
+  fprintf(fptr, "StarFeedbackSphere                    = %"ISYM"\n",
+          StarFeedbackSphere);
+  fprintf(fptr, "StarFeedbackSNIIRadius                = %"GSYM"\n",
+          StarFeedbackSNIIRadius);
+  fprintf(fptr, "StarFeedbackSNIaRadius                = %"GSYM"\n",
+          StarFeedbackSNIaRadius);
+  fprintf(fptr, "StarFeedbackPreSNRadius               = %"GSYM"\n",
+          StarFeedbackPreSNRadius);
   fprintf(fptr, "StarFeedbackUseTabularYields          = %"ISYM"\n",
           StarFeedbackUseTabularYields);
   fprintf(fptr, "StarFeedbackTabularFilename           = %s\n",

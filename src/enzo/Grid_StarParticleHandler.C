@@ -382,7 +382,10 @@ extern "C" void FORTRAN_NAME(star_feedback6)(int *nx, int *ny, int *nz,
              float *metalSNIa, int *ntabZ, int *ntabAge, double *tabZ, double *tabAge,
              double *tabMass, double *tabMetal, double *tabEvents, int *stochastic,
              int *preSN, int *preSNmom, int *pSNntabZ, int *pSNntabAge, double *pSNtabZ,
-             double *pSNtabAge, double *pSNtabMass, double *pSNtabMetal, double *pSNtabMom);
+             double *pSNtabAge, double *pSNtabMass, double *pSNtabMetal, double *pSNtabMom,
+             int *sphere, int *distrad_ii, int *distrad_ia, int *distrad_presn,
+             int *distrad_max, float *radius_ii, float *radius_ia,
+             float *radius_presn);
 
 extern "C" void FORTRAN_NAME(star_feedback3)(int *nx, int *ny, int *nz,
              float *d, float *dm, float *te, float *ge, float *u, float *v,
@@ -1765,6 +1768,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
   if (STARFEED_METHOD(MECH_STAR)) {
 
     //---- MOMENTUM FEEDBACK
+    if (StarFeedbackUseTabularYields && 
+      (StarFeedbackTabularSNIaEnergy != 1e51 || StarFeedbackTabularSNIIEnergy != 1e51))
+      ENZO_FAIL("Mechanical feedback (StarParticleFeedback = 64) does not support supernova energies other than 1e51 ergs.\n")
 
     // Compute mu across grid
     float *mu_field = new float[size];
@@ -1831,6 +1837,36 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       }
     }
     
+    /* If using StarFeedbackSphere, each of SNII, SNIa, and pre-SN feedback
+       gets its own injection region: a true Euclidean sphere of physical
+       radius (pc), floored at sqrt(3) cells (the radius that just
+       circumscribes a 3x3x3 cube). radius_ii/ia/presn (in cells) are what actually
+       define the sphere in star_feedback6; distrad_ii/ia/presn (their
+       ceiling) only bound the search cube for loops/array sizing. This
+       has to be computed per grid (not once in ReadParameterFile.C, like
+       StarFeedbackDistRadius) because it depends on dx. distrad_max sizes
+       star_feedback6's shared work arrays to fit whichever of these three
+       regions is largest on this grid; when StarFeedbackSphere is off,
+       everything here just collapses back to StarFeedbackDistRadius and
+       the radii are unused. */
+
+    int distrad_ii = StarFeedbackDistRadius;
+    int distrad_ia = StarFeedbackDistRadius;
+    int distrad_presn = StarFeedbackDistRadius;
+    int distrad_max = StarFeedbackDistRadius;
+    float radius_ii = 0, radius_ia = 0, radius_presn = 0;
+    if (StarFeedbackSphere) {
+      float cellsize_cm = CellWidthTemp * LengthUnits;
+      float floor_cells = sqrt(3.0);
+      radius_ii = max(floor_cells, StarFeedbackSNIIRadius * pc_cm / cellsize_cm);
+      radius_ia = max(floor_cells, StarFeedbackSNIaRadius * pc_cm / cellsize_cm);
+      radius_presn = max(floor_cells, StarFeedbackPreSNRadius * pc_cm / cellsize_cm);
+      distrad_ii = int(radius_ii) + 1;
+      distrad_ia = int(radius_ia) + 1;
+      distrad_presn = int(radius_presn) + 1;
+      distrad_max = max(distrad_ii, max(distrad_ia, distrad_presn));
+    }
+
     FORTRAN_NAME(star_feedback6)(
        GridDimension, GridDimension+1, GridDimension+2,
        BaryonField[DensNum], mu_field,
@@ -1858,7 +1894,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        &FBTable.n_met, &FBTable.n_age, FBTable.ini_met, FBTable.pop_age, 
        FBTable.mass_yield, FBTable.metm_yield, FBTable.event_rate, &StarFeedbackStochasticSNe,
        &StarFeedbackPreSNFeedback, &StarFeedbackPreSNMomentum, &pSNFBTable.n_met, &pSNFBTable.n_age, pSNFBTable.ini_met, pSNFBTable.pop_age, 
-       pSNFBTable.mass_yield, pSNFBTable.metm_yield, pSNFBTable.mom_rate);
+       pSNFBTable.mass_yield, pSNFBTable.metm_yield, pSNFBTable.mom_rate,
+       &StarFeedbackSphere, &distrad_ii, &distrad_ia, &distrad_presn, &distrad_max,
+       &radius_ii, &radius_ia, &radius_presn);
 
     delete [] mu_field;
  

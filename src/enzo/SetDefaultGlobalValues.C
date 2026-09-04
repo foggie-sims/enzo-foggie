@@ -218,6 +218,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   SubgridSizeAutoAdjust     = TRUE; // true for adjusting maxsize and minedge
   OptimalSubgridsPerProcessor = 16;    // Subgrids per processor
+  SubgridSizeAutoAdjustMinimum = 2000; // floor on the auto-adjusted maxsize
   NumberOfBufferZones       = 1;
  
   for (i = 0; i < MAX_FLAGGING_METHODS; i++) {
@@ -638,6 +639,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   StarFeedbackDistRadius           = 0;
   StarFeedbackDistCellStep         = 0;
   StarFeedbackDistTotalCells       = 1;
+  StarFeedbackSphere               = 0;
+  StarFeedbackSNIIRadius           = 400;         // pc
+  StarFeedbackSNIaRadius           = 400;         // pc
+  StarFeedbackPreSNRadius          = 200;         // pc
   StarFeedbackUseTabularYields     = FALSE;
   StarFeedbackTabularFilename      = "sygma_feedback_table.h5";
   StarFeedbackTabularSNIIEnergy    = 1.0e+51;
