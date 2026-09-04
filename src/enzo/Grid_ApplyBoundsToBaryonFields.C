@@ -32,6 +32,10 @@
 int GetUnits(float *DensityUnits, float *LengthUnits,
   float *TemperatureUnits, float *TimeUnits,
   float *VelocityUnits, double *MassUnits, FLOAT Time);
+
+/* Feedback-clamp diagnostics: reuse the existing StarParticleData.h switch
+   rather than adding a parameter.  Purely read-only instrumentation. */
+extern int WriteFeedbackLogFiles;
  
 int grid::ApplyBoundsToBaryonFields()
 {
@@ -64,6 +68,18 @@ int grid::ApplyBoundsToBaryonFields()
   /* declarations */
   float orig_ge_from_te, new_ge_from_te, vel_mag, vel_ratio;
   int i, size = 1;
+
+  /* Feedback-clamp diagnostics.  Counts how many cells this call pushes onto
+     each ceiling and remembers the single worst cell by pre-clamp
+     Sigma = 3cs + |u|+|v|+|w|, the quantity that actually binds calc_dt's
+     Godunov branch.  nBoth is the count that lands exactly on the
+     20,931 km/s floor (both ceilings saturated at once). */
+  int nGEclamp = 0, nVelclamp = 0, nBothclamp = 0;
+  float worst_Sigma = -1.0, worst_T = 0.0, worst_vmag = 0.0;
+  float worst_rho = 0.0, worst_cs3 = 0.0, worst_vsum = 0.0;
+  int worst_index = -1;
+  static int nFBClampPrinted = 0;
+  const int maxFBClampPrints = 20000;
 
   /* more declarations. TODO: THESE SHOULD BE REPLACED BY INPUT PARAMETERS.
      Density cap: 1e-8 g/cm^3 (10^16 particles per cc)
@@ -241,6 +257,32 @@ for (i = 0; i < size; i++) {
   // velocity magnitude - make sure it's within bounds.
   vel_mag = POW( POW(BaryonField[Vel1Num][i],2.0) + POW(BaryonField[Vel2Num][i],2.0) + POW(BaryonField[Vel3Num][i],2.0), 0.5);
 
+  /* --- feedback-clamp diagnostics: read PRE-clamp state ------------------
+     orig_ge_from_te and vel_mag are both still the unmodified values here;
+     the velocity clamp below is the first thing that touches them.  Note
+     Density may already have been clamped above, but RestrictDensity = 0
+     in this run so it is untouched. */
+  if(WriteFeedbackLogFiles){
+    int hitGE  = (RestrictTemperature && orig_ge_from_te > ge_ceiling);
+    int hitVel = (RestrictVelocity && vel_mag > vel_max);
+    if(hitGE)  nGEclamp++;
+    if(hitVel) nVelclamp++;
+    if(hitGE && hitVel) nBothclamp++;
+    if(hitGE || hitVel){
+      float cs3 = 3.0*sqrt(max(Gamma*(Gamma-1.0)*orig_ge_from_te, (float) 0.0));
+      float vsum = fabs(BaryonField[Vel1Num][i]) + fabs(BaryonField[Vel2Num][i])
+                 + fabs(BaryonField[Vel3Num][i]);
+      float Sigma = cs3 + vsum;
+      if(Sigma > worst_Sigma){
+        worst_Sigma = Sigma;  worst_cs3 = cs3;  worst_vsum = vsum;
+        worst_T    = orig_ge_from_te*POW(VelocityUnits, 2.0)*4.04e-9;
+        worst_vmag = vel_mag;
+        worst_rho  = BaryonField[DensNum][i];
+        worst_index = i;
+      }
+    }
+  }
+
   if(RestrictVelocity && vel_mag > vel_max){
     vel_ratio = vel_max/vel_mag;
     if(debug){
@@ -268,6 +310,34 @@ for (i = 0; i < size; i++) {
   }
 
 } // for (i = 0; i < size; i++)
+
+  /* --- feedback-clamp diagnostics: one line per grid call that clamped -----
+     Gated on nGEclamp so we only log calls that hit the TEMPERATURE ceiling,
+     which is the 75% term in Sigma and the one we are chasing.  Position is
+     cell-centred in code units so it can be matched against feedbacklog_grid
+     (ic,jc,kc) and against a dump. */
+  if(WriteFeedbackLogFiles && nGEclamp > 0 && worst_index >= 0 &&
+     nFBClampPrinted < maxFBClampPrints){
+    nFBClampPrinted++;
+    int ix = worst_index % GridDimension[0];
+    int iy = (GridRank > 1) ? (worst_index / GridDimension[0]) % GridDimension[1] : 0;
+    int iz = (GridRank > 2) ?  worst_index / (GridDimension[0]*GridDimension[1]) : 0;
+    FLOAT px = GridLeftEdge[0] + (ix - GridStartIndex[0] + 0.5)*CellWidth[0][0];
+    FLOAT py = (GridRank > 1) ? GridLeftEdge[1] + (iy - GridStartIndex[1] + 0.5)*CellWidth[1][0] : 0.0;
+    FLOAT pz = (GridRank > 2) ? GridLeftEdge[2] + (iz - GridStartIndex[2] + 0.5)*CellWidth[2][0] : 0.0;
+    printf("FBCLAMP dx= %"GSYM" t= %"GSYM" nGE= %"ISYM" nVel= %"ISYM" nBoth= %"ISYM
+           " ncell= %"ISYM" Sigma= %"GSYM" cs3= %"GSYM" vsum= %"GSYM
+           " T= %"GSYM" vmag= %"GSYM" rho= %"GSYM" pos= %"GSYM" %"GSYM" %"GSYM"\n",
+           (float) CellWidth[0][0], (float) Time,
+           (int) nGEclamp, (int) nVelclamp, (int) nBothclamp, (int) size,
+           worst_Sigma*VelocityUnits/1.0e5, worst_cs3*VelocityUnits/1.0e5,
+           worst_vsum*VelocityUnits/1.0e5, worst_T,
+           worst_vmag*VelocityUnits/1.0e5, worst_rho*DensityUnits,
+           (float) px, (float) py, (float) pz);
+    if(nFBClampPrinted == maxFBClampPrints)
+      printf("FBCLAMP: print cap %"ISYM" reached on this rank; further FBCLAMP lines suppressed.\n",
+             (int) maxFBClampPrints);
+  }
 
   return SUCCESS;
 }
