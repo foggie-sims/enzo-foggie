@@ -1306,17 +1306,6 @@ c
                   n_avg = 1.0e-6_RKIND
                endif
 c
-c        If n_avg is NaN or negative, floor it at the density of one hydrogen
-c        atom per cc, far below any cell that hosts a supernova.
-c
-               if (n_avg .ne. n_avg .or. 
-     &                     n_avg .lt. 1.0e-6_RKIND) then
-                  write(6,*) 'star_feedback6: bad n_avg', n_avg,
-     &            ' at ic,jc,kc =', ic, jc, kc, ' nsn =', nsn,
-     &            ' Z_floor =', Z_floor
-                  n_avg = 1.0e-6_RKIND
-               endif
-c
 c     Compute the mass and momentum that this cell is responsible for
 c     injecting. Zero only the sub-cube this channel actually uses --
 c     mom_per_cell/energy_per_cell are sized to distrad_max, which can
