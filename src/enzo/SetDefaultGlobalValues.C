@@ -639,6 +639,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   StarFeedbackDistRadius           = 0;
   StarFeedbackDistCellStep         = 0;
   StarFeedbackDistTotalCells       = 1;
+  StarFeedbackSphere               = 0;
+  StarFeedbackSNIIRadius           = 400;         // pc
+  StarFeedbackSNIaRadius           = 400;         // pc
+  StarFeedbackPreSNRadius          = 200;         // pc
   StarFeedbackUseTabularYields     = FALSE;
   StarFeedbackTabularFilename      = "sygma_feedback_table.h5";
   StarFeedbackTabularSNIIEnergy    = 1.0e+51;
