@@ -974,6 +974,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
           StarFeedbackTabularSNIaEnergy);
   fprintf(fptr, "StarFeedbackTrackMetalSources         = %"ISYM"\n",
           StarFeedbackTrackMetalSources);
+  fprintf(fptr, "StarFeedbackAGB                       = %"ISYM"\n",
+          StarFeedbackAGB);
 
   fprintf(fptr, "ApplyBoundsToBaryonFields             = %"ISYM"\n",
     ApplyBoundsToBaryonFields);

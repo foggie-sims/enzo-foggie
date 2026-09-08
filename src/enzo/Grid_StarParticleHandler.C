@@ -383,6 +383,7 @@ extern "C" void FORTRAN_NAME(star_feedback6)(int *nx, int *ny, int *nz,
              double *tabMass, double *tabMetal, double *tabEvents, int *stochastic,
              int *preSN, int *preSNmom, int *pSNntabZ, int *pSNntabAge, double *pSNtabZ,
              double *pSNtabAge, double *pSNtabMass, double *pSNtabMetal, double *pSNtabMom,
+             int *useAGB, float *metalAGB,
              int *sphere, int *distrad_ii, int *distrad_ia, int *distrad_presn,
              int *distrad_max, float *radius_ii, float *radius_ia,
              float *radius_presn);
@@ -847,27 +848,61 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
   //  if (StarParticleCreation > 0 && level == MaximumRefinementLevel) {
   if (StarParticleCreation > 0) {
-    
-    /* Generate a fake grid to keep the particles in. */
- 
-    grid *tg = new grid;
-    tg->GridRank = GridRank;
-    tg->ProcessorNumber = ProcessorNumber;
- 
-    /* Allocate space for new particles. */
- 
-    int MaximumNumberOfNewParticles = int(0.25*float(size)) + 5;
-    tg->AllocateNewParticles(MaximumNumberOfNewParticles);
- 
-    /* Compute the cooling time. */
- 
-    float *cooling_time = new float[size];
-    this->ComputeCoolingTime(cooling_time);
- 
-    /* Call FORTRAN routine to do the actual work. */
- 
+
+    /* Will any maker branch below actually execute on this call?  If
+       not (e.g. H2REG_STAR outside its once-per-root-step window, or
+       only makers gated to other levels), skip the fake grid, the
+       0.25*size particle-buffer allocation, and the cooling time */ 
+
+    int AnyMakerThisCall =
+      ((STARMAKE_METHOD(NORMAL_STAR) || STARMAKE_METHOD(H2REG_STAR)) &&
+       (this->MakeStars || !StarFormationOncePerRootGridTimeStep)) ||
+      STARMAKE_METHOD(MOM_STAR) || STARMAKE_METHOD(UNIGRID_STAR) ||
+      STARMAKE_METHOD(KRAVTSOV_STAR) || STARMAKE_METHOD(POP3_STAR) ||
+      STARMAKE_METHOD(COLORED_POP3_STAR) || STARMAKE_METHOD(STAR_CLUSTER) ||
+      STARMAKE_METHOD(MBH_PARTICLE) || STARMAKE_METHOD(SINGLE_SUPERNOVA) ||
+      STARMAKE_METHOD(INSTANT_STAR) ||
+      STARMAKE_METHOD(SPRINGEL_HERNQUIST_STAR) ||
+      STARMAKE_METHOD(DISTR_FEEDBACK) ||
+      (STARMAKE_METHOD(SINK_PARTICLE) && level == MaximumRefinementLevel) ||
+      BigStarFormation > 0;
+
+    grid *tg = NULL;
+    float *cooling_time = NULL;
     int NumberOfNewParticlesSoFar = 0;
     int NumberOfNewParticles = 0;
+
+    if (AnyMakerThisCall) {
+
+    /* Generate a fake grid to keep the particles in. */
+
+    tg = new grid;
+    tg->GridRank = GridRank;
+    tg->ProcessorNumber = ProcessorNumber;
+
+    /* Allocate space for new particles. */
+
+    int MaximumNumberOfNewParticles = int(0.25*float(size)) + 5;
+    tg->AllocateNewParticles(MaximumNumberOfNewParticles);
+
+    /* Compute the cooling time - a full Grackle solve over the grid.
+       Only these makers consume it, and star_maker2 reads it only
+       under StarMakerThermalCrit, so skip it otherwise */ 
+
+    int CoolingTimeNeeded =
+      (STARMAKE_METHOD(NORMAL_STAR) && StarMakerThermalCrit == 1 &&
+       (this->MakeStars || !StarFormationOncePerRootGridTimeStep)) ||
+      STARMAKE_METHOD(MOM_STAR) || STARMAKE_METHOD(UNIGRID_STAR) ||
+      STARMAKE_METHOD(POP3_STAR) || STARMAKE_METHOD(STAR_CLUSTER) ||
+      STARMAKE_METHOD(INSTANT_STAR) || STARMAKE_METHOD(DISTR_FEEDBACK);
+
+    if (CoolingTimeNeeded) {
+      cooling_time = new float[size];
+      this->ComputeCoolingTime(cooling_time);
+    }
+
+    /* Call FORTRAN routine to do the actual work. */
+
  
 #ifdef STAR1
     //    if (StarParticleCreation == 1) {
@@ -1543,6 +1578,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
     delete [] cooling_time;
 
+    } // end: if (AnyMakerThisCall)
+
       /* Add magnetic energy to total energy with the new density field */
     if (HydroMethod == MHD_RK)
       for (int n = 0; n < size; n++) {
@@ -1581,7 +1618,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
     /* Clean up and keep it quiet. */
 
-    delete tg; // temporary grid
+    if (tg != NULL)
+      delete tg; // temporary grid
 
     //    if (debug) printf("StarParticle: end\n");
  
@@ -1893,8 +1931,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        &StarFeedbackTrackMetalSources, BaryonField[MetalIINum], BaryonField[MetalIaNum],
        &FBTable.n_met, &FBTable.n_age, FBTable.ini_met, FBTable.pop_age, 
        FBTable.mass_yield, FBTable.metm_yield, FBTable.event_rate, &StarFeedbackStochasticSNe,
-       &StarFeedbackPreSNFeedback, &StarFeedbackPreSNMomentum, &pSNFBTable.n_met, &pSNFBTable.n_age, pSNFBTable.ini_met, pSNFBTable.pop_age, 
+       &StarFeedbackPreSNFeedback, &StarFeedbackPreSNMomentum, &pSNFBTable.n_met, &pSNFBTable.n_age, pSNFBTable.ini_met, pSNFBTable.pop_age,
        pSNFBTable.mass_yield, pSNFBTable.metm_yield, pSNFBTable.mom_rate,
+       &StarFeedbackAGB, BaryonField[MetalAGBNum],
        &StarFeedbackSphere, &distrad_ii, &distrad_ia, &distrad_presn, &distrad_max,
        &radius_ii, &radius_ia, &radius_presn);
 
