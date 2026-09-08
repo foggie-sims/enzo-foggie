@@ -644,6 +644,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   StarFeedbackTabularSNIIEnergy    = 1.0e+51;
   StarFeedbackTabularSNIaEnergy    = 1.0e+51;
   StarFeedbackTrackMetalSources    = FALSE;
+  StarFeedbackAGB                  = FALSE;
   StarMakerUseJeansMass            = TRUE;
   MultiMetals                      = FALSE;
   NumberOfParticleAttributes       = INT_UNDEFINED;
