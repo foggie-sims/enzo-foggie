@@ -316,18 +316,14 @@ c
                up_ia_grid(i,j,k) = 0._RKIND
                vp_ia_grid(i,j,k) = 0._RKIND
                wp_ia_grid(i,j,k) = 0._RKIND
-               if (preSN .eq. 1_IKIND) then
-                  pSNmass_grid(i,j,k) = 0._RKIND
-                  pSNmetal_grid(i,j,k) = 0._RKIND
-                  pSNmom_grid(i,j,k) = 0._RKIND
-                  pSNup_grid(i,j,k) = 0._RKIND
-                  pSNvp_grid(i,j,k) = 0._RKIND
-                  pSNwp_grid(i,j,k) = 0._RKIND
-               endif
-               if (useAGB .eq. 1_IKIND) then
-                  agbmass_grid(i,j,k) = 0._RKIND
-                  agbmetal_grid(i,j,k) = 0._RKIND
-               endif
+               pSNmass_grid(i,j,k) = 0._RKIND
+               pSNmetal_grid(i,j,k) = 0._RKIND
+               pSNmom_grid(i,j,k) = 0._RKIND
+               pSNup_grid(i,j,k) = 0._RKIND
+               pSNvp_grid(i,j,k) = 0._RKIND
+               pSNwp_grid(i,j,k) = 0._RKIND
+               agbmass_grid(i,j,k) = 0._RKIND
+               agbmetal_grid(i,j,k) = 0._RKIND
             enddo
          enddo
       enddo
