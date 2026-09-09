@@ -208,6 +208,17 @@ int grid::TestMultiStarParticleInitializeGrid(int NParticles,
     int DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum;
     IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum);
 
+    /* Identify metal-tracking fields so their densities can be rescaled
+       along with the gas density, preserving the input metal fraction. */
+
+    int SNColourNum, MetalNum, MetalIaNum, MetalIINum, MetalAGBNum,
+      MetalNSMNum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum;
+    IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum,
+                          MetalAGBNum, MetalNSMNum, MBHColourNum,
+                          Galaxy1ColourNum, Galaxy2ColourNum);
+    int MetalFieldNum[5] = {MetalNum, MetalIaNum, MetalIINum, MetalAGBNum,
+                             MetalNSMNum};
+
     int k_idx, j_idx, i_idx, index;
     float delx, dely, delz, r, ratio;
 
@@ -230,6 +241,14 @@ int grid::TestMultiStarParticleInitializeGrid(int NParticles,
             float vy = (GridRank > 1) ? BaryonField[Vel2Num][index] : 0.0f;
             float vz = (GridRank > 2) ? BaryonField[Vel3Num][index] : 0.0f;
             float totalE = internalE + 0.5f * (vx*vx + vy*vy + vz*vz);
+
+            /* Rescale metal-tracking fields so their fraction of the gas
+               density (set uniformly by InitializeUniformGrid) is preserved
+               under the power-law density profile. */
+            float density_scale = density / BaryonField[DensNum][index];
+            for (int m = 0; m < 5; m++)
+              if (MetalFieldNum[m] >= 0)
+                BaryonField[MetalFieldNum[m]][index] *= density_scale;
 
             BaryonField[DensNum][index] = density;
             BaryonField[TENum][index]   = totalE;
