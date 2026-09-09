@@ -447,9 +447,18 @@ c     starmass_in_Msun/StarFormationMinimumMass.
                      
  300                     format(a,a,1pe10.3,a,2(1pe10.3))
                      endif
+                  else
+c                 The goto added here 112623 makes StarFormationMinimumMass a
+c                 hard threshold.  enzo-dev has no goto at this point at all:
+c                 upstream a sub-minimum cell falls through and creates a
+c                 particle at its true (tiny) mass.  Keep the hard threshold
+c                 when stochastic creation is off, but a cell that WINS the
+c                 stochastic draw must fall through to the particle-creation
+c                 block below -- with the goto unconditional the promoted mass
+c                 was computed and then thrown away, so
+c                 StochasticStarFormation = 1 was dead code.
+                     goto 10
                   endif
-c                 JT added goto here 112623
-                  goto 10 
                endif
 
                ii = ii + 1
