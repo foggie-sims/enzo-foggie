@@ -39,6 +39,8 @@ int GrackleWriteParameters(FILE *fptr)
   fprintf(fptr, "use_specific_heating_rate   = %d\n", grackle_data->use_specific_heating_rate);
   fprintf(fptr, "self_shielding_method       = %d\n", grackle_data->self_shielding_method);
   fprintf(fptr, "H2_self_shielding           = %d\n", grackle_data->H2_self_shielding);
+  fprintf(fptr, "use_temperature_floor       = %d\n", grackle_data->use_temperature_floor);
+  fprintf(fptr, "temperature_floor_scalar    = %lf\n", grackle_data->temperature_floor_scalar);
   fprintf(fptr, "grackle_data_file           = %s\n", grackle_data->grackle_data_file);
   fprintf(fptr, "UVbackground                = %d\n", grackle_data->UVbackground);
   fprintf(fptr, "Compton_xray_heating        = %d\n", grackle_data->Compton_xray_heating);

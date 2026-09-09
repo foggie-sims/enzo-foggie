@@ -102,6 +102,7 @@ int grid::GrackleWrapper()
 
   float *volumetric_heating_rate = NULL;
   float *specific_heating_rate   = NULL;
+  float *temperature_floor       = NULL;
 
   /* Compute the cooling time. */
 
@@ -251,6 +252,7 @@ int grid::GrackleWrapper()
 
   my_fields.volumetric_heating_rate = volumetric_heating_rate;
   my_fields.specific_heating_rate   = specific_heating_rate;
+  my_fields.temperature_floor       = temperature_floor;
 
 #ifdef TRANSFER
   /* Find RT fields */

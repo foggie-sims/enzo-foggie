@@ -297,6 +297,7 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
 
     my_fields.volumetric_heating_rate  = volumetric_heating_rate;
     my_fields.specific_heating_rate    = specific_heating_rate;
+    my_fields.temperature_floor        = NULL;
 
 #ifdef TRANSFER
 

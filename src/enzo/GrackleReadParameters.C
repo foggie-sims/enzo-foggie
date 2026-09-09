@@ -124,6 +124,10 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
                     &grackle_data->self_shielding_method);
     ret += sscanf(line, "H2_self_shielding = %d",
                     &grackle_data->H2_self_shielding);
+    ret += sscanf(line, "use_temperature_floor = %d",
+                    &grackle_data->use_temperature_floor);
+    ret += sscanf(line, "temperature_floor_scalar = %lf",
+                    &grackle_data->temperature_floor_scalar);
 
     if (sscanf(line, "grackle_data_file = %s", dummy) == 1) {
       grackle_data->grackle_data_file = dummy;
