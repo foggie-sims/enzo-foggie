@@ -467,7 +467,15 @@ c
      &              dunits*x1**3._RKIND/SolarMass*dx**3_IKIND
 #endif
 c
-c     Metal feedback. Similar to total ejected mass, 
+c     Disallow a SN channel entirely when its
+c     integrated ejecta mass is zero, so that momentum/energy can
+c     never be injected onto the grid without any accompanying mass.
+c
+               if (meject_ii .eq. 0._RKIND) nsn_ii = 0._RKIND
+               if (meject_ia .eq. 0._RKIND) nsn_ia = 0._RKIND
+               nsn = nsn_ii + nsn_ia
+c
+c     Metal feedback. Similar to total ejected mass,
 c     table has metal mass yield per initial population mass.
 c
                   if (imetal .eq. 1_IKIND) then
