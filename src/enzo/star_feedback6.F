@@ -358,8 +358,8 @@ c     Disallow a SN channel entirely when its integrated ejecta
 c     mass is zero or negative, so that momentum/energy can
 c     never be injected onto the grid without any accompanying mass.
 c
-               if (meject_ii .leq. 0._RKIND) nsn_ii = 0._RKIND
-               if (meject_ia .leq. 0._RKIND) nsn_ia = 0._RKIND
+               if (meject_ii .le. 0._RKIND) nsn_ii = 0._RKIND
+               if (meject_ia .le. 0._RKIND) nsn_ia = 0._RKIND
                nsn = nsn_ii + nsn_ia
 c
 c     Metal feedback. Similar to total ejected mass,
