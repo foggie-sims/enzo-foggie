@@ -25,19 +25,23 @@ c=======================================================================
 c////////////////////////  SUBROUTINE STAR_MAKER \\\\\\\\\\\\\\\\\\\\\\\
 c
       subroutine star_maker2(nx, ny, nz,
-     &                      d, dm, temp, u, v, w, h2, cooltime,
-     &                      dt, r, metal, dx, t, z, procnum, 
+     &                      d, dust, dm, temp, u, v, w, h2, cooltime,
+     &                      dt, r, metal, dx, t, z, procnum,
      &                      d1, x1, v1, t1,
-     &                      nmax, xstart, ystart, zstart, ibuff, 
+     &                      nmax, xstart, ystart, zstart, ibuff,
      &                      imetal, imethod, tindsf, mintdyn,
-     &                      veldivcrit, selfboundcrit, thermalcrit, 
+     &                      veldivcrit, selfboundcrit, thermalcrit,
      &                      usejeans, h2crit,
      &                      odthresh, masseff, smthresh, tempthresh,
-     &                      level, np, 
+     &                      level, np,
      &                      xp, yp, zp, up, vp, wp,
      &                      mp, tdp, tcp, metalf,
      &                      imetalSNIa, metalSNIa, metalfSNIa,
-     &                      iminit, minit, usetracer,
+     &                      iminit, minit, usedust,
+     &                      usedustspecies,
+     &                      metalc, metalo, metalmg, metalsi, metalfe,
+     &                      dustsil, dustmg, dustfe, dustc,
+     &                      usetracer,
      &                      usetracerwithstarform, numtracer,
      &                      tracer1, tracer2, tracer3, tracer4,
      &                      tracer5, tracer6, tracer7, tracer8)
@@ -65,6 +69,7 @@ c
 c  INPUTS:
 c
 c    d     - density field
+c    dust  - dust density field (only modified if usedust .eq. 1)
 c    dm    - dark matter field
 c    temp  - temperature field
 c    u,v,w - velocity fields
@@ -96,6 +101,12 @@ c    level - current level of refinement
 c    procnum - processor number (for output)
 c    imetalSNIa - SN Ia metallicity flag (0 - none, 1 - yes)
 c    iminit - whether to store initial mass separately
+c    usedust  - whether the dust density field is present (0 - no, 1 - yes)
+c    usedustspecies - whether species-resolved dust+metal tracking is on
+c               (0 - no, 1 - yes). When on, the 5 gas-metal species fields
+c               (C, O, Mg, Si, Fe) and 4 dust species fields are scaled
+c               by the same (1 - starfraction) as the gas density, so
+c               per-species mass fractions are preserved.
 c    usetracer - whether tracer fluids are used
 c    usetracerwithstarform - whether tracer fluids are used in star formation
 c    numtracer - number of tracer fields used (usetracer must be 1)
@@ -124,9 +135,14 @@ c
 c  Arguments
 c
       INTG_PREC nx, ny, nz, ibuff, nmax, np, level, imetal, imethod
-      INTG_PREC imetalSNIa, procnum, tindsf, iminit
+      INTG_PREC imetalSNIa, procnum, tindsf, iminit, usedust
+      INTG_PREC usedustspecies
       INTG_PREC usejeans, veldivcrit, selfboundcrit, thermalcrit, h2crit
-      R_PREC    d(nx,ny,nz), dm(nx,ny,nz), temp(nx,ny,nz)
+      R_PREC    d(nx,ny,nz), dust(nx,ny,nz), dm(nx,ny,nz), temp(nx,ny,nz)
+      R_PREC    metalc(nx,ny,nz), metalo(nx,ny,nz), metalmg(nx,ny,nz),
+     &          metalsi(nx,ny,nz), metalfe(nx,ny,nz)
+      R_PREC    dustsil(nx,ny,nz), dustmg(nx,ny,nz),
+     &          dustfe(nx,ny,nz), dustc(nx,ny,nz)
       R_PREC    u(nx,ny,nz), v(nx,ny,nz), w(nx,ny,nz), h2(nx,ny,nz)
       R_PREC    r(nx,ny,nz), cooltime(nx,ny,nz), metal(nx,ny,nz)
       R_PREC    metalSNIa(nx,ny,nz)
@@ -157,7 +173,8 @@ c
       R_PREC   alpha, betaprime
       R_PREC   thish2frac, h2mass
       R_PREC   sndspdC
-      R_PREC   isosndsp2, starmass, starfraction, bmass, jeanmass
+      R_PREC   isosndsp2, starmass, starfraction, starfactor
+      R_PREC   bmass, jeanmass
       parameter (sndspdC=1.3095e8_RKIND)
 c
       ii = np
@@ -327,7 +344,25 @@ c              Metallicity from Type Ia SNe
 c
 c              Remove mass from grid
 c
-               d(i,j,k) = (1._RKIND - starfraction)*d(i,j,k)
+               starfactor = 1._RKIND - starfraction
+               d(i,j,k) = starfactor*d(i,j,k)
+               if (usedust .eq. 1) then
+                  dust(i,j,k) = starfactor*dust(i,j,k)
+               endif
+c
+c              Keep species fractions fixed when gas is removed.
+c
+               if (usedustspecies .eq. 1) then
+                  metalc(i,j,k)  = starfactor*metalc(i,j,k)
+                  metalo(i,j,k)  = starfactor*metalo(i,j,k)
+                  metalmg(i,j,k) = starfactor*metalmg(i,j,k)
+                  metalsi(i,j,k) = starfactor*metalsi(i,j,k)
+                  metalfe(i,j,k) = starfactor*metalfe(i,j,k)
+                  dustsil(i,j,k) = starfactor*dustsil(i,j,k)
+                  dustmg(i,j,k)  = starfactor*dustmg(i,j,k)
+                  dustfe(i,j,k)  = starfactor*dustfe(i,j,k)
+                  dustc(i,j,k)   = starfactor*dustc(i,j,k)
+               endif
 c
 c               write(7+procnum,1000) level,bmass*starfraction,tcp(ii),
 c     &                           tdp(ii)*t1,d(i,j,k)*d1,z,metalf(ii)
@@ -438,15 +473,24 @@ c=======================================================================
 c/////////////////////  SUBROUTINE STAR_FEEDBACK \\\\\\\\\\\\\\\\\\\\\\\
 c
       subroutine star_feedback2(nx, ny, nz,
-     &                      d, dm, te, ge, u, v, w, metal,
+     &                      d, dust, dm, te, ge, u, v, w, metal,
      &                      idual, imetal, imethod, dt, r, dx, t, z,
      &                      d1, x1, v1, t1, sn_param, m_eject, yield,
      &                      distrad, diststep, distcells,
      &                      npart, xstart, ystart, zstart, ibuff,
      &                      xp, yp, zp, up, vp, wp,
      &                      mp, tdp, tcp, metalf, type, justburn,
-     &                      iminit, minit, 
+     &                      iminit, minit,
      &                      crmodel, crfeedback, cr,
+     &                      usedust,
+     &                      usedustspecies,
+     &                      metalc, metalo, metalmg, metalsi, metalfe,
+     &                      dustsil, dustmg, dustfe, dustc,
+     &                      fc_metal, fo_metal, fmg_metal, fsi_metal,
+     &                      ffe_metal,
+     &                      fsil_dust, fmg_sil_dust, ffe_sil_dust,
+     &                      fc_dust, dustcond,
+     &                      usesnerate, sne_rate,
      &                      usetracer, usetracerwithstarfeed,
      &                      numtracer,
      &                      tracer1, tracer2, tracer3, tracer4,
@@ -470,6 +514,7 @@ c
 c  INPUTS:
 c
 c    d     - density field
+c    dust  - dust density field
 c    dm    - dark matter field
 c    te,ge - total energy and gas energy fields
 c    u,v,w - velocity fields
@@ -484,6 +529,21 @@ c    nx,ny,nz - dimensions of field arrays
 c    ibuff    - number of buffer zones at each end of grid
 c    idual    - dual energy flag
 c    imetal   - metallicity flag (0 - none, 1 - yes)
+c    usedust  - dust density flag (0 - none, 1 - yes)
+c    usedustspecies - species-resolved dust+metal flag (0 - none, 1 - yes)
+c    fc_metal..ffe_metal - solar-abundance mass fractions of C/O/Mg/Si/Fe
+c               relative to total metal mass.
+c    fsil_dust  - canonical MW silicate (Mg+Fe) fraction of total dust.
+c    fmg_sil_dust, ffe_sil_dust - Mg/Fe split within the silicate fraction.
+c    fc_dust    - canonical MW carbonaceous fraction of total dust.
+c    dustcond   - fraction of new metal ejecta condensed into dust
+c    usesnerate - SN-event count field flag (0 - none, 1 - yes). When on,
+c               sne_rate is zeroed at the top of the routine and each
+c               particle's per-cell SN-equivalent energy contribution
+c               (energy / 1e51 erg, in cgs) is accumulated.
+c    sne_rate - per-cell count of SN-equivalent events this dt (filled
+c               when usesnerate = 1). Consumed by Grackle when
+c               UseSNeRateField = 1.
 c    imethod  - hydro method (0 - PPMDE, 1 - PPMLR, 2 - ZEUS)
 c
 c    x/y/z start - starting position of grid origin
@@ -521,8 +581,17 @@ c
 c  Arguments
 c
       INTG_PREC nx, ny, nz, ibuff, npart, idual, imetal, imethod,
-     &      distrad, diststep, distcells, iminit
-      R_PREC    d(nx,ny,nz), dm(nx,ny,nz), te(nx,ny,nz)
+     &      distrad, diststep, distcells, iminit, usedust, usesnerate,
+     &      usedustspecies
+      R_PREC    d(nx,ny,nz), dust(nx,ny,nz), dm(nx,ny,nz), te(nx,ny,nz)
+      R_PREC    sne_rate(nx,ny,nz)
+      R_PREC    metalc(nx,ny,nz), metalo(nx,ny,nz), metalmg(nx,ny,nz),
+     &          metalsi(nx,ny,nz), metalfe(nx,ny,nz)
+      R_PREC    dustsil(nx,ny,nz), dustmg(nx,ny,nz),
+     &          dustfe(nx,ny,nz), dustc(nx,ny,nz)
+      R_PREC    fc_metal, fo_metal, fmg_metal, fsi_metal, ffe_metal
+      R_PREC    fsil_dust, fmg_sil_dust, ffe_sil_dust, fc_dust
+      R_PREC    dustcond
       R_PREC    u(nx,ny,nz), v(nx,ny,nz), w(nx,ny,nz)
       R_PREC    r(nx,ny,nz), metal(nx,ny,nz), ge(nx,ny,nz)
       R_PREC    dt, dx, z
@@ -547,10 +616,25 @@ c
       INTG_PREC i, j, k, n, ic, jc, kc, stepk, stepj, cellstep
       R_PREC mform, tfactor, energy, sn_param, msolar_e51,
      &     m_eject, yield, minitial, xv1, xv2, dratio,
-     &     distmass
+     &     distmass, dmetal, metalgas, dustadd, olddust, dustscale
+      R_PREC dustfloor
       parameter (msolar_e51 = 1800._RKIND)
+c     Floor for seeding dust species in cells with no existing dust.
+      parameter (dustfloor = 1.e-20_RKIND)
 c
 c-----------------------------------------------------------------------
+c
+c     Clear the SN-event count field for this feedback pass.
+c
+      if (usesnerate .eq. 1) then
+         do k=1,nz
+            do j=1,ny
+               do i=1,nx
+                  sne_rate(i,j,k) = 0._RKIND
+               enddo
+            enddo
+         enddo
+      endif
 c
 c     Loop over particles
 c
@@ -662,6 +746,14 @@ c
                      cellstep = stepj + abs(ic-i)
                      if (cellstep .le. diststep) then
                         dratio = 1._RKIND/(d(ic,jc,kc) + distmass)
+c
+c           Store SN-equivalent events for Grackle dust destruction.
+c
+                        if (usesnerate .eq. 1) then
+                           sne_rate(ic,jc,kc) = sne_rate(ic,jc,kc) +
+     &                          energy * d1 * v1**2 * (dx*x1)**3 /
+     &                          1.0e51_RKIND
+                        endif
                         if( crmodel .gt. 0 ) then
                           te(ic,jc,kc) = ((te(ic,jc,kc)*d(ic,jc,kc)) +
      &                          energy*(1._RKIND-crfeedback)) * dratio
@@ -686,13 +778,71 @@ c
                         if (imetal .eq. 1) then
 c
 c           "Cen method".  This takes into account gas recycling.
+c           Split new metal ejecta between gas-phase metals and dust.
 c
-                           metal(ic,jc,kc) = 
-     &                          (metal(ic,jc,kc)*d(ic,jc,kc) + 
-     &                          (mform / distcells) * 
-     &                          (yield * (1._RKIND-metalf(n)) + 
-     &                          m_eject * metalf(n))) * dratio
-            !metal is a fraction
+                           dmetal = (mform / distcells) *
+     &                          (yield * (1._RKIND-metalf(n)) +
+     &                          m_eject * metalf(n))
+                           if (usedust .eq. 1) then
+                              metalgas = (1._RKIND - dustcond)*dmetal
+                              dustadd = dustcond*dmetal
+                              olddust = dust(ic,jc,kc)
+                              metal(ic,jc,kc) =
+     &                             (metal(ic,jc,kc)*d(ic,jc,kc) +
+     &                             metalgas) * dratio
+                              dust(ic,jc,kc) = olddust + dustadd
+                           else
+                              metalgas = dmetal
+                              dustadd = 0._RKIND
+                              olddust = 0._RKIND
+                              metal(ic,jc,kc) =
+     &                             (metal(ic,jc,kc)*d(ic,jc,kc) +
+     &                             metalgas) * dratio
+                           endif
+c
+c           New metal species are stored as densities.
+c
+                           if (usedustspecies .eq. 1) then
+                              metalc(ic,jc,kc)  = metalc(ic,jc,kc)
+     &                            + metalgas * fc_metal
+                              metalo(ic,jc,kc)  = metalo(ic,jc,kc)
+     &                            + metalgas * fo_metal
+                              metalmg(ic,jc,kc) = metalmg(ic,jc,kc)
+     &                            + metalgas * fmg_metal
+                              metalsi(ic,jc,kc) = metalsi(ic,jc,kc)
+     &                            + metalgas * fsi_metal
+                              metalfe(ic,jc,kc) = metalfe(ic,jc,kc)
+     &                            + metalgas * ffe_metal
+                           endif
+c
+c           Preserve the existing dust mix; seed empty cells with the
+c           fiducial split.
+c
+                           if (usedustspecies .eq. 1 .and.
+     &                         usedust .eq. 1) then
+                              if (olddust .gt. dustfloor) then
+                                 dustscale = dust(ic,jc,kc) / olddust
+                                 dustsil(ic,jc,kc) =
+     &                              dustscale * dustsil(ic,jc,kc)
+                                 dustmg(ic,jc,kc)  =
+     &                              dustscale * dustmg(ic,jc,kc)
+                                 dustfe(ic,jc,kc)  =
+     &                              dustscale * dustfe(ic,jc,kc)
+                                 dustc(ic,jc,kc)   =
+     &                              dustscale * dustc(ic,jc,kc)
+                              else
+                                 dustsil(ic,jc,kc) = dustsil(ic,jc,kc)
+     &                              + fsil_dust * dustadd
+                                 dustmg(ic,jc,kc)  = dustmg(ic,jc,kc)
+     &                              + fsil_dust * fmg_sil_dust
+     &                              * dustadd
+                                 dustfe(ic,jc,kc)  = dustfe(ic,jc,kc)
+     &                              + fsil_dust * ffe_sil_dust
+     &                              * dustadd
+                                 dustc(ic,jc,kc)   = dustc(ic,jc,kc)
+     &                              + fc_dust * dustadd
+                              endif
+                           endif
 c
                         endif
 c

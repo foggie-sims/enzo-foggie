@@ -1851,9 +1851,13 @@ int TransferSubgridActiveParticles(grid* Subgrids[], int NumberOfSubgrids,
   int IdentifyPotentialField(int &PotenNum, int &Acce1Num, int &Acce2Num, int &Acce3Num);
 
   /* Identify colour field */
-  int IdentifyColourFields(int &SNColourNum, int &MetalNum, 
+  int IdentifyColourFields(int &SNColourNum, int &MetalNum,
 			   int &MetalIaNum, int &MetalIINum, int &MetalAGBNum, int &MetalNSMNum,
 			   int &MBHColourNum, int &Galaxy1ColourNum, int &Galaxy2ColourNum);
+  int IdentifyColourFields(int &SNColourNum, int &MetalNum,
+			   int &MetalIaNum, int &MetalIINum, int &MetalAGBNum, int &MetalNSMNum,
+			   int &MBHColourNum, int &Galaxy1ColourNum, int &Galaxy2ColourNum,
+			   int &DustDensityNum);
 
   /* Identify Multi-species fields. */
 
@@ -3412,4 +3416,3 @@ int ApplyBoundsToBaryonFields();
 
 
 #endif
-

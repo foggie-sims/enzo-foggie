@@ -14,6 +14,7 @@
 /
 ************************************************************************/
  
+#include "preincludes.h"
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
@@ -97,7 +98,7 @@ extern "C" void FORTRAN_NAME(star_maker1)(int *nx, int *ny, int *nz,
 #endif /* STAR1 */
  
 extern "C" void FORTRAN_NAME(star_maker2)(int *nx, int *ny, int *nz,
-               float *d, float *dm, float *temp, float *u, float *v, float *w,
+               float *d, float *dust, float *dm, float *temp, float *u, float *v, float *w,
                float *h2, float *cooltime,
                float *dt, float *r, float *metal, float *dx, FLOAT *t, float *z,
                int *procnum,
@@ -114,6 +115,11 @@ extern "C" void FORTRAN_NAME(star_maker2)(int *nx, int *ny, int *nz,
 		         float *mp, float *tdp, float *tcp, float *metalf,
 	            int *imetalSNIa, float *metalSNIa, float *metalfSNIa,
                int *iminit, float *minit,
+               int *usedust,
+               int *usedustspecies,
+               float *metalc, float *metalo, float *metalmg,
+               float *metalsi, float *metalfe,
+               float *dustsil, float *dustmg, float *dustfe, float *dustc,
                int *usetracer, int *usetracerwithstarform, int *numtracer,
                float *tracer1, float *tracer2, float *tracer3, float *tracer4,
                float *tracer5, float *tracer6, float *tracer7, float *tracer8);
@@ -319,8 +325,8 @@ extern "C" void FORTRAN_NAME(star_feedback1)(int *nx, int *ny, int *nz,
 #endif /* STAR1 */
  
 extern "C" void FORTRAN_NAME(star_feedback2)(int *nx, int *ny, int *nz,
-             float *d, float *dm, float *te, float *ge, float *u, float *v,
-		       float *w, float *metal,
+             float *d, float *dust, float *dm, float *te, float *ge,
+                       float *u, float *v, float *w, float *metal,
              int *idual, int *imetal, hydro_method *imethod, float *dt,
 		       float *r, float *dx, FLOAT *t, float *z,
              float *d1, float *x1, float *v1, float *t1,
@@ -332,6 +338,16 @@ extern "C" void FORTRAN_NAME(star_feedback2)(int *nx, int *ny, int *nz,
 	     float *mp, float *tdp, float *tcp, float *metalf, int *type,
 	     float *justburn, int *iminit, float *minit,
         int *crmodel, float *crfeedback, float *cr,
+        int *usedust,
+        int *usedustspecies,
+        float *metalc, float *metalo, float *metalmg,
+        float *metalsi, float *metalfe,
+        float *dustsil, float *dustmg, float *dustfe, float *dustc,
+        float *fc_metal, float *fo_metal, float *fmg_metal,
+        float *fsi_metal, float *ffe_metal,
+        float *fsil_dust, float *fmg_sil_dust, float *ffe_sil_dust,
+        float *fc_dust, float *dustcond,
+        int *usesnerate, float *sne_rate,
         int *usetracer, int *usetracerwithstarfeed, int *numtracer,
         float *tracer1, float *tracer2, float *tracer3, float *tracer4,
         float *tracer5, float *tracer6, float *tracer7, float *tracer8);
@@ -665,11 +681,12 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
   /* Find metallicity field and set flag. */
  
   int SNColourNum, MetalNum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum,
-    MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum;
+    MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum, DustDensityNum;
 
-  if (this->IdentifyColourFields(SNColourNum, MetalNum, 
+  if (this->IdentifyColourFields(SNColourNum, MetalNum,
               MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum,
-              MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum) == FAIL)
+              MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum,
+              DustDensityNum) == FAIL)
     ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
 
   /* Set variables to type defines to pass to FORTRAN routines */
@@ -782,6 +799,61 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       MetalPointer = BaryonField[SNColourNum];
   } // ENDELSE both metal types
 
+  if (UseDustDensityField && !UseDustSpeciesTrack && DustDensityNum == -1)
+    ENZO_FAIL("UseDustDensityField = 1 but DustDensity field is missing.\n");
+
+  /* With UseDustSpeciesTrack the bulk dust density (and the silicate sum)
+     are not carried as baryon fields; scratch buffers holding the species
+     sums are passed to the star maker/feedback routines instead, and the
+     species fields remain the authoritative state. */
+  int ActiveDustField = (UseDustDensityField &&
+                         (DustDensityNum != -1 || UseDustSpeciesTrack));
+  float *DustPointer = (DustDensityNum != -1) ?
+    BaryonField[DustDensityNum] : BaryonField[DensNum];
+
+  int MetalCNum = -1, MetalONum = -1, MetalMgNum = -1,
+      MetalSiNum = -1, MetalFeNum = -1;
+  int DustMgNum = -1, DustFeNum = -1, DustCNum = -1;
+  float *DustTotalScratch = NULL, *DustSilScratch = NULL;
+
+  if (UseDustSpeciesTrack) {
+    MetalCNum  = FindField(MetalDensityCarbon,     FieldType, NumberOfBaryonFields);
+    MetalONum  = FindField(MetalDensityOxygen,     FieldType, NumberOfBaryonFields);
+    MetalMgNum = FindField(MetalDensityMagnesium,  FieldType, NumberOfBaryonFields);
+    MetalSiNum = FindField(MetalDensitySilicon,    FieldType, NumberOfBaryonFields);
+    MetalFeNum = FindField(MetalDensityIron,       FieldType, NumberOfBaryonFields);
+    DustMgNum  = FindField(DustDensityMgSilicate,  FieldType, NumberOfBaryonFields);
+    DustFeNum  = FindField(DustDensityFeSilicate,  FieldType, NumberOfBaryonFields);
+    DustCNum   = FindField(DustDensityCarbonaceous, FieldType, NumberOfBaryonFields);
+
+    if (MetalCNum == -1 || MetalONum == -1 ||
+        MetalMgNum == -1 || MetalSiNum == -1 || MetalFeNum == -1 ||
+        DustMgNum == -1 || DustFeNum == -1 || DustCNum == -1)
+      ENZO_FAIL("UseDustSpeciesTrack = 1 but a required dust/species field is missing.\n");
+
+    DustTotalScratch = new float[size];
+    DustSilScratch   = new float[size];
+    DustPointer = DustTotalScratch;
+  }
+
+  float *MetalCPtr  = (MetalCNum  != -1) ? BaryonField[MetalCNum]  : BaryonField[DensNum];
+  float *MetalOPtr  = (MetalONum  != -1) ? BaryonField[MetalONum]  : BaryonField[DensNum];
+  float *MetalMgPtr = (MetalMgNum != -1) ? BaryonField[MetalMgNum] : BaryonField[DensNum];
+  float *MetalSiPtr = (MetalSiNum != -1) ? BaryonField[MetalSiNum] : BaryonField[DensNum];
+  float *MetalFePtr = (MetalFeNum != -1) ? BaryonField[MetalFeNum] : BaryonField[DensNum];
+  float *DustSilPtr = (UseDustSpeciesTrack) ? DustSilScratch : BaryonField[DensNum];
+  float *DustMgPtr  = (DustMgNum  != -1) ? BaryonField[DustMgNum]  : BaryonField[DensNum];
+  float *DustFePtr  = (DustFeNum  != -1) ? BaryonField[DustFeNum]  : BaryonField[DensNum];
+  float *DustCPtr   = (DustCNum   != -1) ? BaryonField[DustCNum]   : BaryonField[DensNum];
+
+  /* The scratch totals are refilled immediately before each Fortran call
+     that reads them, because earlier calls (e.g. star_maker2 scaling the
+     species fields at star formation) invalidate the sums. */
+  if (UseDustSpeciesTrack)
+    for (i = 0; i < size; i++) {
+      DustSilScratch[i]   = DustMgPtr[i] + DustFePtr[i];
+      DustTotalScratch[i] = DustSilScratch[i] + DustCPtr[i];
+    }
 
   int TF01Num, TF02Num, TF03Num, TF04Num, TF05Num, TF06Num, TF07Num, TF08Num;
 
@@ -844,27 +916,61 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
   //  if (StarParticleCreation > 0 && level == MaximumRefinementLevel) {
   if (StarParticleCreation > 0) {
-    
-    /* Generate a fake grid to keep the particles in. */
- 
-    grid *tg = new grid;
-    tg->GridRank = GridRank;
-    tg->ProcessorNumber = ProcessorNumber;
- 
-    /* Allocate space for new particles. */
- 
-    int MaximumNumberOfNewParticles = int(0.25*float(size)) + 5;
-    tg->AllocateNewParticles(MaximumNumberOfNewParticles);
- 
-    /* Compute the cooling time. */
- 
-    float *cooling_time = new float[size];
-    this->ComputeCoolingTime(cooling_time);
- 
-    /* Call FORTRAN routine to do the actual work. */
- 
+
+    /* Will any maker branch below actually execute on this call?  If
+       not (e.g. H2REG_STAR outside its once-per-root-step window, or
+       only makers gated to other levels), skip the fake grid, the
+       0.25*size particle-buffer allocation, and the cooling time */ 
+
+    int AnyMakerThisCall =
+      ((STARMAKE_METHOD(NORMAL_STAR) || STARMAKE_METHOD(H2REG_STAR)) &&
+       (this->MakeStars || !StarFormationOncePerRootGridTimeStep)) ||
+      STARMAKE_METHOD(MOM_STAR) || STARMAKE_METHOD(UNIGRID_STAR) ||
+      STARMAKE_METHOD(KRAVTSOV_STAR) || STARMAKE_METHOD(POP3_STAR) ||
+      STARMAKE_METHOD(COLORED_POP3_STAR) || STARMAKE_METHOD(STAR_CLUSTER) ||
+      STARMAKE_METHOD(MBH_PARTICLE) || STARMAKE_METHOD(SINGLE_SUPERNOVA) ||
+      STARMAKE_METHOD(INSTANT_STAR) ||
+      STARMAKE_METHOD(SPRINGEL_HERNQUIST_STAR) ||
+      STARMAKE_METHOD(DISTR_FEEDBACK) ||
+      (STARMAKE_METHOD(SINK_PARTICLE) && level == MaximumRefinementLevel) ||
+      BigStarFormation > 0;
+
+    grid *tg = NULL;
+    float *cooling_time = NULL;
     int NumberOfNewParticlesSoFar = 0;
     int NumberOfNewParticles = 0;
+
+    if (AnyMakerThisCall) {
+
+    /* Generate a fake grid to keep the particles in. */
+
+    tg = new grid;
+    tg->GridRank = GridRank;
+    tg->ProcessorNumber = ProcessorNumber;
+
+    /* Allocate space for new particles. */
+
+    int MaximumNumberOfNewParticles = int(0.25*float(size)) + 5;
+    tg->AllocateNewParticles(MaximumNumberOfNewParticles);
+
+    /* Compute the cooling time - a full Grackle solve over the grid.
+       Only these makers consume it, and star_maker2 reads it only
+       under StarMakerThermalCrit, so skip it otherwise */ 
+
+    int CoolingTimeNeeded =
+      (STARMAKE_METHOD(NORMAL_STAR) && StarMakerThermalCrit == 1 &&
+       (this->MakeStars || !StarFormationOncePerRootGridTimeStep)) ||
+      STARMAKE_METHOD(MOM_STAR) || STARMAKE_METHOD(UNIGRID_STAR) ||
+      STARMAKE_METHOD(POP3_STAR) || STARMAKE_METHOD(STAR_CLUSTER) ||
+      STARMAKE_METHOD(INSTANT_STAR) || STARMAKE_METHOD(DISTR_FEEDBACK);
+
+    if (CoolingTimeNeeded) {
+      cooling_time = new float[size];
+      this->ComputeCoolingTime(cooling_time);
+    }
+
+    /* Call FORTRAN routine to do the actual work. */
+
  
 #ifdef STAR1
     //    if (StarParticleCreation == 1) {
@@ -908,7 +1014,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
       FORTRAN_NAME(star_maker2)(
        GridDimension, GridDimension+1, GridDimension+2,
-       BaryonField[DensNum], dmfield, temperature, BaryonField[Vel1Num],
+       BaryonField[DensNum], DustPointer, dmfield, temperature,
+       BaryonField[Vel1Num],
        BaryonField[Vel2Num], BaryonField[Vel3Num], BaryonField[H2INum],
        cooling_time,
        &dtFixed, BaryonField[NumberOfBaryonFields], MetalPointer,
@@ -918,11 +1025,11 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        CellLeftEdge[2], &GhostZones,
        &MetallicityField, &HydroMethod, &StarMakerTimeIndependentFormation,
        &StarMakerMinimumDynamicalTime,
-       &StarMakerVelDivCrit, &StarMakerSelfBoundCrit, 
-       &StarMakerThermalCrit, &StarMakerUseJeansMass, &StarMakerH2Crit, 
+       &StarMakerVelDivCrit, &StarMakerSelfBoundCrit,
+       &StarMakerThermalCrit, &StarMakerUseJeansMass, &StarMakerH2Crit,
        &StarMakerOverDensityThreshold, &StarMakerMassEfficiency,
        &StarMakerMinimumMass, &StarMakerTemperatureThreshold,
-       &level, &NumberOfNewParticles, 
+       &level, &NumberOfNewParticles,
        tg->ParticlePosition[0], tg->ParticlePosition[1],
           tg->ParticlePosition[2],
        tg->ParticleVelocity[0], tg->ParticleVelocity[1],
@@ -931,6 +1038,10 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        tg->ParticleAttribute[2],
        &StarMakerTypeIaSNe, BaryonField[MetalIaNum], tg->ParticleAttribute[3],
        &StarMakerStoreInitialMass, tg->ParticleInitialMass,
+       &ActiveDustField,
+       &UseDustSpeciesTrack,
+       MetalCPtr, MetalOPtr, MetalMgPtr, MetalSiPtr, MetalFePtr,
+       DustSilPtr, DustMgPtr, DustFePtr, DustCPtr,
        &UseTracerFluid, &UseTracerFluidWithStarFormation, &NumberOfTracerFluidFields,
        TracerFluid01Pointer, TracerFluid02Pointer, TracerFluid03Pointer, TracerFluid04Pointer,
        TracerFluid05Pointer, TracerFluid06Pointer, TracerFluid07Pointer, TracerFluid08Pointer);
@@ -1540,6 +1651,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
     delete [] cooling_time;
 
+    } // end: if (AnyMakerThisCall)
+
       /* Add magnetic energy to total energy with the new density field */
     if (HydroMethod == MHD_RK)
       for (int n = 0; n < size; n++) {
@@ -1578,7 +1691,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
     /* Clean up and keep it quiet. */
 
-    delete tg; // temporary grid
+    if (tg != NULL)
+      delete tg; // temporary grid
 
     //    if (debug) printf("StarParticle: end\n");
  
@@ -1670,9 +1784,41 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
     //---- THIS IS THE MODIFIED STAR FORMATION ALGORITHM
  
+      int SNeRateNum = (UseSNeRateField)
+                          ? FindField(SNeRate, FieldType, NumberOfBaryonFields)
+                          : -1;
+      if (UseSNeRateField && SNeRateNum == -1)
+        ENZO_FAIL("UseSNeRateField = 1 but SNeRate field is missing.\n");
+
+      float *SNeRatePointer = (SNeRateNum != -1) ?
+        BaryonField[SNeRateNum] : BaryonField[DensNum];
+
+      float DustCondensationEfficiency = 0.15;
+#ifdef USE_GRACKLE
+      DustCondensationEfficiency =
+        (float) grackle_data->dust_condensation_eff;
+#endif
+
+      /* Refill the scratch dust totals: star_maker2 above scales the
+         species fields in star-forming cells, and star_feedback2 reads
+         the bulk total (olddust) to apportion newly condensed dust. */
+      if (UseDustSpeciesTrack)
+        for (i = 0; i < size; i++) {
+          DustSilScratch[i]   = DustMgPtr[i] + DustFePtr[i];
+          DustTotalScratch[i] = DustSilScratch[i] + DustCPtr[i];
+        }
+
+      /* Addressable copies of the solar metal mass fractions for the
+         Fortran interface. */
+      float SolarMetalFracC  = SOLAR_METAL_FRACTION_C;
+      float SolarMetalFracO  = SOLAR_METAL_FRACTION_O;
+      float SolarMetalFracMg = SOLAR_METAL_FRACTION_MG;
+      float SolarMetalFracSi = SOLAR_METAL_FRACTION_SI;
+      float SolarMetalFracFe = SOLAR_METAL_FRACTION_FE;
+
       FORTRAN_NAME(star_feedback2)(
        GridDimension, GridDimension+1, GridDimension+2,
-          BaryonField[DensNum], dmfield,
+          BaryonField[DensNum], DustPointer, dmfield,
           BaryonField[TENum], BaryonField[GENum], BaryonField[Vel1Num],
           BaryonField[Vel2Num], BaryonField[Vel3Num], MetalPointer,
        &DualEnergyFormalism, &MetallicityField, &HydroMethod,
@@ -1680,7 +1826,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
           &Time, &zred,
        &DensityUnits, &LengthUnits, &VelocityUnits, &TimeUnits,
           &StarEnergyToThermalFeedback, &StarMassEjectionFraction,
-          &StarMetalYield, &StarFeedbackDistRadius, &StarFeedbackDistCellStep, 
+          &StarMetalYield, &StarFeedbackDistRadius, &StarFeedbackDistCellStep,
        &StarFeedbackDistTotalCells,
        &NumberOfParticles,
           CellLeftEdge[0], CellLeftEdge[1], CellLeftEdge[2], &GhostZones,
@@ -1689,9 +1835,21 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        ParticleVelocity[0], ParticleVelocity[1],
           ParticleVelocity[2],
        ParticleMass, ParticleAttribute[1], ParticleAttribute[0],
-       ParticleAttribute[2], ParticleType, &RadiationData.IntegratedStarFormation, 
+       ParticleAttribute[2], ParticleType, &RadiationData.IntegratedStarFormation,
        &StarMakerStoreInitialMass, ParticleInitialMass,
        &CRModel, &CRFeedback, (CRModel?BaryonField[CRNum]:NULL),
+       &ActiveDustField,
+       &UseDustSpeciesTrack,
+       MetalCPtr, MetalOPtr, MetalMgPtr, MetalSiPtr, MetalFePtr,
+       DustSilPtr, DustMgPtr, DustFePtr, DustCPtr,
+       &SolarMetalFracC, &SolarMetalFracO,
+       &SolarMetalFracMg, &SolarMetalFracSi,
+       &SolarMetalFracFe,
+       &InitialDustSilicateFraction, &InitialDustMgSilicateFraction,
+       &InitialDustFeSilicateFraction,
+       &InitialDustCarbonaceousFraction,
+       &DustCondensationEfficiency,
+       &UseSNeRateField, SNeRatePointer,
        &UseTracerFluid, &UseTracerFluidWithStellarFeedback, &NumberOfTracerFluidFields,
        TracerFluid01Pointer, TracerFluid02Pointer, TracerFluid03Pointer, TracerFluid04Pointer,
        TracerFluid05Pointer, TracerFluid06Pointer, TracerFluid07Pointer, TracerFluid08Pointer);
@@ -2290,11 +2448,13 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
   }
  
   /* Clean up. */
- 
+
   delete [] h2field;
   delete [] TotalMetals;
   delete [] temperature;
   delete [] dmfield;
+  delete [] DustTotalScratch;
+  delete [] DustSilScratch;
   delete [] BaryonField[NumberOfBaryonFields];   // refinement flag field
   BaryonField[NumberOfBaryonFields] = NULL;
  

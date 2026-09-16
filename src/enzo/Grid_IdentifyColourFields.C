@@ -26,16 +26,34 @@
  
 int FindField(int f, int farray[], int n);
 
-int grid::IdentifyColourFields(int &SNColourNum, int &MetalNum, 
-			       int &MetalIaNum, int &MetalIINum, 
+int grid::IdentifyColourFields(int &SNColourNum, int &MetalNum,
+			       int &MetalIaNum, int &MetalIINum,
 			       int &MetalAGBNum, int& MetalNSMNum,
 			       int &MBHColourNum,
 			       int &Galaxy1ColourNum, int &Galaxy2ColourNum)
 {
- 
+  int DustDensityNum;
+
+  return this->IdentifyColourFields(SNColourNum, MetalNum,
+				    MetalIaNum, MetalIINum,
+				    MetalAGBNum, MetalNSMNum,
+				    MBHColourNum,
+				    Galaxy1ColourNum, Galaxy2ColourNum,
+				    DustDensityNum);
+}
+
+int grid::IdentifyColourFields(int &SNColourNum, int &MetalNum,
+			       int &MetalIaNum, int &MetalIINum,
+			       int &MetalAGBNum, int& MetalNSMNum,
+			       int &MBHColourNum,
+			       int &Galaxy1ColourNum, int &Galaxy2ColourNum,
+			       int &DustDensityNum)
+{
+
   SNColourNum = MetalNum = MetalIaNum = MetalIINum = MetalAGBNum
-    = MetalNSMNum = MBHColourNum = Galaxy1ColourNum = Galaxy2ColourNum = 0;
- 
+    = MetalNSMNum = MBHColourNum = Galaxy1ColourNum = Galaxy2ColourNum
+    = DustDensityNum = 0;
+
   SNColourNum = FindField(SNColour, FieldType, NumberOfBaryonFields);
   MetalNum = FindField(Metallicity, FieldType, NumberOfBaryonFields);
   MetalIaNum = FindField(MetalSNIaDensity, FieldType, NumberOfBaryonFields);
@@ -45,6 +63,7 @@ int grid::IdentifyColourFields(int &SNColourNum, int &MetalNum,
   MBHColourNum = FindField(MBHColour, FieldType, NumberOfBaryonFields);
   Galaxy1ColourNum = FindField(Galaxy1Colour, FieldType, NumberOfBaryonFields);
   Galaxy2ColourNum = FindField(Galaxy2Colour, FieldType, NumberOfBaryonFields);
+  DustDensityNum = FindField(DustDensity, FieldType, NumberOfBaryonFields);
 
   /*
   if ((SNColourNum < 0) && (MetalNum < 0) && (MBHColourNum < 0) && 
@@ -56,4 +75,3 @@ int grid::IdentifyColourFields(int &SNColourNum, int &MetalNum,
 
   return SUCCESS;
 }
-
