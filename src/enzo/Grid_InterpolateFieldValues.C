@@ -609,11 +609,42 @@ int grid::InterpolateFieldValues(grid *ParentGrid
     for (field = 0; field < NumberOfBaryonFields; field++)
       delete [] ParentTemp[field];
  
+    /* Enforce positivity on the interpolated internal energy.
+
+       The interpolator only applies a positivity constraint when
+       InterpolationMethod == SecondOrderB: SecondOrderBFlag[] is populated
+       inside "if (InterpolationMethod == SecondOrderB)" above, and
+       interpolate.F consults iposflag only for imethod == 2.  With
+       SecondOrderA (InterpolationMethod = 1) the flag stays 0 and interp3d
+       runs unconstrained, so a second-order interpolant can undershoot below
+       zero across a steep gradient.  That leaves a tiny negative gas energy
+       (order machine epsilon relative to the local energy scale) which
+       nothing downstream clamps -- it persists in the field and eventually
+       trips the fatal "stop in euler with geslice < 0" test in euler.F,
+       aborting every rank.  This mirrors the clamp that
+       Grid_CorrectForRefinedFluxes.C already applies to the same field.
+
+       Done before RestoreEnergyConsistency so the total energy is rebuilt
+       from the clamped internal energy. */
+
+    if (DualEnergyFormalism) {
+      int DensNumGE, GENumGE, Vel1NumGE, Vel2NumGE, Vel3NumGE, TENumGE;
+      if (this->IdentifyPhysicalQuantities(DensNumGE, GENumGE, Vel1NumGE,
+                                           Vel2NumGE, Vel3NumGE, TENumGE) == FAIL)
+        ENZO_FAIL("Error in IdentifyPhysicalQuantities.");
+      int sizeGE = 1;
+      for (int dim = 0; dim < GridRank; dim++)
+        sizeGE *= GridDimension[dim];
+      for (int n = 0; n < sizeGE; n++)
+        if (BaryonField[GENumGE][n] < tiny_number)
+          BaryonField[GENumGE][n] = tiny_number;
+    }
+
     /* If using the dual energy formalism, then modify the total energy field
        to maintain consistency between the total and internal energy fields.
        This is necessary because the interpolation introduces small
        descrepancies between the two fields which are normally kept in sync. */
- 
+
     if (DualEnergyFormalism)
       if (this->RestoreEnergyConsistency(ENTIRE_REGION) == FAIL) {
 	ENZO_FAIL("Error in grid->RestoreEnergyConsistency.");
