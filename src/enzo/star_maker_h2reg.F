@@ -447,9 +447,12 @@ c     starmass_in_Msun/StarFormationMinimumMass.
                      
  300                     format(a,a,1pe10.3,a,2(1pe10.3))
                      endif
+                  else
+c                 impose the floor if SF if non-stochastic. 
+c                 promote particles StarFormationMinimumMass when 
+c                 they survive the random draw 
+                     goto 10
                   endif
-c                 JT added goto here 112623
-                  goto 10 
                endif
 
                ii = ii + 1
