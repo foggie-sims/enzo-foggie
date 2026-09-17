@@ -366,9 +366,8 @@ int grid::GrackleWrapper()
     //Sum all the mass of all young star particles on the grid
     //Get an estimate of the LW photon production from fitting results 
     //Convert to RT_H2_dissociation_rate and add to grackle fields
-    float years_to_seconds = 3.15576e7f; //Seconds in a year
     float MassUnits = DensityUnits * POW(LengthUnits,3);
-  
+
     //n_metal_bins = pSNFBTable.n_met
     //n_age_bins = pSNFBTable.n_age
     //metallicity bins = pSNFBTable.ini_met?
@@ -384,7 +383,7 @@ int grid::GrackleWrapper()
     isrf_grid_sum = 0;
     for (i = 0; i < this->NumberOfParticles; i++) {
       if (this->ParticleType[i] == PARTICLE_TYPE_STAR) {
-        float age = (this->Time - this->ParticleAttribute[0][i]) * TimeUnits / years_to_seconds; //Convert to yr
+        float age = (this->Time - this->ParticleAttribute[0][i]) * TimeUnits / yr_s; //Convert to yr
         if (age < 5e7) { 
           //int aa = search_lower_bound((float*)pSNFBTable.pop_age, age, 0, pSNFBTable.n_age+1, pSNFBTable.n_age+1);  //+1?
           float dt_table = pSNFBTable.pop_age[1] - pSNFBTable.pop_age[0];
@@ -453,11 +452,11 @@ int grid::GrackleWrapper()
       }
     }
 
-    k_diss_H2I_grid_sum = k_diss_H2I_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
-    k_det_HM_grid_sum  = k_det_HM_grid_sum  * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units
-    k_diss_COI_grid_sum = k_diss_COI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
-    k_ion_CI_grid_sum = k_ion_CI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
-    k_ion_OI_grid_sum = k_ion_OI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
+    k_diss_H2I_grid_sum = k_diss_H2I_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units
+    k_det_HM_grid_sum  = k_det_HM_grid_sum  * TimeUnits / (LengthUnits * LengthUnits); 
+    k_diss_COI_grid_sum = k_diss_COI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); 
+    k_ion_CI_grid_sum = k_ion_CI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); 
+    k_ion_OI_grid_sum = k_ion_OI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); 
     isrf_grid_sum = isrf_grid_sum / (LengthUnits * LengthUnits); //Convert from G0 cm^2 to G0 code length^2
 
     float grid_dx = this->GridRightEdge[0]-this->GridLeftEdge[0];
