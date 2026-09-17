@@ -255,7 +255,7 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
 
 
   // Error checking for behavior not implemented
-  //Editing out check, may break! CT 08/12/2026
+  //Behavior should be implemented in Grackle now - CT 08/12/2026
   //if ( (grackle_data->photoelectric_heating == 2) ||
   //     (grackle_data->use_isrf_field)){
   //  ENZO_FAIL("Photoelectric heating model 2, and ISRF field, in Grackle is not yet implemented.\n");
