@@ -437,7 +437,7 @@ int grid::GrackleWrapper()
           float isrf_sb99_interp      = (1-t_age) * (1-t_z) * pSNFBTable.isrf[ii0] + t_age * (1-t_z) * pSNFBTable.isrf[ii1] + (1-t_age) * t_z * pSNFBTable.isrf[ii2] + t_age * t_z * pSNFBTable.isrf[ii3];
 
           float dx = this->CellWidth[0][0];
-          float ParticleMass_Msun = this->ParticleMass[i] * dx * dx * dx *  MassUnits / SolarMass; //Convert from code mass to Msun
+          float ParticleMass_Msun = this->ParticleInitialMass[i] * dx * dx * dx *  MassUnits / SolarMass; //Convert from code mass to Msun
 
           k_diss_H2I_grid_sum += k_diss_H2_sb99_interp * ParticleMass_Msun;
           k_det_HM_grid_sum += k_det_HM_sb99_interp * ParticleMass_Msun;
@@ -463,9 +463,8 @@ int grid::GrackleWrapper()
     float grid_dy = this->GridRightEdge[1]-this->GridLeftEdge[1];
     float grid_dz = this->GridRightEdge[2]-this->GridLeftEdge[2];
     //This is the most tunable part of this code, as calculating the r^2 for each cell will get expensive
-    //Currently estimating as half the average extent of the grid which isn't great
-    //To do: Account for any local extinction from unresolved sources around stars?
-    float dilutionRadius = 0.5 * (grid_dx + grid_dy + grid_dz)/3.0; //Get Half the average extent of the grid
+    //Currently estimating as half the average extent of the grid.
+    float dilutionRadius = sqrt((grid_dx*grid_dx + grid_dy*grid_dy + grid_dz*grid_dz) / 6.0); //~point by point separation
     //float dilutionRadius = 4.848e-6 * pc_cm / (double) LengthUnits;  // 1 AU //Try an extreme case
     float dilRad2 = dilutionRadius * dilutionRadius;
     k_diss_H2I_grid_sum = k_diss_H2I_grid_sum  / (4.0 * 3.14159 * dilRad2);
@@ -492,19 +491,19 @@ int grid::GrackleWrapper()
       isrf_grid[i] = isrf_grid_sum;
     }
 
-    if (k_diss_H2I_grid_sum>0){
-      fprintf(stdout, "Grid %"ISYM",", this->ID);
-      fprintf(stdout, "Time %"ESYM",", this->Time);
-      fprintf(stdout, " k_diss_H2 = %"ESYM" 1/CodeTime,", k_diss_H2_grid[0]);
-      fprintf(stdout, " k_det_HM  = %"ESYM" 1/CodeTime,", k_det_HM_grid[0]);
-      fprintf(stdout, " k_diss_CO  = %"ESYM" 1/CodeTime,", k_diss_CO_grid[0]);
-      fprintf(stdout, " k_ion_CI  = %"ESYM" 1/CodeTime,", k_ion_CI_grid[0]);
-      fprintf(stdout, " k_ion_OI  = %"ESYM" 1/CodeTime,", k_ion_OI_grid[0]);
-      fprintf(stdout, " isrf  = %"ESYM" (Habing Units)\n", isrf_grid[0]);
-
+    if (debug){
+      if (k_diss_H2I_grid_sum>0){
+        fprintf(stdout, "Grid %"ISYM",", this->ID);
+        fprintf(stdout, "Time %"ESYM",", this->Time);
+        fprintf(stdout, " k_diss_H2 = %"ESYM" 1/CodeTime,", k_diss_H2_grid[0]);
+        fprintf(stdout, " k_det_HM  = %"ESYM" 1/CodeTime,", k_det_HM_grid[0]);
+        fprintf(stdout, " k_diss_CO  = %"ESYM" 1/CodeTime,", k_diss_CO_grid[0]);
+        fprintf(stdout, " k_ion_CI  = %"ESYM" 1/CodeTime,", k_ion_CI_grid[0]);
+        fprintf(stdout, " k_ion_OI  = %"ESYM" 1/CodeTime,", k_ion_OI_grid[0]);
+        fprintf(stdout, " isrf  = %"ESYM" (Habing Units)\n", isrf_grid[0]);
+      }
     }
 
-    //To Do -> Add CO, CI, OI to grackle rates?
     my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;
 #ifdef HM_GRACKLE
     my_fields.RT_HM_detachment_rate   =  k_det_HM_grid; //Feeds in Britton's Grackle Branch (foggie-sf) only
