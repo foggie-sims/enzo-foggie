@@ -577,7 +577,7 @@ int grid::GrackleWrapper()
     for(i = 0; i < size; i ++) BaryonField[gammaNum][i] /= rtunits;
 
   }
-#endif //TRANSFER
+#endif TRANSFER
 
 
   delete [] TotalMetals;
