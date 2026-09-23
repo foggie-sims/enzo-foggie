@@ -1,7 +1,7 @@
 .. _local_stellar_radiation:
 
 Local Stellar Radiation
-==================
+=========================
 
 This is a cheap alternative to existing radiation transfer methods
 to get local photodissociation/photodetachment/photoionization rates
@@ -21,7 +21,7 @@ these are added to grackle.
 
 
 Compiling and Running
-=================
+=======================
 Currently requires the `foggie-sf (https://github.com/foggie-sims/grackle)`
 branch of grackle, which includes a field for HM-photodetachment. To compile,
 add the `HM_GRACKLE` flag to indicate you are on this branch of grackle.
