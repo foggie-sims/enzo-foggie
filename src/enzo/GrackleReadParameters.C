@@ -108,6 +108,13 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
 
 #ifdef USE_GRACKLE
 
+#ifndef GRACKLE_NEW_DUST_MODEL
+  if (UseDustSpeciesTrack || UseSNeRateField) {
+    ENZO_FAIL("UseDustSpeciesTrack and UseSNeRateField require "
+              "HL-new-dust-model and -DGRACKLE_NEW_DUST_MODEL.\n");
+  }
+#endif
+
   // Go back through parameter file to check for Grackle-specific
   // parameters that do not have Enzo equivalents
   rewind(fptr);
@@ -155,6 +162,7 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
     ret += sscanf(line, "use_dust_density_field = %d",
                   &grackle_data->use_dust_density_field);
 
+#ifdef GRACKLE_NEW_DUST_MODEL
     /* New dust physics parameters (newchemcpp Grackle). Fixed microphysics constants
        ride on the Grackle defaults defined in grackle_chemistry_data_fields.def, 
        that file is the single source of truth for their values.
@@ -189,6 +197,27 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
                   &grackle_data->dust_growth_clumping_nH_min);
     ret += sscanf(line, "dust_growth_clumping_nH_max = %lf",
                   &grackle_data->dust_growth_clumping_nH_max);
+#else
+    /* Reject unsupported parameters rather than silently ignoring them. */
+    char parameter[MAX_LINE_LENGTH], separator;
+    if (sscanf(line, " %[^ \t=] %c", parameter, &separator) == 2 &&
+        separator == '=' &&
+        (!strcmp(parameter, "dust_model") ||
+         !strcmp(parameter, "solver_method") ||
+         !strcmp(parameter, "use_sne_field") ||
+         !strcmp(parameter, "use_tau_dest_field") ||
+         !strcmp(parameter, "dust_destruction_eff") ||
+         !strcmp(parameter, "sne_coeff") ||
+         !strcmp(parameter, "dust_growth_tauref") ||
+         !strcmp(parameter, "dust_condensation_eff") ||
+         !strcmp(parameter, "sne_metal_yield") ||
+         !strcmp(parameter, "dust_growth_clumping_factor_max") ||
+         !strcmp(parameter, "dust_growth_clumping_nH_min") ||
+         !strcmp(parameter, "dust_growth_clumping_nH_max"))) {
+      ENZO_VFAIL("Parameter %s requires HL-new-dust-model and "
+                 "-DGRACKLE_NEW_DUST_MODEL.\n", parameter)
+    }
+#endif
 
     /* If the dummy char space was used, then make another. */
     if (*dummy != 0) {
@@ -237,11 +266,13 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
   grackle_data->UVbackground_redshift_fullon   = (double) CoolData.RadiationRedshiftFullOn;
   grackle_data->UVbackground_redshift_drop     = (double) CoolData.RadiationRedshiftDropOff;
   grackle_data->use_radiative_transfer         = (Eint32) RadiativeTransfer;
+#ifdef GRACKLE_NEW_DUST_MODEL
   grackle_data->dust_species_track             = (Eint32) UseDustSpeciesTrack;
   grackle_data->use_sne_field                  = (Eint32) UseSNeRateField;
   /* Single knob for the Mg/Fe silicate split: Grackle's fallback split must
      match the split Enzo uses to seed dust species in ICs and feedback. */
   grackle_data->dust_silicate_mg_fraction      = (double) InitialDustMgSilicateFraction;
+#endif
   // grackle_data->radiative_transfer_coupled_rate_solver set in RadiativeTransferReadParameters
   // grackle_data->radiative_transfer_hydrogen_only set in RadiativeTransferReadParameters
 
@@ -252,6 +283,7 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
     ENZO_FAIL("Photoelectric heating model 2, and ISRF field, in Grackle is not yet implemented.\n");
   }
 
+#ifdef GRACKLE_NEW_DUST_MODEL
   /* Species-resolved dust tracking requires the bulk dust_density field
      and dust_model = 1. */
   if (UseDustSpeciesTrack) {
@@ -262,6 +294,7 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
       ENZO_FAIL("UseDustSpeciesTrack = 1 requires dust_model = 1.\n");
     }
   }
+#endif
 
   // if ( grackle_data->use_dust_density_field ){
   //   ENZO_FAIL("Supplying dust density (use_dust_density_field) to Grackle is not yet implemented.\n");

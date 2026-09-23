@@ -26,6 +26,11 @@
 #include "mpi.h"
 #endif
 #ifdef USE_GRACKLE
+/* GRACKLE_NEW_DUST_MODEL selects the HL-new-dust-model interface,
+   including its rate-query API. Keep the former flag as an alias. */
+#if defined(GRACKLE_NEW_RATE_API) && !defined(GRACKLE_NEW_DUST_MODEL)
+#define GRACKLE_NEW_DUST_MODEL
+#endif
 extern "C" {
 #include <grackle.h>
 }

@@ -1794,7 +1794,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
         BaryonField[SNeRateNum] : BaryonField[DensNum];
 
       float DustCondensationEfficiency = 0.15;
-#ifdef USE_GRACKLE
+#if defined(USE_GRACKLE) && defined(GRACKLE_NEW_DUST_MODEL)
       DustCondensationEfficiency =
         (float) grackle_data->dust_condensation_eff;
 #endif
