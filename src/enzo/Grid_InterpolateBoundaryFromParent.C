@@ -435,9 +435,9 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 	 on the physical variable. */
 
       if (FieldType[field] == InternalEnergy)
-	for (int n = 0; n < TempSize; n++)
-	  if (TemporaryField[n] < tiny_number)
-	    TemporaryField[n] = tiny_number;
+        for (int n = 0; n < TempSize; n++)
+          if (TemporaryField[n] < tiny_number)
+            TemporaryField[n] = tiny_number;
 
       /* Set FieldPointer to either the correct field (density or the one we
 	 just interpolated to). */
