@@ -73,15 +73,7 @@ c    nx,ny,nz - dimensions of field arrays
 c    ibuff    - number of buffer zones at each end of grid
 c    imethod  - Hydro method (0/1 -- PPM DE/LR, 2 - ZEUS)
 c    mintdyn  - minimum dynamical time, in years
-c               (StarMakerMinimumDynamicalTime). The SF time scale is
-c               floored at max(mintdyn, dt), so that dt/t_ff <= 1 and
-c               hence gasfrac <= StarFormationEfficiency * f_H2. Without
-c               this the unfloored free-fall time in the densest cells
-c               drives dt/t_ff >> 1 and gasfrac saturates at the 0.9 cap
-c               below, turning a large fraction of a coarse cell into a
-c               single star particle. Every other star maker already
-c               applies this floor; h2reg was the only one it was never
-c               plumbed through to.
+c               (StarMakerMinimumDynamicalTime).
 c
 c     H2Method -
 c          Method for determining H_2 fraction.
@@ -316,14 +308,10 @@ c          = 2.10e14 seconds * [ rho / 10^-22 g/cm^3 ]^(-1/2)
      $              sqrt( d(i,j,k)*dble(d1) / 1.0e-22_RKIND )
 
 c     Keep the unfloored free-fall time for the star log, then floor the
-c     SF time scale. mintdyn is in years, timeconstant and dt in code
-c     units. Including dt in the max is what makes the bound hold at
-c     every level: with StarFormationOncePerRootGridTimeStep the maker is
-c     handed the root grid step regardless of the level it fires on, and
-c     that step is comoving, so no fixed value of mintdyn guarantees
-c     dt/t_ff <= 1 on its own.
+c     SF time scale. mintdyn is in years, timeconstant in code units.
+c     We may consider adding dt to the list of considered quantities in max()
                tau_ff = timeconstant
-               timeconstant = max( timeconstant, mintdyn*yr_s/t1, dt )
+               timeconstant = max( timeconstant, mintdyn*yr_s/t1 )
 
                if (H2Method .eq. 0) then
 c     Calculate molecular hydrogen fraction (if H2StarFormation)
