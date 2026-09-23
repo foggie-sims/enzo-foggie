@@ -752,7 +752,7 @@ c
                         if (usesnerate .eq. 1) then
                            sne_rate(ic,jc,kc) = sne_rate(ic,jc,kc) +
      &                          energy * d1 * v1**2 * (dx*x1)**3 /
-     &                          1.0e51_RKIND
+     &                          10._RKIND**51._RKIND
                         endif
                         if( crmodel .gt. 0 ) then
                           te(ic,jc,kc) = ((te(ic,jc,kc)*d(ic,jc,kc)) +
