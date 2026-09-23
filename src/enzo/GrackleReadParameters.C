@@ -197,26 +197,6 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
                   &grackle_data->dust_growth_clumping_nH_min);
     ret += sscanf(line, "dust_growth_clumping_nH_max = %lf",
                   &grackle_data->dust_growth_clumping_nH_max);
-#else
-    /* Reject unsupported parameters rather than silently ignoring them. */
-    char parameter[MAX_LINE_LENGTH], separator;
-    if (sscanf(line, " %[^ \t=] %c", parameter, &separator) == 2 &&
-        separator == '=' &&
-        (!strcmp(parameter, "dust_model") ||
-         !strcmp(parameter, "solver_method") ||
-         !strcmp(parameter, "use_sne_field") ||
-         !strcmp(parameter, "use_tau_dest_field") ||
-         !strcmp(parameter, "dust_destruction_eff") ||
-         !strcmp(parameter, "sne_coeff") ||
-         !strcmp(parameter, "dust_growth_tauref") ||
-         !strcmp(parameter, "dust_condensation_eff") ||
-         !strcmp(parameter, "sne_metal_yield") ||
-         !strcmp(parameter, "dust_growth_clumping_factor_max") ||
-         !strcmp(parameter, "dust_growth_clumping_nH_min") ||
-         !strcmp(parameter, "dust_growth_clumping_nH_max"))) {
-      ENZO_VFAIL("Parameter %s requires HL-new-dust-model and "
-                 "-DGRACKLE_NEW_DUST_MODEL.\n", parameter)
-    }
 #endif
 
     /* If the dummy char space was used, then make another. */
