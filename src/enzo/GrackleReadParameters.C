@@ -312,6 +312,18 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
     grackle_data->UVbackground_redshift_drop = FinalRedshift;
   }
 
+  // Report the redshift ramp applied to the UV background so that the
+  // (Enzo-side) defaults of RadiationRedshiftOn = 7 and
+  // RadiationRedshiftFullOn = 6 are visible in the log.
+  if (grackle_data->UVbackground && MyProcessorNumber == ROOT_PROCESSOR) {
+    printf("Grackle UV background ramp (set with RadiationRedshiftOn/FullOn/DropOff/Off):\n");
+    printf("  on at z = %.3f, full strength at z = %.3f, drop-off at z = %.3f, off at z = %.3f\n",
+           grackle_data->UVbackground_redshift_on,
+           grackle_data->UVbackground_redshift_fullon,
+           grackle_data->UVbackground_redshift_drop,
+           grackle_data->UVbackground_redshift_off);
+  }
+
 #endif // end USE_GRACKLE
 
   delete [] dummy;
