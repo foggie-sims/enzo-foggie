@@ -276,9 +276,9 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
   }
 #endif
 
-  // if ( grackle_data->use_dust_density_field ){
-  //   ENZO_FAIL("Supplying dust density (use_dust_density_field) to Grackle is not yet implemented.\n");
-  // }
+  if (grackle_data->use_dust_density_field && !UseDustDensityField) {
+    ENZO_FAIL("use_dust_density_field = 1 requires UseDustDensityField = 1.\n");
+  }
 
   // Initialize Grackle units structure.
   FLOAT a_value, dadt;
