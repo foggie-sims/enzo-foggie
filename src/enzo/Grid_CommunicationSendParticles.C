@@ -186,16 +186,6 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
 	
       delete [] TempNumber;
       delete [] TempMass;
-      /* Saved above from ToGrid->ParticleInitialMass and then orphaned by the
-	 AllocateNewParticles() call above, which installs a fresh array; it was
-	 the one saved array not freed here.  This append path is reached once
-	 per top-level grid on every data dump: CommunicationCombineGrids() is
-	 the only caller passing ToStart == -1, and it walks NextGridThisLevel
-	 sending every top-level grid into a single NewGrid.  Each dump therefore
-	 orphaned one array per tile after the first, sized to the running
-	 particle total, all on the receiving rank.  TempInitialMass is declared
-	 = NULL above because the save is guarded by StarMakerStoreInitialMass
-	 and this delete is not. */
       delete [] TempInitialMass;
       delete [] TempType;
       for (dim = 0; dim < GridRank; dim++) {
