@@ -80,6 +80,7 @@ SPEXTERN char* StarFeedbackTabularFilename;
 SPEXTERN float StarFeedbackTabularSNIIEnergy;
 SPEXTERN float StarFeedbackTabularSNIaEnergy;
 SPEXTERN int   StarFeedbackTrackMetalSources;
+SPEXTERN int   StarFeedbackAGB;
 SPEXTERN float StarMakerExplosionDelayTime;
 SPEXTERN int   StarMakerUseJeansMass;
 SPEXTERN int   StarMakerVelDivCrit;
