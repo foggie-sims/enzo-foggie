@@ -24,4 +24,5 @@ Enzo parameters associated with them.
    additional_physics.rst
    adaptive_mesh.rst
    analysis_modules.rst
+   local_stellar_radiation.rst
 
