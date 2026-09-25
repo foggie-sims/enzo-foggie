@@ -78,6 +78,9 @@
 
 #define GRAVITY_BUFFER_SIZE                 3
 
+/* If you update MAX_FLAGGING_METHODS, you MUST also update CellFlaggingMethod,
+   MultiRefineRegionFlaggingMethod, and MultiRefineRegionMaximum/MinimumLevel in 
+   ReadParameterFile.C */
 #define MAX_FLAGGING_METHODS                9
 
 #define MAX_STATIC_REGIONS               1000
@@ -86,7 +89,7 @@
 
 #define MAX_TRACKS                         20
 
-#define MAX_TIME_ENTRIES                   80
+#define MAX_TIME_ENTRIES                 2500
 
 #ifdef WINDS 
 #define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  7

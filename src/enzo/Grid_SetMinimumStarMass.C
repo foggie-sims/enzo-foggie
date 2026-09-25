@@ -8,7 +8,7 @@
 /
 /  PURPOSE: Checks to see if grid is inside of a multirefine region and,
 /           if so, sets minimum star particle mass to minimum for that 
-/           region.
+/           region if it is lower than minimum for timestep.
 /  RETURNS: Success or Fail
 /
 ************************************************************************/
@@ -57,67 +57,108 @@ int grid::SetMinimumStarMass(){
   }
   
   /* Now take care of any evolving multirefine regions. We must recalculate the position and stellar mass threshold for each
-     evolving multirefine region in order to account for the fact that the current time will be different for different levels */
+     evolving multirefine region in order to account for the fact that the current time will be different for different levels. */
+     
+  /* Find closest time entry with a time value earlier than the current simulation time */
+  int closest_ind[NumberOfMultiRefineTracks];
+
   if (MultiRefineRegionTimeType == 1) {  // redshift
     CosmologyComputeExpansionFactor(Time, &a, &dadt);
     redshift = (1.0 + InitialRedshift)/a - 1.0;
     ctime = redshift;
+    /* For each enabled MultiRefineRegion track, check to see if the current 
+       redshift is within the bounds of the time entries. */
+    for(i=0; i<NumberOfMultiRefineTracks; i++){
+      closest_ind[i] = -1; // Fill with -1s for tracks that aren't enabled
+      if (MRRTracks[i].Enabled == 1){
+        if(ctime > MRRTracks[i].TimeEntries[0].Time || ctime < MRRTracks[i].TimeEntries[MRRTracks[i].NTimeEntries-1]){
+          fprintf(stderr,"Grid_SetMinimumStarMass ERROR: current simulation redshift (%"PSYM") is outside of range of enabled MultiRefineRegion %"ISYM" (minimum:%"PSYM", maximum:%"PSYM")!",ctime,i,MRRTracks[i].TimeEntries[0].Time,MRRTracks[i].TimeEntries[MRRTracks[i].NTimeEntries].Time);
+          my_exit(EXIT_FAILURE);
+        }
+
+        for(timestep=0; timestep<MRRTracks[i].NTimeEntries; timestep++){
+          if( ctime > MRRTracks[i].TimeEntries[timestep] ){
+            break;
+          }
+        }
+        closest_ind[i] = timestep-1; // so that we're at the closest timestep _before_ the current time
+
+        if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+          fprintf(stderr,"Grid_SetMinimumStarMass: It is currently %"PSYM", which is greater than %"PSYM", so the closest timestep entry for enabled MultiRefineRegion track %"ISYM" is %"ISYM".\n",ctime,MRRTracks[0].TimeEntries[timestep],i,timestep);
+        }
+      } // if (MRRTracks[i].Enabled == 1)
+    } // for(i=0; i<NumberOfMultiRefineTracks; i++)
   } else{ // code time
     ctime = Time;
-  }
-
-  /* Identify the indices of the evolving MultiRefineRegion time entries that are closest to the current time */ 
-  if (MultiRefineRegionTimeType == 1) {  // redshift
-    /* Find the index of the first entry that is later than the current time */
-    for(timestep=0; timestep<NumberOfMultiRefineTimeEntries; timestep++){
-      if( ctime > EvolveMultiRefineRegionTime[timestep] ){
-        break;
-      }
-    }
-  } else{ // code time
-    /* Find the index of the first entry that is later than the current time */
-    for(timestep=0; timestep<NumberOfMultiRefineTimeEntries; timestep++){
-	    if( ctime < EvolveRefineRegionTime[timestep] ){
-	      break;
-      }
-    }
-  }
-
-  timestep -= 1;  // Move to the previous index (i.e., the index of the last time entry that is earlier than the current time)
-  if (timestep < 0) return SUCCESS; // if we're at a time before the MultiRefineRegion time entries start, we don't need to do anything
-
-  for (region = 0; region < NumberOfMultiRefineTracks; region++){ // for each MultiRefineRegion...
-    if (MultiRefineRegionMinimumStarMass[NumberOfStaticMultiRefineRegions+region]>0.0){ // Does this region have a set minimum star mass?
-      if(timestep == NumberOfMultiRefineTimeEntries-1){ // if we're precisely at the last time entry, adopt its values
-        MRRMinimumStarMass = EvolveMultiRefineRegionMinimumStarMass[region][timestep];
-        for (i = 0; i < MAX_DIMENSION; i++){
-          MRRLeftEdge[i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i];
-          MRRRightEdge[i] = EvolveMultiRefineRegionRightEdge[region][timestep][i];
+    /* For each enabled MultiRefineRegion track, check to see if the current 
+       time is within the bounds of the time entries. */
+    for(i=0; i<NumberOfMultiRefineTracks; i++){
+      closest_ind[i] = -1; // Fill with -1s for tracks that aren't enabled
+      if (MRRTracks[i].Enabled == 1){
+        if(ctime < MRRTracks[i].TimeEntries[0].Time || ctime > MRRTracks[i].TimeEntries[MRRTracks[i].NTimeEntries-1]){
+          fprintf(stderr,"Grid_SetMinimumStarMass ERROR: current simulation time (%"PSYM") is outside of range of enabled MultiRefineRegion %"ISYM" (minimum:%"PSYM", maximum:%"PSYM")!",ctime,i,MRRTracks[i].TimeEntries[0].Time,MRRTracks[i].TimeEntries[MRRTracks[i].NTimeEntries].Time);
+          my_exit(EXIT_FAILURE);
         }
-      } else { // otherwise interpolate the MinimumStarMass and MRR positions based on the closest time entries
-          MRRMinimumStarMass = EvolveMultiRefineRegionMinimumStarMass[region][timestep]
-          + (ctime - EvolveMultiRefineRegionTime[timestep])
-          * (EvolveMultiRefineRegionMinimumStarMass[region][timestep+1]-EvolveMultiRefineRegionMinimumStarMass[region][timestep])
-          / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
+
+        for(timestep=0; timestep<MRRTracks[i].NTimeEntries; timestep++){
+          if( ctime < MRRTracks[i].TimeEntries[timestep] ){
+            break;
+          }
+        }
+        closest_ind[i] = timestep-1; // so that we're at the closest timestep _before_ the current time
+        
+        if(debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+          fprintf(stderr,"Grid_SetMinimumStarMass: It is currently %"PSYM", which is greater than %"PSYM", so the closest timestep entry for enabled MultiRefineRegion track %"ISYM" is %"ISYM".\n",ctime,MRRTracks[0].TimeEntries[timestep],i,timestep);
+        }
+      } // if (MRRTracks[i].Enabled == 1)
+    } // for(i=0; i<NumberOfMultiRefineTracks; i++)
+  } // if we're using code time
+
+  /* Interpolate the position of each enabled MultiRefineRegion and check whether or not this grid overlaps with any of them.
+     for MRRs with overlap, calculate the current value of the MinimumStarMass and adopt the minimum allowed for this grid */
+  for (region = 0; region < NumberOfMultiRefineTracks; region++){
+    if (MRRTracks[region].Enabled == 1){ // don't need to calculate for tracks that aren't enabled
+      timestep = closest_ind[region];
+      /* Recalculate MRR position and minimum star particle mass */
+      if(timestep == MRRTracks[region].NTimeEntries-1){ // if we're at the last specified time entry, no need to interpolate
         for (i = 0; i < MAX_DIMENSION; i++){
-          MRRLeftEdge[i] = EvolveMultiRefineRegionLeftEdge[region][timestep][i]
-            + (ctime - EvolveMultiRefineRegionTime[timestep])
-            * (EvolveMultiRefineRegionLeftEdge[region][timestep+1][i]-EvolveMultiRefineRegionLeftEdge[region][timestep][i])
-            / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
-          MRRRightEdge[i] = EvolveMultiRefineRegionRightEdge[region][timestep][i]
-            + (ctime - EvolveMultiRefineRegionTime[timestep])
-            * (EvolveMultiRefineRegionRightEdge[region][timestep+1][i]-EvolveMultiRefineRegionRightEdge[region][timestep][i])
-            / (EvolveMultiRefineRegionTime[timestep+1] - EvolveMultiRefineRegionTime[timestep]);
+          MRRLeftEdge[i] = MRRTracks[region].TimeEntry[timestep].Pos[i];
+          MRRRightEdge[i] = MRRTracks[region].TimeEntry[timestep].Pos[i+3];
+        }  // for (i = 0; i < MAX_DIMENSION; i++)
+        MRRMinimumStarMass = MRRTracks[region].TimeEntry[timestep].MinStarMass;
+      } else { // if we're not at the last time, we need to interpolate
+        MRRMinimumStarMass = MRRTracks[region].TimeEntry[timestep].MinStarMass
+          + (time - MRRTracks[region].TimeEntry[timestep].Time)
+          * (MRRTracks[region].TimeEntry[timestep+1].MinStarMass-MRRTracks[region].TimeEntry[timestep].MinStarMass)
+          / (MRRTracks[region].TimeEntry[timestep+1].Time - MRRTracks[region].TimeEntry[timestep].Time);
+        for (i = 0; i < MAX_DIMENSION; i++){
+          MRRLeftEdge[i] = MRRTracks[region].TimeEntry[timestep].Pos[i]
+            + (time - MRRTracks[region].TimeEntry[timestep].Time)
+            * (MRRTracks[region].TimeEntry[timestep+1].Pos[i]-MRRTracks[region].TimeEntry[timestep].Pos[i])
+            / (MRRTracks[region].TimeEntry[timestep+1].Time - MRRTracks[region].TimeEntry[timestep].Time);
+          MRRRightEdge[i] = MRRTracks[region].TimeEntry[timestep].Pos[i+3]
+            + (time - MRRTracks[region].TimeEntry[timestep].Time)
+            * (MRRTracks[region].TimeEntry[timestep+1].Pos[i+3]-MRRTracks[region].TimeEntry[timestep].Pos[i+3])
+            / (MRRTracks[region].TimeEntry[timestep+1].Time - MRRTracks[region].TimeEntry[timestep].Time);
         } // for (i = 0; i < MAX_DIMENSION; i++)
-      } // if(timestep == NumberOfMultiRefineTimeEntries-1)
-       if ((GridLeftEdge[0] <= MRRRightEdge[0]) && (GridRightEdge[0] >= MRRLeftEdge[0]) &&
-          (GridLeftEdge[1] <= MRRRightEdge[1]) && (GridRightEdge[1] >= MRRLeftEdge[1]) &&
-          (GridLeftEdge[2] <= MRRRightEdge[2]) && (GridRightEdge[2] >= MRRLeftEdge[2])){
+      }  // if we're not at the final timestep
+      
+      /* If our grid overlaps with this MRR, check to see if this MRR's minimum star mass is lower than the current one on this grid
+         If so, set this grid's minimum star particle mass to that of this MRR */
+      if(((GridRightEdge[0] > MRRLeftEdge[0]) && (GridLeftEdge[0] < MRRRightEdge[0]))
+        && ((GridRightEdge[1] > MRRLeftEdge[1]) && (GridLeftEdge[1] < MRRRightEdge[1]))
+        && ((GridRightEdge[2] > MRRLeftEdge[2]) && (GridLeftEdge[2] < MRRRightEdge[2]))){
         if (StarMakerMinimumMass>MRRMinimumStarMass){
           StarMakerMinimumMass = MRRMinimumStarMass;
         }
-      } // if region in MRR
-    } // if region is using a specific minimum star mass
+      }
+
+      if (debug1 && MyProcessorNumber == ROOT_PROCESSOR){
+        if (MultiRefineRegionDefaultStarMass>StarMakerMinimumMass){
+          fprintf(stderr,"Grid_SetMinimumStarMass: I set StarMakerMinimumMass to %"FSYM".\n",StarMakerMinimumMass);
+        }
+      }
+    } // if (MRRTracks[region].Enabled == 1)
   } // for (region = 0; region < NumberOfMultiRefineTracks; region++)
 
   return SUCCESS;
