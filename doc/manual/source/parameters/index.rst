@@ -1224,6 +1224,19 @@ Hierarchy Control Parameters
     Load balance the grids in levels greater than this parameter.  Default: 0
 ``LoadBalancingMaxLevel`` (external)
     Load balance the grids in levels less than this parameter.  Default: MAX_DEPTH_OF_HIERARCHY
+``LoadBalanceCountGhostZones`` (external)
+    Controls how a grid's cost is estimated when load balancing. With the
+    default of 0 (FALSE) a grid is weighted by its active cell count. Set to
+    1 (TRUE) to weight it instead by the number of cells it allocates, which
+    includes ghost zones. Weighting by active cells alone treats a level of
+    many small grids as equal in cost to a level of few large ones, although
+    the former allocates more memory and performs many more boundary
+    exchanges for the same number of active cells. The discrepancy grows with
+    refinement depth and varies from grid to grid, so it cannot be corrected
+    by a single scale factor. Enabling this changes only the balancer's cost
+    estimate, never the hierarchy or the solution, but it does change which
+    processor owns which grid and therefore the order of floating-point
+    reductions. See :ref:`running_large_simulations`.  Default: 0 (FALSE)
 ``ResetLoadBalancing`` (external)
     When restarting a simulation, this parameter resets the processor number of each root grid to be sequential.  All child grids are assigned to the processor of their parent grid.  Only implemented for LoadBalancing = 1.  Default = 0
 ``NumberOfRootGridTilesPerDimensionPerProcessor`` (external)
