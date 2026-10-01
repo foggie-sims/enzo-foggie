@@ -169,14 +169,12 @@ jobs:
         if: steps.restore-deps-test.outputs.cache-hit != 'true'
         run: |
           mkdir -p ${HOME}/local
-          if [ ! -f ${HOME}/local/lib/libHYPRE.a ]; then
-            cd ${HOME}
-            wget https://github.com/hypre-space/hypre/archive/refs/tags/v${HYPRE}.tar.gz
-            tar xvfz v${HYPRE}.tar.gz
-            cd hypre-${HYPRE}/src
-            ./configure --with-MPI --with-MPI-include=/usr/include/mpi --with-MPI-libs=mpi --with-MPI-lib-dirs=/usr/lib --prefix=${HOME}/local
-            make install
-          fi
+          cd ${HOME}
+          wget https://github.com/hypre-space/hypre/archive/refs/tags/v${HYPRE}.tar.gz
+          tar xvfz v${HYPRE}.tar.gz
+          cd hypre-${HYPRE}/src
+          ./configure --with-MPI --with-MPI-include=/usr/include/mpi --with-MPI-libs=mpi --with-MPI-lib-dirs=/usr/lib --prefix=${HOME}/local
+          make install
 
       - name: Install Grackle
         if: steps.restore-deps-test.outputs.cache-hit != 'true'
@@ -201,17 +199,15 @@ jobs:
       - name: Build and test (gold standard)
         if: steps.restore-answers.outputs.cache-hit != 'true'
         run: |
-          if [ ! -e ${HOME}/enzo_test/push_suite ]; then
-            git checkout foggie-gold-standard-v1
-            ./configure
-            cd src/enzo
-            make machine-ubuntu
-            make load-config-test-suite
-            make clean
-            make -j 4
-            cd ../../run
-            python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --answer-store
-          fi
+          git checkout foggie-gold-standard-v1
+          ./configure
+          cd src/enzo
+          make machine-ubuntu
+          make load-config-test-suite
+          make clean
+          make -j 4
+          cd ../../run
+          python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --answer-store
 
       - name: Build and test (tip)
         id: build-test-tip
