@@ -27,7 +27,7 @@
 #include "phys_constants.h"
 
 int PrepareIsolatedGreensFunction(region *GreensFunction, int proc, 
-				  int DomainDim[], TopGridData *MetaData)
+				  int DomainDim[], TopGridData *MetaData, bool isRT=false)
 {
 
   /* Declarations. */
@@ -122,7 +122,8 @@ int PrepareIsolatedGreensFunction(region *GreensFunction, int proc,
 	r = max(r, 0.38*RealCellWidth[0]);
 	//	r *= GravitatingMassFieldCellSize;
 	if (GridRank == 3)
-	  GreensFunction->Data[n] = GravConst_factor/r;
+    if (isRT){GreensFunction->Data[n] = GravConst_factor/r/r;}
+    else{GreensFunction->Data[n] = GravConst_factor/r;}
 	if (GridRank == 2)
 	  GreensFunction->Data[n] = GravConst_factor*log(r);
 	if (GridRank == 1)

@@ -95,6 +95,12 @@ int grid::PrepareFFT(region *InitialRegion, int Field, int DomainDim[])
       FieldPointer = GravitatingMassField;
     if (Field == POTENTIAL_FIELD)
       FieldPointer = PotentialField;
+    if (Field == KDISSH2_SOURCE_FIELD) //LEBRON-like RT
+      FieldPointer = kdissH2SourceField;
+    if (Field == KDETHM_SOURCE_FIELD)
+      FieldPointer = kdetHMSourceField;
+    if (Field == ISRF_SOURCE_FIELD)
+      FieldPointer = isrfSourceField;
     if (FieldPointer == NULL) {
       ENZO_VFAIL("Field type %"ISYM" not recognized.\n", Field)
     }

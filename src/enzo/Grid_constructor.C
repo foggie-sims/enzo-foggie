@@ -53,6 +53,14 @@ grid::grid()
   k_ion_CI_grid_sum = 0.;
   k_ion_OI_grid_sum = 0.;
   isrf_grid_sum = 0.;
+  /* LEBRON-like Values*/
+  float kdissH2SourceField = NULL;
+  float kdetHMSourceField = NULL;
+  float isrfSourceField = NULL;
+  float kdissH2FluxField = NULL;
+  float kdetHMFluxField = NULL;
+  float isrfFluxField = NULL;
+  /*      */
 
   /* clear MAX_DIMENSION vectors */
  

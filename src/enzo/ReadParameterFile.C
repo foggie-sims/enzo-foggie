@@ -1005,6 +1005,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &WriteFeedbackLogFiles);
     ret += sscanf(line, "UseLocalStellarRadiation = %"ISYM, //CWT 06/07/2026
         &UseLocalStellarRadiation);
+    ret += sscanf(line, "UseLocallyExtinctStellarRadiation = %"ISYM, //CWT 09/30/2026
+        &UseLocallyExtinctStellarRadiation);
     ret += sscanf(line, "StarEnergyToStellarUV = %"FSYM, &StarEnergyToStellarUV);
     ret += sscanf(line, "StarEnergyToQuasarUV = %"FSYM, &StarEnergyToQuasarUV);
     ret += sscanf(line, "StarFeedbackKineticFraction = %"FSYM,
@@ -2237,7 +2239,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   }
 
 
-  if (StarFeedbackPreSNFeedback || UseLocalStellarRadiation) {
+  if (StarFeedbackPreSNFeedback || UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {
 
     if (!StarMakerStoreInitialMass)
       ENZO_FAIL("StarFeedbackPreSNFeedback requires StarMakerStoreInitialMass to be enabled.");

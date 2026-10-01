@@ -387,6 +387,7 @@ int grid::GrackleWrapper()
       }
     }
 
+
     k_diss_H2I_grid_sum = k_diss_H2I_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
     k_det_HM_grid_sum  = k_det_HM_grid_sum  * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units
     k_diss_COI_grid_sum = k_diss_COI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units //Correct?
@@ -472,7 +473,37 @@ int grid::GrackleWrapper()
     my_fields.RT_HeII_ionization_rate = EmptyRtArray2;
     my_fields.RT_heating_rate = EmptyRtArray3;
   } // UseLocalStellarRadiation
-  /*                                              */
+  /*   
+                                             */
+
+  if (UseLocallyExtinctStellarRadiation){
+    my_fields.RT_H2_dissociation_rate =  this->kdissH2FluxField;
+#ifdef HM_GRACKLE
+    my_fields.RT_HM_detachment_rate   =  this->kdetHMFluxField; //Feeds in Britton's Grackle Branch (foggie-sf) only
+#endif
+    if (grackle_data->use_isrf_field){
+      my_fields.isrf_habing = this->isrfFluxField;
+
+    }
+
+    // Need to set the other fields to the same 0 array for now
+    EmptyRtArray0  = new float[size];
+    EmptyRtArray1  = new float[size];
+    EmptyRtArray2  = new float[size];
+    EmptyRtArray3  = new float[size];
+
+    for (int i = 0; i < size; i++){
+      EmptyRtArray0[i] = 0;
+      EmptyRtArray1[i] = 0;
+      EmptyRtArray2[i] = 0;
+      EmptyRtArray3[i] = 0;
+    }
+
+    my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
+    my_fields.RT_HeI_ionization_rate  = EmptyRtArray1;
+    my_fields.RT_HeII_ionization_rate = EmptyRtArray2;
+    my_fields.RT_heating_rate = EmptyRtArray3;
+  } //UseLocallyExtinctStellarRadiation
 
   //fprintf(stdout, "Calling Grackle - %"ISYM"\n", UseLocalStellarRadiation);
 

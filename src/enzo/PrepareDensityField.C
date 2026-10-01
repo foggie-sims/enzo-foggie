@@ -47,6 +47,7 @@
 /* function prototypes */
  
 int DepositParticleMassField(HierarchyEntry *Grid, FLOAT Time = -1.0);
+int DepositParticleLuminosityField(HierarchyEntry *Grid, FLOAT Time = -1.0); //LEBRON-like
 
 int CommunicationBufferPurge(void);
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
@@ -90,7 +91,7 @@ extern int CopyPotentialFieldAverage;
  
 #define GRIDS_PER_LOOP 100000
 
- 
+
 
 #ifdef FAST_SIB
 int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
@@ -150,6 +151,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       DepositParticleMassField(Grids[grid1], EvaluateTime);
+      DepositParticleLuminosityField(Grids[grid1], EvaluateTime); //LEBRON-like
 
 #ifdef FORCE_MSG_PROGRESS 
     CommunicationBarrier();
@@ -164,6 +166,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     CommunicationDirection = COMMUNICATION_SEND;
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       DepositParticleMassField(Grids[grid1], EvaluateTime);
+      DepositParticleLuminosityField(Grids[grid1], EvaluateTime); //Luminosity field deposit
 
     /* Finally, receive the data and process it. */
     

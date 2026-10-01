@@ -418,6 +418,14 @@ typedef long long int   HDF5_hid_t;
 //If MAX_EXTRA_OUTPUTS neesd to be changed, change statements in ReadParameterFile and WriteParameterFile.
 #define MAX_EXTRA_OUTPUTS                10 
 
+//LEBRON-like RT fields
+#define KDISSH2_SOURCE_FIELD             -19
+#define KDETHM_SOURCE_FIELD              -18
+#define ISRF_SOURCE_FIELD                -17
+#define KDISSH2_FLUX_FIELD               -16
+#define KDETHM_FLUX_FIELD                -15
+#define ISRF_FLUX_FIELD                  -14
+
 #define BARYONS_ELECTRIC                 -13
 #define BARYONS_MAGNETIC                 -12
 #define JUST_BARYONS                     -11

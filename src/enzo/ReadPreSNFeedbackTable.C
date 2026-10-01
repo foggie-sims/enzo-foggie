@@ -205,7 +205,7 @@ int ReadPreSNFeedbackTable(char *name)
       return FAIL;
     }
 
-    if (UseLocalStellarRadiation) {  // CWT 06/07/2026
+    if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {  // CWT 06/07/2026
         /* Read H2 Photodissociation Fields */
         pSNFBTable.kdiss_H2 = new double[pSNFBTable.n_met*pSNFBTable.n_age];
         dset_id = H5Dopen(file_id, "/SB99_models/h2_photodissociation_rate");
@@ -337,7 +337,7 @@ int ReadPreSNFeedbackTable(char *name)
     pSNFBTable.metm_yield = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     pSNFBTable.mom_rate = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     //Local Radiation Fields - CWT 06/07/2026
-    if (UseLocalStellarRadiation) {
+    if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {
         pSNFBTable.kdiss_H2 = new double[pSNFBTable.n_met*pSNFBTable.n_age];
         pSNFBTable.kdet_HM = new double[pSNFBTable.n_met*pSNFBTable.n_age];
         pSNFBTable.kdiss_CO = new double[pSNFBTable.n_met*pSNFBTable.n_age];
@@ -355,7 +355,7 @@ int ReadPreSNFeedbackTable(char *name)
   MPI_Bcast(pSNFBTable.mass_yield, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
   MPI_Bcast(pSNFBTable.metm_yield, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
   MPI_Bcast(pSNFBTable.mom_rate, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
-  if (UseLocalStellarRadiation) {
+  if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {
     MPI_Bcast(pSNFBTable.kdiss_H2, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
     MPI_Bcast(pSNFBTable.kdet_HM, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
     MPI_Bcast(pSNFBTable.kdiss_CO, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);

@@ -201,7 +201,7 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
   grackle_data->UVbackground_redshift_off      = (double) CoolData.RadiationRedshiftOff;
   grackle_data->UVbackground_redshift_fullon   = (double) CoolData.RadiationRedshiftFullOn;
   grackle_data->UVbackground_redshift_drop     = (double) CoolData.RadiationRedshiftDropOff;
-  if (UseLocalStellarRadiation){
+  if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation){
     grackle_data->use_radiative_transfer         = TRUE; //CWT 06/07/2026
     grackle_data->radiative_transfer_coupled_rate_solver = FALSE;
     grackle_data->radiative_transfer_hydrogen_only       = FALSE;

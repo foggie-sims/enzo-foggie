@@ -176,7 +176,14 @@ class grid
   int    GravitatingMassFieldParticlesDimension[MAX_DIMENSION];
   gravity_boundary_type GravityBoundaryType;
   float  PotentialSum;
-
+  //LEBRON-like RT Fields
+  float *kdissH2SourceField;
+  float *kdetHMSourceField;
+  float *isrfFluxField;
+  float *kdissH2FluxField;
+  float *kdetHMFluxField;
+  float *isrfFluxField;
+  //
 
   //
   //  WS: total energy injection by stochastic forcing
@@ -1217,6 +1224,10 @@ gradient force to gravitational force for one-zone collapse test. */
 /* Gravity: Allocate and make initial guess for PotentialField. */
 
    int SolveForPotential(int level, FLOAT PotentialTime = -1);
+
+/*LEBRON-like*/
+   int SolveForLocallyExtinctRadiation(int level);
+
 
 /* Gravity: Prepare the Greens Function. */
 

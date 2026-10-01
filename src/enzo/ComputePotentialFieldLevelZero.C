@@ -147,18 +147,26 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
  
   static int FirstCall = TRUE, NumberOfGreensRegions;
   static region *GreensRegion;
+  static region *GreensRegionRT; //LEBRON-like 1/r2 green regions
  
   /* Declarations. */
  
   region *OutRegion = NULL;
-  int NumberOfOutRegions, DomainDim[MAX_DIMENSION];
+  region *OutRegion_kdissh2 = NULL; //LEBRON-like out regions
+  region *OutRegion_kdethm = NULL;
+  region *OutRegion_isrf = NULL;
+
+  int NumberOfOutRegions, DomainDim[MAX_DIMENSION], IsolatedDomainDim[MAX_DIMENSION];
   int i, j, n, grid1, grid2, dim, TransposeOnCompletion;
  
   /* Allocate space for grid info. */
  
   int NumberOfRegions = NumberOfGrids;
   region *InitialRegion = new region[NumberOfRegions];
- 
+  region *InitialRegion_kdissh2 = new region[NumberOfRegions]; //For LEBRON-like RT
+  region *InitialRegion_kdethm = new region[NumberOfRegions];
+  region *InitialRegion_isrf = new region[NumberOfRegions];
+
   /* Compute adot/a at time = t+1/2dt (time-centered). */
  
   FLOAT a = 1, dadt, MidTime = Grids[0]->GridData->ReturnTime() +
@@ -234,6 +242,35 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
 
     } // end: if (Periodic)
  
+    //Generate Greens Function for LEBRON-like RT
+ 
+    region *TempRegion_RT = new region[NumberOfProcessors];
+    /* Generate Greens function in real space. */
+    int proc1;
+    for (proc1 = 0; proc1 < NumberOfProcessors; proc1++)
+	  if (PrepareIsolatedGreensFunction(&TempRegion_RT[proc1], proc1, DomainDim,
+					  MetaData,true) 
+	     == FAIL) {
+	  	      ENZO_FAIL("Error in PrepareIsolatedGreensFunction.");
+	        }
+
+    /* Forward FFT Greens function. */
+
+    //      TransposeOnCompletion = FALSE;  // for isolated case we can skip transpose back
+    if (CommunicationParallelFFT(TempRegion, NumberOfProcessors,
+				  &GreensRegionRT, &NumberOfGreensRegions,
+				  DomainDim, MetaData->TopGridRank,
+				  FFT_FORWARD, TransposeOnCompletion) == FAIL) {
+		ENZO_FAIL("Error in CommunicationParallelFFT.");
+    }
+
+      /* Clean up. */
+      
+    if (GreensRegionRT != TempRegion_RT)
+	  delete [] TempRegion_RT;
+
+
+
     FirstCall = FALSE;
  
   } // end: if (FirstCall)
@@ -247,8 +284,32 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
 	== FAIL) {
             ENZO_FAIL("Error in grid->PrepareFFT.");
     }
+
+    //LEBRON-like RT fields
+    if (Grids[grid1]->GridData->PrepareFFT(&InitialRegion_kdissh2[grid1],
+					  KDISSH2_SOURCE_FIELD, DomainDim)
+	== FAIL) {
+            ENZO_FAIL("Error in grid->PrepareFFT.");
+    }
+
+    if (Grids[grid1]->GridData->PrepareFFT(&InitialRegion_kdethm[grid1],
+					  KDETHM_SOURCE_FIELD, DomainDim)
+	== FAIL) {
+            ENZO_FAIL("Error in grid->PrepareFFT.");
+    }
+
+    if (Grids[grid1]->GridData->PrepareFFT(&InitialRegion_isrf[grid1],
+					  ISRF_SOURCE_FIELD, DomainDim)
+	== FAIL) {
+            ENZO_FAIL("Error in grid->PrepareFFT.");
+    }
  
   /* If doing isolated BC's then double the domain size. */
+
+  //FOR LEBRON-like implementation
+  for (dim = 0; dim < MetaData->TopGridRank; dim++)
+    IsoaltedDomainDim[dim] = DomainDim[dim] * 2;
+  IsoaltedDomainDim[0] -= 2; /* correct for real-to-complex extra 2 */
 
   if (MetaData->GravityBoundary == TopGridIsolated) {
     for (dim = 0; dim < MetaData->TopGridRank; dim++)
@@ -261,6 +322,28 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
   if (CommunicationParallelFFT(InitialRegion, NumberOfRegions,
 			       &OutRegion, &NumberOfOutRegions,
 			       DomainDim, MetaData->TopGridRank,
+			       FFT_FORWARD, TransposeOnCompletion) == FAIL) {
+        ENZO_FAIL("Error in CommunicationParallelFFT.");
+  }
+
+  /* Forward FFT Rad fields for LEBRON-like implementation*/
+    if (CommunicationParallelFFT(InitialRegion_kdissh2, NumberOfRegions,
+			       &OutRegion_kdissh2, &NumberOfOutRegions,
+			       IsolatedDomainDim, MetaData->TopGridRank,
+			       FFT_FORWARD, TransposeOnCompletion) == FAIL) {
+        ENZO_FAIL("Error in CommunicationParallelFFT.");
+  }
+
+    if (CommunicationParallelFFT(InitialRegion_kdethm, NumberOfRegions,
+			       &OutRegion_kdethm, &NumberOfOutRegions,
+			       IsolatedDomainDim, MetaData->TopGridRank,
+			       FFT_FORWARD, TransposeOnCompletion) == FAIL) {
+        ENZO_FAIL("Error in CommunicationParallelFFT.");
+  }
+
+    if (CommunicationParallelFFT(InitialRegion_isrf, NumberOfRegions,
+			       &OutRegion_isrf, &NumberOfOutRegions,
+			       IsolatedDomainDim, MetaData->TopGridRank,
 			       FFT_FORWARD, TransposeOnCompletion) == FAIL) {
         ENZO_FAIL("Error in CommunicationParallelFFT.");
   }
@@ -281,7 +364,7 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
 			
   /* Multiply density by Green's function to get potential. */
  
-  for (i = 0; i < NumberOfGreensRegions; i++)
+  for (i = 0; i < NumberOfGreensRegions; i++){
     if (OutRegion[i].Data != NULL) {
       int size = OutRegion[i].RegionDim[0]*OutRegion[i].RegionDim[1]*
 	         OutRegion[i].RegionDim[2];
@@ -311,6 +394,45 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
 	}
       }
     }
+   if (OutRegion_kdissh2[i].Data != NULL) { //LEBRON-like for kdissH2
+      int size = OutRegion_kdissh2[i].RegionDim[0]*OutRegion_kdissh2[i].RegionDim[1]*
+	         OutRegion_kdissh2[i].RegionDim[2];
+	float real_part, imag_part;
+	for (j = 0; j < size; j += 2) {
+	  real_part = OutRegion_kdissh2[i].Data[j  ]*GreensRegionRT[i].Data[j  ] -
+	              OutRegion_kdissh2[i].Data[j+1]*GreensRegionRT[i].Data[j+1];
+	  imag_part = OutRegion_kdissh2[i].Data[j+1]*GreensRegionRT[i].Data[j  ] +
+	              OutRegion_kdissh2[i].Data[j  ]*GreensRegionRT[i].Data[j+1];
+	  OutRegion_kdissh2[i].Data[j  ] = real_part;
+	  OutRegion_kdissh2[i].Data[j+1] = imag_part;
+	}
+   if (OutRegion_kdethm[i].Data != NULL) { //LEBRON-like for kdissH2
+      int size = OutRegion_kdethm[i].RegionDim[0]*OutRegion_kdethm[i].RegionDim[1]*
+	         OutRegion_kdethm[i].RegionDim[2];
+	float real_part, imag_part;
+	for (j = 0; j < size; j += 2) {
+	  real_part = OutRegion_kdethm[i].Data[j  ]*GreensRegionRT[i].Data[j  ] -
+	              OutRegion_kdethm[i].Data[j+1]*GreensRegionRT[i].Data[j+1];
+	  imag_part = OutRegion_kdethm[i].Data[j+1]*GreensRegionRT[i].Data[j  ] +
+	              OutRegion_kdethm[i].Data[j  ]*GreensRegionRT[i].Data[j+1];
+	  OutRegion_kdethm[i].Data[j  ] = real_part;
+	  OutRegion_kdethm[i].Data[j+1] = imag_part;
+	}
+   if (OutRegion_isrf[i].Data != NULL) { //LEBRON-like for kdissH2
+      int size = OutRegion_isrf[i].RegionDim[0]*OutRegion_isrf[i].RegionDim[1]*
+	         OutRegion_isrf[i].RegionDim[2];
+	float real_part, imag_part;
+	for (j = 0; j < size; j += 2) {
+	  real_part = OutRegion_isrf[i].Data[j  ]*GreensRegionRT[i].Data[j  ] -
+	              OutRegion_isrf[i].Data[j+1]*GreensRegionRT[i].Data[j+1];
+	  imag_part = OutRegion_isrf[i].Data[j+1]*GreensRegionRT[i].Data[j  ] +
+	              OutRegion_isrf[i].Data[j  ]*GreensRegionRT[i].Data[j+1];
+	  OutRegion_isrf[i].Data[j  ] = real_part;
+	  OutRegion_isrf[i].Data[j+1] = imag_part;
+	}
+
+  
+  
  
   /* Inverse FFT potential field. */
  
@@ -320,7 +442,26 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
 			       FFT_INVERSE, TransposeOnCompletion) == FAIL) {
         ENZO_FAIL("Error in CommunicationParallelFFT.");
   }
- 
+
+  //LEBRON-like terms
+  if (CommunicationParallelFFT(InitialRegion_kdissh2, NumberOfRegions,
+			       &OutRegion_kdissh2, &NumberOfOutRegions,
+			       DomainDim, MetaData->TopGridRank,
+			       FFT_INVERSE, TransposeOnCompletion) == FAIL) {
+        ENZO_FAIL("Error in CommunicationParallelFFT.");
+  }
+  if (CommunicationParallelFFT(InitialRegion_kdethm, NumberOfRegions,
+			       &OutRegion_kdethm, &NumberOfOutRegions,
+			       DomainDim, MetaData->TopGridRank,
+			       FFT_INVERSE, TransposeOnCompletion) == FAIL) {
+        ENZO_FAIL("Error in CommunicationParallelFFT.");
+  }
+  if (CommunicationParallelFFT(InitialRegion_isrf, NumberOfRegions,
+			       &OutRegion_isrf, &NumberOfOutRegions,
+			       DomainDim, MetaData->TopGridRank,
+			       FFT_INVERSE, TransposeOnCompletion) == FAIL) {
+        ENZO_FAIL("Error in CommunicationParallelFFT.");
+  }
   /* Copy Potential in active region into while grid. */
  
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
@@ -328,6 +469,21 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
 			       DomainDim) == FAIL) {
             ENZO_FAIL("Error in grid->FinishFFT.");
     }
+
+    //LEBRON-like terms
+    if (Grids[grid1]->GridData->FinishFFT(&InitialRegion_kdissh2[grid1], KDISSH2_FIELD,
+			       DomainDim) == FAIL) {
+            ENZO_FAIL("Error in grid->FinishFFT.");
+    }
+    if (Grids[grid1]->GridData->FinishFFT(&InitialRegion_kdethm[grid1], KDETHM_FIELD,
+			       DomainDim) == FAIL) {
+            ENZO_FAIL("Error in grid->FinishFFT.");
+    }
+    if (Grids[grid1]->GridData->FinishFFT(&InitialRegion_isrf[grid1], ISRF_FIELD,
+			       DomainDim) == FAIL) {
+            ENZO_FAIL("Error in grid->FinishFFT.");
+    }
+    //End LEBRON-like terms
  
   /* Update boundary regions of potential
      (first set BCTempL/R which are fluid BC's because that's the format

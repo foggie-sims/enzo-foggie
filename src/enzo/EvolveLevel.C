@@ -514,6 +514,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
                 if (level > 0)
                     Grids[grid1]->GridData->SolveForPotential(level);
+                    Grids[grid1]->GridData->SolveForLocallyExtinctRadiation(level) ; //LEBRON-like
+
                 Grids[grid1]->GridData->ComputeAccelerations(level);
                 Grids[grid1]->GridData->CopyPotentialToBaryonField();
             }
@@ -613,6 +615,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
                     if (level <= MaximumGravityRefinementLevel) {
                         if (level > 0) 
                             Grids[grid1]->GridData->SolveForPotential(level) ;
+                            Grids[grid1]->GridData->SolveForLocallyExtinctRadiation(level) ; //LEBRON-like
+
                         Grids[grid1]->GridData->ComputeAccelerations(level) ;
                     }
                 } // end: if (SelfGravity)

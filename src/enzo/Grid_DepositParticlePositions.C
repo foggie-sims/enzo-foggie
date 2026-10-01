@@ -131,6 +131,44 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     }
   }
 
+  /* 4) Young Star Radiation Fields for LEBRON-like RT */
+  
+  else if (DepositField == KDISSH2_FIELD) {
+    if (TargetGrid->GravitatingMassFieldParticlesCellSize <= 0)
+      TargetGrid->InitializeGravitatingMassFieldParticles(RefineBy);
+    DepositFieldPointer = TargetGrid->kdissH2SourceField;
+    CellSize            = TargetGrid->CellWidth[0][0];
+    CloudSize            = CellWidth[0][0];
+    for (dim = 0; dim < GridRank; dim++) {
+      LeftEdge[dim]  = TargetGrid->GravitatingMassFieldParticlesLeftEdge[dim];
+      Dimension[dim] = TargetGrid->GravitatingMassFieldParticlesDimension[dim];
+    }
+  }
+
+  else if (DepositField == KDETHM_FIELD) {
+    if (TargetGrid->GravitatingMassFieldParticlesCellSize <= 0)
+      TargetGrid->InitializeGravitatingMassFieldParticles(RefineBy);
+    DepositFieldPointer = TargetGrid->kdetHMSourceField;
+    CellSize            = TargetGrid->CellWidth[0][0];
+    CloudSize            = CellWidth[0][0];
+    for (dim = 0; dim < GridRank; dim++) {
+      LeftEdge[dim]  = TargetGrid->GravitatingMassFieldParticlesLeftEdge[dim];
+      Dimension[dim] = TargetGrid->GravitatingMassFieldParticlesDimension[dim];
+    }
+  }
+
+  else if (DepositField == ISRF_FIELD) {
+    if (TargetGrid->GravitatingMassFieldParticlesCellSize <= 0)
+      TargetGrid->InitializeGravitatingMassFieldParticles(RefineBy);
+    DepositFieldPointer = TargetGrid->isrfSourceField;
+    CellSize            = TargetGrid->CellWidth[0][0];
+    CloudSize            = CellWidth[0][0];
+    for (dim = 0; dim < GridRank; dim++) {
+      LeftEdge[dim]  = TargetGrid->GravitatingMassFieldParticlesLeftEdge[dim];
+      Dimension[dim] = TargetGrid->GravitatingMassFieldParticlesDimension[dim];
+    }
+  }
+
   /* 4) ParticleMassFlaggingField */
  
 //  else if (DepositField == PARTICLE_MASS_FLAGGING_FIELD) {
@@ -271,6 +309,69 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
       for (i = 0; i < NumberOfParticles; i++)
 	ParticleMassPointer[i] = min(DepositParticleMaximumParticleMass,
 				     ParticleMassPointer[i]);
+
+    if (DepositField == KDISSH2_FIELD || DepositField == KDETHM_FIELD || DepositField == ISRF_FIELD) {
+      ParticleRadiationTemp = new float[NumberOfParticles];
+      for (i = 0; i < NumberOfParticles; i++){
+        if (ParticleType[i] == PARTICLE_TYPE_STAR) {
+            float age = (this->Time - this->ParticleAttribute[0][i]) * TimeUnits / years_to_seconds; //Convert to yr
+            if (age < 5e7) { 
+              float dt_table = pSNFBTable.pop_age[1] - pSNFBTable.pop_age[0];
+              float t_age = (age - pSNFBTable.pop_age[0]) / dt_table;
+              int aa = (int)floor(t_age);
+              if (aa>=pSNFBTable.n_age-1){
+                aa=pSNFBTable.n_age-2;
+                t_age = 1;
+              }
+              else if (aa<0){
+                aa=0;
+                t_age=0;
+              }
+              else{
+                  t_age = (age - pSNFBTable.pop_age[aa]) / (pSNFBTable.pop_age[aa+1] - pSNFBTable.pop_age[aa]);
+              }
+
+              float metallicity = this->ParticleAttribute[2][i];
+              int zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met, pSNFBTable.n_met);
+
+              float t_z=0.5f;
+              if (zz>=pSNFBTable.n_met-1){
+                zz=pSNFBTable.n_met-2;
+                t_z = 1;
+              }
+              else if (zz<0){
+                zz=0;
+                t_z=0;
+              }
+              else{
+                  t_z = (metallicity - pSNFBTable.ini_met[zz]) / (pSNFBTable.ini_met[zz+1] - pSNFBTable.ini_met[zz]);
+              }
+
+              int ii0 = zz * pSNFBTable.n_age + aa;
+              int ii1 = zz * pSNFBTable.n_age + (aa+1);
+              int ii2 = (zz+1) * pSNFBTable.n_age + aa;
+              int ii3 = (zz+1) * pSNFBTable.n_age + (aa+1);
+
+              /* In Units Hz/cm^2 per Solar Mass*/
+              float rad_interp_value=0;
+              if (DepositField == KDISSH2_FIELD)
+                rad_interp_value = (1-t_age) * (1-t_z) * pSNFBTable.kdiss_H2[ii0] + t_age * (1-t_z) * pSNFBTable.kdiss_H2[ii1] + (1-t_age) * t_z * pSNFBTable.kdiss_H2[ii2] + t_age * t_z * pSNFBTable.kdiss_H2[ii3];
+              else if (DepositField == KDETHM_FIELD)
+                rad_interp_value = (1-t_age) * (1-t_z) * pSNFBTable.kdet_HM[ii0] + t_age * (1-t_z) * pSNFBTable.kdet_HM[ii1] + (1-t_age) * t_z * pSNFBTable.kdet_HM[ii2] + t_age * t_z * pSNFBTable.kdet_HM[ii3];
+              else if (DepositField == ISRF_FIELD)
+                rad_interp_value = (1-t_age) * (1-t_z) * pSNFBTable.isrf[ii0] + t_age * (1-t_z) * pSNFBTable.isrf[ii1] + (1-t_age) * t_z * pSNFBTable.isrf[ii2] + t_age * t_z * pSNFBTable.isrf[ii3];
+
+              //Multiply by the appropriately scaled Mass
+              ParticleRadiationTemp[i] = rad_interp_value * ParticleMassPointer[i] * dx * dx * dx * MassUnits / SolarMass;
+            }
+            else{
+              ParticleRadiationTemp[i] = 0; //Ignore older stars
+            }
+
+        }
+      }
+      ParticleMassPointer = ParticleRadiationTemp;
+    }
  
     /* Compute difference between current time and DepositTime. */
  

@@ -383,6 +383,36 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
   /*                                              */
 
 
+    if (UseLocallyExtinctStellarRadiation){
+    my_fields.RT_H2_dissociation_rate =  this->kdissH2FluxField;
+#ifdef HM_GRACKLE
+    my_fields.RT_HM_detachment_rate   =  this->kdetHMFluxField; //Feeds in Britton's Grackle Branch (foggie-sf) only
+#endif
+    if (grackle_data->use_isrf_field){
+      my_fields.isrf_habing = this->isrfFluxField;
+
+    }
+
+    // Need to set the other fields to the same 0 array for now
+    EmptyRtArray0  = new float[size];
+    EmptyRtArray1  = new float[size];
+    EmptyRtArray2  = new float[size];
+    EmptyRtArray3  = new float[size];
+
+    for (int i = 0; i < size; i++){
+      EmptyRtArray0[i] = 0;
+      EmptyRtArray1[i] = 0;
+      EmptyRtArray2[i] = 0;
+      EmptyRtArray3[i] = 0;
+    }
+
+    my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
+    my_fields.RT_HeI_ionization_rate  = EmptyRtArray1;
+    my_fields.RT_HeII_ionization_rate = EmptyRtArray2;
+    my_fields.RT_heating_rate = EmptyRtArray3;
+  } //UseLocallyExtinctStellarRadiation
+
+
     if (calculate_cooling_time(&grackle_units, &my_fields, cooling_time) == FAIL) {
       ENZO_FAIL("Error in Grackle calculate_cooling_time.\n");
     }
