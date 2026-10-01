@@ -53,7 +53,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: |
-            ~/.conda/pkgs
+            /home/runner/work/.conda/pkgs
           key: deps-compile
 
       # pip install h5py to avoid duplicating HDF5 libraries
@@ -153,12 +153,12 @@ jobs:
         uses: actions/cache@v5
         with:
           path: |
-            ~/local
-            ~/.conda/pkgs
+            /home/runner/work/local
+            /home/runner/work/.conda/pkgs
           key: deps-test
           
-      - name: Pull yt enzo-ci-debug branch
-        run: git clone --branch enzo-ci-debug https://github.com/clairekope/yt.git ${HOME}/yt
+      - name: Pull yt enzo-ci-fix branch
+        run: git clone --branch enzo-ci-fix https://github.com/clairekope/yt.git ${HOME}/yt
 
        # pip install h5py to avoid duplicating HDF5 libraries
       - name: Create conda environment
@@ -198,7 +198,7 @@ jobs:
         id: restore-answers
         uses: actions/cache@v5
         with:
-          path: ~/enzo_test/push_suite
+          path: /home/runner/work/enzo_test/push_suite
           key: foggie-test-answers-v1
 
       - name: Build and test (gold standard)
@@ -222,7 +222,7 @@ jobs:
           name: test-suite-gold-output
           path: |
             src/enzo/out.compile
-            ~/enzo_test/${{ github.sha }}/test_results.txt
+            /home/runner/work/enzo_test/${{ github.sha }}/test_results.txt
 
       - name: Build and test (tip)
         id: build-test-tip
@@ -244,7 +244,7 @@ jobs:
           name: test-suite-tip-output
           path: |
             src/enzo/out.compile
-            ~/enzo_test/${{ github.sha }}/test_results.txt
+            /home/runner/work/enzo_test/${{ github.sha }}/test_results.txt
 
   docs-build:
     name: Build Documentation
