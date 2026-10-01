@@ -29,6 +29,15 @@ such as:
   where the UV background starts, stop the simulation, and restart with another input 
   file.
 
+- When the UV background comes on is controlled by Enzo, not by the redshift range of
+  the table.  Enzo passes its ``RadiationRedshiftOn`` (default 7.0) and
+  ``RadiationRedshiftFullOn`` (default 6.0) parameters to Grackle, which ramps the
+  background from zero to full strength between those two redshifts even if the table
+  starts at a higher redshift (the Haardt & Madau 2012 table starts at z = 15.13).
+  Set both parameters to the table's maximum redshift to use the whole table.  The
+  values in effect are printed at start-up; see the Grackle section of the parameter
+  list for details.
+
 - Also unlike the original Cloudy cooling module, Grackle supports the option to also 
   solve the primordial cooling via interpolation from a table.  Thus, one is no longer 
   required to run with the MultiSpecies functionality in order to calculate the 

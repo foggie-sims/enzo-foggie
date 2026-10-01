@@ -122,7 +122,7 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
   /* Allocate Number field on from processor. */
  
   FLOAT *TempPos[MAX_DIMENSION];
-  float  *TempVel[MAX_DIMENSION], *TempMass, *TempInitialMass,
+  float  *TempVel[MAX_DIMENSION], *TempMass, *TempInitialMass = NULL,
         *TempAttribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
   PINT *TempNumber;
   int NewNumber = FromNumber, *TempType;
@@ -186,6 +186,7 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
 	
       delete [] TempNumber;
       delete [] TempMass;
+      delete [] TempInitialMass;
       delete [] TempType;
       for (dim = 0; dim < GridRank; dim++) {
 	delete [] TempPos[dim];

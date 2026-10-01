@@ -742,7 +742,10 @@ int grid::NestedCosmologySimulationInitializeGrid(
 
 		Note: if you add more tracer fluid fields make sure to update
 		MAX_NUMBER_OF_TRACER_FIELDS in macros_and_parameters.h  */
-	if(UseTracerFluid)
+	/* Only once the fields are allocated (ReadData), like every other block:
+	   with ParallelRootGridIO the first pass runs with ReadData = FALSE and
+	   the BaryonField pointers are still NULL. */
+	if(UseTracerFluid && ReadData)
 	  for (i = 0; i < size; i++){
 		if(NumberOfTracerFluidFields >= 1) BaryonField[TF01Num][i] = tiny_number;
 		if(NumberOfTracerFluidFields >= 2) BaryonField[TF02Num][i] = tiny_number;
