@@ -180,7 +180,7 @@ jobs:
       - name: Install Grackle
         if: steps.restore-deps-test.outputs.cache-hit != 'true'
         run: |
-          git clone -b main https://github.com/grackle-project/grackle ${HOME}/grackle
+          git clone -b foggie-sf https://github.com/brittonsmith/grackle.git ${HOME}/grackle
           cd ${HOME}/grackle
           cmake -DCMAKE_INSTALL_PREFIX=${HOME}/local -B build
           cmake --build build
@@ -194,7 +194,7 @@ jobs:
         id: restore-answers
         uses: actions/cache@v5
         with:
-          path: ${HOME}/enzo_test/push_suite
+          path: ~/enzo_test/push_suite
           key: foggie-test-answers-v1
 
       - name: Build and test (gold standard)
