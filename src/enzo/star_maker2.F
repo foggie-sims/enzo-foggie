@@ -138,7 +138,7 @@ c
       INTG_PREC imetalSNIa, procnum, tindsf, iminit, usedust
       INTG_PREC usedustspecies
       INTG_PREC usejeans, veldivcrit, selfboundcrit, thermalcrit, h2crit
-      R_PREC    d(nx,ny,nz), dust(nx,ny,nz), dm(nx,ny,nz), temp(nx,ny,nz)
+      R_PREC    d(nx,ny,nz),dust(nx,ny,nz),dm(nx,ny,nz),temp(nx,ny,nz)
       R_PREC    metalc(nx,ny,nz), metalo(nx,ny,nz), metalmg(nx,ny,nz),
      &          metalsi(nx,ny,nz), metalfe(nx,ny,nz)
       R_PREC    dustsil(nx,ny,nz), dustmg(nx,ny,nz),
