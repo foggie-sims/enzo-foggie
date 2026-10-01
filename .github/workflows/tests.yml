@@ -158,7 +158,7 @@ jobs:
           key: deps-test
           
       - name: Pull yt enzo-ci-debug branch
-        run: git clone --branch enzo-ci-debug git@github.com:clairekope/yt.git ${HOME}/yt
+        run: git clone --branch enzo-ci-debug https://github.com/clairekope/yt.git ${HOME}/yt
 
        # pip install h5py to avoid duplicating HDF5 libraries
       - name: Create conda environment
