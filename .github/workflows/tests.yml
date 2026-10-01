@@ -156,6 +156,9 @@ jobs:
             ~/local
             ~/.conda/pkgs
           key: deps-test
+          
+      - name: Pull yt enzo-ci-debug branch
+        run: git clone --branch enzo-ci-debug git@github.com:clairekope/yt.git ${HOME}/yt
 
        # pip install h5py to avoid duplicating HDF5 libraries
       - name: Create conda environment
@@ -163,7 +166,9 @@ jobs:
         run: |
           conda install -y -c conda-forge \
             cython numpy fastcache flake8 nose girder-client matplotlib pytest gitpython pip 
-            pip install h5py yt-astro-analysis
+          cd ${HOME}/yt
+          pip install .
+          pip install h5py yt-astro-analysis
 
       - name: Install HYPRE
         if: steps.restore-deps-test.outputs.cache-hit != 'true'
@@ -197,6 +202,7 @@ jobs:
           key: foggie-test-answers-v1
 
       - name: Build and test (gold standard)
+        id: build-test-gold
         if: steps.restore-answers.outputs.cache-hit != 'true'
         run: |
           git checkout foggie-gold-standard-v1
@@ -208,6 +214,15 @@ jobs:
           make -j 4
           cd ../../run
           python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --answer-store
+
+      - name: Upload compilation output
+        if: failure() && steps.build-test-gold.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-suite-gold-output
+          path: |
+            src/enzo/out.compile
+            ~/enzo_test/${{ github.sha }}/test_results.txt
 
       - name: Build and test (tip)
         id: build-test-tip
@@ -226,7 +241,7 @@ jobs:
         if: failure() && steps.build-test-tip.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
-          name: test-suite-output
+          name: test-suite-tip-output
           path: |
             src/enzo/out.compile
             ~/enzo_test/${{ github.sha }}/test_results.txt
