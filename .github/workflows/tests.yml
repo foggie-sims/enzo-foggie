@@ -65,6 +65,7 @@ jobs:
             pip install h5py yt-astro-analysis
 
       - name: Test compilation configurations
+        id: test-compile-options
         run: |
           ./configure
           cd src/enzo
@@ -111,7 +112,7 @@ jobs:
           make -j 4 || (make show-config ; exit 1)
 
       - name: Upload compilation output
-        if: always()
+        if: failure() && steps.test-compile-options.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
           name: compile-output
@@ -198,6 +199,7 @@ jobs:
           key: foggie-test-answers-v1
 
       - name: Build and test (gold standard)
+        if: steps.restore-answers.outputs.cache-hit != 'true'
         run: |
           if [ ! -e ${HOME}/enzo_test/push_suite ]; then
             git checkout foggie-gold-standard-v1
@@ -225,11 +227,13 @@ jobs:
           python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --clobber
 
       - name: Upload compilation output
-        if: always()
+        if: failure() && steps.build-test-tip.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
-          name: test-suite-compile-output
-          path: src/enzo/out.compile
+          name: test-suite-output
+          path: |
+            src/enzo/out.compile
+            ~/enzo_test/${{ github.sha }}/test_results.txt
 
   docs-build:
     name: Build Documentation
