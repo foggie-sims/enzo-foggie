@@ -206,6 +206,7 @@ jobs:
         if: steps.restore-answers.outputs.cache-hit != 'true'
         run: |
           git checkout foggie-gold-standard-v1
+          echo "rev_hash=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           ./configure
           cd src/enzo
           make machine-ubuntu
@@ -222,12 +223,13 @@ jobs:
           name: test-suite-gold-output
           path: |
             src/enzo/out.compile
-            /home/runner/work/enzo_test/${{ github.sha }}/test_results.txt
+            /home/runner/work/enzo_test/${{ steps.build-test-gold.outputs.rev_hash }}/test_results.txt
 
       - name: Build and test (tip)
         id: build-test-tip
         run: |
           git checkout tip
+          echo "rev_hash=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           ./configure
           cd src/enzo
           make machine-ubuntu
@@ -244,7 +246,7 @@ jobs:
           name: test-suite-tip-output
           path: |
             src/enzo/out.compile
-            /home/runner/work/enzo_test/${{ github.sha }}/test_results.txt
+            /home/runner/work/enzo_test/${{ steps.build-test-tip.outputs.rev_hash }}/test_results.txt
 
   docs-build:
     name: Build Documentation
