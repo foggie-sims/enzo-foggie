@@ -485,6 +485,7 @@ OBJS_CONFIG_LIB = \
 	Grid_FindAverageTemperature.o \
 	Grid_FindMassiveParticles.o \
 	Grid_FindMinimumParticleMass.o \
+        Grid_FindMultiRefineRegions.o \
 	Grid_FindNewStarParticles.o \
 	Grid_FindShocks.o \
 	Grid_FinishFFT.o \
@@ -497,7 +498,6 @@ OBJS_CONFIG_LIB = \
 	Grid_FlagCellsToBeRefinedByMass.o \
 	Grid_FlagCellsToBeRefinedByMetallicity.o \
 	Grid_FlagCellsToBeRefinedByMetalMass.o \
-        Grid_FlagCellsToBeRefinedByMultiRefineRegion.o \
 	Grid_FlagCellsToBeRefinedByMustRefineRegion.o \
 	Grid_FlagCellsToBeRefinedByResistiveLength.o \
 	Grid_FlagCellsToBeRefinedByShear.o \

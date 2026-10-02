@@ -283,12 +283,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
   } else {
 
   /* Do the first grid regeneration after checking for evolving refine regions. */
-
     if(CheckpointRestart == FALSE) {
-      if ((RefineRegionTimeType == 1) || (RefineRegionTimeType == 0)
-        || (MustRefineRegionTimeType == 1) || (MustRefineRegionTimeType == 0)
-        || (CoolingRefineRegionTimeType == 1) || (CoolingRefineRegionTimeType == 0)
-        || (MultiRefineRegionTimeType == 1) || (MultiRefineRegionTimeType == 0)) {
+      if ((MultiRefineRegionTimeType == 1) || (MultiRefineRegionTimeType == 0)) {
         if (SetEvolveRefineRegion(MetaData.Time) == FAIL) 
 	        ENZO_FAIL("Error in SetEvolveRefineRegion during initial grid regeneration.");
       }
@@ -467,13 +463,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     FOF(&MetaData, LevelArray, MetaData.WroteData);
 
     /* If provided, set RefineRegion from evolving RefineRegion 
-       OR set MustRefineRegion from evolving MustRefineRegion 
-       OR set CoolingRefineRegion from evolving CoolingRefineRegion
        OR set MultiRefineRegion from evolving MultiRefineRegion */
-    if ((RefineRegionTimeType == 1) || (RefineRegionTimeType == 0)
-        || (MustRefineRegionTimeType == 1) || (MustRefineRegionTimeType == 0)
-        || (CoolingRefineRegionTimeType == 1) || (CoolingRefineRegionTimeType == 0)
-        || (MultiRefineRegionTimeType == 1) || (MultiRefineRegionTimeType == 0)) {
+    if ((MultiRefineRegionTimeType == 1) || (MultiRefineRegionTimeType == 0)) {
         if (SetEvolveRefineRegion(MetaData.Time) == FAIL) 
 	  ENZO_FAIL("Error in SetEvolveRefineRegion.");
     }
