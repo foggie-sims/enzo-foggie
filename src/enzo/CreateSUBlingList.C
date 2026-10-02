@@ -79,6 +79,8 @@ int CreateSUBlingList(TopGridData *MetaData,
   if( FluxCorrection == 0 ) {
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
       (*SUBlingList)[grid1] = NULL;
+    delete [] Grids;
+    delete [] ChildGrids;
     return SUCCESS;
   }
 
