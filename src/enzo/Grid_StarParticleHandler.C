@@ -745,7 +745,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
   for (field = 0; field < NumberOfBaryonFields; field++)
     if ((FieldType[field] >= ElectronDensity && FieldType[field] <= ExtraType1) ||
-	FieldType[field] == MetalSNIaDensity || FieldType[field] == MetalSNIIDensity)
+	FieldType[field] == MetalSNIaDensity || FieldType[field] == MetalSNIIDensity ||
+    (FieldType[field] >= MetalAGBDensity && FieldType[field] <= TracerFluidField08Density))
 #ifdef EMISSIVITY
       /* 
          it used to be set to  FieldType[field] < GravPotential if Geoffrey's Emissivity0
@@ -2432,7 +2433,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
   for (field = 0; field < NumberOfBaryonFields; field++) {
     if ((FieldType[field] >= ElectronDensity && FieldType[field] <= ExtraType1) ||
-	FieldType[field] == MetalSNIaDensity || FieldType[field] == MetalSNIIDensity) {
+	FieldType[field] == MetalSNIaDensity || FieldType[field] == MetalSNIIDensity ||
+       (FieldType[field] >= MetalAGBDensity && FieldType[field] <= TracerFluidField08Density)) {
 #ifdef EMISSIVITY
       /* 
          it used to be set to  FieldType[field] < GravPotential if Geoffrey's Emissivity0
