@@ -11,7 +11,7 @@ c
      &     dt, r, metal, dx, t, z, procnum, 
      &     d1, x1, v1, t1,
      &     nmax, xstart, ystart, zstart, ibuff, 
-     &     imetal, imethod, H2Method,
+     &     imetal, imethod, mintdyn, H2Method,
      &     StarFormationEfficiency,
      &     StarFormationNumberDensityThreshold, 
      &     StarFormationMinimumMass, 
@@ -72,6 +72,8 @@ c    d1,x1,v1,t1 - factors to convert d,dx,v,t to physical units
 c    nx,ny,nz - dimensions of field arrays
 c    ibuff    - number of buffer zones at each end of grid
 c    imethod  - Hydro method (0/1 -- PPM DE/LR, 2 - ZEUS)
+c    mintdyn  - minimum dynamical time, in years
+c               (StarMakerMinimumDynamicalTime).
 c
 c     H2Method -
 c          Method for determining H_2 fraction.
@@ -195,6 +197,7 @@ c
       INTG_PREC UseLocalDensityMax
       INTG_PREC WriteStarLogFiles
 
+      R_PREC mintdyn
       R_PREC StarFormationEfficiency
       R_PREC StarFormationNumberDensityThreshold
       R_PREC StarFormationMinimumMass
@@ -303,6 +306,13 @@ c          = 2.10e14 seconds * [ rho / 10^-22 g/cm^3 ]^(-1/2)
 
                timeconstant = 2.10e14_RKIND / t1 /
      $              sqrt( d(i,j,k)*dble(d1) / 1.0e-22_RKIND )
+
+c     Keep the unfloored free-fall time for the star log, then floor the
+c     SF time scale. mintdyn is in years, timeconstant in code units.
+c     We may consider adding dt to the list of considered quantities in max()
+               tau_ff = timeconstant
+               timeconstant = max( timeconstant, mintdyn*yr_s/t1 )
+
                if (H2Method .eq. 0) then
 c     Calculate molecular hydrogen fraction (if H2StarFormation)
                   H2_fraction = 1.0
