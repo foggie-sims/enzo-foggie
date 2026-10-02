@@ -204,6 +204,7 @@ jobs:
       - name: Build and test (gold standard)
         id: build-test-gold
         if: steps.restore-answers.outputs.cache-hit != 'true'
+        continue-on-error: true  # there's a segfault due to Grackle; remove once fixed
         run: |
           git checkout foggie-gold-standard-v1
           echo "rev_hash=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
