@@ -32,8 +32,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
 int FindField(int field, int farray[], int numfields);
-int search_lower_bound(float *arr, float value, int low, int high, 
-		       int total);
+float InterpolatePreSNFeedbackTable(double *table, float age, float metallicity);
            
 int grid::GrackleWrapper()
 {
@@ -390,56 +389,15 @@ int grid::GrackleWrapper()
       if (this->ParticleType[i] == PARTICLE_TYPE_STAR) {
         float age = (this->Time - this->ParticleAttribute[0][i]) * TimeUnits / years_to_seconds; //Convert to yr
         if (age < 5e7) { 
-          //int aa = search_lower_bound((float*)pSNFBTable.pop_age, age, 0, pSNFBTable.n_age+1, pSNFBTable.n_age+1);  //+1?
-          float dt_table = pSNFBTable.pop_age[1] - pSNFBTable.pop_age[0];
-          float t_age = (age - pSNFBTable.pop_age[0]) / dt_table;
-          int aa = (int)floor(t_age);
-          if (aa>=pSNFBTable.n_age-1){
-            aa=pSNFBTable.n_age-2;
-            t_age = 1;
-          }
-          else if (aa<0){
-            aa=0;
-            t_age=0;
-          }
-          else{
-              t_age = (age - pSNFBTable.pop_age[aa]) / (pSNFBTable.pop_age[aa+1] - pSNFBTable.pop_age[aa]);
-          }
-
           float metallicity = this->ParticleAttribute[2][i];
-         // int zz = search_lower_bound((float*)metallicity_bins, metallicity, 0, 6, 6);
-          int zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met, pSNFBTable.n_met);
 
-          //fprintf(stdout, "Age %"ESYM", ", age);
-          //fprintf(stdout, "aa %"ISYM",", aa);
-          //fprintf(stdout, "Z %"ESYM", ", metallicity);
-          //fprintf(stdout, "zz %"ISYM"\n", zz);
-
-          float t_z=0.5f;
-          if (zz>=pSNFBTable.n_met-1){
-            zz=pSNFBTable.n_met-2;
-            t_z = 1;
-          }
-          else if (zz<0){
-            zz=0;
-            t_z=0;
-          }
-          else{
-              t_z = (metallicity - pSNFBTable.ini_met[zz]) / (pSNFBTable.ini_met[zz+1] - pSNFBTable.ini_met[zz]);
-          }
-
-          int ii0 = zz * pSNFBTable.n_age + aa;
-          int ii1 = zz * pSNFBTable.n_age + (aa+1);
-          int ii2 = (zz+1) * pSNFBTable.n_age + aa;
-          int ii3 = (zz+1) * pSNFBTable.n_age + (aa+1);
-
-          /* In Units Hz/cm^2 per Solar Mass*/
-          float k_diss_H2_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kdiss_H2[ii0] + t_age * (1-t_z) * pSNFBTable.kdiss_H2[ii1] + (1-t_age) * t_z * pSNFBTable.kdiss_H2[ii2] + t_age * t_z * pSNFBTable.kdiss_H2[ii3];
-          float k_det_HM_sb99_interp  = (1-t_age) * (1-t_z) * pSNFBTable.kdet_HM[ii0] + t_age * (1-t_z) * pSNFBTable.kdet_HM[ii1] + (1-t_age) * t_z * pSNFBTable.kdet_HM[ii2] + t_age * t_z * pSNFBTable.kdet_HM[ii3];
-          float k_diss_CO_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kdiss_CO[ii0] + t_age * (1-t_z) * pSNFBTable.kdiss_CO[ii1] + (1-t_age) * t_z * pSNFBTable.kdiss_CO[ii2] + t_age * t_z * pSNFBTable.kdiss_CO[ii3];
-          float k_ion_CI_sb99_interp  = (1-t_age) * (1-t_z) * pSNFBTable.kion_CI[ii0] + t_age * (1-t_z) * pSNFBTable.kion_CI[ii1] + (1-t_age) * t_z * pSNFBTable.kion_CI[ii2] + t_age * t_z * pSNFBTable.kion_CI[ii3];
-          float k_ion_OI_sb99_interp  = (1-t_age) * (1-t_z) * pSNFBTable.kion_OI[ii0] + t_age * (1-t_z) * pSNFBTable.kion_OI[ii1] + (1-t_age) * t_z * pSNFBTable.kion_OI[ii2] + t_age * t_z * pSNFBTable.kion_OI[ii3];
-          float isrf_sb99_interp      = (1-t_age) * (1-t_z) * pSNFBTable.isrf[ii0] + t_age * (1-t_z) * pSNFBTable.isrf[ii1] + (1-t_age) * t_z * pSNFBTable.isrf[ii2] + t_age * t_z * pSNFBTable.isrf[ii3];
+          /* In Units Hz cm^2 per Solar Mass*/
+          float k_diss_H2_sb99_interp = InterpolatePreSNFeedbackTable(pSNFBTable.kdiss_H2, age, metallicity);
+          float k_det_HM_sb99_interp  = InterpolatePreSNFeedbackTable(pSNFBTable.kdet_HM,  age, metallicity);
+          float k_diss_CO_sb99_interp = InterpolatePreSNFeedbackTable(pSNFBTable.kdiss_CO, age, metallicity);
+          float k_ion_CI_sb99_interp  = InterpolatePreSNFeedbackTable(pSNFBTable.kion_CI,  age, metallicity);
+          float k_ion_OI_sb99_interp  = InterpolatePreSNFeedbackTable(pSNFBTable.kion_OI,  age, metallicity);
+          float isrf_sb99_interp      = InterpolatePreSNFeedbackTable(pSNFBTable.isrf,     age, metallicity);
 
           float dx = this->CellWidth[0][0];
           float ParticleMass_Msun = this->ParticleMass[i] * dx * dx * dx *  MassUnits / SolarMass; //Convert from code mass to Msun
@@ -510,6 +468,21 @@ int grid::GrackleWrapper()
 
     }
 
+  } // UseLocalStellarRadiation
+
+  if (UseLocallyExtinctStellarRadiation) {
+    /* LEBRON-like RT: per-cell rates from the flux fields (CWT 10/05/26) */
+    k_diss_H2_grid = new float[size]();
+    k_det_HM_grid  = new float[size]();
+    k_diss_CO_grid = new float[size]();  // not computed yet
+    k_ion_CI_grid  = new float[size]();
+    k_ion_OI_grid  = new float[size]();
+    isrf_grid      = new float[size]();
+    this->GetLocallyExtinctRadiationRates(k_diss_H2_grid, k_det_HM_grid,
+                                          isrf_grid);
+  } //UseLocallyExtinctStellarRadiation
+
+  if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {
     //To Do -> Add CO, CI, OI to grackle rates?
     my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;
 #ifdef HM_GRACKLE
@@ -521,59 +494,19 @@ int grid::GrackleWrapper()
 #endif
     if (grackle_data->use_isrf_field){
       my_fields.isrf_habing = isrf_grid;
-      //fprintf(stdout, " setting isrf_habing  = %"ESYM" (Habing Units)\n", isrf_grid[0]);
-
     }
 
     // Need to set the other fields to the same 0 array for now
-    EmptyRtArray0  = new float[size];
-    EmptyRtArray1  = new float[size];
-    EmptyRtArray2  = new float[size];
-    EmptyRtArray3  = new float[size];
-
-    for (int i = 0; i < size; i++){
-      EmptyRtArray0[i] = 0;
-      EmptyRtArray1[i] = 0;
-      EmptyRtArray2[i] = 0;
-      EmptyRtArray3[i] = 0;
-    }
+    EmptyRtArray0  = new float[size]();
+    EmptyRtArray1  = new float[size]();
+    EmptyRtArray2  = new float[size]();
+    EmptyRtArray3  = new float[size]();
 
     my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
     my_fields.RT_HeI_ionization_rate  = EmptyRtArray1;
     my_fields.RT_HeII_ionization_rate = EmptyRtArray2;
     my_fields.RT_heating_rate = EmptyRtArray3;
-  } // UseLocalStellarRadiation
-  /*   
-                                             */
-
-  if (UseLocallyExtinctStellarRadiation){
-    my_fields.RT_H2_dissociation_rate =  this->kdissH2FluxField;
-#ifdef HM_GRACKLE
-    my_fields.RT_HM_detachment_rate   =  this->kdetHMFluxField; //Feeds in Britton's Grackle Branch (foggie-sf) only
-#endif
-    if (grackle_data->use_isrf_field){
-      my_fields.isrf_habing = this->isrfFluxField;
-
-    }
-
-    // Need to set the other fields to the same 0 array for now
-    EmptyRtArray0  = new float[size];
-    EmptyRtArray1  = new float[size];
-    EmptyRtArray2  = new float[size];
-    EmptyRtArray3  = new float[size];
-
-    for (int i = 0; i < size; i++){
-      EmptyRtArray0[i] = 0;
-      EmptyRtArray1[i] = 0;
-      EmptyRtArray2[i] = 0;
-      EmptyRtArray3[i] = 0;
-    }
-
-    my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
-    my_fields.RT_HeI_ionization_rate  = EmptyRtArray1;
-    my_fields.RT_HeII_ionization_rate = EmptyRtArray2;
-    my_fields.RT_heating_rate = EmptyRtArray3;
-  } //UseLocallyExtinctStellarRadiation
+  }
 
   //fprintf(stdout, "Calling Grackle - %"ISYM"\n", UseLocalStellarRadiation);
 
@@ -624,7 +557,7 @@ int grid::GrackleWrapper()
   delete [] g_grid_start;
   delete [] g_grid_end;
 
-    if (UseLocalStellarRadiation){
+    if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation){
       delete[] k_diss_H2_grid;
       delete[] k_det_HM_grid;
       delete[] k_diss_CO_grid;

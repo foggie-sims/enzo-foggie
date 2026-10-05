@@ -128,6 +128,15 @@ grid::~grid()
   delete [] PotentialField;
   delete [] GravitatingMassField;
   delete [] GravitatingMassFieldParticles;
+  delete [] kdissH2SourceParticles; // LEBRON-like RT fields
+  delete [] kdetHMSourceParticles;
+  delete [] isrfSourceParticles;
+  delete [] kdissH2SourceField;
+  delete [] kdetHMSourceField;
+  delete [] isrfSourceField;
+  delete [] kdissH2FluxField;
+  delete [] kdetHMFluxField;
+  delete [] isrfFluxField;
   delete [] FlaggingField;
   delete [] MassFlaggingField;
   delete [] ParticleMassFlaggingField;

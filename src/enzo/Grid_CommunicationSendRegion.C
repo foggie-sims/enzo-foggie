@@ -76,6 +76,16 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
  
   int RegionSize = RegionDim[0]*RegionDim[1]*RegionDim[2];
   int TransferSize = RegionSize * NumberOfFields;
+
+  /* LEBRON-like RT: when enabled, the three RT source arrays ride along with
+     the particle mass field, and the three RT flux fields with the
+     potential, packed after the original field in the same message. */
+
+  int SendRT = (UseLocallyExtinctStellarRadiation &&
+                (SendField == GRAVITATING_MASS_FIELD_PARTICLES ||
+                 SendField == POTENTIAL_FIELD));
+  if (SendRT)
+    TransferSize += 3*RegionSize;
  
   /* MHD Dimension stuff */
 
@@ -201,6 +211,34 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 			   RegionDim, RegionDim+1, RegionDim+2,
 			   Zero, Zero+1, Zero+2,
 			   RegionStart, RegionStart+1, RegionStart+2);
+
+    if (SendRT) {
+      float *RT[3];
+      int *RTDim;
+      if (SendField == GRAVITATING_MASS_FIELD_PARTICLES) {
+        RT[0] = kdissH2SourceParticles;
+        RT[1] = kdetHMSourceParticles;
+        RT[2] = isrfSourceParticles;
+        RTDim = GravitatingMassFieldParticlesDimension;
+      } else {
+        RT[0] = kdissH2FluxField;
+        RT[1] = kdetHMFluxField;
+        RT[2] = isrfFluxField;
+        RTDim = GravitatingMassFieldDimension;
+      }
+      for (field = 0; field < 3; field++) {
+        float *dest = &buffer[RegionSize*(1+field)];
+        if (RT[field] == NULL)
+          for (int n = 0; n < RegionSize; n++)
+            dest[n] = 0.0;
+        else
+          FORTRAN_NAME(copy3d)(RT[field], dest,
+                               RTDim, RTDim+1, RTDim+2,
+                               RegionDim, RegionDim+1, RegionDim+2,
+                               Zero, Zero+1, Zero+2,
+                               RegionStart, RegionStart+1, RegionStart+2);
+      }
+    }
  
     if (SendField == ACCELERATION_FIELDS)
       for (dim = 0; dim < GridRank; dim++) {
@@ -392,6 +430,28 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 			   RegionDim, RegionDim+1, RegionDim+2,
 			   Zero, Zero+1, Zero+2,
 			   Zero, Zero+1, Zero+2);
+    }
+
+    if (SendRT) {
+      float **RT[3];
+      if (SendField == GRAVITATING_MASS_FIELD_PARTICLES) {
+        RT[0] = &ToGrid->kdissH2SourceParticles;
+        RT[1] = &ToGrid->kdetHMSourceParticles;
+        RT[2] = &ToGrid->isrfSourceParticles;
+      } else {
+        RT[0] = &ToGrid->kdissH2FluxField;
+        RT[1] = &ToGrid->kdetHMFluxField;
+        RT[2] = &ToGrid->isrfFluxField;
+      }
+      for (field = 0; field < 3; field++) {
+        delete [] *RT[field];
+        *RT[field] = new float[RegionSize];
+        FORTRAN_NAME(copy3d)(&buffer[RegionSize*(1+field)], *RT[field],
+                             RegionDim, RegionDim+1, RegionDim+2,
+                             RegionDim, RegionDim+1, RegionDim+2,
+                             Zero, Zero+1, Zero+2,
+                             Zero, Zero+1, Zero+2);
+      }
     }
  
     if (SendField == ACCELERATION_FIELDS)

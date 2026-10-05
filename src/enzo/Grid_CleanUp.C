@@ -51,6 +51,20 @@ void grid::CleanUp()
   GravitatingMassField          = NULL;
   GravitatingMassFieldParticles = NULL;
 
+  /* LEBRON-like RT: particle-mesh and summed sources (flux is kept) */
+  delete [] kdissH2SourceParticles;
+  delete [] kdetHMSourceParticles;
+  delete [] isrfSourceParticles;
+  delete [] kdissH2SourceField;
+  delete [] kdetHMSourceField;
+  delete [] isrfSourceField;
+  kdissH2SourceParticles = NULL;
+  kdetHMSourceParticles  = NULL;
+  isrfSourceParticles    = NULL;
+  kdissH2SourceField     = NULL;
+  kdetHMSourceField      = NULL;
+  isrfSourceField        = NULL;
+
 #ifdef SAB
   for (i = 0; i < MAX_DIMENSION; i++)
     if (OldAccelerationField[i] != NULL) {

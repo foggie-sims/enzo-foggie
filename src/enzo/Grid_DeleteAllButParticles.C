@@ -63,5 +63,26 @@ void grid::DeleteAllButParticles()
   PotentialField                = NULL;
   GravitatingMassField          = NULL;
   GravitatingMassFieldParticles = NULL;
- 
+
+  /* LEBRON-like RT fields */
+  delete [] kdissH2SourceParticles;
+  delete [] kdetHMSourceParticles;
+  delete [] isrfSourceParticles;
+  delete [] kdissH2SourceField;
+  delete [] kdetHMSourceField;
+  delete [] isrfSourceField;
+  delete [] kdissH2FluxField;
+  delete [] kdetHMFluxField;
+  delete [] isrfFluxField;
+
+  kdissH2SourceParticles = NULL;
+  kdetHMSourceParticles  = NULL;
+  isrfSourceParticles    = NULL;
+  kdissH2SourceField = NULL;
+  kdetHMSourceField  = NULL;
+  isrfSourceField    = NULL;
+  kdissH2FluxField   = NULL;
+  kdetHMFluxField    = NULL;
+  isrfFluxField      = NULL;
+
 }

@@ -369,3 +369,57 @@ int ReadPreSNFeedbackTable(char *name)
   return SUCCESS;
 }
 
+
+int search_lower_bound(float *arr, float value, int low, int high,
+		       int total);
+
+/* Bilinear interpolation of a pre-SN feedback table (n_met x n_age, age
+   fastest) at a population age [yr] and initial metal fraction, following
+   the original lookup in Grid_GrackleWrapper.C.  Age bins are assumed to be
+   evenly spaced.  Values outside the table are clamped to the edges.
+   CWT 10/05/2026 */
+
+float InterpolatePreSNFeedbackTable(double *table, float age, float metallicity)
+{
+  /* Age bracket (evenly spaced bins). */
+
+  float dt_table = pSNFBTable.pop_age[1] - pSNFBTable.pop_age[0];
+  float t_age = (age - pSNFBTable.pop_age[0]) / dt_table;
+  int aa = (int)floor(t_age);
+  if (aa>=pSNFBTable.n_age-1){
+    aa=pSNFBTable.n_age-2;
+    t_age = 1;
+  }
+  else if (aa<0){
+    aa=0;
+    t_age=0;
+  }
+  else{
+      t_age = (age - pSNFBTable.pop_age[aa]) / (pSNFBTable.pop_age[aa+1] - pSNFBTable.pop_age[aa]);
+  }
+
+  /* Metallicity bracket. */
+
+  int zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met, pSNFBTable.n_met);
+
+  float t_z=0.5f;
+  if (zz>=pSNFBTable.n_met-1){
+    zz=pSNFBTable.n_met-2;
+    t_z = 1;
+  }
+  else if (zz<0){
+    zz=0;
+    t_z=0;
+  }
+  else{
+      t_z = (metallicity - pSNFBTable.ini_met[zz]) / (pSNFBTable.ini_met[zz+1] - pSNFBTable.ini_met[zz]);
+  }
+
+  int ii0 = zz * pSNFBTable.n_age + aa;
+  int ii1 = zz * pSNFBTable.n_age + (aa+1);
+  int ii2 = (zz+1) * pSNFBTable.n_age + aa;
+  int ii3 = (zz+1) * pSNFBTable.n_age + (aa+1);
+
+  return (1-t_age) * (1-t_z) * table[ii0] + t_age * (1-t_z) * table[ii1] +
+         (1-t_age) * t_z * table[ii2] + t_age * t_z * table[ii3];
+}

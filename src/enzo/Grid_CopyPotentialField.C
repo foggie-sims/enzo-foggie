@@ -169,16 +169,6 @@ int grid::CopyPotentialField(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
   if (ProcessorNumber != OtherGrid->ProcessorNumber) {
     OtherGrid->CommunicationSendRegion(OtherGrid, ProcessorNumber,
 				 POTENTIAL_FIELD, NEW_ONLY, StartOther, Dim);
-
-        OtherGrid->CommunicationSendRegion(OtherGrid, ProcessorNumber,
-				 KDISSH2_FLUX_FIELD, NEW_ONLY, StartOther, Dim); //LEBRON-like Terms
-
-        OtherGrid->CommunicationSendRegion(OtherGrid, ProcessorNumber,
-				 KDETHM_FLUX_FIELD, NEW_ONLY, StartOther, Dim); //LEBRON-like Terms
-
-        OtherGrid->CommunicationSendRegion(OtherGrid, ProcessorNumber,
-				 ISRF_FLUX_FIELD, NEW_ONLY, StartOther, Dim); //LEBRON-like Terms
-
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	CommunicationDirection == COMMUNICATION_SEND)
       return SUCCESS;    
@@ -222,42 +212,16 @@ int grid::CopyPotentialField(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
 	  if (Start[0] == 0)
 	    PotentialField[thisindex] = 0.5*(PotentialField[thisindex] +
 		  		   OtherGrid->PotentialField[otherindex]);
-      kdissH2FluxField[thisindex] = 0.5*(kdissH2FluxField[thisindex] + //Lebron-like
-		  		   OtherGrid->kdissH2FluxField[otherindex]);
-      kdetHMFluxField[thisindex] = 0.5*(kdetHMFluxField[thisindex] + //Lebron-like
-		  		   OtherGrid->kdetHMFluxField[otherindex]);
-      isrfFluxField[thisindex] = 0.5*(isrfFluxField[thisindex] + //Lebron-like
-		  		   OtherGrid->isrfFluxField[otherindex]);
-
 	  if (Start[0]+Dim[0] == GravitatingMassFieldDimension[0])
 	    PotentialField[thisindex+Dim[0]-1] =
 	      0.5*(PotentialField[thisindex+Dim[0]-1] +
 		   OtherGrid->PotentialField[otherindex+Dim[0]-1]);
-	    kdissH2FluxField[thisindex+Dim[0]-1] =//LEBRON-like RT
-	      0.5*(kdissH2FluxField[thisindex+Dim[0]-1] +
-		   OtherGrid->kdissH2FluxField[otherindex+Dim[0]-1]);
-	    kdetHMFluxField[thisindex+Dim[0]-1] =//LEBRON-like RT
-	      0.5*(kdetHMFluxField[thisindex+Dim[0]-1] +
-		   OtherGrid->kdetHMFluxField[otherindex+Dim[0]-1]);
-	    isrfFluxField[thisindex+Dim[0]-1] =//LEBRON-like RT
-	      0.5*(isrfFluxField[thisindex+Dim[0]-1] +
-		   OtherGrid->isrfFluxField[otherindex+Dim[0]-1]);
 	} else {
 	  if (Start[0] == 0)
 	    PotentialField[thisindex] = OtherGrid->PotentialField[otherindex];
-	    kdissH2FluxField[thisindex] = OtherGrid->kdissH2FluxField[otherindex];//LEBRON-like RT
-	    kdetHMFluxField[thisindex] = OtherGrid->kdetHMFluxField[otherindex];//LEBRON-like RT
-	    isrfFluxField[thisindex] = OtherGrid->isrfFluxField[otherindex];//LEBRON-like RT
-
 	  if (Start[0]+Dim[0] == GravitatingMassFieldDimension[0])
 	    PotentialField[thisindex+Dim[0]-1] =
 	      OtherGrid->PotentialField[otherindex+Dim[0]-1];
-	    kdissH2FluxField[thisindex+Dim[0]-1] = //LEBRON-like RT
-	      OtherGrid->kdissH2FluxField[otherindex+Dim[0]-1];
-  	  kdetHMFluxField[thisindex+Dim[0]-1] = //LEBRON-like RT
-	      OtherGrid->kdetHMFluxField[otherindex+Dim[0]-1];
-	    isrfFluxField[thisindex+Dim[0]-1] = //LEBRON-like RT
-	      OtherGrid->isrfFluxField[otherindex+Dim[0]-1];
 	}
  
       } else {
@@ -268,23 +232,54 @@ int grid::CopyPotentialField(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
 	  for (i = 0; i < Dim[0]; i++, thisindex++, otherindex++)
 	    PotentialField[thisindex] = 0.5*(PotentialField[thisindex] +
 		  		   OtherGrid->PotentialField[otherindex]);
-
-  	  kdissH2FluxField[thisindex] = 0.5*(kdissH2FluxField[thisindex] + //LEBRON-like RT
-		  		   OtherGrid->kdissH2FluxField[otherindex]);
-	    kdetHMFluxField[thisindex] = 0.5*(kdetHMFluxField[thisindex] + //LEBRON-like RT
-		  		   OtherGrid->kdetHMFluxField[otherindex]);
-	    isrfFluxField[thisindex] = 0.5*(isrfFluxField[thisindex] + //LEBRON-like RT
-		  		   OtherGrid->isrfFluxField[otherindex]);
 	else
 	  for (i = 0; i < Dim[0]; i++, thisindex++, otherindex++)
 	    PotentialField[thisindex] = OtherGrid->PotentialField[otherindex];
-	    kdissH2FluxField[thisindex] = OtherGrid->kdissH2FluxField[otherindex];//LEBRON-like RT
-      kdetHMFluxField[thisindex] = OtherGrid->kdetHMFluxField[otherindex];//LEBRON-like RT
-	    isrfFluxField[thisindex] = OtherGrid->isrfFluxField[otherindex];//LEBRON-like RT
 
       }
     }
- 
+
+  /* LEBRON-like RT: copy the flux fields over the same region.
+     (Off-processor, these arrive packed with POTENTIAL_FIELD in
+     CommunicationSendRegion.) */
+
+  if (UseLocallyExtinctStellarRadiation) {
+    float *ThisRT[3]  = {kdissH2FluxField, kdetHMFluxField, isrfFluxField};
+    float *OtherRT[3] = {OtherGrid->kdissH2FluxField,
+                         OtherGrid->kdetHMFluxField,
+                         OtherGrid->isrfFluxField};
+    for (int f = 0; f < 3; f++) {
+      if (ThisRT[f] == NULL || OtherRT[f] == NULL)
+        continue;
+      for (k = 0; k < Dim[2]; k++)
+        for (j = 0; j < Dim[1]; j++) {
+          thisindex = ((k + Start[2])*GravitatingMassFieldDimension[1] +
+                       (j + Start[1]))*GravitatingMassFieldDimension[0] +
+                       Start[0];
+          otherindex = (0 + StartOther[0]) + (j + StartOther[1])*OtherDim[0] +
+                       (k + StartOther[2])*OtherDim[0]*OtherDim[1];
+
+          OnBoundary = FALSE;
+          if (GridRank > 1 && (j+Start[1] == 0 ||
+                               j+Start[1] == GravitatingMassFieldDimension[1]-1))
+            OnBoundary = TRUE;
+          if (GridRank > 2 && (k+Start[2] == 0 ||
+                               k+Start[2] == GravitatingMassFieldDimension[2]-1))
+            OnBoundary = TRUE;
+
+          for (i = 0; i < Dim[0]; i++, thisindex++, otherindex++) {
+            if (OnlyBoundary == TRUE && OnBoundary == FALSE &&
+                !(i == 0 && Start[0] == 0) &&
+                !(i == Dim[0]-1 && Start[0]+Dim[0] == GravitatingMassFieldDimension[0]))
+              continue;  // only the endpoints, as for the potential
+            ThisRT[f][thisindex] = (CopyPotentialFieldAverage == 2) ?
+              0.5*(ThisRT[f][thisindex] + OtherRT[f][otherindex]) :
+              OtherRT[f][otherindex];
+          }
+        }
+    }
+  }
+
   /* Clean up if we have transfered data. */
  
   if (MyProcessorNumber != OtherGrid->ProcessorNumber)

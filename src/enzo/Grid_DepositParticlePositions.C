@@ -34,6 +34,7 @@
 #include "Grid.h"
 #include "ActiveParticle.h"
 #include "communication.h"
+#include "phys_constants.h"
  
 /* function prototypes */
  
@@ -59,6 +60,11 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type,
 			      int BufferSize);
 #endif /* USE_MPI */
 double ReturnWallTime(void);
+int GetUnits(float *DensityUnits, float *LengthUnits,
+	     float *TemperatureUnits, float *TimeUnits,
+	     float *VelocityUnits, FLOAT Time);
+float InterpolatePreSNFeedbackTable(double *table, float age, float metallicity);
+int FindField(int field, int farray[], int numfields);
 
 /* This controls the maximum particle mass which will be deposited in
    the MASS_FLAGGING_FIELD.  Only set in Grid_SetFlaggingField. */
@@ -87,6 +93,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
   float MassFactor = 1.0, *ParticleMassTemp, *ParticleMassPointer; 
   FLOAT CellSize, CloudSize;
   float *ParticleMassPointerSink;    
+  float *ParticleRadiationTemp = NULL;  // LEBRON-like RT
   float TimeDifference = 0;
   FLOAT LeftEdge[MAX_DIMENSION], OriginalLeftEdge[MAX_DIMENSION];
   float *DepositFieldPointer, *OriginalDepositFieldPointer;
@@ -133,10 +140,10 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 
   /* 4) Young Star Radiation Fields for LEBRON-like RT */
   
-  else if (DepositField == KDISSH2_FIELD) {
+  else if (DepositField == KDISSH2_SOURCE_FIELD) {
     if (TargetGrid->GravitatingMassFieldParticlesCellSize <= 0)
       TargetGrid->InitializeGravitatingMassFieldParticles(RefineBy);
-    DepositFieldPointer = TargetGrid->kdissH2SourceField;
+    DepositFieldPointer = TargetGrid->kdissH2SourceParticles;
     CellSize            = TargetGrid->CellWidth[0][0];
     CloudSize            = CellWidth[0][0];
     for (dim = 0; dim < GridRank; dim++) {
@@ -145,10 +152,10 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     }
   }
 
-  else if (DepositField == KDETHM_FIELD) {
+  else if (DepositField == KDETHM_SOURCE_FIELD) {
     if (TargetGrid->GravitatingMassFieldParticlesCellSize <= 0)
       TargetGrid->InitializeGravitatingMassFieldParticles(RefineBy);
-    DepositFieldPointer = TargetGrid->kdetHMSourceField;
+    DepositFieldPointer = TargetGrid->kdetHMSourceParticles;
     CellSize            = TargetGrid->CellWidth[0][0];
     CloudSize            = CellWidth[0][0];
     for (dim = 0; dim < GridRank; dim++) {
@@ -157,10 +164,10 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     }
   }
 
-  else if (DepositField == ISRF_FIELD) {
+  else if (DepositField == ISRF_SOURCE_FIELD) {
     if (TargetGrid->GravitatingMassFieldParticlesCellSize <= 0)
       TargetGrid->InitializeGravitatingMassFieldParticles(RefineBy);
-    DepositFieldPointer = TargetGrid->isrfSourceField;
+    DepositFieldPointer = TargetGrid->isrfSourceParticles;
     CellSize            = TargetGrid->CellWidth[0][0];
     CloudSize            = CellWidth[0][0];
     for (dim = 0; dim < GridRank; dim++) {
@@ -310,64 +317,81 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 	ParticleMassPointer[i] = min(DepositParticleMaximumParticleMass,
 				     ParticleMassPointer[i]);
 
-    if (DepositField == KDISSH2_FIELD || DepositField == KDETHM_FIELD || DepositField == ISRF_FIELD) {
+    /* LEBRON-like RT: replace particle 'mass' with the young-star source
+       strength.  ParticleMassPointer is already a density on the target
+       grid, so (table value [rate*cm^2 per Msun]) * density * MassUnits /
+       SolarMass is the source per unit code volume; the RT Green's function
+       multiplies back by the cell volume. */
+
+    if (DepositField == KDISSH2_SOURCE_FIELD ||
+        DepositField == KDETHM_SOURCE_FIELD ||
+        DepositField == ISRF_SOURCE_FIELD) {
+      float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits,
+        VelocityUnits;
+      GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits,
+               &VelocityUnits, Time);
+      const float years_to_seconds = 3.15576e7;
+      float MsunPerCodeMass = DensityUnits * POW(LengthUnits, 3) / SolarMass;
+      double *table = (DepositField == KDISSH2_SOURCE_FIELD) ? pSNFBTable.kdiss_H2 :
+                      (DepositField == KDETHM_SOURCE_FIELD)  ? pSNFBTable.kdet_HM :
+                                                               pSNFBTable.isrf;
+
+      /* Source-side ("locally extinct") attenuation: each young star's
+         output is reduced by exp(-kappa * Sigma), with Sigma the local
+         Sobolev column of total gas, rho * min(rho/|grad rho|, cap), from
+         central differences around the star's cell.  Absorber-side
+         shielding is left to Grackle.
+
+         TODO(CWT, refine): placeholders --
+           - kappa per band [cm^2/g] is 0 (no attenuation yet); choose
+             opacities and any metallicity / dust-to-gas scaling.
+           - the Sobolev length cap (in cells) is arbitrary; consider the
+             Jeans length instead. */
+
+      const float SourceOpacity = (DepositField == KDISSH2_SOURCE_FIELD) ? 0.0 :
+                                  (DepositField == KDETHM_SOURCE_FIELD)  ? 0.0 :
+                                                                           0.0;
+      const float MaxSobolevCells = 4.0;
+
+      int DensNum = FindField(Density, FieldType, NumberOfBaryonFields);
+      float *rho = (DensNum >= 0) ? BaryonField[DensNum] : NULL;
+      float SigmaUnits = DensityUnits * LengthUnits;  // code rho*L -> g/cm^2
+
       ParticleRadiationTemp = new float[NumberOfParticles];
-      for (i = 0; i < NumberOfParticles; i++){
-        if (ParticleType[i] == PARTICLE_TYPE_STAR) {
-            float age = (this->Time - this->ParticleAttribute[0][i]) * TimeUnits / years_to_seconds; //Convert to yr
-            if (age < 5e7) { 
-              float dt_table = pSNFBTable.pop_age[1] - pSNFBTable.pop_age[0];
-              float t_age = (age - pSNFBTable.pop_age[0]) / dt_table;
-              int aa = (int)floor(t_age);
-              if (aa>=pSNFBTable.n_age-1){
-                aa=pSNFBTable.n_age-2;
-                t_age = 1;
-              }
-              else if (aa<0){
-                aa=0;
-                t_age=0;
-              }
-              else{
-                  t_age = (age - pSNFBTable.pop_age[aa]) / (pSNFBTable.pop_age[aa+1] - pSNFBTable.pop_age[aa]);
-              }
+      for (i = 0; i < NumberOfParticles; i++) {
+        ParticleRadiationTemp[i] = 0;  // dark matter and old stars emit nothing
+        if (ParticleType[i] != PARTICLE_TYPE_STAR)
+          continue;
+        float age = (Time - ParticleAttribute[0][i]) * TimeUnits / years_to_seconds;
+        if (age >= 5e7)
+          continue;
+        ParticleRadiationTemp[i] = InterpolatePreSNFeedbackTable(table, age,
+                                     ParticleAttribute[2][i]) *
+                                   ParticleMassPointer[i] * MsunPerCodeMass;
 
-              float metallicity = this->ParticleAttribute[2][i];
-              int zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met, pSNFBTable.n_met);
+        /* Source-side attenuation (see above). */
 
-              float t_z=0.5f;
-              if (zz>=pSNFBTable.n_met-1){
-                zz=pSNFBTable.n_met-2;
-                t_z = 1;
-              }
-              else if (zz<0){
-                zz=0;
-                t_z=0;
-              }
-              else{
-                  t_z = (metallicity - pSNFBTable.ini_met[zz]) / (pSNFBTable.ini_met[zz+1] - pSNFBTable.ini_met[zz]);
-              }
-
-              int ii0 = zz * pSNFBTable.n_age + aa;
-              int ii1 = zz * pSNFBTable.n_age + (aa+1);
-              int ii2 = (zz+1) * pSNFBTable.n_age + aa;
-              int ii3 = (zz+1) * pSNFBTable.n_age + (aa+1);
-
-              /* In Units Hz/cm^2 per Solar Mass*/
-              float rad_interp_value=0;
-              if (DepositField == KDISSH2_FIELD)
-                rad_interp_value = (1-t_age) * (1-t_z) * pSNFBTable.kdiss_H2[ii0] + t_age * (1-t_z) * pSNFBTable.kdiss_H2[ii1] + (1-t_age) * t_z * pSNFBTable.kdiss_H2[ii2] + t_age * t_z * pSNFBTable.kdiss_H2[ii3];
-              else if (DepositField == KDETHM_FIELD)
-                rad_interp_value = (1-t_age) * (1-t_z) * pSNFBTable.kdet_HM[ii0] + t_age * (1-t_z) * pSNFBTable.kdet_HM[ii1] + (1-t_age) * t_z * pSNFBTable.kdet_HM[ii2] + t_age * t_z * pSNFBTable.kdet_HM[ii3];
-              else if (DepositField == ISRF_FIELD)
-                rad_interp_value = (1-t_age) * (1-t_z) * pSNFBTable.isrf[ii0] + t_age * (1-t_z) * pSNFBTable.isrf[ii1] + (1-t_age) * t_z * pSNFBTable.isrf[ii2] + t_age * t_z * pSNFBTable.isrf[ii3];
-
-              //Multiply by the appropriately scaled Mass
-              ParticleRadiationTemp[i] = rad_interp_value * ParticleMassPointer[i] * dx * dx * dx * MassUnits / SolarMass;
-            }
-            else{
-              ParticleRadiationTemp[i] = 0; //Ignore older stars
-            }
-
+        if (SourceOpacity > 0 && rho != NULL) {
+          int idx[MAX_DIMENSION] = {0, 0, 0}, stride[MAX_DIMENSION];
+          stride[0] = 1;
+          stride[1] = GridDimension[0];
+          stride[2] = GridDimension[0]*GridDimension[1];
+          for (dim = 0; dim < GridRank; dim++) {
+            idx[dim] = int((ParticlePosition[dim][i] - CellLeftEdge[dim][0]) /
+                           CellWidth[dim][0]);
+            idx[dim] = max(1, min(GridDimension[dim]-2, idx[dim]));
+          }
+          int c = idx[0] + idx[1]*stride[1] + idx[2]*stride[2];
+          float grad2 = 0;
+          for (dim = 0; dim < GridRank; dim++) {
+            float g = (rho[c+stride[dim]] - rho[c-stride[dim]]) /
+                      (2.0*CellWidth[dim][0]);
+            grad2 += g*g;
+          }
+          float Lcap = MaxSobolevCells * CellWidth[0][0];
+          float L = (grad2 > 0) ? min(rho[c]/sqrt(grad2), Lcap) : Lcap;
+          float Sigma = rho[c] * L * SigmaUnits;
+          ParticleRadiationTemp[i] *= exp(-SourceOpacity * Sigma);
         }
       }
       ParticleMassPointer = ParticleRadiationTemp;
@@ -594,6 +618,8 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     if (MassFactor != 1.0)
 
       delete [] ParticleMassTemp;
+
+    delete [] ParticleRadiationTemp;  // LEBRON-like RT (NULL otherwise)
 
     /* Return particles to positions at Time. */
 

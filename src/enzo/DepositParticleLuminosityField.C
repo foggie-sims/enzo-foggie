@@ -38,36 +38,20 @@ int DepositParticleLuminosityField(HierarchyEntry *Grid, FLOAT TimeMidStep)
     TimeMidStep =     Grid->GridData->ReturnTime() +
                   0.5*Grid->GridData->ReturnTimeStep();
  
-  /* Initialize the gravitating mass field only if in send-receive mode
+  /* Clear the RT source particle arrays only if in send-receive mode
      (i.e. this routine is called only once) or if in the first of the
-     three communication modes (post-receive). */
+     three communication modes (post-receive).  DepositParticleMassField
+     is always called first, so the particle mesh is already initialized. */
 
+  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
+      CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
+    if (Grid->GridData->ClearRTSourceParticles() == FAIL) {
+      ENZO_FAIL("Error in grid->ClearRTSourceParticles.\n");
+    }
+  }
 
-  //I think this part can be piggy backed of the previous DepositParticleMass call
-  //if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-  //    CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
- 
-    /* Initialize the gravitating mass field parameters (if necessary). */
- 
-  //  if (Grid->GridData->InitializeGravitatingMassFieldParticles(RefineBy)
-  //                                                                == FAIL) {
-  //    ENZO_FAIL("Error in grid->InitializeGravitatingMassFieldParticles.\n");
-  //  }
- 
-    /* Clear the GravitatingMassFieldParticles. */
- 
-  //  if (Grid->GridData->ClearGravitatingMassFieldParticles() == FAIL) {
-  //    ENZO_FAIL("Error in grid->ClearGravitatingMassFieldParticles.\n");
-   // }
- 
-//  fprintf(stderr, "--DepositParticleMassField (Send) Initialize & Clear\n");
- 
-  //} // end: if (CommunicationDirection != COMMUNICATION_SEND)
-  
-  /* Deposit particles to GravitatingMassFieldParticles in this grid. */
- 
-//  fprintf(stderr, "--DepositParticleMassField Call DepositParticlePositions\n");
- 
+  /* Deposit young-star sources into this grid's RT source particle arrays. */
+
   if (Grid->GridData->DepositParticlePositions(Grid->GridData, TimeMidStep,
 				 KDISSH2_SOURCE_FIELD) == FAIL) {
     ENZO_FAIL("Error in grid->DepositParticlePositions.\n");

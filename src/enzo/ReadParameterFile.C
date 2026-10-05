@@ -2251,6 +2251,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ENZO_FAIL("StarFeedbackAGB requires StarFeedbackUseTabularYields to be enabled.");
 
 
+  if (UseLocalStellarRadiation && UseLocallyExtinctStellarRadiation)
+    ENZO_FAIL("UseLocalStellarRadiation and UseLocallyExtinctStellarRadiation are mutually exclusive.");
+
+  if (UseLocallyExtinctStellarRadiation && !SelfGravity)
+    ENZO_FAIL("UseLocallyExtinctStellarRadiation requires SelfGravity (it uses the gravity solver's meshes and FFTs).");
+
   if (StarFeedbackPreSNFeedback || UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {
 
     if (!StarMakerStoreInitialMass)

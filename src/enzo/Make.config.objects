@@ -163,6 +163,7 @@ OBJS_CONFIG_LIB = \
         DepositActiveParticleMassFlaggingField.o \
         DepositBaryons.o \
         DepositParticleMassField.o \
+        DepositParticleLuminosityField.o \
         DepositParticleMassFlaggingField.o \
 	DetermineNumberOfNodes.o \
 	DetermineParallelism.o \
@@ -637,6 +638,7 @@ OBJS_CONFIG_LIB = \
         Grid_ShearingBoxStratifiedInitializeGrid.o \
 	Grid_ShocksHandler.o \
 	Grid_SolveForPotential.o \
+	Grid_SolveForLocallyExtinctRadiation.o \
         Grid_SolveHydroEquations.o \
 	Grid_SolveOneZoneFreefall.o \
   Grid_SolveMHD_Li.o \

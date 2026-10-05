@@ -411,10 +411,25 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
       k_ion_OI_grid[i] = k_ion_OI_grid_sum;
       isrf_grid[i] = isrf_grid_sum;
     }
-  
+  } //UseLocalStellarRadiation
+
+  if (UseLocallyExtinctStellarRadiation) {
+    /* LEBRON-like RT: per-cell rates from the flux fields (CWT 10/05/26) */
+    k_diss_H2_grid = new float[size]();
+    k_det_HM_grid  = new float[size]();
+    k_diss_CO_grid = new float[size]();  // not computed yet
+    k_ion_CI_grid  = new float[size]();
+    k_ion_OI_grid  = new float[size]();
+    isrf_grid      = new float[size]();
+    this->GetLocallyExtinctRadiationRates(k_diss_H2_grid, k_det_HM_grid,
+                                          isrf_grid);
+  } //UseLocallyExtinctStellarRadiation
+
+  if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {
+    //To Do -> Add CO, CI, OI to grackle rates?
     my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;
 #ifdef HM_GRACKLE
-    my_fields.RT_HM_detachment_rate =  k_det_HM_grid; //Feeds in Britton's Grackle Branch (foggie-sf) only
+    my_fields.RT_HM_detachment_rate   =  k_det_HM_grid; //Feeds in Britton's Grackle Branch (foggie-sf) only
     //The following rates are commented out for now, but will feed into the newchem-cpp branch of grackle when ready
     //my_fields.RT_CO_dissociation_rate =  k_diss_CO_grid; 
     //my_fields.RT_CI_ionization_rate   =  k_ion_CI_grid; 
@@ -423,55 +438,18 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     if (grackle_data->use_isrf_field){
       my_fields.isrf_habing = isrf_grid;
     }
-    // Need to set the other fields to the same 0 array for now
-    EmptyRtArray0  = new float[size];
-    EmptyRtArray1  = new float[size];
-    EmptyRtArray2  = new float[size];
-    EmptyRtArray3  = new float[size];
 
-    for (int i = 0; i < size; i++){
-      EmptyRtArray0[i] = 0;
-      EmptyRtArray1[i] = 0;
-      EmptyRtArray2[i] = 0;
-      EmptyRtArray3[i] = 0;
-    }
+    // Need to set the other fields to the same 0 array for now
+    EmptyRtArray0  = new float[size]();
+    EmptyRtArray1  = new float[size]();
+    EmptyRtArray2  = new float[size]();
+    EmptyRtArray3  = new float[size]();
 
     my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
     my_fields.RT_HeI_ionization_rate  = EmptyRtArray1;
     my_fields.RT_HeII_ionization_rate = EmptyRtArray2;
     my_fields.RT_heating_rate = EmptyRtArray3;
-  } //UseLocalStellarRadiation
-  /*                                              */
-
-
-    if (UseLocallyExtinctStellarRadiation){
-    my_fields.RT_H2_dissociation_rate =  this->kdissH2FluxField;
-#ifdef HM_GRACKLE
-    my_fields.RT_HM_detachment_rate   =  this->kdetHMFluxField; //Feeds in Britton's Grackle Branch (foggie-sf) only
-#endif
-    if (grackle_data->use_isrf_field){
-      my_fields.isrf_habing = this->isrfFluxField;
-
-    }
-
-    // Need to set the other fields to the same 0 array for now
-    EmptyRtArray0  = new float[size];
-    EmptyRtArray1  = new float[size];
-    EmptyRtArray2  = new float[size];
-    EmptyRtArray3  = new float[size];
-
-    for (int i = 0; i < size; i++){
-      EmptyRtArray0[i] = 0;
-      EmptyRtArray1[i] = 0;
-      EmptyRtArray2[i] = 0;
-      EmptyRtArray3[i] = 0;
-    }
-
-    my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
-    my_fields.RT_HeI_ionization_rate  = EmptyRtArray1;
-    my_fields.RT_HeII_ionization_rate = EmptyRtArray2;
-    my_fields.RT_heating_rate = EmptyRtArray3;
-  } //UseLocallyExtinctStellarRadiation
+  }
 
 
     if (calculate_cooling_time(&grackle_units, &my_fields, cooling_time) == FAIL) {
@@ -501,7 +479,7 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     delete [] g_grid_start;
     delete [] g_grid_end;
 
-    if (UseLocalStellarRadiation){
+    if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation){
       delete[] k_diss_H2_grid;
       delete[] k_det_HM_grid;
       delete[] k_diss_CO_grid;
