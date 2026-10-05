@@ -24,7 +24,7 @@ c
      &               tabZ, tabAge, tabMass, tabMetal, tabEvents,
      &               stochastic, preSN, preSNmom, pSNntabZ, pSNntabAge,
      &               pSNtabZ, pSNtabAge, pSNtabMass, pSNtabMetal,
-     &               pSNtabMom)
+     &               pSNtabMom, useAGB, metalAGB)
 c
 c  RELEASES "STAR" PARTICLE MOMENTUM, MASS AND METALS
 c
@@ -87,7 +87,7 @@ c    use_tab_fdbk - flag to use tabular feedback
 c    minit     - initial particle mass
 c    ergSNII   - energy in ergs per SNII event
 c    ergSNIa   - energy in ergs per SNIa event
-c    itracksrc - track SNII & SNIa metals separately?
+c    itracksrc - track SNII, SNIa, & AGB metals separately?
 c    metalSNII - field for SNII metals
 c    metalSNIa - field for SNIa metals
 c    ntabZ     - number of initial metallicities
@@ -107,6 +107,11 @@ c    pSNtabAge - age indices for pre-SN FB table
 c    pSNtabMass - table of pre-SN wind mass injection rates
 c    pSNtabMetal - table of pre-SN wind metal injection rates
 c    pSNtabMom  - table of pre-SN wind + Lbol momentum injection rates
+c
+c    useAGB    - flag to deposit AGB wind mass and metals (from tables)
+c                into the star particle's host cell, with no momentum
+c                or energy injection. Requires use_tabfbk.
+c    metalAGB  - field for AGB wind metals (only updated if itracksrc)
 c
 c  OUTPUTS:
 c    d,u,v,w,ge,e - modified field
@@ -141,9 +146,9 @@ c
       R_PREC    minit(npart)
       R_PREC    ergSNII, ergSNIa, age
       INTG_PREC itracksrc, ntabZ, ntabAge, use_tabfbk, stochastic
-      INTG_PREC preSN, preSNmom, pSNntabZ, pSNntabAge
+      INTG_PREC preSN, preSNmom, pSNntabZ, pSNntabAge, useAGB
       R_PREC    metalSNII(nx,ny,nz), metalSNIa(nx,ny,nz)
-      R_PREC    tabZ(ntabZ), tabAge(ntabAge)
+      R_PREC    tabZ(ntabZ), tabAge(ntabAge), metalAGB(nx,ny,nz)
       R_PREC    tabMass(4, ntabAge, ntabZ), tabMetal(4, ntabAge, ntabZ)
       R_PREC    tabEvents(2, ntabAge, ntabZ)
       R_PREC    pSNtabZ(pSNntabZ), pSNtabAge(pSNntabAge)
@@ -192,6 +197,8 @@ c
       R_PREC pSNmass_grid(nx,ny,nz), pSNmetal_grid(nx,ny,nz),
      &      pSNmom_grid(nx,ny,nz), pSNup_grid(nx,ny,nz),
      &      pSNvp_grid(nx,ny,nz), pSNwp_grid(nx,ny,nz)
+      R_PREC agbmass_grid(nx,ny,nz), agbmetal_grid(nx,ny,nz)
+      R_PREC agb_mass_y, agb_metal_y
       R_PREC up_avg, vp_avg, wp_avg, up_avg_w, vp_avg_w, wp_avg_w
       R_PREC wind_mass, wind_metal, wind_mom, dt_pSN
       R_PREC ke_b_wind(2*distrad+1,2*distrad+1,2*distrad+1)
@@ -263,6 +270,10 @@ c
                   pSNvp_grid(i,j,k) = 0._RKIND
                   pSNwp_grid(i,j,k) = 0._RKIND
                endif
+               if (useAGB .eq. 1_IKIND) then
+                  agbmass_grid(i,j,k) = 0._RKIND
+                  agbmetal_grid(i,j,k) = 0._RKIND
+               endif
             enddo
          enddo
       enddo
@@ -323,6 +334,12 @@ c              Cap timestep at 4 Myr so winds are not integrated beyond that
                wind_mom = 0._RKIND
             endif
 c
+c     Default AGB wind mass/metals to zero; overwritten below if
+c     useAGB is set (this requires use_tabfbk, checked at startup)
+c
+            agb_mass_y = 0._RKIND
+            agb_metal_y = 0._RKIND
+c
 c     If using tabulated yields, the ejected mass, energy, and metals come from
 c     tables and depend on the particle's mass, age, and metallicity
 c
@@ -354,7 +371,15 @@ c
      &              dunits*x1**3._RKIND/SolarMass*dx**3_IKIND
 #endif
 c
-c     Metal feedback. Similar to total ejected mass, 
+c     Disallow a SN channel entirely when its integrated ejecta 
+c     mass is zero or negative, so that momentum/energy can
+c     never be injected onto the grid without any accompanying mass.
+c
+               if (meject_ii .le. 0._RKIND) nsn_ii = 0._RKIND
+               if (meject_ia .le. 0._RKIND) nsn_ia = 0._RKIND
+               nsn = nsn_ii + nsn_ia
+c
+c     Metal feedback. Similar to total ejected mass,
 c     table has metal mass yield per initial population mass.
 c
                   if (imetal .eq. 1_IKIND) then
@@ -377,6 +402,25 @@ c
      &              dunits*x1**3._RKIND/SolarMass*dx**3_IKIND
 #endif
                   endif
+c
+c     If including AGB wind feedback, get the AGB ejected mass and
+c     metals from the tabulated yields
+c
+               if (useAGB .eq. 1_IKIND) then
+                  call agb_mass(agb_mass_y,
+     &                        minit(n), metalf(n), age, dt, t1,
+     &                        tabMass, tabZ, tabAge, ntabZ, ntabAge)
+                  if (imetal .eq. 1_IKIND) then
+                     call agb_metal(agb_metal_y,
+     &                        minit(n), metalf(n), age, dt, t1,
+     &                        tabMetal, tabZ, tabAge, ntabZ, ntabAge)
+                  else
+                     agb_metal_y = 0._RKIND
+                  endif
+               else
+                  agb_mass_y = 0._RKIND
+                  agb_metal_y = 0._RKIND
+               endif
 c
 c     If doing stochastic feedback, use the expected number of SNe in
 c     this timestep to draw from a Poisson distribution to get an integer
@@ -506,6 +550,13 @@ c
                      wind_metal = yield*mp(n)
                   endif
                   mp(n) = mp(n) - wind_mass
+               endif
+               if (useAGB .eq. 1_IKIND) then
+                  if (agb_mass_y .gt. mp(n)) then
+                     agb_mass_y = m_eject_frac*mp(n)
+                     agb_metal_y = yield*mp(n)
+                  endif
+                  mp(n) = mp(n) - agb_mass_y
                endif
 c
 c     End tabulated feedback
@@ -711,8 +762,17 @@ c
      &                                up(n)*wind_mass
                pSNvp_grid(ic,jc,kc) = pSNvp_grid(ic,jc,kc) + 
      &                                vp(n)*wind_mass
-               pSNwp_grid(ic,jc,kc) = pSNwp_grid(ic,jc,kc) + 
+               pSNwp_grid(ic,jc,kc) = pSNwp_grid(ic,jc,kc) +
      &                                wp(n)*wind_mass
+            endif
+c
+c     If using AGB wind feedback, add ejected mass and metals to grids.
+c
+            if (useAGB .eq. 1_IKIND) then
+               agbmass_grid(ic,jc,kc) = agbmass_grid(ic,jc,kc) +
+     &                                  agb_mass_y
+               agbmetal_grid(ic,jc,kc) = agbmetal_grid(ic,jc,kc) +
+     &                                  agb_metal_y
             endif
 c
 c     Put particle feedback data in log. If not using pre-SN feedback,
@@ -1037,7 +1097,12 @@ c     are oxygen atoms, for simplicity. Note that what is called "mu" here
 c     and in the mu_field passed to this function are actually the inverse
 c     mean molecular weight!!!
 c
-                        if (Z_cell .gt. 0.95_RKIND) 
+c     Z_cell comes from metal/d with no guard on either operand, so it can
+c     be NaN (0/0 in an evacuated cell) or negative, so catch these cases.
+c     
+                        if (Z_cell .ne. Z_cell) Z_cell = 0._RKIND
+                        if (Z_cell .lt. 0._RKIND) Z_cell = 0._RKIND
+                        if (Z_cell .gt. 0.95_RKIND)
      &                    Z_cell = 0.95_RKIND
                         if ((mu_cell .lt. 0.0625_RKIND) .or. 
      &                    (mu_cell .gt. 2._RKIND) .or.
@@ -1067,6 +1132,17 @@ c
 #ifdef FORTRAN_DEBUG
                write(7,*) 'Z_avg, n_avg', Z_floor, n_avg
 #endif
+c
+c        If n_avg is NaN or negative, floor it at the density of one hydrogen
+c        atom per cc, far below any cell that hosts a supernova.
+c
+               if (n_avg .ne. n_avg .or. 
+     &                     n_avg .lt. 1.0e-6_RKIND) then
+                  write(6,*) 'star_feedback6: bad n_avg', n_avg,
+     &            ' at ic,jc,kc =', ic, jc, kc, ' nsn =', nsn,
+     &            ' Z_floor =', Z_floor
+                  n_avg = 1.0e-6_RKIND
+               endif
 c
 c     Compute the mass and momentum that this cell is responsible for
 c     injecting
@@ -1389,6 +1465,34 @@ c
 c
  100           continue
 c
+c ====================================================================
+c     BEGIN AGB WIND FEEDBACK
+c
+c     Deposit AGB wind mass and metals directly into the star
+c     particles' host cell, with no momentum or energy injection.
+c     This is done after SNe (and pre-SN) feedback so that it does
+c     not interfere with the mass/energy/momentum bookkeeping above.
+c
+               if (useAGB .eq. 1_IKIND .and.
+     &             agbmass_grid(ic,jc,kc) .gt. 0._RKIND) then
+                  if (imetal .eq. 1_IKIND) then
+                     metal(ic,jc,kc) = (metal(ic,jc,kc)*d(ic,jc,kc) +
+     &                 agbmetal_grid(ic,jc,kc))
+     &                     / (d(ic,jc,kc) + agbmass_grid(ic,jc,kc))
+                     if (metal(ic,jc,kc) .gt. 0.95_RKIND)
+     &                  metal(ic,jc,kc) = 0.95_RKIND
+                     if (itracksrc .eq. 1_IKIND) then
+                        metalAGB(ic,jc,kc) =
+     &                    (metalAGB(ic,jc,kc)*d(ic,jc,kc) +
+     &                    agbmetal_grid(ic,jc,kc))
+     &                    / (d(ic,jc,kc) + agbmass_grid(ic,jc,kc))
+                        if (metalAGB(ic,jc,kc) .gt. 0.95_RKIND)
+     &                    metalAGB(ic,jc,kc) = 0.95_RKIND
+                     endif
+                     endif
+                     d(ic,jc,kc) = d(ic,jc,kc) + agbmass_grid(ic,jc,kc)
+               endif ! end AGB wind feedback
+c
             enddo
          enddo
       enddo ! end loop over feedback grid
@@ -1443,8 +1547,9 @@ c
         Mej = mass_per_cell*real(distcells, RKIND) * 
      &     dunits*(x1*dx)**3._RKIND
         SN_energy = nsn*10**51._RKIND/Nnbors
-        chi_th = 69.58_RKIND*(nsn)**(-2._RKIND/17._RKIND) * 
-     &               (n_avg)**(-4._RKIND/17._RKIND) * 
+c
+        chi_th = 69.58_RKIND*(nsn)**(-2._RKIND/17._RKIND) *
+     &               (n_avg)**(-4._RKIND/17._RKIND) *
      &               (Z_floor)**(-0.28_RKIND)
 #ifdef FORTRAN_DEBUG
         write(7,*) 'chi_th:',chi_th

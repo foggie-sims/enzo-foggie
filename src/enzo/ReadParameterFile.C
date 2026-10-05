@@ -1021,6 +1021,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (sscanf(line, "StarFeedbackTabularFilename = %s", dummy) == 1)
       StarFeedbackTabularFilename = dummy;
     ret += sscanf(line, "StarFeedbackTrackMetalSources = %"ISYM, &StarFeedbackTrackMetalSources);
+    ret += sscanf(line, "StarFeedbackAGB = %"ISYM, &StarFeedbackAGB);
 
     ret += sscanf(line, "ApplyBoundsToBaryonFields = %"ISYM,
 		  &ApplyBoundsToBaryonFields);
@@ -1188,6 +1189,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "MovieTimestepCounter = %"ISYM, &MetaData.MovieTimestepCounter);
 
     ret += sscanf(line, "MultiMetals = %"ISYM, &MultiMetals);
+    ret += sscanf(line, "UseDustDensityField = %"ISYM, &UseDustDensityField);
+    ret += sscanf(line, "InitialDustToGasRatio = %"FSYM, &InitialDustToGasRatio);
+    ret += sscanf(line, "UseSNeRateField = %"ISYM, &UseSNeRateField);
+    ret += sscanf(line, "UseDustSpeciesTrack = %"ISYM, &UseDustSpeciesTrack);
+    ret += sscanf(line, "InitialDustSilicateFraction = %"FSYM, &InitialDustSilicateFraction);
+    ret += sscanf(line, "InitialDustMgSilicateFraction = %"FSYM, &InitialDustMgSilicateFraction);
+    ret += sscanf(line, "InitialDustFeSilicateFraction = %"FSYM, &InitialDustFeSilicateFraction);
+    ret += sscanf(line, "InitialDustCarbonaceousFraction = %"FSYM, &InitialDustCarbonaceousFraction);
     ret += sscanf(line, "IsotropicConduction = %"ISYM, &IsotropicConduction);
     ret += sscanf(line, "AnisotropicConduction = %"ISYM, &AnisotropicConduction);
     ret += sscanf(line, "IsotropicConductionSpitzerFraction = %"FSYM, &IsotropicConductionSpitzerFraction);
@@ -2237,6 +2246,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       if (debug) fprintf(stderr, "Successfully read in feedback table %s.\n", StarFeedbackTabularFilename);
     }
   }
+
+  if (StarFeedbackAGB && !StarFeedbackUseTabularYields)
+    ENZO_FAIL("StarFeedbackAGB requires StarFeedbackUseTabularYields to be enabled.");
 
 
   if (StarFeedbackPreSNFeedback || UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {

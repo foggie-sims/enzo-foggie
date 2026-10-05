@@ -112,12 +112,13 @@ int grid::ReturnHydroRKPointers(float **Prim, bool ReturnMassFractions)
 
   /* Add the colours (NColor is determined in EvolveLevel) */  
 
-  int SNColourNum, MetalNum, MetalIaNum, MetalIINum, MBHColourNum, Galaxy1ColourNum, 
-    Galaxy2ColourNum, MetalAGBNum, MetalNSMNum; 
+  int SNColourNum, MetalNum, MetalIaNum, MetalIINum, MBHColourNum, Galaxy1ColourNum,
+    Galaxy2ColourNum, MetalAGBNum, MetalNSMNum, DustDensityNum;
 
-  if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum, 
-         MetalAGBNum, MetalNSMNum, MBHColourNum, 
-				 Galaxy1ColourNum, Galaxy2ColourNum) == FAIL) {
+  if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum,
+         MetalAGBNum, MetalNSMNum, MBHColourNum,
+				 Galaxy1ColourNum, Galaxy2ColourNum,
+				 DustDensityNum) == FAIL) {
     fprintf(stderr, "Error in grid->IdentifyColourFields.\n");
     return FAIL;
   }
@@ -140,7 +141,29 @@ int grid::ReturnHydroRKPointers(float **Prim, bool ReturnMassFractions)
     }
   }
 
-  if (SNColourNum      != -1) Prim[nfield++] = BaryonField[SNColourNum];  
+  if (SNColourNum      != -1) Prim[nfield++] = BaryonField[SNColourNum];
+  if (DustDensityNum   != -1) Prim[nfield++] = BaryonField[DustDensityNum];
+
+  /* Species-resolved dust tracking: 5 gas-phase elements + 3 dust species
+     (the bulk and silicate dust sums are not carried as fields). */
+  if (UseDustSpeciesTrack) {
+    int MetalCNum  = FindField(MetalDensityCarbon,     FieldType, NumberOfBaryonFields);
+    int MetalONum  = FindField(MetalDensityOxygen,     FieldType, NumberOfBaryonFields);
+    int MetalMgNum = FindField(MetalDensityMagnesium,  FieldType, NumberOfBaryonFields);
+    int MetalSiNum = FindField(MetalDensitySilicon,    FieldType, NumberOfBaryonFields);
+    int MetalFeNum = FindField(MetalDensityIron,       FieldType, NumberOfBaryonFields);
+    int DustMgNum  = FindField(DustDensityMgSilicate,  FieldType, NumberOfBaryonFields);
+    int DustFeNum  = FindField(DustDensityFeSilicate,  FieldType, NumberOfBaryonFields);
+    int DustCNum   = FindField(DustDensityCarbonaceous,FieldType, NumberOfBaryonFields);
+    if (MetalCNum  != -1) Prim[nfield++] = BaryonField[MetalCNum];
+    if (MetalONum  != -1) Prim[nfield++] = BaryonField[MetalONum];
+    if (MetalMgNum != -1) Prim[nfield++] = BaryonField[MetalMgNum];
+    if (MetalSiNum != -1) Prim[nfield++] = BaryonField[MetalSiNum];
+    if (MetalFeNum != -1) Prim[nfield++] = BaryonField[MetalFeNum];
+    if (DustMgNum  != -1) Prim[nfield++] = BaryonField[DustMgNum];
+    if (DustFeNum  != -1) Prim[nfield++] = BaryonField[DustFeNum];
+    if (DustCNum   != -1) Prim[nfield++] = BaryonField[DustCNum];
+  }
   /*   //##### These fields are currently not being used and only causing interpolation problems
   if (MBHColourNum     != -1) Prim[nfield++] = BaryonField[MBHColourNum];
   if (Galaxy1ColourNum != -1) Prim[nfield++] = BaryonField[Galaxy1ColourNum];

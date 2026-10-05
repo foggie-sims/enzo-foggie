@@ -334,8 +334,13 @@ c
 c     Check here for negative densities and energies
 c
       do i=i1, i2
-         if (dslice(i,j)+df(i,j)-df(i+1,j) .le. 0._RKIND) then
-            if (eslice(i,j) .lt. 0._RKIND) then
+c     See the companion comment in flux_hllc.F: negated .gt. so a NaN
+c     density update is reported instead of passing every comparison.
+         if (.not. (dslice(i,j)+df(i,j)-df(i+1,j) .gt. 0._RKIND)) then
+            if (dslice(i,j)+df(i,j)-df(i+1,j) .ne.
+     &           dslice(i,j)+df(i,j)-df(i+1,j)) then
+               write (6,*) 'flux_hll: dnu is NaN:', i, j
+            else if (eslice(i,j) .lt. 0._RKIND) then
                write (6,*) 'flux_hll: eslice < 0: ', i, j
                write (6,*) qc*(ef(i,j)-ef(i+1,j)),
      &              eslice(i,j)*dslice(i,j)

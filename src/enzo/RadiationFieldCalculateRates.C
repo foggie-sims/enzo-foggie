@@ -108,7 +108,12 @@ int RadiationFieldCalculateRates(FLOAT Time)
   /* ------------------------------------------------------------------ */
   /* First, calculate the ramp value, a number between 0 and 1 which
      is used as an external control to the radiation. 
-     (Only used if RadiationFieldType = 1 to 4 or equal to 12). */
+     (Only used if RadiationFieldType = 1 to 4 or equal to 12).
+     The ramp limits are the run-time parameters RadiationRedshiftOn,
+     RadiationRedshiftFullOn, RadiationRedshiftDropOff and
+     RadiationRedshiftOff (defaults 7, 6, 0, 0).  When use_grackle is
+     on, the same parameters are handed to Grackle, which applies an
+     identical ramp to its UV background (see GrackleReadParameters.C). */
 
   float Ramp = 0;
 
@@ -126,29 +131,6 @@ int RadiationFieldCalculateRates(FLOAT Time)
     else
       Ramp = 1.0;
 
-  }
-
-  float RampX = 0.0;  // this is unused below
-  float XRadRedShiftOn = 7.0;
-  float XRadRedShiftOff = 0.0 ;
-  float XRadRedShiftFullOn = 6.0 ;
-  float XRadRedShiftDropOff = 0.0 ;
-  float XRadRedShiftf0to3 = 0.1 ;
-  
-  if (Redshift < XRadRedShiftOn &&
-      Redshift >= XRadRedShiftOff) {
-    
-    if (Redshift > XRadRedShiftFullOn)
-      RampX = 0.5 - 0.5*tanh(15.0*(Redshift - 0.5*
-				   (XRadRedShiftOn + XRadRedShiftFullOn)));
-    else if (Redshift < XRadRedShiftDropOff)
-      RampX = (Redshift - XRadRedShiftOff + XRadRedShiftf0to3*
-	       (XRadRedShiftDropOff - Redshift)) /
-	(XRadRedShiftDropOff -
-	 XRadRedShiftOff);
-    else
-      RampX = 1.0;
-    
   }
 
   float exp_arg = -1.0 * POW(Redshift-2.3, 2);

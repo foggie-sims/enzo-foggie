@@ -54,11 +54,12 @@ int grid::PrepareBoundaryMassFluxFieldNumbers(){
 
   /* identify colour fields if they exist */
   int SNColourNum, MetalNum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum,
-    MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum;
+    MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum, DustDensityNum;
 
   if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum,
               MetalAGBNum, MetalNSMNum,
-              MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum) == FAIL)
+              MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum,
+              DustDensityNum) == FAIL)
     ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
 
   /* pre-compute field numbers so we only need to do this once */
@@ -101,6 +102,28 @@ int grid::PrepareBoundaryMassFluxFieldNumbers(){
   if (MBHColourNum     != -1) BoundaryMassFluxFieldNumbers[count++] = MBHColourNum;
   if (Galaxy1ColourNum != -1) BoundaryMassFluxFieldNumbers[count++] = Galaxy1ColourNum;
   if (Galaxy2ColourNum != -1) BoundaryMassFluxFieldNumbers[count++] = Galaxy2ColourNum;
+  if (DustDensityNum   != -1) BoundaryMassFluxFieldNumbers[count++] = DustDensityNum;
+
+  /* Species-resolved dust tracking: 5 gas-phase elements + 3 dust species
+     (the bulk and silicate dust sums are not carried as fields). */
+  if (UseDustSpeciesTrack) {
+    int MetalCNum  = FindField(MetalDensityCarbon,     FieldType, NumberOfBaryonFields);
+    int MetalONum  = FindField(MetalDensityOxygen,     FieldType, NumberOfBaryonFields);
+    int MetalMgNum = FindField(MetalDensityMagnesium,  FieldType, NumberOfBaryonFields);
+    int MetalSiNum = FindField(MetalDensitySilicon,    FieldType, NumberOfBaryonFields);
+    int MetalFeNum = FindField(MetalDensityIron,       FieldType, NumberOfBaryonFields);
+    int DustMgNum  = FindField(DustDensityMgSilicate,  FieldType, NumberOfBaryonFields);
+    int DustFeNum  = FindField(DustDensityFeSilicate,  FieldType, NumberOfBaryonFields);
+    int DustCNum   = FindField(DustDensityCarbonaceous,FieldType, NumberOfBaryonFields);
+    if (MetalCNum  != -1) BoundaryMassFluxFieldNumbers[count++] = MetalCNum;
+    if (MetalONum  != -1) BoundaryMassFluxFieldNumbers[count++] = MetalONum;
+    if (MetalMgNum != -1) BoundaryMassFluxFieldNumbers[count++] = MetalMgNum;
+    if (MetalSiNum != -1) BoundaryMassFluxFieldNumbers[count++] = MetalSiNum;
+    if (MetalFeNum != -1) BoundaryMassFluxFieldNumbers[count++] = MetalFeNum;
+    if (DustMgNum  != -1) BoundaryMassFluxFieldNumbers[count++] = DustMgNum;
+    if (DustFeNum  != -1) BoundaryMassFluxFieldNumbers[count++] = DustFeNum;
+    if (DustCNum   != -1) BoundaryMassFluxFieldNumbers[count++] = DustCNum;
+  }
 
   return SUCCESS;
 }
