@@ -12,6 +12,7 @@
 #ifdef USE_MPI
 #include "mpi.h"
 #endif
+#include "EnzoTiming.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "ErrorExceptions.h"
@@ -80,8 +81,15 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
   /* Update the star particle counters. */
 
+  /* This is a global MPI_Allreduce over 2*NumberOfGrids ints, executed
+     once per subcycle of every level.  The Allreduce is also a
+     synchronization point, so this section absorbs whatever load
+     imbalance accumulated upstream - compare its cost against the
+     ~1 ms a 7 kB Allreduce on 128 ranks actually needs. */
+  TIMER_START("SPCommUpdateCount");
   CommunicationUpdateStarParticleCount(Grids, MetaData, NumberOfGrids,
 				       TotalStarParticleCountPrevious);
+  TIMER_STOP("SPCommUpdateCount");
 
   /* Update position and velocity of star particles from the actual
      particles */
