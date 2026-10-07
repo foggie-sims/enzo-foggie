@@ -342,20 +342,34 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
          central differences around the star's cell.  Absorber-side
          shielding is left to Grackle.
 
-         TODO(CWT, refine): placeholders --
-           - kappa per band [cm^2/g] is 0 (no attenuation yet); choose
-             opacities and any metallicity / dust-to-gas scaling.
-           - the Sobolev length cap (in cells) is arbitrary; consider the
-             Jeans length instead. */
+         Opacities follow FIRE-2's LEBRON (Hopkins et al. 2018, 2020):
+         photon-weighted dust opacity per gas mass at solar metallicity,
+         scaled linearly with the metallicity of the gas in the star's cell
+         (dust-to-gas assumed proportional to Z):
+           kdissH2 (LW, 11.2-13.6 eV)      -> FUV band,         2000 cm^2/g
+           kdetHM  (H-, mostly ~0.75-3 eV) -> optical/NIR band,  180 cm^2/g
+           ISRF    (Habing, 6-13.6 eV)     -> FUV band,         2000 cm^2/g
+         Gas metals are Metallicity + SNColour, as in GrackleWrapper, and
+         Z_sun is CoolData.SolarMetalFractionByMass, as used by Grackle.
 
-      const float SourceOpacity = (DepositField == KDISSH2_SOURCE_FIELD) ? 0.0 :
-                                  (DepositField == KDETHM_SOURCE_FIELD)  ? 0.0 :
-                                                                           0.0;
+         TODO(CWT, refine): the Sobolev length cap (in cells) is arbitrary;
+           consider the Jeans length instead.
+         TODO(CWT, check): Z_sun normalization vs FIRE's; recompute kappas
+           from the SB99 SEDs (band/cross-section weighted). */
+
+      const float SourceOpacitySolar = (DepositField == KDISSH2_SOURCE_FIELD) ? 2000.0 :
+                                       (DepositField == KDETHM_SOURCE_FIELD)  ?  180.0 :
+                                                                                2000.0;
       const float MaxSobolevCells = 4.0;
 
       int DensNum = FindField(Density, FieldType, NumberOfBaryonFields);
       float *rho = (DensNum >= 0) ? BaryonField[DensNum] : NULL;
       float SigmaUnits = DensityUnits * LengthUnits;  // code rho*L -> g/cm^2
+
+      int MetalNum    = FindField(Metallicity, FieldType, NumberOfBaryonFields);
+      int SNColourNum = FindField(SNColour, FieldType, NumberOfBaryonFields);
+      float *MetalField    = (MetalNum    >= 0) ? BaryonField[MetalNum]    : NULL;
+      float *SNColourField = (SNColourNum >= 0) ? BaryonField[SNColourNum] : NULL;
 
       ParticleRadiationTemp = new float[NumberOfParticles];
       for (i = 0; i < NumberOfParticles; i++) {
@@ -371,7 +385,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 
         /* Source-side attenuation (see above). */
 
-        if (SourceOpacity > 0 && rho != NULL) {
+        if (rho != NULL && (MetalField != NULL || SNColourField != NULL)) {
           int idx[MAX_DIMENSION] = {0, 0, 0}, stride[MAX_DIMENSION];
           stride[0] = 1;
           stride[1] = GridDimension[0];
@@ -391,7 +405,11 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
           float Lcap = MaxSobolevCells * CellWidth[0][0];
           float L = (grad2 > 0) ? min(rho[c]/sqrt(grad2), Lcap) : Lcap;
           float Sigma = rho[c] * L * SigmaUnits;
-          ParticleRadiationTemp[i] *= exp(-SourceOpacity * Sigma);
+          float MetalDensity = ((MetalField    != NULL) ? MetalField[c]    : 0) +
+                               ((SNColourField != NULL) ? SNColourField[c] : 0);
+          float ZoverZsun = MetalDensity / rho[c] /
+                            CoolData.SolarMetalFractionByMass;
+          ParticleRadiationTemp[i] *= exp(-SourceOpacitySolar * ZoverZsun * Sigma);
         }
       }
       ParticleMassPointer = ParticleRadiationTemp;
