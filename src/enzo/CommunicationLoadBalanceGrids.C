@@ -81,7 +81,13 @@ int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
     GridHierarchyPointer[i]->GridData->CollectGridInformation
       (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles);
     //    ComputeTime[i] = GridMemory; // roughly speaking
-    ComputeTime[i] = float(NumberOfCells);
+    /* LoadBalanceCountGhostZones: weight a grid by the total cells it allocates,
+       not just the active ones.  Off by default, so the balancer keeps 
+       its historical weighting unless this is set. */
+    if (LoadBalanceCountGhostZones)
+      ComputeTime[i] = float(CellsTotal);
+    else
+      ComputeTime[i] = float(NumberOfCells);
     ProcessorComputeTime[proc] += ComputeTime[i];
     NewProcessorNumber[i] = proc;
   }

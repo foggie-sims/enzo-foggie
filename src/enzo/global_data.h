@@ -233,6 +233,11 @@ EXTERN int OptimalSubgridsPerProcessor;
 
 EXTERN int SubgridSizeAutoAdjustMinimum;
 
+/* Weight grids by the cells they allocate (ghost zones included) when load
+   balancing, instead of by active cells only. */
+
+EXTERN int LoadBalanceCountGhostZones;
+
 /* This is the minimum allowable edge size for a new subgrid (>=4) */
 
 EXTERN int MinimumSubgridEdge;
