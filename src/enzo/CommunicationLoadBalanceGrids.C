@@ -81,23 +81,9 @@ int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
     GridHierarchyPointer[i]->GridData->CollectGridInformation
       (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles);
     //    ComputeTime[i] = GridMemory; // roughly speaking
-    /* LoadBalanceCountGhostZones: weight a grid by the cells it ALLOCATES,
-       not just the active ones.  CollectGridInformation already returns both
-       -- NumberOfCells is the GridEndIndex-GridStartIndex extent, CellsTotal
-       is the full GridDimension product including ghost zones -- and only the
-       active count was ever used.
-
-       That systematically mis-weights a hierarchy whose grids differ in size.
-       A rank holding one 60^3 grid and a rank holding 216 grids of 6^3 have
-       the SAME active count, 216000 each, and the balancer calls them equal;
-       the second allocates 373248 cells against 287496 and pays 216 boundary
-       exchanges against one.  Measured on halo23679 L4: 2.33e9 cells
-       allocated to hold 1.21e9 active, a factor 1.92, and the ratio varies
-       per grid.
-
-       Off by default, so the balancer keeps its historical weighting unless
-       this is set. */
-
+    /* LoadBalanceCountGhostZones: weight a grid by the total cells it allocates,
+       not just the active ones.  Off by default, so the balancer keeps 
+       its historical weighting unless this is set. */
     if (LoadBalanceCountGhostZones)
       ComputeTime[i] = float(CellsTotal);
     else
