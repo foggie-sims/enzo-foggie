@@ -265,14 +265,6 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
   // grackle_data->radiative_transfer_coupled_rate_solver set in RadiativeTransferReadParameters
   // grackle_data->radiative_transfer_hydrogen_only set in RadiativeTransferReadParameters
 
-
-  // Error checking for behavior not implemented
-  //Behavior should be implemented in Grackle now - CT 08/12/2026
-  //if ( (grackle_data->photoelectric_heating == 2) ||
-  //     (grackle_data->use_isrf_field)){
-  //  ENZO_FAIL("Photoelectric heating model 2, and ISRF field, in Grackle is not yet implemented.\n");
-  //}
-
 #ifdef GRACKLE_NEW_DUST_MODEL
   /* Species-resolved dust tracking requires the bulk dust_density field
      and dust_model = 1. */
