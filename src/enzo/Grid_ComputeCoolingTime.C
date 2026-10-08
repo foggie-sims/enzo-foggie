@@ -393,7 +393,12 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
 
 
   if (UseLocalStellarRadiation) {
-    //CWT 06/07/26: Use GridAttribute defined each timestep in Grid_GrackleWrapper.C
+    /* Estimate local radiation field from new Stars - CWT 06/07/26 */
+    /* Sets the k_*_grid_sum and isrf_grid_sum grid attributes */
+    if (this->ComputeLocalStellarRadiation() == FAIL) {
+      ENZO_FAIL("Error in grid->ComputeLocalStellarRadiation.\n");
+    }
+
     k_diss_H2_grid  = new float[size];
     k_det_HM_grid  = new float[size];
     k_diss_CO_grid  = new float[size];

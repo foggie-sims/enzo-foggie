@@ -765,6 +765,10 @@ gradient force to gravitational force for one-zone collapse test. */
 
    int GrackleWrapper();
 
+/* Estimate local radiation field from young star particles (sets k_*_grid_sum, isrf_grid_sum). */
+
+   int ComputeLocalStellarRadiation();
+
 /* Handle the selection of shock finding algorithm */
 
    int ShocksHandler();
