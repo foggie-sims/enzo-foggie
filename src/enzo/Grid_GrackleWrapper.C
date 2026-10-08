@@ -359,10 +359,7 @@ int grid::GrackleWrapper()
   float *k_ion_CI_grid = NULL;
   float *k_ion_OI_grid = NULL;
   float *isrf_grid = NULL;
-  float *EmptyRtArray0 = NULL;
-  float *EmptyRtArray1 = NULL;
-  float *EmptyRtArray2 = NULL;
-  float *EmptyRtArray3 = NULL;
+  float *EmptyRtArray = NULL;
 
   //fprintf(stdout, "UseLocalStellarRadiation  = %"ISYM"\n", UseLocalStellarRadiation);
   if (UseLocalStellarRadiation){
@@ -385,14 +382,15 @@ int grid::GrackleWrapper()
     k_ion_CI_grid_sum = 0;
     k_ion_OI_grid_sum = 0;
     isrf_grid_sum = 0;
+    float dt_table = pSNFBTable.pop_age[1] - pSNFBTable.pop_age[0];
     for (i = 0; i < this->NumberOfParticles; i++) {
       if (this->ParticleType[i] == PARTICLE_TYPE_STAR) {
         float age = (this->Time - this->ParticleAttribute[0][i]) * TimeUnits / yr_s; //Convert to yr
         if (age < 5e7) { 
-          //int aa = search_lower_bound((float*)pSNFBTable.pop_age, age, 0, pSNFBTable.n_age+1, pSNFBTable.n_age+1);  //+1?
-          float dt_table = pSNFBTable.pop_age[1] - pSNFBTable.pop_age[0];
-          float t_age = (age - pSNFBTable.pop_age[0]) / dt_table;
-          int aa = (int)floor(t_age);
+          //Interpolate in age and metallicity to get the rates
+          int aa = (int)floor((age - pSNFBTable.pop_age[0]) / dt_table); //Index of the lower bound for age
+
+          float t_age; //How far between the two indices?
           if (aa>=pSNFBTable.n_age-1){
             aa=pSNFBTable.n_age-2;
             t_age = 1;
@@ -406,15 +404,9 @@ int grid::GrackleWrapper()
           }
 
           float metallicity = this->ParticleAttribute[2][i];
-         // int zz = search_lower_bound((float*)metallicity_bins, metallicity, 0, 6, 6);
-          int zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met, pSNFBTable.n_met);
+          int zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met, pSNFBTable.n_met); //Index of the lower bound for metallicity
 
-          //fprintf(stdout, "Age %"ESYM", ", age);
-          //fprintf(stdout, "aa %"ISYM",", aa);
-          //fprintf(stdout, "Z %"ESYM", ", metallicity);
-          //fprintf(stdout, "zz %"ISYM"\n", zz);
-
-          float t_z=0.5f;
+          float t_z; //How far between the two indices?
           if (zz>=pSNFBTable.n_met-1){
             zz=pSNFBTable.n_met-2;
             t_z = 1;
@@ -432,7 +424,7 @@ int grid::GrackleWrapper()
           int ii2 = (zz+1) * pSNFBTable.n_age + aa;
           int ii3 = (zz+1) * pSNFBTable.n_age + (aa+1);
 
-          /* In Units Hz/cm^2 per Solar Mass*/
+          /* In Units Hz cm^2 per Solar Mass*/
           float k_diss_H2_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kdiss_H2[ii0] + t_age * (1-t_z) * pSNFBTable.kdiss_H2[ii1] + (1-t_age) * t_z * pSNFBTable.kdiss_H2[ii2] + t_age * t_z * pSNFBTable.kdiss_H2[ii3];
           float k_det_HM_sb99_interp  = (1-t_age) * (1-t_z) * pSNFBTable.kdet_HM[ii0] + t_age * (1-t_z) * pSNFBTable.kdet_HM[ii1] + (1-t_age) * t_z * pSNFBTable.kdet_HM[ii2] + t_age * t_z * pSNFBTable.kdet_HM[ii3];
           float k_diss_CO_sb99_interp = (1-t_age) * (1-t_z) * pSNFBTable.kdiss_CO[ii0] + t_age * (1-t_z) * pSNFBTable.kdiss_CO[ii1] + (1-t_age) * t_z * pSNFBTable.kdiss_CO[ii2] + t_age * t_z * pSNFBTable.kdiss_CO[ii3];
@@ -441,14 +433,13 @@ int grid::GrackleWrapper()
           float isrf_sb99_interp      = (1-t_age) * (1-t_z) * pSNFBTable.isrf[ii0] + t_age * (1-t_z) * pSNFBTable.isrf[ii1] + (1-t_age) * t_z * pSNFBTable.isrf[ii2] + t_age * t_z * pSNFBTable.isrf[ii3];
 
           float dx = this->CellWidth[0][0];
-          float ParticleMass_Msun = this->ParticleInitialMass[i] * dx * dx * dx *  MassUnits / SolarMass; //Convert from code mass to Msun
 
-          k_diss_H2I_grid_sum += k_diss_H2_sb99_interp * ParticleMass_Msun;
-          k_det_HM_grid_sum += k_det_HM_sb99_interp * ParticleMass_Msun;
-          k_diss_COI_grid_sum += k_diss_CO_sb99_interp * ParticleMass_Msun;
-          k_ion_CI_grid_sum += k_ion_CI_sb99_interp * ParticleMass_Msun;
-          k_ion_OI_grid_sum += k_ion_OI_sb99_interp * ParticleMass_Msun;
-          isrf_grid_sum += isrf_sb99_interp * ParticleMass_Msun;
+          k_diss_H2I_grid_sum += k_diss_H2_sb99_interp * this->ParticleInitialMass[i];
+          k_det_HM_grid_sum += k_det_HM_sb99_interp * this->ParticleInitialMass[i];
+          k_diss_COI_grid_sum += k_diss_CO_sb99_interp * this->ParticleInitialMass[i];
+          k_ion_CI_grid_sum += k_ion_CI_sb99_interp * this->ParticleInitialMass[i];
+          k_ion_OI_grid_sum += k_ion_OI_sb99_interp * this->ParticleInitialMass[i];
+          isrf_grid_sum += isrf_sb99_interp * this->ParticleInitialMass[i];
 
 
 
@@ -456,12 +447,16 @@ int grid::GrackleWrapper()
       }
     }
 
-    k_diss_H2I_grid_sum = k_diss_H2I_grid_sum * TimeUnits / (LengthUnits * LengthUnits); //Convert from cm^2/s to code units
-    k_det_HM_grid_sum  = k_det_HM_grid_sum  * TimeUnits / (LengthUnits * LengthUnits); 
-    k_diss_COI_grid_sum = k_diss_COI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); 
-    k_ion_CI_grid_sum = k_ion_CI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); 
-    k_ion_OI_grid_sum = k_ion_OI_grid_sum * TimeUnits / (LengthUnits * LengthUnits); 
-    isrf_grid_sum = isrf_grid_sum / (LengthUnits * LengthUnits); //Convert from G0 cm^2 to G0 code length^2
+    float conversion_factor = dx * dx * dx * MassUnits / SolarMass; //Convert particle density to units of Msun
+    conversion_factor = conversion_factor * TimeUnits/(LengthUnits*LengthUnits); //Convert from cm^2/s to code units
+
+    k_diss_H2I_grid_sum = k_diss_H2I_grid_sum * conversion_factor;
+    k_det_HM_grid_sum  = k_det_HM_grid_sum  * conversion_factor;
+    k_diss_COI_grid_sum = k_diss_COI_grid_sum  * conversion_factor;
+    k_ion_CI_grid_sum = k_ion_CI_grid_sum * conversion_factor;
+    k_ion_OI_grid_sum = k_ion_OI_grid_sum * conversion_factor;
+    isrf_grid_sum = isrf_grid_sum * conversion_factor;
+
 
     float grid_dx = this->GridRightEdge[0]-this->GridLeftEdge[0];
     float grid_dy = this->GridRightEdge[1]-this->GridLeftEdge[1];
@@ -523,22 +518,17 @@ int grid::GrackleWrapper()
     }
 
     // Need to set the other fields to the same 0 array for now
-    EmptyRtArray0  = new float[size];
-    EmptyRtArray1  = new float[size];
-    EmptyRtArray2  = new float[size];
-    EmptyRtArray3  = new float[size];
+    EmptyRtArray  = new float[size];
+
 
     for (int i = 0; i < size; i++){
-      EmptyRtArray0[i] = 0;
-      EmptyRtArray1[i] = 0;
-      EmptyRtArray2[i] = 0;
-      EmptyRtArray3[i] = 0;
+      EmptyRtArray[i] = 0;
     }
 
-    my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
-    my_fields.RT_HeI_ionization_rate  = EmptyRtArray1;
-    my_fields.RT_HeII_ionization_rate = EmptyRtArray2;
-    my_fields.RT_heating_rate = EmptyRtArray3;
+    my_fields.RT_HI_ionization_rate   = EmptyRtArray;
+    my_fields.RT_HeI_ionization_rate  = EmptyRtArray;
+    my_fields.RT_HeII_ionization_rate = EmptyRtArray;
+    my_fields.RT_heating_rate = EmptyRtArray;
   } // UseLocalStellarRadiation
   /*                                              */
 
