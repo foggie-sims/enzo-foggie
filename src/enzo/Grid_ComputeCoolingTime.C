@@ -389,10 +389,8 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
   float *k_ion_CI_grid = NULL;
   float *k_ion_OI_grid = NULL;
   float *isrf_grid = NULL;
-  float *EmptyRtArray0 = NULL;
-  float *EmptyRtArray1 = NULL;
-  float *EmptyRtArray2 = NULL;
-  float *EmptyRtArray3 = NULL;
+  float *EmptyRtArray = NULL;
+
 
   if (UseLocalStellarRadiation) {
     //CWT 06/07/26: Use GridAttribute defined each timestep in Grid_GrackleWrapper.C
@@ -424,22 +422,17 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
       my_fields.isrf_habing = isrf_grid;
     }
     // Need to set the other fields to the same 0 array for now
-    EmptyRtArray0  = new float[size];
-    EmptyRtArray1  = new float[size];
-    EmptyRtArray2  = new float[size];
-    EmptyRtArray3  = new float[size];
+    EmptyRtArray = new float[size];
+
 
     for (int i = 0; i < size; i++){
-      EmptyRtArray0[i] = 0;
-      EmptyRtArray1[i] = 0;
-      EmptyRtArray2[i] = 0;
-      EmptyRtArray3[i] = 0;
+      EmptyRtArray[i] = 0;
     }
 
-    my_fields.RT_HI_ionization_rate   = EmptyRtArray0;
-    my_fields.RT_HeI_ionization_rate  = EmptyRtArray1;
-    my_fields.RT_HeII_ionization_rate = EmptyRtArray2;
-    my_fields.RT_heating_rate = EmptyRtArray3;
+    my_fields.RT_HI_ionization_rate   = EmptyRtArray;
+    my_fields.RT_HeI_ionization_rate  = EmptyRtArray;
+    my_fields.RT_HeII_ionization_rate = EmptyRtArray;
+    my_fields.RT_heating_rate = EmptyRtArray;
   } //UseLocalStellarRadiation
   /*                                              */
 
@@ -478,10 +471,7 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
       delete[] k_ion_CI_grid;
       delete[] k_ion_OI_grid;
       delete[] isrf_grid;
-      delete[] EmptyRtArray0;
-      delete[] EmptyRtArray1;
-      delete[] EmptyRtArray2;
-      delete[] EmptyRtArray3;
+      delete[] EmptyRtArray;
 
     }
 
