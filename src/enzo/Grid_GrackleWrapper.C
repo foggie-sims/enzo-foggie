@@ -32,7 +32,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
 int FindField(int field, int farray[], int numfields);
-
+           
 int grid::GrackleWrapper()
 {
 
@@ -52,6 +52,7 @@ int grid::GrackleWrapper()
 #ifdef TRANSFER
   dt_cool = (grackle_data->radiative_transfer_intermediate_step == TRUE) ? dtPhoton : dtFixed;
 #endif
+
   
   /* Compute the size of the fields. */
  
@@ -350,8 +351,71 @@ int grid::GrackleWrapper()
   }
 #endif // TRANSFER
 
-  /* Call the chemistry solver. */
+  float *k_diss_H2_grid = NULL;
+  float *k_det_HM_grid = NULL;
+  float *k_diss_CO_grid = NULL;
+  float *k_ion_CI_grid = NULL;
+  float *k_ion_OI_grid = NULL;
+  float *isrf_grid = NULL;
+  float *EmptyRtArray = NULL;
 
+  //fprintf(stdout, "UseLocalStellarRadiation  = %"ISYM"\n", UseLocalStellarRadiation);
+  if (UseLocalStellarRadiation){
+    /* Estimate local radiation field from new Stars - CWT 06/07/26 */
+    /* Sets the k_*_grid_sum and isrf_grid_sum grid attributes */
+    if (this->ComputeLocalStellarRadiation() == FAIL) {
+      ENZO_FAIL("Error in grid->ComputeLocalStellarRadiation.\n");
+    }
+
+    /* Define Grid */
+    k_diss_H2_grid  = new float[size];
+    k_det_HM_grid  = new float[size];
+    k_diss_CO_grid  = new float[size];
+    k_ion_CI_grid  = new float[size];
+    k_ion_OI_grid  = new float[size];
+    isrf_grid = new float[size];
+
+    for (int i = 0; i < size; i++){
+      k_diss_H2_grid[i] = k_diss_H2I_grid_sum;
+      k_det_HM_grid[i] = k_det_HM_grid_sum; 
+      k_diss_CO_grid[i] = k_diss_COI_grid_sum;
+      k_ion_CI_grid[i] = k_ion_CI_grid_sum;
+      k_ion_OI_grid[i] = k_ion_OI_grid_sum;
+      isrf_grid[i] = isrf_grid_sum;
+    }
+
+    my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;
+#ifdef HM_GRACKLE
+    my_fields.RT_HM_detachment_rate   =  k_det_HM_grid; //Feeds in Britton's Grackle Branch (foggie-sf) only
+    //The following rates are commented out for now, but will feed into the newchem-cpp branch of grackle when ready
+    //my_fields.RT_CO_dissociation_rate =  k_diss_CO_grid; 
+    //my_fields.RT_CI_ionization_rate   =  k_ion_CI_grid; 
+    //my_fields.RT_OI_ionization_rate   =  k_ion_OI_grid; 
+#endif
+    if (grackle_data->use_isrf_field){
+      my_fields.isrf_habing = isrf_grid;
+      //fprintf(stdout, " setting isrf_habing  = %"ESYM" (Habing Units)\n", isrf_grid[0]);
+
+    }
+
+    // Need to set the other fields to the same 0 array for now
+    EmptyRtArray  = new float[size];
+
+
+    for (int i = 0; i < size; i++){
+      EmptyRtArray[i] = 0;
+    }
+
+    my_fields.RT_HI_ionization_rate   = EmptyRtArray;
+    my_fields.RT_HeI_ionization_rate  = EmptyRtArray;
+    my_fields.RT_HeII_ionization_rate = EmptyRtArray;
+    my_fields.RT_heating_rate = EmptyRtArray;
+  } // UseLocalStellarRadiation
+  /*                                              */
+
+  //fprintf(stdout, "Calling Grackle - %"ISYM"\n", UseLocalStellarRadiation);
+
+  /* Call the chemistry solver. */
   if (solve_chemistry(&grackle_units, &my_fields, (double) dt_cool) == FAIL){
     fprintf(stderr, "Error in Grackle solve_chemistry.\n");
     delete [] TotalDust;
@@ -397,6 +461,17 @@ int grid::GrackleWrapper()
   delete [] g_grid_dimension;
   delete [] g_grid_start;
   delete [] g_grid_end;
+
+    if (UseLocalStellarRadiation){
+      delete[] k_diss_H2_grid;
+      delete[] k_det_HM_grid;
+      delete[] k_diss_CO_grid;
+      delete[] k_ion_CI_grid;
+      delete[] k_ion_OI_grid;
+      delete[] isrf_grid;
+      delete[] EmptyRtArray;
+    }
+
 
   LCAPERF_STOP("grid_GrackleWrapper");
 

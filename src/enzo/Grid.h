@@ -94,6 +94,13 @@ class grid
   int   SubgridsAreStatic;             // 
   int   ID;                            // Grid ID Number
   int   sfSeed;
+  float k_diss_H2I_grid_sum;           // For Local Radiation implementation - CWT 06/07/26
+  float k_det_HM_grid_sum;
+  float k_diss_COI_grid_sum;
+  float k_ion_CI_grid_sum;
+  float k_ion_OI_grid_sum;
+  float isrf_grid_sum;                 // End Local Radiation Implementation
+
 //
 //  Baryon grid data
 //
@@ -757,6 +764,10 @@ gradient force to gravitational force for one-zone collapse test. */
 /* Wrap the grackle chemistry solver. */
 
    int GrackleWrapper();
+
+/* Estimate local radiation field from young star particles (sets k_*_grid_sum, isrf_grid_sum). */
+
+   int ComputeLocalStellarRadiation();
 
 /* Handle the selection of shock finding algorithm */
 
