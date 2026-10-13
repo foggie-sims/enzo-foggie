@@ -429,6 +429,18 @@ c     starmass_in_Msun/StarFormationMinimumMass.
      $              StarFormationMinimumMass) then
 
                   if (StochasticStarFormation .eq. 1) then
+
+c     A winning draw creates a particle of StarFormationMinimumMass,
+c     which is not the mass that set gasfrac above, so the cell has to
+c     be able to afford one.  Tested before the draw so that a cell
+c     which cannot does not consume a random variate.  The 0.9 ceiling
+c     is the one already applied to gasfrac above; re-applying it here
+c     keeps the recomputed gasfrac below that ceiling by construction.
+                     if (StarFormationMinimumMass .gt.
+     $                    0.9_RKIND*d(i,j,k)*m1) then
+                        goto 10
+                     endif
+
                      call random_number(random)
                      critval = starmass_in_Msun / 
      $                    StarFormationMinimumMass
@@ -438,6 +450,18 @@ c     starmass_in_Msun/StarFormationMinimumMass.
                         
                      starmass_in_Msun = StarFormationMinimumMass
                      starmass = starmass_in_Msun / m1
+
+c     Mass conservation.  gasfrac still holds its pre-promotion value,
+c     and gasfrac -- not starmass -- is what debits the cell further
+c     down this loop (see "Remove mass from grid").  Without the line
+c     below the particle gains StarFormationMinimumMass while the gas
+c     loses only critval times that, so every winning draw creates mass
+c     from nothing by a factor 1/critval, and critval << 1 is the whole
+c     premise of this branch.  metal(i,j,k) is a fraction here (see
+c     metalf below), so rescaling d debits the metal density correctly
+c     as well and needs no separate correction.
+                     gasfrac = starmass / d(i,j,k)
+
                      if (WriteStarLogFiles .eq. 1) then 
                          write(4,300) 'Star particle does not meet ',
      $                        'minimum mass threshold: M =', 
@@ -448,9 +472,9 @@ c     starmass_in_Msun/StarFormationMinimumMass.
  300                     format(a,a,1pe10.3,a,2(1pe10.3))
                      endif
                   else
-c                 impose the floor if SF if non-stochastic. 
-c                 promote particles StarFormationMinimumMass when 
-c                 they survive the random draw 
+c     Non-stochastic: StarFormationMinimumMass is a hard floor and a
+c     sub-minimum cell forms nothing.  (The two lines that used to sit
+c     here described the stochastic branch above rather than this one.)
                      goto 10
                   endif
                endif
