@@ -412,15 +412,13 @@ c     a star particle.
      $              dt / timeconstant )
                
                
-c     Calculate star mass (this is actually a density, since Enzo treats
-c     particle masses as densities)
+c     Calc star mass as a density; Enzo treats particles as densities)
                starmass =  gasfrac * d(i,j,k) 
                
-c     Calculate star mass in solar masses, which means multiplying
-c     'starmass' by the cell volume to get an actual mass, and then
-c     dividing by Msun. Only make a star particle if (a) this is greater
-c     than StarFormationMinimumMass or (b) StochasticStarFormation is
-c     ste and a random number is less than
+c     Calculate star mass in Msun by multiplying 'starmass' by the 
+c     cell volume and dividing by Msun. Only make a star particle if 
+c     (a) this is greater than StarFormationMinimumMass or 
+c     (b) StochasticStarFormation = 1 and a random number is less than
 c     starmass_in_Msun/StarFormationMinimumMass.
                
                starmass_in_Msun = starmass * m1
@@ -431,10 +429,9 @@ c     starmass_in_Msun/StarFormationMinimumMass.
                   if (StochasticStarFormation .eq. 1) then
 
 c     A winning draw creates a particle of StarFormationMinimumMass,
-c     which is not the mass that set gasfrac above, so the cell has to
-c     be able to afford one.  Tested before the draw so that a cell
-c     which cannot does not consume a random variate.  The 0.9 ceiling
-c     is the one already applied to gasfrac above; re-applying it here
+c     Tested before the draw so that a cell which cannot does not 
+c     consume a random variate.  The 0.9 ceiling is the one already 
+c     applied to gasfrac above; re-applying it here
 c     keeps the recomputed gasfrac below that ceiling by construction.
                      if (StarFormationMinimumMass .gt.
      $                    0.9_RKIND*d(i,j,k)*m1) then
@@ -451,15 +448,7 @@ c     keeps the recomputed gasfrac below that ceiling by construction.
                      starmass_in_Msun = StarFormationMinimumMass
                      starmass = starmass_in_Msun / m1
 
-c     Mass conservation.  gasfrac still holds its pre-promotion value,
-c     and gasfrac -- not starmass -- is what debits the cell further
-c     down this loop (see "Remove mass from grid").  Without the line
-c     below the particle gains StarFormationMinimumMass while the gas
-c     loses only critval times that, so every winning draw creates mass
-c     from nothing by a factor 1/critval, and critval << 1 is the whole
-c     premise of this branch.  metal(i,j,k) is a fraction here (see
-c     metalf below), so rescaling d debits the metal density correctly
-c     as well and needs no separate correction.
+c     Enforce Mass conservation by updating gasfrac from the above. 
                      gasfrac = starmass / d(i,j,k)
 
                      if (WriteStarLogFiles .eq. 1) then 
@@ -473,8 +462,7 @@ c     as well and needs no separate correction.
                      endif
                   else
 c     Non-stochastic: StarFormationMinimumMass is a hard floor and a
-c     sub-minimum cell forms nothing.  (The two lines that used to sit
-c     here described the stochastic branch above rather than this one.)
+c     sub-minimum cell forms nothing.  
                      goto 10
                   endif
                endif
