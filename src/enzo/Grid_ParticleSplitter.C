@@ -80,12 +80,13 @@ int grid::ParticleSplitter(int level, int iteration, int NumberOfIDs,
   /* Find metallicity field and set flag. */
  
   int SNColourNum, MetalNum, MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum,
-    MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum;
+    MetalIaNum, MetalIINum, MetalAGBNum, MetalNSMNum, DustDensityNum;
   int MetallicityField = FALSE;
 
   if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum,
               MetalAGBNum, MetalNSMNum,
-              MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum) == FAIL)
+              MBHColourNum, Galaxy1ColourNum, Galaxy2ColourNum,
+              DustDensityNum) == FAIL)
     ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
 
   MetalNum = max(MetalNum, SNColourNum);

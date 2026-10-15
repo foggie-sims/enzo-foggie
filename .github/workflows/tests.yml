@@ -49,45 +49,23 @@ jobs:
           git tag tip
 
       - name: Restore dependencies cache
-        id: restore-deps
+        id: restore-deps-comp
         uses: actions/cache@v5
         with:
           path: |
-            ~/.conda/pkgs
-            ~/local
-          key: dependencies-v1
+            /home/runner/work/.conda/pkgs
+          key: deps-compile
 
       # pip install h5py to avoid duplicating HDF5 libraries
       - name: Create conda environment
-        if: steps.restore-deps.outputs.cache-hit != 'true'
+        if: steps.restore-deps-comp.outputs.cache-hit != 'true'
         run: |
           conda install -y -c conda-forge \
             cython numpy fastcache flake8 nose girder-client matplotlib pytest gitpython pip
             pip install h5py yt-astro-analysis
 
-      - name: Install HYPRE
-        if: steps.restore-deps.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p ${HOME}/local
-          if [ ! -f ${HOME}/local/lib/libHYPRE.a ]; then
-            cd ${HOME}
-            wget https://github.com/hypre-space/hypre/archive/refs/tags/v${HYPRE}.tar.gz
-            tar xvfz v${HYPRE}.tar.gz
-            cd hypre-${HYPRE}/src
-            ./configure --with-MPI --with-MPI-include=/usr/include/mpi --with-MPI-libs=mpi --with-MPI-lib-dirs=/usr/lib --prefix=${HOME}/local
-            make install
-          fi
-
-      - name: Install Grackle
-        if: steps.restore-deps.outputs.cache-hit != 'true'
-        run: |
-          git clone -b main https://github.com/grackle-project/grackle ${HOME}/grackle
-          cd ${HOME}/grackle
-          cmake -DCMAKE_INSTALL_PREFIX=${HOME}/local -B build
-          cmake --build build
-          cmake --install build
-
       - name: Test compilation configurations
+        id: test-compile-options
         run: |
           ./configure
           cd src/enzo
@@ -134,7 +112,7 @@ jobs:
           make -j 4 || (make show-config ; exit 1)
 
       - name: Upload compilation output
-        if: always()
+        if: failure() && steps.test-compile-options.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
           name: compile-output
@@ -170,28 +148,43 @@ jobs:
           activate-environment: enzo-ci
           auto-activate-base: false
 
+      - name: Restore dependencies cache
+        id: restore-deps-test
+        uses: actions/cache@v5
+        with:
+          path: |
+            /home/runner/work/local
+            /home/runner/work/.conda/pkgs
+          key: deps-test
+          
+      - name: Pull yt enzo-ci-fix branch
+        run: git clone --branch enzo-ci-fix https://github.com/clairekope/yt.git ${HOME}/yt
+
        # pip install h5py to avoid duplicating HDF5 libraries
       - name: Create conda environment
+        if: steps.restore-deps-test.outputs.cache-hit != 'true'
         run: |
           conda install -y -c conda-forge \
             cython numpy fastcache flake8 nose girder-client matplotlib pytest gitpython pip 
-            pip install h5py yt-astro-analysis
+          cd ${HOME}/yt
+          pip install .
+          pip install h5py yt-astro-analysis
 
       - name: Install HYPRE
+        if: steps.restore-deps-test.outputs.cache-hit != 'true'
         run: |
           mkdir -p ${HOME}/local
-          if [ ! -f ${HOME}/local/lib/libHYPRE.a ]; then
-            cd ${HOME}
-            wget https://github.com/hypre-space/hypre/archive/refs/tags/v${HYPRE}.tar.gz
-            tar xvfz v${HYPRE}.tar.gz
-            cd hypre-${HYPRE}/src
-            ./configure --with-MPI --with-MPI-include=/usr/include/mpi --with-MPI-libs=mpi --with-MPI-lib-dirs=/usr/lib --prefix=${HOME}/local
-            make install
-          fi
+          cd ${HOME}
+          wget https://github.com/hypre-space/hypre/archive/refs/tags/v${HYPRE}.tar.gz
+          tar xvfz v${HYPRE}.tar.gz
+          cd hypre-${HYPRE}/src
+          ./configure --with-MPI --with-MPI-include=/usr/include/mpi --with-MPI-libs=mpi --with-MPI-lib-dirs=/usr/lib --prefix=${HOME}/local
+          make install
 
       - name: Install Grackle
+        if: steps.restore-deps-test.outputs.cache-hit != 'true'
         run: |
-          git clone -b main https://github.com/grackle-project/grackle ${HOME}/grackle
+          git clone -b foggie-sf https://github.com/brittonsmith/grackle.git ${HOME}/grackle
           cd ${HOME}/grackle
           cmake -DCMAKE_INSTALL_PREFIX=${HOME}/local -B build
           cmake --build build
@@ -205,28 +198,39 @@ jobs:
         id: restore-answers
         uses: actions/cache@v5
         with:
-          path: ${HOME}/enzo_test/push_suite
+          path: /home/runner/work/enzo_test/push_suite
           key: foggie-test-answers-v1
 
       - name: Build and test (gold standard)
+        id: build-test-gold
+        if: steps.restore-answers.outputs.cache-hit != 'true'
+        continue-on-error: true  # there's a segfault due to Grackle; remove once fixed
         run: |
-          if [ ! -e ${HOME}/enzo_test/push_suite ]; then
-            git checkout foggie-gold-standard-v1
-            ./configure
-            cd src/enzo
-            make machine-ubuntu
-            make load-config-test-suite
-            make clean
-            make -j 4
-            cd ../../run
-            python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --answer-store
-          fi
+          git checkout foggie-gold-standard-v1
+          echo "rev_hash=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          ./configure
+          cd src/enzo
+          make machine-ubuntu
+          make load-config-test-suite
+          make clean
+          make -j 4
+          cd ../../run
+          python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --answer-store
+
+      - name: Upload compilation output
+        if: failure() && steps.build-test-gold.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-suite-gold-output
+          path: |
+            src/enzo/out.compile
+            /home/runner/work/enzo_test/${{ steps.build-test-gold.outputs.rev_hash }}/test_results.txt
 
       - name: Build and test (tip)
-        continue-on-error: true
         id: build-test-tip
         run: |
           git checkout tip
+          echo "rev_hash=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           ./configure
           cd src/enzo
           make machine-ubuntu
@@ -237,11 +241,13 @@ jobs:
           python ./test_runner.py --suite=push -o $ENZOTEST_DIR --answer-name=$ANSWER_NAME --local --machine=local_nompi --strict=high --verbose --jrun=4 --clobber
 
       - name: Upload compilation output
-        if: always()
+        if: failure() && steps.build-test-tip.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
-          name: test-suite-compile-output
-          path: src/enzo/out.compile
+          name: test-suite-tip-output
+          path: |
+            src/enzo/out.compile
+            /home/runner/work/enzo_test/${{ steps.build-test-tip.outputs.rev_hash }}/test_results.txt
 
   docs-build:
     name: Build Documentation

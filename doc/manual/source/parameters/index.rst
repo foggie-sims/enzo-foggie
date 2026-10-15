@@ -2034,6 +2034,38 @@ parameters have been mapped to Enzo parameters for simplicity.
 ``grackle_data_file`` (string)
     Path to the data file containing the metal cooling and UV background tables.  Default: "".
 
+``RadiationRedshiftOn`` (float) [mapped to Grackle parameter ``UVbackground_redshift_on``]
+    Redshift at which the Grackle UV background (e.g. the Haardt & Madau 2012
+    table) begins to turn on.  Between ``RadiationRedshiftOn`` and
+    ``RadiationRedshiftFullOn`` the photo-ionization and photo-heating rates
+    are multiplied by a smooth ramp, 0.5 - 0.5 tanh(15 (z - z_mid)) with
+    z_mid the midpoint of the two redshifts, so the background is effectively
+    off above ``RadiationRedshiftOn`` and at full strength below
+    ``RadiationRedshiftFullOn``.  Enzo always passes these four
+    ``RadiationRedshift*`` parameters to Grackle, so Grackle's own
+    behaviour of taking the limits from the data file when they are unset
+    never applies: with the defaults, the HM2012 background is
+    switched on at z = 7 and fully on by z = 6 even though the table extends
+    to z = 15.13.  To use the full table without a ramp set both
+    ``RadiationRedshiftOn`` and ``RadiationRedshiftFullOn`` to the table's
+    highest redshift (15.13 for HM2012).  The values in use are printed to
+    the log at start-up.  Default: 7.0.
+
+``RadiationRedshiftFullOn`` (float) [mapped to Grackle parameter ``UVbackground_redshift_fullon``]
+    Redshift at which the Grackle UV background reaches full strength; see
+    ``RadiationRedshiftOn``.  Default: 6.0.
+
+``RadiationRedshiftDropOff`` (float) [mapped to Grackle parameter ``UVbackground_redshift_drop``]
+    Redshift below which the Grackle UV background begins to ramp back down,
+    reaching zero at ``RadiationRedshiftOff``.  If ``CosmologyFinalRedshift``
+    is lower than ``RadiationRedshiftOff``, both this and
+    ``RadiationRedshiftOff`` are reset to ``CosmologyFinalRedshift`` so the
+    background stays on to the end of the run.  Default: 0.0.
+
+``RadiationRedshiftOff`` (float) [mapped to Grackle parameter ``UVbackground_redshift_off``]
+    Redshift at which the Grackle UV background is fully off; see
+    ``RadiationRedshiftDropOff``.  Default: 0.0.
+
 ``Gamma`` (float)
     See Enzo equivalent above.  Default:  5/3.
 
@@ -2942,12 +2974,16 @@ Background Radiation Parameters
     redshifts are permitted. Default: (undefined)
 ``RadiationRedshiftOn`` (external) 
     The redshift at which the UV 
-    background turns on. Default: 7.0.
+    background turns on.  This applies both to Enzo's internal radiation
+    field (``RadiationFieldType`` 1-4 and 12) and, when ``use_grackle`` is
+    on, to the Grackle UV background; see the Grackle section of this page
+    for details of the ramp.  Default: 7.0.
 ``RadiationRedshiftFullOn`` (external) 
     The redshift at which the UV
     background is at full strength.  Between z =
     ``RadiationRedshiftOn`` and z = ``RadiationRedshiftFullOn``, the 
-    background is gradually ramped up to full strength. Default: 6.0.
+    background is gradually ramped up to full strength with a tanh
+    profile.  Also passed to Grackle when ``use_grackle`` is on.  Default: 6.0.
 ``RadiationRedshiftDropOff`` (external) 
     The redshift at which the 
     strength of the UV background is begins to gradually reduce,
@@ -3972,7 +4008,10 @@ Other External Parameters
 ``StopSteps``
     Reserved for future use
 ``CoolDataf0to3``
-    Reserved for future use
+    Fraction used by Enzo's internal radiation field (``RadiationFieldType``
+    1-4 and 12) in the linear drop-off of the UV background between
+    ``RadiationRedshiftDropOff`` and ``RadiationRedshiftOff``.  Not used by
+    Grackle.  Default: 0.1
 ``StageInput``
     Reserved for future use
 ``LocalPath``

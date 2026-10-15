@@ -198,7 +198,32 @@ const field_type
   TracerFluidField07Density = 112,
   TracerFluidField08Density = 113,
 
-  FieldUndefined  = 114;
+  /* Dust density field */
+  DustDensity = 114,
+
+  /* dust_species_track = 1: 5-element gas-phase metal tracking
+     (subsets of Metallicity). REF: Trayford+2026 MNRAS 545, staf2040. */
+  MetalDensityCarbon    = 115,
+  MetalDensityOxygen    = 116,
+  MetalDensityMagnesium = 117,
+  MetalDensitySilicon   = 118,
+  MetalDensityIron      = 119,
+
+  /* dust_species_track = 1: three-species dust (Mg-silicate + Fe-silicate +
+     carbonaceous). These species are the authoritative dust state; the bulk
+     DustDensity and the silicate sum are not carried as baryon fields and
+     are reconstructed in scratch buffers at the Grackle/cooling/feedback
+     call sites. */
+  DustDensityMgSilicate   = 120,
+  DustDensityFeSilicate   = 121,
+  DustDensityCarbonaceous = 122,
+
+  /* Per-cell count of supernova events that occurred during the current
+     timestep. Populated by star_feedback2; consumed by Grackle when
+     use_sne_field = 1 (Li+ 2019 dust destruction). NOT a density. */
+  SNeRate                 = 123,
+
+  FieldUndefined  = 124;
 
 /*
 enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
@@ -211,7 +236,7 @@ enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
                  FieldUndefined};
 */
 
-#define FieldTypeIsDensity(A) ((((A) >= TotalEnergy && (A) <= Velocity3) || ((A) >= kphHI && (A) <= kdissH2I) || ((A) == kdissH2II) || ((A) == kphHM) || ((A) >= RadiationFreq0 && (A) <= RaySegments) || ((A) >= Bfield1 && (A) <= AccelerationField3)) ? FALSE : TRUE)
+#define FieldTypeIsDensity(A) ((((A) >= TotalEnergy && (A) <= Velocity3) || ((A) >= kphHI && (A) <= kdissH2I) || ((A) == kdissH2II) || ((A) == kphHM) || ((A) >= RadiationFreq0 && (A) <= RaySegments) || ((A) >= Bfield1 && (A) <= AccelerationField3) || ((A) == SNeRate)) ? FALSE : TRUE)
 #define FieldTypeIsRadiation(A) ((((A) >= kphHI && (A) <= kdissH2I) || ((A) == kdissH2II) || ((A) == kphHM) || ((A) >= RadiationFreq0 && (A) <= RadiationFreq9)) ? TRUE : FALSE)
 #define FieldTypeNoInterpolate(A) (((((A) >= Mach) && ((A) <= PreShockDensity)) || ((A) == GravPotential) || ((A) == RaySegments)) ? TRUE : FALSE)
 

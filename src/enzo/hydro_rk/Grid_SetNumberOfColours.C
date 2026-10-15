@@ -38,12 +38,13 @@ int grid::SetNumberOfColours(void)
 
   /* Count colours */  
 
-  int SNColourNum, MetalNum, MetalIaNum, MetalIINum, MBHColourNum, Galaxy1ColourNum, 
-    Galaxy2ColourNum, MetalAGBNum, MetalNSMNum; 
+  int SNColourNum, MetalNum, MetalIaNum, MetalIINum, MBHColourNum, Galaxy1ColourNum,
+    Galaxy2ColourNum, MetalAGBNum, MetalNSMNum, DustDensityNum;
 
-  if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum, 
-         MetalAGBNum, MetalNSMNum, MBHColourNum, 
-				 Galaxy1ColourNum, Galaxy2ColourNum) == FAIL) {
+  if (this->IdentifyColourFields(SNColourNum, MetalNum, MetalIaNum, MetalIINum,
+         MetalAGBNum, MetalNSMNum, MBHColourNum,
+				 Galaxy1ColourNum, Galaxy2ColourNum,
+				 DustDensityNum) == FAIL) {
     fprintf(stderr, "Error in grid->IdentifyColourFields.\n");
     return FAIL;
   }
@@ -66,6 +67,20 @@ int grid::SetNumberOfColours(void)
   }
 
   if (SNColourNum      != -1) _nc++;
+  if (DustDensityNum   != -1) _nc++;
+
+  /* Species-resolved dust tracking: 5 gas-phase elements + 3 dust species
+     (the bulk and silicate dust sums are not carried as fields). */
+  if (UseDustSpeciesTrack) {
+    if (FindField(MetalDensityCarbon,     FieldType, NumberOfBaryonFields) != -1) _nc++;
+    if (FindField(MetalDensityOxygen,     FieldType, NumberOfBaryonFields) != -1) _nc++;
+    if (FindField(MetalDensityMagnesium,  FieldType, NumberOfBaryonFields) != -1) _nc++;
+    if (FindField(MetalDensitySilicon,    FieldType, NumberOfBaryonFields) != -1) _nc++;
+    if (FindField(MetalDensityIron,       FieldType, NumberOfBaryonFields) != -1) _nc++;
+    if (FindField(DustDensityMgSilicate,  FieldType, NumberOfBaryonFields) != -1) _nc++;
+    if (FindField(DustDensityFeSilicate,  FieldType, NumberOfBaryonFields) != -1) _nc++;
+    if (FindField(DustDensityCarbonaceous,FieldType, NumberOfBaryonFields) != -1) _nc++;
+  }
   /*   //##### These fields are currently not being used and only causing interpolation problems
   if (MBHColourNum     != -1) _nc++;
   if (Galaxy1ColourNum != -1) _nc++;
