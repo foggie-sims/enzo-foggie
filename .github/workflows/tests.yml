@@ -154,7 +154,7 @@ jobs:
         with:
           path: |
             /home/runner/work/local
-            /home/runner/work/.conda/pkgs
+            /usr/share/miniconda/envs/enzo-ci
           key: deps-test
           
       - name: Pull yt enzo-ci-fix branch
