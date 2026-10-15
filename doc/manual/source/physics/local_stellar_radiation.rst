@@ -10,14 +10,13 @@ only affects gas cells on their grid and assumes an average particle
 cell separation. Fluxes from stars are loaded from
 `input/preSN_feedback_SB99_RT.hdf5` table set by
 `StarFeedbackPreSNFilename` and calculated with
-`input/combine_pySB_hdf5_with_RT_Fields.py` (or interactively with 
-`input/combine_pySB_hdf5_with_RT_Fields.ipynb`). Rates are
+`input/combine_pySB_hdf5_with_RT_Fields.py`. Rates are
 pre-mutliplied by the reaction cross section, and thus have units
 of cm^2/s. This option sums the relative reaction rates for each star
 particle on a grid, and calculates the typical reaction rate as a
 grid averaged value. Grids without any young star particles will not
 see any radiation. Currently supports H2 Photodissociation,
-HM photodetachment, and  the isrf radiation field of grackle. Has
+HM photodetachment, and the isrf radiation field of grackle. Has
 commented out support for CO photodissociation, as well as CI and
 OI photoionization for when these are added to grackle. Calculations
 are done in `Grid_ComputeLocalStellarRadiation.C`, which is called
