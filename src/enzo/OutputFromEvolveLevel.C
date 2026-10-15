@@ -169,7 +169,17 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
     // a file stopNow will output and then exit enzo.
     
     int outputNow = -1, stopNow = -1, subcycleCount=-1, checkpointDumpNow=-1;
-    if( FileDirectedOutput == TRUE){
+
+    /* Poll for the trigger files only from the level-0 call: this
+       routine runs at the bottom of every subcycle of every level, and
+       the poll is four filesystem stats on the root rank plus a
+       5-int broadcast that synchronizes ALL ranks - thousands of
+       global collectives per root cycle in a deep-AMR run (audit
+       5.4).  Checking once per root cycle bounds the response
+       latency at one root timestep, which is what the trigger files
+       are for. */
+
+    if( FileDirectedOutput == TRUE && level == 0){
 
     int OutputFlagArray[5] = {-1, -1, -1, -1, -1};
 

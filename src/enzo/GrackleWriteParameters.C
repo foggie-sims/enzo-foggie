@@ -51,6 +51,7 @@ int GrackleWriteParameters(FILE *fptr)
   fprintf(fptr, "use_isrf_field              = %d\n",  grackle_data->use_isrf_field);
   fprintf(fptr, "use_dust_density_field      = %d\n",  grackle_data->use_dust_density_field);
 
+#ifdef GRACKLE_NEW_DUST_MODEL
     /* New dust physics parameters (newchemcpp Grackle). Fixed microphysics constants
        ride on the Grackle defaults defined in grackle_chemistry_data_fields.def, 
        that file is the single source of truth for their values.
@@ -73,6 +74,7 @@ int GrackleWriteParameters(FILE *fptr)
   fprintf(fptr, "dust_growth_clumping_factor_max = %lf\n", grackle_data->dust_growth_clumping_factor_max);
   fprintf(fptr, "dust_growth_clumping_nH_min = %lf\n", grackle_data->dust_growth_clumping_nH_min);
   fprintf(fptr, "dust_growth_clumping_nH_max = %lf\n", grackle_data->dust_growth_clumping_nH_max);
+#endif
 
 #endif
 

@@ -253,13 +253,14 @@ int grid::GrackleWrapper()
   else
     my_fields.dust_density = NULL;
 
+  float *TotalDust = NULL, *TotalSilicate = NULL;
+#ifdef GRACKLE_NEW_DUST_MODEL
   /* Species-resolved dust tracking (dust_species_track = 1): 5 gas-phase
      element fields (subsets of metal_density) and 3 dust species fields.
      The bulk dust density and the silicate sum are not carried as baryon
      fields; Grackle only reads them as the current sum of the species and
      re-derives them on output (make_consistent Phase E), so they are
      reconstructed here in scratch buffers and discarded after the solve. */
-  float *TotalDust = NULL, *TotalSilicate = NULL;
   my_fields.metal_density_carbon      = NULL;
   my_fields.metal_density_oxygen      = NULL;
   my_fields.metal_density_magnesium   = NULL;
@@ -297,10 +298,12 @@ int grid::GrackleWrapper()
     my_fields.dust_density          = TotalDust;
     my_fields.dust_density_silicate = TotalSilicate;
   }
+#endif
 
   my_fields.volumetric_heating_rate = volumetric_heating_rate;
   my_fields.specific_heating_rate   = specific_heating_rate;
 
+#ifdef GRACKLE_NEW_DUST_MODEL
   /* Per-cell SN rate field (use_sne_field = 1). The
      field is populated by star_feedback2 each timestep as SNe-per-cell. */
   if (UseSNeRateField) {
@@ -314,6 +317,7 @@ int grid::GrackleWrapper()
 
   /* Per-cell dust destruction timescale field (use_tau_dest_field = 1) — NULL if not used */
   my_fields.tau_dest  = NULL;
+#endif
 
 #ifdef TRANSFER
   /* Find RT fields */

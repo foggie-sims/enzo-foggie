@@ -807,8 +807,11 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
      are not carried as baryon fields; scratch buffers holding the species
      sums are passed to the star maker/feedback routines instead, and the
      species fields remain the authoritative state. */
-  int ActiveDustField = (UseDustDensityField &&
-                         (DustDensityNum != -1 || UseDustSpeciesTrack));
+  int ActiveDustField = 0;
+#if defined(USE_GRACKLE) && defined(GRACKLE_NEW_DUST_MODEL)
+  ActiveDustField = (UseDustDensityField &&
+                     (DustDensityNum != -1 || UseDustSpeciesTrack));
+#endif
   float *DustPointer = (DustDensityNum != -1) ?
     BaryonField[DustDensityNum] : BaryonField[DensNum];
 
@@ -1795,7 +1798,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
         BaryonField[SNeRateNum] : BaryonField[DensNum];
 
       float DustCondensationEfficiency = 0.15;
-#ifdef USE_GRACKLE
+#if defined(USE_GRACKLE) && defined(GRACKLE_NEW_DUST_MODEL)
       DustCondensationEfficiency =
         (float) grackle_data->dust_condensation_eff;
 #endif
