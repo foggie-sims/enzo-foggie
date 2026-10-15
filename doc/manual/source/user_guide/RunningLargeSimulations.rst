@@ -67,6 +67,21 @@ Important Parameters
   best value is problem- and processor-count-dependent and worth a short
   scan.
 
+* ``LoadBalanceCountGhostZones``: Default 0 (FALSE), which weights each grid
+  by its active cell count when load balancing.  Set to 1 (TRUE) to weight by
+  the cells a grid allocates, ghost zones included.  Active cells alone are a
+  poor proxy for cost once a level holds grids of very different sizes: one
+  60\ :sup:`3` grid and 216 grids of 6\ :sup:`3` have the same 216000 active
+  cells, but the second allocates 373248 cells against 287496 and performs 216
+  boundary exchanges against one.  On a deeply refined level the allocated
+  total can approach twice the active total, and because the ratio varies from
+  grid to grid it cannot be absorbed into a single scale factor.  Turning this
+  on is most likely to help where subgrid sizes are heterogeneous, which is
+  also the regime where lowering ``SubgridSizeAutoAdjustMinimum`` has the
+  largest effect, so the two are worth scanning together.  It changes the cost
+  estimate only -- never the hierarchy or the solution -- but it does change
+  grid ownership, and therefore the order of floating-point reductions.
+
 * ``MinimumSubgridEdge`` and ``MaximumSubgridSize``: *Unused if
   SubgridAutoAdjust is ON*.  Increase both of these parameters to
   increase the average subgrid size, which might reduce communication
