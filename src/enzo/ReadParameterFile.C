@@ -1011,6 +1011,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     	&StarMakerExplosionDelayTime);
     ret += sscanf(line, "StarFeedbackDistRadius = %"ISYM, &StarFeedbackDistRadius);
     ret += sscanf(line, "StarFeedbackDistCellStep = %"ISYM, &StarFeedbackDistCellStep);
+    ret += sscanf(line, "StarFeedbackSphere = %"ISYM, &StarFeedbackSphere);
+    ret += sscanf(line, "StarFeedbackSNIIRadius = %"FSYM, &StarFeedbackSNIIRadius);
+    ret += sscanf(line, "StarFeedbackSNIaRadius = %"FSYM, &StarFeedbackSNIaRadius);
+    ret += sscanf(line, "StarFeedbackPreSNRadius = %"FSYM, &StarFeedbackPreSNRadius);
     ret += sscanf(line, "StarFeedbackUseTabularYields = %"ISYM, &StarFeedbackUseTabularYields);
     ret += sscanf(line, "StarFeedbackTabularSNIIEnergy = %"FSYM, &StarFeedbackTabularSNIIEnergy);
     ret += sscanf(line, "StarFeedbackTabularSNIaEnergy = %"FSYM, &StarFeedbackTabularSNIaEnergy);
