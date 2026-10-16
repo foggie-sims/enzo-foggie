@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "EnzoTiming.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -141,7 +142,11 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
   MPI_Arg stat;
   MPI_Status Status;
   void *buffer_send;
- 
+
+  /* Send-side packing + Isend cost (cross-cutting: called from within
+     other timed sections). */
+  TIMER_START("CommBufferedSend");
+
   /* First, check to see if we should do a scan. */
  
   if (++CallCount % NUMBER_OF_CALLS_BETWEEN_SCANS == 0) {
@@ -203,7 +208,9 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
  
   RequestBuffer[index] = (char *) buffer_send;
   LastActiveIndex = max(LastActiveIndex, index);
- 
+
+  TIMER_STOP("CommBufferedSend");
+
   return SUCCESS;
 }
  
