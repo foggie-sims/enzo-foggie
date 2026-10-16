@@ -90,18 +90,19 @@ int grid::ComputeLocalStellarRadiation()
         }
 
         float metallicity = this->ParticleAttribute[2][i];
-        int zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met, pSNFBTable.n_met); //Index of the lower bound for metallicity
-
+        int zz; //Index of the lower bound for metallicity
         float t_z; //How far between the two indices?
-        if (zz>=pSNFBTable.n_met-1){
+        //Clamp before searching:
+        if (metallicity >= pSNFBTable.ini_met[pSNFBTable.n_met-1]){
           zz=pSNFBTable.n_met-2;
           t_z = 1;
         }
-        else if (zz<0){
+        else if (metallicity <= pSNFBTable.ini_met[0]){
           zz=0;
           t_z=0;
         }
         else{
+            zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met-1, pSNFBTable.n_met);
             t_z = (metallicity - pSNFBTable.ini_met[zz]) / (pSNFBTable.ini_met[zz+1] - pSNFBTable.ini_met[zz]);
         }
 
@@ -134,15 +135,16 @@ int grid::ComputeLocalStellarRadiation()
   }
 
   float dx = this->CellWidth[0][0];
-  float conversion_factor = dx * dx * dx * MassUnits / SolarMass; //Convert particle density to units of Msun
-  conversion_factor = conversion_factor * TimeUnits/(LengthUnits*LengthUnits); //Convert from cm^2/s to code units
+  float mass_conversion = dx * dx * dx * MassUnits / SolarMass; //Convert particle density to units of Msun
+  float flux_conversion = TimeUnits/(LengthUnits*LengthUnits); //Convert from cm^2/s to code units
+  float habing_conversion = 1./(LengthUnits*LengthUnits); //ISRF already in units of G0*cm^2
 
-  k_diss_H2I_grid_sum = k_diss_H2I_grid_sum * conversion_factor;
-  k_det_HM_grid_sum  = k_det_HM_grid_sum  * conversion_factor;
-  k_diss_COI_grid_sum = k_diss_COI_grid_sum  * conversion_factor;
-  k_ion_CI_grid_sum = k_ion_CI_grid_sum * conversion_factor;
-  k_ion_OI_grid_sum = k_ion_OI_grid_sum * conversion_factor;
-  isrf_grid_sum = isrf_grid_sum * conversion_factor;
+  k_diss_H2I_grid_sum = k_diss_H2I_grid_sum * mass_conversion * flux_conversion;
+  k_det_HM_grid_sum  = k_det_HM_grid_sum * mass_conversion * flux_conversion;
+  k_diss_COI_grid_sum = k_diss_COI_grid_sum * mass_conversion * flux_conversion;
+  k_ion_CI_grid_sum = k_ion_CI_grid_sum * mass_conversion * flux_conversion;
+  k_ion_OI_grid_sum = k_ion_OI_grid_sum * mass_conversion * flux_conversion;
+  isrf_grid_sum = isrf_grid_sum  * mass_conversion * habing_conversion;
 
 
   float grid_dx = this->GridRightEdge[0]-this->GridLeftEdge[0];
@@ -151,12 +153,12 @@ int grid::ComputeLocalStellarRadiation()
   //This is the most tunable part of this code, as calculating the r^2 for each cell will get expensive
   float dilutionRadius = sqrt((grid_dx*grid_dx + grid_dy*grid_dy + grid_dz*grid_dz) / 6.0); //~point by point separation
   float dilRad2 = dilutionRadius * dilutionRadius;
-  k_diss_H2I_grid_sum = k_diss_H2I_grid_sum  / (4.0 * 3.14159 * dilRad2);
-  k_det_HM_grid_sum   = k_det_HM_grid_sum    / (4.0 * 3.14159 * dilRad2);
-  k_diss_COI_grid_sum = k_diss_COI_grid_sum  / (4.0 * 3.14159 * dilRad2);
-  k_ion_CI_grid_sum = k_ion_CI_grid_sum  / (4.0 * 3.14159 * dilRad2);
-  k_ion_OI_grid_sum = k_ion_OI_grid_sum  / (4.0 * 3.14159 * dilRad2);
-  isrf_grid_sum = isrf_grid_sum  / (4.0 * 3.14159 * dilRad2); //Convert to G0
+  k_diss_H2I_grid_sum = k_diss_H2I_grid_sum  / (4.0 * pi * dilRad2);
+  k_det_HM_grid_sum   = k_det_HM_grid_sum    / (4.0 * pi * dilRad2);
+  k_diss_COI_grid_sum = k_diss_COI_grid_sum  / (4.0 * pi * dilRad2);
+  k_ion_CI_grid_sum = k_ion_CI_grid_sum  / (4.0 * pi * dilRad2);
+  k_ion_OI_grid_sum = k_ion_OI_grid_sum  / (4.0 * pi * dilRad2);
+  isrf_grid_sum = isrf_grid_sum  / (4.0 * pi * dilRad2); //Convert to G0
 
   if (debug){
     if (k_diss_H2I_grid_sum>0){
