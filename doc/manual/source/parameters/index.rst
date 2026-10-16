@@ -2790,7 +2790,7 @@ See :ref:`method_6`.
 ``StarFeedbackPreSNMomentum`` (external)
     This parameter turns on (1) and off (0) the injection of momentum from stellar winds in the first 5 Myr of a star particle's evolution. Must be used with ``StarFeedbackPreSNFeedback = 1``. Default is 0.
 ``StarFeedbackPreSNFilename`` (external)
-    This parameter gives the filename of the table from which stellar wind mass, metals, and momentum is drawn. This is necessary if using ``StarFeedbackPreSNFeedback = 1``.
+    This parameter gives the filename of the table from which stellar wind mass, metals, and momentum is drawn. This is necessary if using ``StarFeedbackPreSNFeedback = 1`` or ``UseLocalStellarRadiation=1``.
 ``WriteFeedbackLogFiles`` (external)
     This parameter is used to turn on or off the outputting of feedback information from this method to text files at runtime. Possible values are 0 or 1, and default is 0.
 
@@ -3494,6 +3494,17 @@ Radiative Transfer (FLD) Split Solver Parameters
 ``EnergyOpacityC0``, ``EnergyOpacityC1``, ``EnergyOpacityC2`` (external)
     Parameters used in defining the energy-mean opacity used with
     RadHydroModel 10. Default: [1 1 0].
+
+.. _local_stellar_radiation_parameters:
+
+Local Stellar Radiation
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The parameters below are used to turn on inexpensive radiation approximations from young stellar sources:
+
+``UseLocalStellarRadiation`` (external)
+    This parameter is used to turn on or off local (grid only) stellar radiation. Calculates H2 photodissociation rates, H- photodetachment rates, and ISRF to feed into grackle. Requires ``StarFeedbackPreSNFilename``.
+
 
 .. _cosmology_parameters:
 

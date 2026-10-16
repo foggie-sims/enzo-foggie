@@ -245,7 +245,16 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
   grackle_data->UVbackground_redshift_off      = (double) CoolData.RadiationRedshiftOff;
   grackle_data->UVbackground_redshift_fullon   = (double) CoolData.RadiationRedshiftFullOn;
   grackle_data->UVbackground_redshift_drop     = (double) CoolData.RadiationRedshiftDropOff;
-  grackle_data->use_radiative_transfer         = (Eint32) RadiativeTransfer;
+  if (UseLocalStellarRadiation){
+    grackle_data->use_radiative_transfer         = TRUE; //CWT 06/07/2026
+    grackle_data->radiative_transfer_coupled_rate_solver = FALSE;
+    grackle_data->radiative_transfer_hydrogen_only       = FALSE;
+    grackle_data->radiative_transfer_intermediate_step = FALSE;
+  }
+  else{
+    grackle_data->use_radiative_transfer         = (Eint32) RadiativeTransfer;
+  }
+  
 #ifdef GRACKLE_NEW_DUST_MODEL
   grackle_data->dust_species_track             = (Eint32) UseDustSpeciesTrack;
   grackle_data->use_sne_field                  = (Eint32) UseSNeRateField;
@@ -255,13 +264,6 @@ int GrackleReadParameters(FILE *fptr, FLOAT InitTime)
 #endif
   // grackle_data->radiative_transfer_coupled_rate_solver set in RadiativeTransferReadParameters
   // grackle_data->radiative_transfer_hydrogen_only set in RadiativeTransferReadParameters
-
-
-  // Error checking for behavior not implemented
-  if ( (grackle_data->photoelectric_heating == 2) ||
-       (grackle_data->use_isrf_field)){
-    ENZO_FAIL("Photoelectric heating model 2, and ISRF field, in Grackle is not yet implemented.\n");
-  }
 
 #ifdef GRACKLE_NEW_DUST_MODEL
   /* Species-resolved dust tracking requires the bulk dust_density field
