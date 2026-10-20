@@ -73,12 +73,12 @@ Important Parameters
   poor proxy for cost once a level holds grids of very different sizes: one
   60\ :sup:`3` grid and 216 grids of 6\ :sup:`3` have the same 216000 active
   cells, but the second allocates 373248 cells against 287496 and performs 216
-  boundary exchanges against one.  On a deeply refined level the allocated
-  total can approach twice the active total, and because the ratio varies from
+  boundary exchanges against one.  On a deeply refined level, the total number of allocated cells can approach twice the total of active-zone cells, 
+  and because the ratio varies from
   grid to grid it cannot be absorbed into a single scale factor.  Turning this
   on is most likely to help where subgrid sizes are heterogeneous, which is
   also the regime where lowering ``SubgridSizeAutoAdjustMinimum`` has the
-  largest effect, so the two are worth scanning together.  It changes the cost
+  largest effect, so the two are worth enabling together.  It changes the cost
   estimate only -- never the hierarchy or the solution -- but it does change
   grid ownership, and therefore the order of floating-point reductions.
 
