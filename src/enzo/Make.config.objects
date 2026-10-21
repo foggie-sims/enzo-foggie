@@ -524,6 +524,7 @@ OBJS_CONFIG_LIB = \
         Grid_GetEnclosedMassInShell.o \
         Grid_GetProjectedBoundaryFluxes.o \
         Grid_GrackleWrapper.o \
+        Grid_ComputeLocalStellarRadiation.o \
         Grid_GrackleCustomCoolRate.o \
         Grid_GravityEquilibriumTestInitializeGrid.o \
         Grid_Group_WriteGridInterpolate.o \
