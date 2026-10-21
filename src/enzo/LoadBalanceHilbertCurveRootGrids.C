@@ -54,10 +54,12 @@ int LoadBalanceHilbertCurveRootGrids(FLOAT *GridCenters[], int *CellCount,
   int *GridWork = new int[NumberOfGrids];
   hilbert_data *HilbertData = new hilbert_data[NumberOfGrids];
   int *BlockDivisions = new int[NumberOfProcessors];
-  int *ProcessorWork = new int[NumberOfProcessors];
+  // 64-bit work accounting: the summed ghost-inclusive cell counts
+  // overflow 32 bits above ~2.1e9 cells, silently garbling partitions.
+  long long *ProcessorWork = new long long[NumberOfProcessors];
 
   FLOAT ThisCenter[MAX_DIMENSION];
-  int TotalWork, WorkThisProcessor, WorkPerProcessor, WorkLeft;
+  long long TotalWork, WorkThisProcessor, WorkPerProcessor, WorkLeft;
   int i, dim, grid_num, Rank, block_num, Dims[MAX_DIMENSION];
   int iter;
 
@@ -92,7 +94,8 @@ int LoadBalanceHilbertCurveRootGrids(FLOAT *GridCenters[], int *CellCount,
   for (i = 0; i < NumberOfProcessors-1; i++) {
     WorkThisProcessor = 0;
     WorkPerProcessor = WorkLeft / (NumberOfProcessors-i);
-    while (WorkThisProcessor < WorkPerProcessor) {
+    while (WorkThisProcessor < WorkPerProcessor &&
+	   grid_num < NumberOfGrids) {
       WorkThisProcessor += GridWork[grid_num];
       grid_num++;
     } // ENDWHILE
@@ -136,15 +139,27 @@ int LoadBalanceHilbertCurveRootGrids(FLOAT *GridCenters[], int *CellCount,
   double div_hkey, min_hkey, max_hkey, global_min_hkey;
   double hkey_boundary;
   char direction;
-  int LoadedBlock, UnloadedBlock, WorkDifference;
-  int MinWork, MaxWork;
+  int LoadedBlock, UnloadedBlock;
+  long long WorkDifference;
+  long long MinWork, MaxWork;
   float WorkImbalance;
 
   for (iter = 0; iter < FUZZY_ITERATIONS; iter++) {
-    MinWork = 0x7FFFFFFF;
+    MinWork = 0x7FFFFFFFFFFFFFFFLL;
     MaxWork = -1;
     for (i = 0; i < NumberOfProcessors-1; i++) {
-      
+
+      /* Degenerate partitions (a block with zero grids leaves its
+	 division at -1, or 0 with nothing before it) have no boundary
+	 to fuzz - and indexing HilbertData with them reads out of
+	 bounds. */
+      if (BlockDivisions[i] <= 0 || BlockDivisions[i+1] < 0 ||
+	  (i > 0 && BlockDivisions[i-1] < 0)) {
+	MinWork = min(MinWork, ProcessorWork[i]);
+	MaxWork = max(MaxWork, ProcessorWork[i]);
+	continue;
+      }
+
       /* Hilbert key for the division and boundaries of the curve
 	 segment that we will move grids */
       div_hkey = HilbertData[BlockDivisions[i]].hkey;
@@ -176,7 +191,8 @@ int LoadBalanceHilbertCurveRootGrids(FLOAT *GridCenters[], int *CellCount,
 	 reach the Hilbert key boundary */
 
       grid_num = BlockDivisions[i] + direction;
-      while (direction * (hkey_boundary - HilbertData[grid_num].hkey) > 0) {
+      while (grid_num >= 0 && grid_num < NumberOfGrids &&
+	     direction * (hkey_boundary - HilbertData[grid_num].hkey) > 0) {
 	WorkDifference = 
 	  ProcessorWork[LoadedBlock] - ProcessorWork[UnloadedBlock];
 	if (2*GridWork[grid_num] < WorkDifference) {
@@ -195,6 +211,9 @@ int LoadBalanceHilbertCurveRootGrids(FLOAT *GridCenters[], int *CellCount,
 
     MinWork = min(MinWork, ProcessorWork[NumberOfProcessors-1]);
     MaxWork = max(MaxWork, ProcessorWork[NumberOfProcessors-1]);
+    // A block can legitimately hold zero work; never divide by it.
+    if (MinWork <= 0)
+      continue;
     WorkImbalance = float(MaxWork - MinWork) / float(MinWork);
     if (WorkImbalance < CriticalBalance)
       break;
