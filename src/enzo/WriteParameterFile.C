@@ -356,6 +356,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "SubgridSizeAutoAdjust          = %"ISYM"\n", SubgridSizeAutoAdjust);
   fprintf(fptr, "SubgridSizeAutoAdjustMinimum   = %"ISYM"\n",
 	  SubgridSizeAutoAdjustMinimum);
+  fprintf(fptr, "LoadBalanceCountGhostZones     = %"ISYM"\n",
+	  LoadBalanceCountGhostZones);
   fprintf(fptr, "OptimalSubgridsPerProcessor    = %"ISYM"\n", 
 	  OptimalSubgridsPerProcessor);
   fprintf(fptr, "MinimumSubgridEdge             = %"ISYM"\n", MinimumSubgridEdge);

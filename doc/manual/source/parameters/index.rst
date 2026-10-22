@@ -1224,6 +1224,19 @@ Hierarchy Control Parameters
     Load balance the grids in levels greater than this parameter.  Default: 0
 ``LoadBalancingMaxLevel`` (external)
     Load balance the grids in levels less than this parameter.  Default: MAX_DEPTH_OF_HIERARCHY
+``LoadBalanceCountGhostZones`` (external)
+    Controls how a grid's cost is estimated when load balancing. With the
+    default of 0 (FALSE) a grid is weighted by its active cell count. Set to
+    1 (TRUE) to weight it instead by the number of cells it allocates, which
+    includes ghost zones. Weighting by active cells alone treats a level of
+    many small grids as equal in cost to a level of few large ones, although
+    the former allocates more memory and performs many more boundary
+    exchanges for the same number of active cells. The discrepancy grows with
+    refinement depth and varies from grid to grid, so it cannot be corrected
+    by a single scale factor. Enabling this changes only the balancer's cost
+    estimate, never the hierarchy or the solution, but it does change which
+    processor owns which grid and therefore the order of floating-point
+    reductions. See :ref:`running_large_simulations`.  Default: 0 (FALSE)
 ``ResetLoadBalancing`` (external)
     When restarting a simulation, this parameter resets the processor number of each root grid to be sequential.  All child grids are assigned to the processor of their parent grid.  Only implemented for LoadBalancing = 1.  Default = 0
 ``NumberOfRootGridTilesPerDimensionPerProcessor`` (external)
@@ -2790,7 +2803,7 @@ See :ref:`method_6`.
 ``StarFeedbackPreSNMomentum`` (external)
     This parameter turns on (1) and off (0) the injection of momentum from stellar winds in the first 5 Myr of a star particle's evolution. Must be used with ``StarFeedbackPreSNFeedback = 1``. Default is 0.
 ``StarFeedbackPreSNFilename`` (external)
-    This parameter gives the filename of the table from which stellar wind mass, metals, and momentum is drawn. This is necessary if using ``StarFeedbackPreSNFeedback = 1``.
+    This parameter gives the filename of the table from which stellar wind mass, metals, and momentum is drawn. This is necessary if using ``StarFeedbackPreSNFeedback = 1`` or ``UseLocalStellarRadiation=1``.
 ``WriteFeedbackLogFiles`` (external)
     This parameter is used to turn on or off the outputting of feedback information from this method to text files at runtime. Possible values are 0 or 1, and default is 0.
 
@@ -3494,6 +3507,17 @@ Radiative Transfer (FLD) Split Solver Parameters
 ``EnergyOpacityC0``, ``EnergyOpacityC1``, ``EnergyOpacityC2`` (external)
     Parameters used in defining the energy-mean opacity used with
     RadHydroModel 10. Default: [1 1 0].
+
+.. _local_stellar_radiation_parameters:
+
+Local Stellar Radiation
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The parameters below are used to turn on inexpensive radiation approximations from young stellar sources:
+
+``UseLocalStellarRadiation`` (external)
+    This parameter is used to turn on or off local (grid only) stellar radiation. Calculates H2 photodissociation rates, H- photodetachment rates, and ISRF to feed into grackle. Requires ``StarFeedbackPreSNFilename``.
+
 
 .. _cosmology_parameters:
 
