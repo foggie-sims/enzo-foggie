@@ -318,7 +318,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 				     ParticleMassPointer[i]);
 
     /* LEBRON-like RT: replace particle 'mass' with the young-star source
-       strength.  ParticleMassPointer is already a density on the target
+       strength.  ParticleInitialMass*MassFactor is a density on the target
        grid, so (table value [rate*cm^2 per Msun]) * density * MassUnits /
        SolarMass is the source per unit code volume; the RT Green's function
        multiplies back by the cell volume. */
@@ -379,9 +379,12 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
         float age = (Time - ParticleAttribute[0][i]) * TimeUnits / years_to_seconds;
         if (age >= 5e7)
           continue;
+        /* SB99 tables are per Msun formed, so use the initial mass (a
+           density, like ParticleMass), scaled to the target grid. */
         ParticleRadiationTemp[i] = InterpolatePreSNFeedbackTable(table, age,
                                      ParticleAttribute[2][i]) *
-                                   ParticleMassPointer[i] * MsunPerCodeMass;
+                                   ParticleInitialMass[i] * MassFactor *
+                                   MsunPerCodeMass;
 
         /* Source-side attenuation (see above). */
 
