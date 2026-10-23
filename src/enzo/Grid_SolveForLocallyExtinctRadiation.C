@@ -18,9 +18,11 @@
 /    root-grid Green's function.  Over all levels this telescopes to K_L * S.
 /
 /  NOTE: Direct sums: O(N_source * N_cell) per grid on the fine mesh, and
-/    the same on the (R^3 smaller) coarse mesh.  Source fields are densities
-/    (per unit volume), hence the cell volume in K_l.  Assumes a uniform
-/    refinement factor RefineBy.
+/    the same on the (R^3 smaller) coarse mesh, over compact lists of the
+/    nonzero source cells with K_l tabulated by integer squared separation.
+/    Grids without sources return early (both views vanish).  Source fields
+/    are densities (per unit volume), hence the cell volume in K_l.  Assumes
+/    a uniform refinement factor RefineBy.
 /
 ************************************************************************/
  
@@ -50,7 +52,112 @@ static int FloorDiv(int a, int b)
 {
   return (a >= 0) ? a/b : -((-a + b - 1)/b);
 }
- 
+
+/* Tabulate K = CellVolume / (4 pi max(r^2, (0.38 dx)^2)) by the integer
+   squared separation m = r^2/dx^2, for every separation on a Dim mesh.
+   Only m = 0 is softened, since 0.38^2 < 1. */
+
+static float *BuildKernelTable(int *Dim, float CellVolume, float dx)
+{
+  int dim, m, mmax = 0;
+  for (dim = 0; dim < MAX_DIMENSION; dim++)
+    mmax += (Dim[dim]-1)*(Dim[dim]-1);
+
+  float *Ktab = new float[mmax+1];
+  float norm = CellVolume / (4.0*pi*dx*dx);
+  Ktab[0] = norm / (0.38*0.38);
+  for (m = 1; m <= mmax; m++)
+    Ktab[m] = norm / float(m);
+
+  return Ktab;
+}
+
+/* Gather the cells of a Dim mesh where any of the three fields is positive
+   into a compact list (indices si,sj,sk and values S[f]).  Returns the
+   number of sources; the arrays are allocated here (NULL if none). */
+
+static int GatherSources(int *Dim, float *Field[3], int **si, int **sj,
+                         int **sk, float *S[3])
+{
+  int i, j, k, n, f, ns = 0;
+  int size = Dim[0]*Dim[1]*Dim[2];
+
+  for (n = 0; n < size; n++)
+    if (Field[0][n] > 0 || Field[1][n] > 0 || Field[2][n] > 0)
+      ns++;
+
+  *si = *sj = *sk = NULL;
+  for (f = 0; f < 3; f++)
+    S[f] = NULL;
+  if (ns == 0)
+    return 0;
+
+  *si = new int[ns];
+  *sj = new int[ns];
+  *sk = new int[ns];
+  for (f = 0; f < 3; f++)
+    S[f] = new float[ns];
+
+  ns = 0;
+  for (k = 0, n = 0; k < Dim[2]; k++)
+    for (j = 0; j < Dim[1]; j++)
+      for (i = 0; i < Dim[0]; i++, n++)
+        if (Field[0][n] > 0 || Field[1][n] > 0 || Field[2][n] > 0) {
+          (*si)[ns] = i;
+          (*sj)[ns] = j;
+          (*sk)[ns] = k;
+          for (f = 0; f < 3; f++)
+            S[f][ns] = Field[f][n];
+          ns++;
+        }
+
+  return ns;
+}
+
+/* Flux[f] += sum_s S[f][s] * Ktab[|target - source|^2] over a Dim mesh.
+   Targets are the outer loop so each flux cell is written once; the
+   (j,k) part of the separation is hoisted out of each row. */
+
+static void DirectSum1OverR2(int *Dim, int ns, int *si, int *sj, int *sk,
+                             float *S[3], float *Ktab, float *Flux[3])
+{
+  int i, j, k, n, s, di;
+  float K, sum0, sum1, sum2;
+  int *dyz2 = new int[ns];
+
+  for (k = 0, n = 0; k < Dim[2]; k++)
+    for (j = 0; j < Dim[1]; j++) {
+
+      for (s = 0; s < ns; s++)
+        dyz2[s] = (j-sj[s])*(j-sj[s]) + (k-sk[s])*(k-sk[s]);
+
+      for (i = 0; i < Dim[0]; i++, n++) {
+        sum0 = sum1 = sum2 = 0;
+        for (s = 0; s < ns; s++) {
+          di = i - si[s];
+          K = Ktab[dyz2[s] + di*di];
+          sum0 += S[0][s] * K;
+          sum1 += S[1][s] * K;
+          sum2 += S[2][s] * K;
+        }
+        Flux[0][n] += sum0;
+        Flux[1][n] += sum1;
+        Flux[2][n] += sum2;
+      }
+    }
+
+  delete [] dyz2;
+}
+
+static void DeleteSources(int *si, int *sj, int *sk, float *S[3])
+{
+  delete [] si;
+  delete [] sj;
+  delete [] sk;
+  for (int f = 0; f < 3; f++)
+    delete [] S[f];
+}
+
 int grid::SolveForLocallyExtinctRadiation(int level)
 {
  
@@ -68,7 +175,7 @@ int grid::SolveForLocallyExtinctRadiation(int level)
 
   LCAPERF_START("grid_SolveForLocallyExtinctRadiation");
  
-  int dim, f, i0, j0, k0, i1, j1, k1, n0, n1;
+  int dim, f, i0, j0, k0, n0, n1, ns;
   int *Dim = GravitatingMassFieldDimension;
   int R = RefineBy;
   int size = Dim[0]*Dim[1]*Dim[2];
@@ -77,30 +184,25 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   float dxp = dx * R;  // parent cell width
   float CellVolume  = POW(dx,  GridRank);
   float CellVolumeP = POW(dxp, GridRank);
-  float soft2  = (0.38*dx)  * (0.38*dx);
-  float softp2 = (0.38*dxp) * (0.38*dxp);
-  float r2, kernel;
+  int *si, *sj, *sk;
+  float *S[3];
+
+  /* Compact list of source cells.  With none, both views below vanish
+     (sources are non-negative), so there is nothing to do. */
+
+  ns = GatherSources(Dim, Source, &si, &sj, &sk, S);
+  if (ns == 0) {
+    LCAPERF_STOP("grid_SolveForLocallyExtinctRadiation");
+    return SUCCESS;
+  }
 
   /* ------------------------------------------------------------------ */
   /* 1) This level's view: Flux += K_L * S on the fine mesh. */
 
-  for (k0 = 0, n0 = 0; k0 < Dim[2]; k0++)
-    for (j0 = 0; j0 < Dim[1]; j0++)
-      for (i0 = 0; i0 < Dim[0]; i0++, n0++) {
-
-        if (Source[0][n0] <= 0 && Source[1][n0] <= 0 && Source[2][n0] <= 0)
-          continue;  // no young stars in this cell
-
-        for (k1 = 0, n1 = 0; k1 < Dim[2]; k1++)
-          for (j1 = 0; j1 < Dim[1]; j1++)
-            for (i1 = 0; i1 < Dim[0]; i1++, n1++) {
-              r2 = ((k1-k0)*(k1-k0) + (j1-j0)*(j1-j0) + (i1-i0)*(i1-i0)) *
-                   dx * dx;
-              kernel = CellVolume / (4.0*pi*max(r2, soft2));
-              for (f = 0; f < 3; f++)
-                Flux[f][n1] += Source[f][n0] * kernel;
-            }
-      }
+  float *Ktab = BuildKernelTable(Dim, CellVolume, dx);
+  DirectSum1OverR2(Dim, ns, si, sj, sk, S, Ktab, Flux);
+  delete [] Ktab;
+  DeleteSources(si, sj, sk, S);
 
   /* ------------------------------------------------------------------ */
   /* 2) The parent's view of the same sources: coarsen S onto a temporary
@@ -133,7 +235,7 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   /* Coarsen: parent-cell density = sum of fine densities / R^rank. */
 
   float inv_R_rank = 1.0 / POW(float(R), GridRank);
-  int ic, jc, kc, c0, c1;
+  int ic, jc, kc, c0;
   for (k0 = 0, n0 = 0; k0 < Dim[2]; k0++) {
     kc = (GridRank > 2) ? FloorDiv(k0 + Offset[2], R) - CStart[2] : 0;
     for (j0 = 0; j0 < Dim[1]; j0++) {
@@ -149,23 +251,11 @@ int grid::SolveForLocallyExtinctRadiation(int level)
 
   /* Convolve with K_{L-1} on the coarse mesh. */
 
-  for (k0 = 0, c0 = 0; k0 < CDim[2]; k0++)
-    for (j0 = 0; j0 < CDim[1]; j0++)
-      for (i0 = 0; i0 < CDim[0]; i0++, c0++) {
-
-        if (Coarse[0][c0] <= 0 && Coarse[1][c0] <= 0 && Coarse[2][c0] <= 0)
-          continue;
-
-        for (k1 = 0, c1 = 0; k1 < CDim[2]; k1++)
-          for (j1 = 0; j1 < CDim[1]; j1++)
-            for (i1 = 0; i1 < CDim[0]; i1++, c1++) {
-              r2 = ((k1-k0)*(k1-k0) + (j1-j0)*(j1-j0) + (i1-i0)*(i1-i0)) *
-                   dxp * dxp;
-              kernel = CellVolumeP / (4.0*pi*max(r2, softp2));
-              for (f = 0; f < 3; f++)
-                CoarseView[f][c1] += Coarse[f][c0] * kernel;
-            }
-      }
+  ns = GatherSources(CDim, Coarse, &si, &sj, &sk, S);
+  float *KtabP = BuildKernelTable(CDim, CellVolumeP, dxp);
+  DirectSum1OverR2(CDim, ns, si, sj, sk, S, KtabP, CoarseView);
+  delete [] KtabP;
+  DeleteSources(si, sj, sk, S);
 
   /* Prolong to the fine mesh (same routine and relative offsets as the
      parent flux) and subtract. */
