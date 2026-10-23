@@ -400,18 +400,21 @@ float InterpolatePreSNFeedbackTable(double *table, float age, float metallicity)
 
   /* Metallicity bracket. */
 
-  int zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met, pSNFBTable.n_met);
+  /* Clamp before searching (search_lower_bound fails out of range), as in
+     Grid_ComputeLocalStellarRadiation.C. */
 
-  float t_z=0.5f;
-  if (zz>=pSNFBTable.n_met-1){
+  int zz;
+  float t_z;
+  if (metallicity >= pSNFBTable.ini_met[pSNFBTable.n_met-1]){
     zz=pSNFBTable.n_met-2;
     t_z = 1;
   }
-  else if (zz<0){
+  else if (metallicity <= pSNFBTable.ini_met[0]){
     zz=0;
     t_z=0;
   }
   else{
+      zz = search_lower_bound((float*)pSNFBTable.ini_met, metallicity, 0, pSNFBTable.n_met-1, pSNFBTable.n_met);
       t_z = (metallicity - pSNFBTable.ini_met[zz]) / (pSNFBTable.ini_met[zz+1] - pSNFBTable.ini_met[zz]);
   }
 
