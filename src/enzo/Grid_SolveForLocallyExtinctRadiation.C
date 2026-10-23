@@ -46,6 +46,17 @@ extern "C" void FORTRAN_NAME(prolong)(float *source, float *dest, int *ndim,
 				      int *refine1, int *refine2,int *refine3);
 
 double ReturnWallTime(void);
+int FastFourierTransform(float *buffer, int Rank, int DimensionReal[],
+			 int Dimension[], int direction, int type);
+
+/* Fine-mesh sum method.  The FFT is used when
+     ns * N_cell > LERFFTCostRatio * M log2(M),   M = padded FFT size,
+   i.e. when the direct sum's pair count exceeds the FFT's cost by this
+   factor (~5 transforms at a few flops per point, vs ~1 flop-equivalent
+   per pair; tune from the debug1 timing lines).  0 forces the FFT
+   whenever there are sources, < 0 forces the direct sum. */
+
+static const float LERFFTCostRatio = 25.0;
 
 /* Integer division rounding toward -infinity (mesh offsets can be
    negative where the buffer extends past the domain edge). */
@@ -160,6 +171,118 @@ static void DeleteSources(int *si, int *sj, int *sk, float *S[3])
     delete [] S[f];
 }
 
+/* Smallest m >= n with no prime factors other than 2, 3 and 5 (sizes
+   every Enzo FFT backend accepts, including ffte). */
+
+static int NextFFTSize(int n)
+{
+  for (int m = max(n, 1); ; m++) {
+    int r = m;
+    while (r % 2 == 0) r /= 2;
+    while (r % 3 == 0) r /= 3;
+    while (r % 5 == 0) r /= 5;
+    if (r == 1)
+      return m;
+  }
+}
+
+/* |offset| stored at padded index ip (offsets -(D-1)..D-1 wrap to the top
+   of the padded axis), or -1 for padding that no source-target pair hits. */
+
+static int WrapOffset(int ip, int D, int P)
+{
+  if (ip < D)     return ip;
+  if (ip > P - D) return P - ip;
+  return -1;
+}
+
+/* Same sum as DirectSum1OverR2 (to roundoff), by zero-padded FFT
+   convolution on a P mesh (P >= 2 Dim - 1, so nothing wraps around).
+   The kernel is even in every offset, so its transform is real and
+   leaves real and imaginary parts uncoupled: fields 0 and 1 share one
+   complex transform (S0 + i S1) and field 2 uses another. */
+
+static int FFTSum1OverR2(int Rank, int *Dim, int *P, float *Source[3],
+                         float *Ktab, float *Flux[3])
+{
+  int i, j, k, n, np, di, dj, dk;
+  int M = P[0]*P[1]*P[2];
+
+  float *Kbuf = new float[2*M]();
+  float *A    = new float[2*M]();  // S0 + i S1
+  float *B    = new float[2*M]();  // S2
+
+  /* Kernel at every wrapped offset. */
+
+  for (k = 0, np = 0; k < P[2]; k++) {
+    dk = WrapOffset(k, Dim[2], P[2]);
+    for (j = 0; j < P[1]; j++) {
+      dj = WrapOffset(j, Dim[1], P[1]);
+      for (i = 0; i < P[0]; i++, np++) {
+        di = WrapOffset(i, Dim[0], P[0]);
+        if (di >= 0 && dj >= 0 && dk >= 0)
+          Kbuf[2*np] = Ktab[di*di + dj*dj + dk*dk];
+      }
+    }
+  }
+
+  /* Sources in the low corner of the padded mesh. */
+
+  for (k = 0, n = 0; k < Dim[2]; k++)
+    for (j = 0; j < Dim[1]; j++) {
+      np = (k*P[1] + j)*P[0];
+      for (i = 0; i < Dim[0]; i++, n++, np++) {
+        A[2*np  ] = Source[0][n];
+        A[2*np+1] = Source[1][n];
+        B[2*np  ] = Source[2][n];
+      }
+    }
+
+  if (FastFourierTransform(Kbuf, Rank, P, P, FFT_FORWARD,
+                           COMPLEX_TO_COMPLEX) == FAIL ||
+      FastFourierTransform(A, Rank, P, P, FFT_FORWARD,
+                           COMPLEX_TO_COMPLEX) == FAIL ||
+      FastFourierTransform(B, Rank, P, P, FFT_FORWARD,
+                           COMPLEX_TO_COMPLEX) == FAIL) {
+    ENZO_FAIL("Error in FastFourierTransform (LER forward).\n");
+  }
+
+  /* Multiply by the (real) kernel transform. */
+
+  float Khat;
+  for (np = 0; np < M; np++) {
+    Khat = Kbuf[2*np];
+    A[2*np  ] *= Khat;
+    A[2*np+1] *= Khat;
+    B[2*np  ] *= Khat;
+    B[2*np+1] *= Khat;
+  }
+  delete [] Kbuf;
+
+  if (FastFourierTransform(A, Rank, P, P, FFT_INVERSE,
+                           COMPLEX_TO_COMPLEX) == FAIL ||
+      FastFourierTransform(B, Rank, P, P, FFT_INVERSE,
+                           COMPLEX_TO_COMPLEX) == FAIL) {
+    ENZO_FAIL("Error in FastFourierTransform (LER inverse).\n");
+  }
+
+  /* Add the low corner back into the flux fields. */
+
+  for (k = 0, n = 0; k < Dim[2]; k++)
+    for (j = 0; j < Dim[1]; j++) {
+      np = (k*P[1] + j)*P[0];
+      for (i = 0; i < Dim[0]; i++, n++, np++) {
+        Flux[0][n] += A[2*np  ];
+        Flux[1][n] += A[2*np+1];
+        Flux[2][n] += B[2*np  ];
+      }
+    }
+
+  delete [] A;
+  delete [] B;
+  return SUCCESS;
+}
+
 int grid::SolveForLocallyExtinctRadiation(int level)
 {
  
@@ -204,8 +327,23 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   double WallTime0 = ReturnWallTime();  // for the debug1 timing line below
   int nsFine = ns;
 
+  /* Direct sum or FFT, whichever is estimated cheaper (see
+     LERFFTCostRatio). */
+
+  int Pad[MAX_DIMENSION] = {1, 1, 1};
+  for (dim = 0; dim < GridRank; dim++)
+    Pad[dim] = NextFFTSize(2*Dim[dim] - 1);
+  double M = double(Pad[0])*double(Pad[1])*double(Pad[2]);
+  int UseFFT = (LERFFTCostRatio >= 0 &&
+                double(ns)*double(size) > LERFFTCostRatio*M*log(M)/log(2.0));
+
   float *Ktab = BuildKernelTable(Dim, CellVolume, dx);
-  DirectSum1OverR2(Dim, ns, si, sj, sk, S, Ktab, Flux);
+  if (UseFFT) {
+    if (FFTSum1OverR2(GridRank, Dim, Pad, Source, Ktab, Flux) == FAIL) {
+      ENZO_FAIL("Error in FFTSum1OverR2.\n");
+    }
+  } else
+    DirectSum1OverR2(Dim, ns, si, sj, sk, S, Ktab, Flux);
   delete [] Ktab;
   DeleteSources(si, sj, sk, S);
 
@@ -283,14 +421,17 @@ int grid::SolveForLocallyExtinctRadiation(int level)
     delete [] CoarseView[f];
   }
 
-  /* Per-grid cost, to compare the direct sum against an FFT: time should
-     scale as ns * N_cell (fine) plus the R^6-cheaper coarse term. */
+  /* Per-grid cost, to tune LERFFTCostRatio: direct-sum time should scale
+     as ns * N_cell, FFT time as M log2(M) (Pad = padded FFT dims), plus
+     the R^6-cheaper coarse term either way. */
 
   if (debug1)
     fprintf(stdout, "LER: P%"ISYM" grid %"ISYM" level %"ISYM
             " Dim %"ISYM" %"ISYM" %"ISYM" ns %"ISYM" (coarse %"ISYM")"
-            " time %"GSYM" s\n", MyProcessorNumber, ID, level,
+            " %s Pad %"ISYM" %"ISYM" %"ISYM" time %"GSYM" s\n",
+            MyProcessorNumber, ID, level,
             Dim[0], Dim[1], Dim[2], nsFine, nsCoarse,
+            (UseFFT ? "FFT" : "direct"), Pad[0], Pad[1], Pad[2],
             float(ReturnWallTime() - WallTime0));
 
   LCAPERF_STOP("grid_SolveForLocallyExtinctRadiation");
