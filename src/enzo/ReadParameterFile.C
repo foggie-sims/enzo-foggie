@@ -2259,6 +2259,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   if (UseLocallyExtinctStellarRadiation && !SelfGravity)
     ENZO_FAIL("UseLocallyExtinctStellarRadiation requires SelfGravity (it uses the gravity solver's meshes and FFTs).");
 
+  if (UseLocallyExtinctStellarRadiation &&
+      MaximumGravityRefinementLevel < MaximumRefinementLevel)
+    ENZO_FAIL("UseLocallyExtinctStellarRadiation requires MaximumGravityRefinementLevel >= MaximumRefinementLevel (no RT flux is computed above it).");
+
   if (StarFeedbackPreSNFeedback || UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {
 
     if (!StarMakerStoreInitialMass)
