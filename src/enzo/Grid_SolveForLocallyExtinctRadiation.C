@@ -45,6 +45,8 @@ extern "C" void FORTRAN_NAME(prolong)(float *source, float *dest, int *ndim,
 				      int *start1, int *start2, int *start3,
 				      int *refine1, int *refine2,int *refine3);
 
+double ReturnWallTime(void);
+
 /* Integer division rounding toward -infinity (mesh offsets can be
    negative where the buffer extends past the domain edge). */
 
@@ -199,6 +201,9 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   /* ------------------------------------------------------------------ */
   /* 1) This level's view: Flux += K_L * S on the fine mesh. */
 
+  double WallTime0 = ReturnWallTime();  // for the debug1 timing line below
+  int nsFine = ns;
+
   float *Ktab = BuildKernelTable(Dim, CellVolume, dx);
   DirectSum1OverR2(Dim, ns, si, sj, sk, S, Ktab, Flux);
   delete [] Ktab;
@@ -256,6 +261,7 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   DirectSum1OverR2(CDim, ns, si, sj, sk, S, KtabP, CoarseView);
   delete [] KtabP;
   DeleteSources(si, sj, sk, S);
+  int nsCoarse = ns;
 
   /* Prolong to the fine mesh (same routine and relative offsets as the
      parent flux) and subtract. */
@@ -276,7 +282,17 @@ int grid::SolveForLocallyExtinctRadiation(int level)
     delete [] Coarse[f];
     delete [] CoarseView[f];
   }
- 
+
+  /* Per-grid cost, to compare the direct sum against an FFT: time should
+     scale as ns * N_cell (fine) plus the R^6-cheaper coarse term. */
+
+  if (debug1)
+    fprintf(stdout, "LER: P%"ISYM" grid %"ISYM" level %"ISYM
+            " Dim %"ISYM" %"ISYM" %"ISYM" ns %"ISYM" (coarse %"ISYM")"
+            " time %"GSYM" s\n", MyProcessorNumber, ID, level,
+            Dim[0], Dim[1], Dim[2], nsFine, nsCoarse,
+            float(ReturnWallTime() - WallTime0));
+
   LCAPERF_STOP("grid_SolveForLocallyExtinctRadiation");
   return SUCCESS;
 }

@@ -151,8 +151,11 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
       DepositParticleMassField(Grids[grid1], EvaluateTime);
-      if (UseLocallyExtinctStellarRadiation)
+      if (UseLocallyExtinctStellarRadiation) {
+        TIMER_START("LER_Deposit");
         DepositParticleLuminosityField(Grids[grid1], EvaluateTime); //LEBRON-like
+        TIMER_STOP("LER_Deposit");
+      }
     }
 
 #ifdef FORCE_MSG_PROGRESS 
@@ -168,8 +171,11 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     CommunicationDirection = COMMUNICATION_SEND;
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
       DepositParticleMassField(Grids[grid1], EvaluateTime);
-      if (UseLocallyExtinctStellarRadiation)
+      if (UseLocallyExtinctStellarRadiation) {
+        TIMER_START("LER_Deposit");
         DepositParticleLuminosityField(Grids[grid1], EvaluateTime); //LEBRON-like
+        TIMER_STOP("LER_Deposit");
+      }
     }
 
     /* Finally, receive the data and process it. */

@@ -51,6 +51,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "ErrorExceptions.h"
+#include "EnzoTiming.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -464,11 +465,14 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
   /* LEBRON-like RT: root-grid optically-thin flux fields.  Done here so the
      sibling copy below (CopyPotentialField) also fills their ghost zones. */
 
-  if (UseLocallyExtinctStellarRadiation)
+  if (UseLocallyExtinctStellarRadiation) {
+    TIMER_START("LER_RootFFT");
     if (ComputeLocallyExtinctRadiationLevelZero(MetaData, Grids,
                                                 NumberOfGrids) == FAIL) {
       ENZO_FAIL("Error in ComputeLocallyExtinctRadiationLevelZero.");
     }
+    TIMER_STOP("LER_RootFFT");
+  }
 
   /* Update boundary regions of potential
      (first set BCTempL/R which are fluid BC's because that's the format
