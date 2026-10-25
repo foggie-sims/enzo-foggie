@@ -84,6 +84,10 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
   float CorrectionAmountLeft, CorrectionAmountRight; 
  
   long_int GlobalDim;
+
+  // internal variable used if FluxCorrectionMethod = 1 or 3 to flag fields that
+  // should be corrected via method 1 (MakeFraction = 1) vs method 2 (MakeFraction = 0)
+  int MakeFraction;
  
   /* If there are no fields, don't do anything. */
  
@@ -361,16 +365,33 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
           fieldNumberList.push_back(GENum);
         }
       }
+
+	  // Flag species that should be corrected via FluxCorrectionMethod 2 vs 1.
+	  // If FluxCorrectionMethod = 3, this will be mixed.
+	  if (FluxCorrection == 1 || FluxCorrection == 3){
+		MakeFraction = 1;
+	  }
+	  elif (FluxCorrection == 2){
+		MakeFraction = 0;
+	  }
+	  if (FluxCorrection ==3 && (FieldType[field] >= ElectronDensity &&
+          FieldType[field] <= HDIDensity)){
+			MakeFraction = 0; // Do not use fractional correction (Method 1) for grackle species
+	  }
+
+
       // When FluxCorrection is set to 2, species will be directly corrected 
-      // like density, total energy, and internal energy
-      if (FluxCorrection == 2){
+      // like density, total energy, and internal energy. If FluxCorrectionMethod 
+	  // is set to 3, species handled by grackle will be corrected via method 2.
+      if (FluxCorrection == 2 || FluxCorrection == 3){
         for (field = 0; field < NumberOfBaryonFields; field++) {
           if ((FieldType[field] >= ElectronDensity &&
                FieldType[field] <= ExtraType1) ||
               FieldType[field] == MetalSNIaDensity ||
               FieldType[field] == MetalSNIIDensity ||
               (FieldType[field] >= TracerFluidField01Density &&
-               FieldType[field] <= TracerFluidField08Density)) {
+               FieldType[field] <= TracerFluidField08Density) &&
+			   MakeFraction == 0) {
             fieldNumberList.push_back(field);
           }
         }
@@ -401,32 +422,34 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
         // Divide species by densities so that at the end we can multiply
         // them by the new density (species are not otherwise modified --
         // see the next comment).  This ensures that the species are changed
-        // to keep the same fractional density.
-        if (FluxCorrection == 1) { // Skip this routine when FluxCorrection = 2
-        if (
-          (
-            (FieldType[field] >= ElectronDensity
-              && FieldType[field] <= ExtraType1
-            )
-            || FieldType[field] == MetalSNIaDensity
-            || FieldType[field] == MetalSNIIDensity
-			|| (FieldType[field] >= TracerFluidField01Density &&
-		        FieldType[field] <= TracerFluidField08Density)
-        	)
-          && FieldTypeNoInterpolate(FieldType[field]) == FALSE
-          && FieldTypeIsRadiation(FieldType[field]) == FALSE
-        ) {
-          for (k = Start[2]; k <= End[2]; k++) {
-            for (j = Start[1]; j <= End[1]; j++) {
-              index = (k*GridDimension[1] + j)*GridDimension[0] + Start[0];
-              for (i = Start[0]; i <= End[0]; i++, index++) {
-                BaryonField[field][index] /= BaryonField[DensNum][index];
-                BaryonField[field][index+Offset]
-                  /= BaryonField[DensNum][index+Offset];
-              }
-            }
-          }
-        }
+        // to keep the same fractional density. If FluxCorrectionMethod is 
+	    // set to 3, species not handled by grackle will be corrected via method 1.
+        if (FluxCorrection == 1 || FluxCorrection == 3) { // Skip this routine when FluxCorrection = 2
+        	if (
+        	   (
+               (FieldType[field] >= ElectronDensity
+                && FieldType[field] <= ExtraType1
+               )
+               || FieldType[field] == MetalSNIaDensity
+               || FieldType[field] == MetalSNIIDensity
+			   || (FieldType[field] >= TracerFluidField01Density &&
+		           FieldType[field] <= TracerFluidField08Density)
+        	   )
+               && FieldTypeNoInterpolate(FieldType[field]) == FALSE
+               && FieldTypeIsRadiation(FieldType[field]) == FALSE
+			   && MakeFraction == 1
+        	) {
+          		for (k = Start[2]; k <= End[2]; k++) {
+            		for (j = Start[1]; j <= End[1]; j++) {
+              			index = (k*GridDimension[1] + j)*GridDimension[0] + Start[0];
+              			for (i = Start[0]; i <= End[0]; i++, index++) {
+                			BaryonField[field][index] /= BaryonField[DensNum][index];
+                			BaryonField[field][index+Offset]
+                 			 /= BaryonField[DensNum][index+Offset];
+              			}
+            		}
+        		}
+        	}
         }
 
 	    if (FieldTypeNoInterpolate(FieldType[field]) == FALSE
@@ -855,17 +878,18 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	    /* Multiply species by density to return from fractional to real
 	       density. (see comments above regarding species). */
 	
-          if (FluxCorrection == 1) {
-	  for (field = 0; field < NumberOfBaryonFields; field++)
-	    if ( ((FieldType[field] >= ElectronDensity &&
-		   FieldType[field] <= ExtraType1) ||
-		  FieldType[field] == MetalSNIaDensity ||
-		  FieldType[field] == MetalSNIIDensity
-			|| (FieldType[field] >= TracerFluidField01Density &&
-		        FieldType[field] <= TracerFluidField08Density)
+    	if (FluxCorrection == 1 || FluxCorrection == 3) {
+	  		for (field = 0; field < NumberOfBaryonFields; field++)
+	    		if ( ((FieldType[field] >= ElectronDensity &&
+		   			FieldType[field] <= ExtraType1) ||
+		  			FieldType[field] == MetalSNIaDensity ||
+		  			FieldType[field] == MetalSNIIDensity ||
+					(FieldType[field] >= TracerFluidField01Density &&
+		      		FieldType[field] <= TracerFluidField08Density)
 		) &&
 		 FieldTypeNoInterpolate(FieldType[field]) == FALSE &&
-		 FieldTypeIsRadiation(FieldType[field]) == FALSE)
+		 FieldTypeIsRadiation(FieldType[field]) == FALSE &&
+		 MakeFraction = 1)
 	      for (k = Start[2]; k <= End[2]; k++)
 		for (j = Start[1]; j <= End[1]; j++) {
 		  index = (k*GridDimension[1] + j)*GridDimension[0] + Start[0];

@@ -1497,7 +1497,9 @@ General Hydrodynamics Parameters
     species quantities are not flux corrected directly but are modified to
     keep the fraction constant based on the density change. If FluxCorrection
     = 2, species quantities are flux corrected directly in the same way as
-    density and energy. Default: 1
+    density and energy. If FluxCorrection = 3, a hybrid method is used:
+    fields that are typically calculated by grackle are corrected via method 1,
+    while all others are corrected via method 2. Default: 1
 ``InterpolationMethod`` (external)
     There should be a whole section devoted to the interpolation
     method, which is used to generate new sub-grids and to fill in the
