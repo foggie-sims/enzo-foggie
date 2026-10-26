@@ -371,7 +371,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	  if (FluxCorrection == 1 || FluxCorrection == 3){
 		MakeFraction = 1;
 	  }
-	  elif (FluxCorrection == 2){
+	  else if (FluxCorrection == 2){
 		MakeFraction = 0;
 	  }
 	  if (FluxCorrection ==3 && (FieldType[field] >= ElectronDensity &&
@@ -889,7 +889,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 		) &&
 		 FieldTypeNoInterpolate(FieldType[field]) == FALSE &&
 		 FieldTypeIsRadiation(FieldType[field]) == FALSE &&
-		 MakeFraction = 1)
+		 MakeFraction == 1)
 	      for (k = Start[2]; k <= End[2]; k++)
 		for (j = Start[1]; j <= End[1]; j++) {
 		  index = (k*GridDimension[1] + j)*GridDimension[0] + Start[0];
