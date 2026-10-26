@@ -49,14 +49,13 @@ double ReturnWallTime(void);
 int FastFourierTransform(float *buffer, int Rank, int DimensionReal[],
 			 int Dimension[], int direction, int type);
 
-/* Fine-mesh sum method.  The FFT is used when
-     ns * N_cell > LERFFTCostRatio * M log2(M),   M = padded FFT size,
-   i.e. when the direct sum's pair count exceeds the FFT's cost by this
-   factor (~5 transforms at a few flops per point, vs ~1 flop-equivalent
-   per pair; tune from the debug1 timing lines).  0 forces the FFT
-   whenever there are sources, < 0 forces the direct sum. */
-
-static const float LERFFTCostRatio = 25.0;
+/* Fine-mesh sum method (runtime parameter LocallyExtinctRadiationFFTRatio,
+   default 25).  The FFT is used when
+     ns * N_cell > LocallyExtinctRadiationFFTRatio * M log2(M),
+   M = padded FFT size, i.e. when the direct sum's pair count exceeds the
+   FFT's cost by this factor (~5 transforms at a few flops per point, vs
+   ~1 flop-equivalent per pair; tune from the debug1 timing lines).
+   0 forces the FFT whenever there are sources, < 0 forces the direct sum. */
 
 /* Integer division rounding toward -infinity (mesh offsets can be
    negative where the buffer extends past the domain edge). */
@@ -328,14 +327,15 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   int nsFine = ns;
 
   /* Direct sum or FFT, whichever is estimated cheaper (see
-     LERFFTCostRatio). */
+     LocallyExtinctRadiationFFTRatio above). */
 
   int Pad[MAX_DIMENSION] = {1, 1, 1};
   for (dim = 0; dim < GridRank; dim++)
     Pad[dim] = NextFFTSize(2*Dim[dim] - 1);
   double M = double(Pad[0])*double(Pad[1])*double(Pad[2]);
-  int UseFFT = (LERFFTCostRatio >= 0 &&
-                double(ns)*double(size) > LERFFTCostRatio*M*log(M)/log(2.0));
+  int UseFFT = (LocallyExtinctRadiationFFTRatio >= 0 &&
+                double(ns)*double(size) >
+                LocallyExtinctRadiationFFTRatio*M*log(M)/log(2.0));
 
   float *Ktab = BuildKernelTable(Dim, CellVolume, dx);
   if (UseFFT) {
@@ -421,7 +421,8 @@ int grid::SolveForLocallyExtinctRadiation(int level)
     delete [] CoarseView[f];
   }
 
-  /* Per-grid cost, to tune LERFFTCostRatio: direct-sum time should scale
+  /* Per-grid cost, to tune LocallyExtinctRadiationFFTRatio: direct-sum time
+     should scale
      as ns * N_cell, FFT time as M log2(M) (Pad = padded FFT dims), plus
      the R^6-cheaper coarse term either way. */
 

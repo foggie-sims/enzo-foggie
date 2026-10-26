@@ -1134,6 +1134,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   /* Local Radiation Rates  - CWT 06/07/2026 */
   UseLocalStellarRadiation = 0;
-UseLocallyExtinctStellarRadiation = 0;
+  UseLocallyExtinctStellarRadiation = 0;
+  LocallyExtinctRadiationFFTRatio = 25.0;  // see Grid_SolveForLocallyExtinctRadiation.C
+
   return SUCCESS;
 }

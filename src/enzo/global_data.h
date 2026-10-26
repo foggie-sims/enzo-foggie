@@ -1328,4 +1328,5 @@ EXTERN int UseTracerFluidWithStellarFeedback;
 /* Local Radiation Rates - CWT 06/07/26 */
 EXTERN int UseLocalStellarRadiation;
 EXTERN int UseLocallyExtinctStellarRadiation;
+EXTERN float LocallyExtinctRadiationFFTRatio;  // subgrid FFT vs direct sum
 #endif
