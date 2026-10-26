@@ -1011,6 +1011,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
         &UseLocallyExtinctStellarRadiation);
     ret += sscanf(line, "LocallyExtinctRadiationFFTRatio = %"FSYM,
         &LocallyExtinctRadiationFFTRatio);
+    ret += sscanf(line, "LocallyExtinctRadiationBoxRadius = %"ISYM,
+        &LocallyExtinctRadiationBoxRadius);
     ret += sscanf(line, "StarEnergyToStellarUV = %"FSYM, &StarEnergyToStellarUV);
     ret += sscanf(line, "StarEnergyToQuasarUV = %"FSYM, &StarEnergyToQuasarUV);
     ret += sscanf(line, "StarFeedbackKineticFraction = %"FSYM,

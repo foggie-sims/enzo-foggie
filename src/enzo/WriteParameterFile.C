@@ -950,6 +950,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
           UseLocallyExtinctStellarRadiation); //CWT 09/30/2026
   fprintf(fptr, "LocallyExtinctRadiationFFTRatio       = %"GSYM"\n",
           LocallyExtinctRadiationFFTRatio);
+  fprintf(fptr, "LocallyExtinctRadiationBoxRadius      = %"ISYM"\n",
+          LocallyExtinctRadiationBoxRadius);
   fprintf(fptr, "StarEnergyToStellarUV                 = %"GSYM"\n",
           StarEnergyToStellarUV);
   fprintf(fptr, "StarEnergyToQuasarUV                  = %"GSYM"\n",

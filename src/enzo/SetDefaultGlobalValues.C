@@ -1136,6 +1136,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   UseLocalStellarRadiation = 0;
   UseLocallyExtinctStellarRadiation = 0;
   LocallyExtinctRadiationFFTRatio = 25.0;  // see Grid_SolveForLocallyExtinctRadiation.C
+  LocallyExtinctRadiationBoxRadius = 0;    // 0: full subgrid correction
 
   return SUCCESS;
 }
