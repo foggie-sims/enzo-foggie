@@ -129,8 +129,8 @@ int ComputePotentialFieldLevelZero(TopGridData *MetaData,
 /******************************************************************/
 /*  ComputeLocallyExtinctRadiationLevelZero convolves the young-  */
 /*  star source fields with a 1/(4 pi r^2) kernel on the root     */
-/*  grid (LEBRON-like RT).  It always uses zero-padded (isolated) */
-/*  FFTs, since a 1/r^2 sum over periodic images diverges.        */
+/*  grid (Locally-Extinct-Radiation). It always uses zero-padded  */
+/*  (isolated) FFTs.                                              */
 /******************************************************************/
 
 int ComputeLocallyExtinctRadiationLevelZero(TopGridData *MetaData,
@@ -462,8 +462,8 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
             ENZO_FAIL("Error in grid->FinishFFT.");
     }
 
-  /* LEBRON-like RT: root-grid optically-thin flux fields.  Done here so the
-     sibling copy below (CopyPotentialField) also fills their ghost zones. */
+  /* Locally-Extinct-Stellar-Radiation: root-grid optically-thin flux fields.
+    Done here so the sibling copy (CopyPotentialField) also fills ghost zones. */
 
   if (UseLocallyExtinctStellarRadiation) {
     TIMER_START("LER_RootFFT");

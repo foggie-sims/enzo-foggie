@@ -122,7 +122,7 @@ int PrepareIsolatedGreensFunction(region *GreensFunction, int proc,
 	r = max(r, 0.38*RealCellWidth[0]);
 	//	r *= GravitatingMassFieldCellSize;
 	if (GridRank == 3) {
-	  if (isRT)  // LEBRON-like RT: optically-thin 1/(4 pi r^2) kernel
+	  if (isRT)  // Locally-Extinct-Stellar-Radiation: optically-thin 1/(4 pi r^2) kernel
 	    GreensFunction->Data[n] = RealCellVolume/(4.0*pi*r*r);
 	  else
 	    GreensFunction->Data[n] = GravConst_factor/r;

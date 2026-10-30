@@ -64,7 +64,7 @@ void grid::DeleteAllButParticles()
   GravitatingMassField          = NULL;
   GravitatingMassFieldParticles = NULL;
 
-  /* LEBRON-like RT fields */
+  /* Locally-Extinct-Stellar-Radiation fields */
   delete [] kdissH2SourceParticles;
   delete [] kdetHMSourceParticles;
   delete [] isrfSourceParticles;

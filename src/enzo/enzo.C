@@ -306,7 +306,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   TIMER_REGISTER("SetBoundaryConditions");
   TIMER_REGISTER("SolveHydroEquations");
   TIMER_REGISTER("Total");
-  // LEBRON-like RT (registered before parameters are read; zero if unused)
+  // Locally-Extinct-Stellar-Radiation Timers
   TIMER_REGISTER("LER_Deposit");
   TIMER_REGISTER("LER_RootFFT");
   TIMER_REGISTER("LER_Subgrid");

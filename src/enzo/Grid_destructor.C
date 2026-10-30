@@ -128,7 +128,7 @@ grid::~grid()
   delete [] PotentialField;
   delete [] GravitatingMassField;
   delete [] GravitatingMassFieldParticles;
-  delete [] kdissH2SourceParticles; // LEBRON-like RT fields
+  delete [] kdissH2SourceParticles; // Locally-Extinct-Stellar-Radiation
   delete [] kdetHMSourceParticles;
   delete [] isrfSourceParticles;
   delete [] kdissH2SourceField;

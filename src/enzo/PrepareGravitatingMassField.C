@@ -58,7 +58,7 @@ int PrepareGravitatingMassField1(HierarchyEntry *Grid)
     }
     CurrentGrid->ClearGravitatingMassField();
     if (UseLocallyExtinctStellarRadiation)
-      CurrentGrid->ClearRTSourceField();  // LEBRON-like RT
+      CurrentGrid->ClearRTSourceField();  // Locally-Extinct-Stellar-Radiation
   }
 
   /* Note: RT sources are deliberately not copied from the parent into the

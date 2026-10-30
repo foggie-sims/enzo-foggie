@@ -80,7 +80,7 @@ int grid::PreparePotentialField(grid *ParentGrid)
     if (PotentialField != NULL)
       delete [] PotentialField;
     PotentialField = new float[size];
-    if (UseLocallyExtinctStellarRadiation) {  // LEBRON-like RT
+    if (UseLocallyExtinctStellarRadiation) {  // Locally-Extinct-Stellar-Radiation
       delete [] kdissH2FluxField;
       delete [] kdetHMFluxField;
       delete [] isrfFluxField;
@@ -195,7 +195,7 @@ int grid::PreparePotentialField(grid *ParentGrid)
 
 #endif /* SPLINE */
 
-  /* LEBRON-like RT: interpolate the parent's flux fields the same way
+  /* Locally-Extinct-Stellar-Radiation: interpolate the parent's flux fields the same way
      (always prolong; SolveForLocallyExtinctRadiation subtracts the parent's
      view of local sources with this same interpolation). */
 
@@ -241,7 +241,7 @@ int grid::PreparePotentialField(grid *ParentGrid)
 
     delete [] ParentGrid->PotentialField;
     ParentGrid->PotentialField = NULL;
-    delete [] ParentGrid->kdissH2FluxField;  // LEBRON-like RT (received copies)
+    delete [] ParentGrid->kdissH2FluxField;  // Locally-Extinct-Stellar-RadiationT (received copies)
     delete [] ParentGrid->kdetHMFluxField;
     delete [] ParentGrid->isrfFluxField;
     ParentGrid->kdissH2FluxField = NULL;

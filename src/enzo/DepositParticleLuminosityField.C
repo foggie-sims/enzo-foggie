@@ -7,7 +7,8 @@
 /  modified1:Cameron Trapp
 /  date:       Sept, 2026
 /
-/  PURPOSE: LEBRON-like implementation of RT
+/  PURPOSE: Modification of DepositParticleMassField.C for the
+/           Locally-Extinct-Stellar-Radiation transfer module.
 /
 ************************************************************************/
  

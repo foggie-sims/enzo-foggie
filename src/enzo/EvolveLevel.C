@@ -525,9 +525,9 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
                 if (level > 0) {
                     Grids[grid1]->GridData->SolveForPotential(level);
-                    if (UseLocallyExtinctStellarRadiation) {
+                    if (UseLocallyExtinctStellarRadiation) { //Solve locally extinct RT using gravity machinery
                         TIMER_START("LER_Subgrid");
-                        Grids[grid1]->GridData->SolveForLocallyExtinctRadiation(level); //LEBRON-like
+                        Grids[grid1]->GridData->SolveForLocallyExtinctRadiation(level);
                         TIMER_STOP("LER_Subgrid");
                     }
                 }
@@ -638,9 +638,9 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
                     if (level <= MaximumGravityRefinementLevel) {
                         if (level > 0) {
                             Grids[grid1]->GridData->SolveForPotential(level) ;
-                            if (UseLocallyExtinctStellarRadiation) {
+                            if (UseLocallyExtinctStellarRadiation) { //Solve locally extinct RT using gravity machinery
                                 TIMER_START("LER_Subgrid");
-                                Grids[grid1]->GridData->SolveForLocallyExtinctRadiation(level) ; //LEBRON-like
+                                Grids[grid1]->GridData->SolveForLocallyExtinctRadiation(level) ;
                                 TIMER_STOP("LER_Subgrid");
                             }
                         }

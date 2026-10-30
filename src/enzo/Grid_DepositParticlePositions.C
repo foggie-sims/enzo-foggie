@@ -93,7 +93,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
   float MassFactor = 1.0, *ParticleMassTemp, *ParticleMassPointer; 
   FLOAT CellSize, CloudSize;
   float *ParticleMassPointerSink;    
-  float *ParticleRadiationTemp = NULL;  // LEBRON-like RT
+  float *ParticleRadiationTmp = NULL;  // Locally-Extinct-Stellar-Radiation
   float TimeDifference = 0;
   FLOAT LeftEdge[MAX_DIMENSION], OriginalLeftEdge[MAX_DIMENSION];
   float *DepositFieldPointer, *OriginalDepositFieldPointer;
@@ -138,7 +138,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     }
   }
 
-  /* 4) Young Star Radiation Fields for LEBRON-like RT */
+  /* 4) Young Star Radiation Fields for Locally-Extinct-Stellar-Radiation */
   
   else if (DepositField == KDISSH2_SOURCE_FIELD) {
     if (TargetGrid->GravitatingMassFieldParticlesCellSize <= 0)
@@ -317,7 +317,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 	ParticleMassPointer[i] = min(DepositParticleMaximumParticleMass,
 				     ParticleMassPointer[i]);
 
-    /* LEBRON-like RT: replace particle 'mass' with the young-star source
+    /* Locally-Extinct-Stellar-Radiation: deposit the young-star source
        strength.  ParticleInitialMass*MassFactor is a density on the target
        grid, so (table value [rate*cm^2 per Msun]) * density * MassUnits /
        SolarMass is the source per unit code volume; the RT Green's function
@@ -330,7 +330,6 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
         VelocityUnits;
       GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits,
                &VelocityUnits, Time);
-      const float years_to_seconds = 3.15576e7;
       float MsunPerCodeMass = DensityUnits * POW(LengthUnits, 3) / SolarMass;
       double *table = (DepositField == KDISSH2_SOURCE_FIELD) ? pSNFBTable.kdiss_H2 :
                       (DepositField == KDETHM_SOURCE_FIELD)  ? pSNFBTable.kdet_HM :
@@ -371,17 +370,17 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
       float *MetalField    = (MetalNum    >= 0) ? BaryonField[MetalNum]    : NULL;
       float *SNColourField = (SNColourNum >= 0) ? BaryonField[SNColourNum] : NULL;
 
-      ParticleRadiationTemp = new float[NumberOfParticles];
+      ParticleRadiationTmp = new float[NumberOfParticles];
       for (i = 0; i < NumberOfParticles; i++) {
-        ParticleRadiationTemp[i] = 0;  // dark matter and old stars emit nothing
+        ParticleRadiationTmp[i] = 0;  // dark matter and old stars emit nothing
         if (ParticleType[i] != PARTICLE_TYPE_STAR)
           continue;
-        float age = (Time - ParticleAttribute[0][i]) * TimeUnits / years_to_seconds;
+        float age = (Time - ParticleAttribute[0][i]) * TimeUnits / yr_s;
         if (age >= 5e7)
           continue;
         /* SB99 tables are per Msun formed, so use the initial mass (a
            density, like ParticleMass), scaled to the target grid. */
-        ParticleRadiationTemp[i] = InterpolatePreSNFeedbackTable(table, age,
+        ParticleRadiationTmp[i] = InterpolatePreSNFeedbackTable(table, age,
                                      ParticleAttribute[2][i]) *
                                    ParticleInitialMass[i] * MassFactor *
                                    MsunPerCodeMass;
@@ -412,10 +411,10 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
                                ((SNColourField != NULL) ? SNColourField[c] : 0);
           float ZoverZsun = MetalDensity / rho[c] /
                             CoolData.SolarMetalFractionByMass;
-          ParticleRadiationTemp[i] *= exp(-SourceOpacitySolar * ZoverZsun * Sigma);
+          ParticleRadiationTmp[i] *= exp(-SourceOpacitySolar * ZoverZsun * Sigma);
         }
       }
-      ParticleMassPointer = ParticleRadiationTemp;
+      ParticleMassPointer = ParticleRadiationTmp;
     }
  
     /* Compute difference between current time and DepositTime. */
@@ -640,7 +639,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 
       delete [] ParticleMassTemp;
 
-    delete [] ParticleRadiationTemp;  // LEBRON-like RT (NULL otherwise)
+    delete [] ParticleRadiationTmp;  //Locally-Extinct-Stellar-Radiation
 
     /* Return particles to positions at Time. */
 

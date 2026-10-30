@@ -77,7 +77,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
   int RegionSize = RegionDim[0]*RegionDim[1]*RegionDim[2];
   int TransferSize = RegionSize * NumberOfFields;
 
-  /* LEBRON-like RT: when enabled, the three RT source arrays ride along with
+  /* Locally-Extinct-Stellar-Radiation: when enabled, the three RT source arrays ride along with
      the particle mass field, and the three RT flux fields with the
      potential, packed after the original field in the same message. */
 
@@ -220,7 +220,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
         RT[1] = kdetHMSourceParticles;
         RT[2] = isrfSourceParticles;
         RTDim = GravitatingMassFieldParticlesDimension;
-      } else {
+      } else { //POTENTIAL_FIELD
         RT[0] = kdissH2FluxField;
         RT[1] = kdetHMFluxField;
         RT[2] = isrfFluxField;

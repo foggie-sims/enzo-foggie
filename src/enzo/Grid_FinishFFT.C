@@ -67,7 +67,7 @@ int grid::FinishFFT(region *InitialRegion, int Field, int DomainDim[])
       if (PotentialField == NULL)
 	PotentialField = new float[size]();
       FieldPointer = PotentialField;
-    } else if (Field == KDISSH2_FLUX_FIELD) { //LEBRON-like RT
+    } else if (Field == KDISSH2_FLUX_FIELD) { //Locally-Extinct-Stellar-Radiation
       if (kdissH2FluxField == NULL)
         kdissH2FluxField = new float[size]();
       FieldPointer = kdissH2FluxField;

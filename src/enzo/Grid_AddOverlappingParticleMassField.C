@@ -156,7 +156,7 @@ int grid::AddOverlappingParticleMassField(grid *OtherGrid,
 	  OtherGrid->GravitatingMassFieldParticles[otherindex];
     }
 
-  /* LEBRON-like RT: sum the overlapping young-star sources the same way.
+  /* Locally-Extinct-Stellar-Radiation: sum the overlapping young-star sources the same way.
      (Off-processor, these arrive packed with the particle mass field.) */
 
   if (UseLocallyExtinctStellarRadiation) {

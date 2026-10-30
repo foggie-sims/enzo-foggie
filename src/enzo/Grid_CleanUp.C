@@ -51,7 +51,7 @@ void grid::CleanUp()
   GravitatingMassField          = NULL;
   GravitatingMassFieldParticles = NULL;
 
-  /* LEBRON-like RT: particle-mesh and summed sources (flux is kept) */
+  /* Locally-Extinct-Stellar-Radiation: particle-mesh and summed sources (flux is kept) */
   delete [] kdissH2SourceParticles;
   delete [] kdetHMSourceParticles;
   delete [] isrfSourceParticles;

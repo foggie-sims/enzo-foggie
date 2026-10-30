@@ -387,7 +387,7 @@ int grid::GrackleWrapper()
   } // UseLocalStellarRadiation
 
   if (UseLocallyExtinctStellarRadiation) {
-    /* LEBRON-like RT: per-cell rates from the flux fields (CWT 10/05/26) */
+    /* Locally-Extinct-Stellar-Radiation: per-cell rates from the flux fields */
     k_diss_H2_grid = new float[size]();
     k_det_HM_grid  = new float[size]();
     k_diss_CO_grid = new float[size]();  // not computed yet

@@ -7,27 +7,25 @@
 /  modified1:  Oct, 2026 - all three RT fields; parent subtraction made
 /              consistent with the prolonged parent flux
 /
-/  PURPOSE: LEBRON-like RT.  On entry the flux fields hold the parent-level
-/    solution, prolonged in PreparePotentialField.  For the sources S on
-/    this grid's mesh we then
+/  PURPOSE: Locally-Extinct-Stellar-Radiation. The flux fields initially
+/    hold the parent-level solution, prolonged in PreparePotentialField.
+/    For the sources S on this grid's mesh we then:
 /      add      K_L * S                      (this level's view)
 /      subtract prolong(K_{L-1} * coarsen(S)) (the parent's view, put through
 /                                              the same interpolation as the
 /                                              parent flux, so it cancels)
 /    where K_l = dx_l^3 / (4 pi max(r^2, (0.38 dx_l)^2)), matching the
-/    root-grid Green's function.  Over all levels this telescopes to K_L * S.
+/    root-grid Green's function.
 /
 /  NOTE: Direct sums: O(N_source * N_cell) per grid on the fine mesh, and
-/    the same on the (R^3 smaller) coarse mesh, over compact lists of the
-/    nonzero source cells with K_l tabulated by integer squared separation.
-/    Grids without sources return early (both views vanish).  Source fields
-/    are densities (per unit volume), hence the cell volume in K_l.  Assumes
-/    a uniform refinement factor RefineBy.
+/    the same on the (R^3 smaller) coarse mesh. Source fields are densities,
+/    hence the cell volume in K_l. Assumes a uniform refinement factor RefineBy.
 /
-/    With LocallyExtinctRadiationBoxRadius = rc > 0, the correction (both
-/    terms) is applied only within rc fine cells of each source, from
-/    precomputed per-source tables: O(N_source * (2 rc + 1)^3).  See
-/    BuildBoxCorrection.
+/    Depending on the number of sources, this will compute this sum in Fourier
+/    space, O(M log M), where M~8*N_cell.
+/
+/    With LocallyExtinctRadiationBoxRadius = rc > 0, the correction is applied
+/    only within rc fine cells of each source, O(N_source * (2 rc + 1)^3).
 /
 ************************************************************************/
  
@@ -58,52 +56,49 @@ int FastFourierTransform(float *buffer, int Rank, int DimensionReal[],
    default 25).  The FFT is used when
      ns * N_cell > LocallyExtinctRadiationFFTRatio * M log2(M),
    M = padded FFT size, i.e. when the direct sum's pair count exceeds the
-   FFT's cost by this factor (~5 transforms at a few flops per point, vs
-   ~1 flop-equivalent per pair; tune from the debug1 timing lines).
+   FFT's cost by this factor.
    0 forces the FFT whenever there are sources, < 0 forces the direct sum. */
-
-/* Integer division rounding toward -infinity (mesh offsets can be
-   negative where the buffer extends past the domain edge). */
 
 static int FloorDiv(int a, int b)
 {
   return (a >= 0) ? a/b : -((-a + b - 1)/b);
 }
 
-/* Tabulate K = CellVolume / (4 pi max(r^2, (0.38 dx)^2)) by the integer
-   squared separation m = r^2/dx^2, for every separation on a Dim mesh.
-   Only m = 0 is softened, since 0.38^2 < 1. */
+
 
 static float *BuildKernelTable(int *Dim, float CellVolume, float dx)
 {
-  int dim, m, mmax = 0;
+  /* Tabulate K = CellVolume / (4 pi max(r^2, (0.38 dx)^2)) by the integer
+   squared separation r2idx = r^2/dx^2, for every separation on a Dim mesh.
+   Only r2idx = 0 is softened*/
+  int dim, r2idx, max_idx = 0;
   for (dim = 0; dim < MAX_DIMENSION; dim++)
-    mmax += (Dim[dim]-1)*(Dim[dim]-1);
+    max_idx += (Dim[dim]-1)*(Dim[dim]-1);
 
-  float *Ktab = new float[mmax+1];
+  float *r2tab = new float[max_idx+1];
   float norm = CellVolume / (4.0*pi*dx*dx);
-  Ktab[0] = norm / (0.38*0.38);
-  for (m = 1; m <= mmax; m++)
-    Ktab[m] = norm / float(m);
+  r2tab[0] = norm / (0.38*0.38);
+  for (r2idx = 1; r2idx <= max_idx; r2idx++)
+    r2tab[r2idx] = norm / float(r2idx);
 
-  return Ktab;
+  return r2tab;
 }
-
-/* Gather the cells of a Dim mesh where any of the three fields is positive
-   into a compact list (indices si,sj,sk and values S[f]).  Returns the
-   number of sources; the arrays are allocated here (NULL if none). */
 
 static int GatherSources(int *Dim, float *Field[3], int **si, int **sj,
                          int **sk, float *S[3])
 {
+/* Gather the cells of a Dim mesh where any of the three fields is positive
+   into a compact list (indices si,sj,sk and values S[f]).  Returns the
+   number of sources; the arrays are allocated here (NULL if none). */
+
   int i, j, k, n, f, ns = 0;
   int size = Dim[0]*Dim[1]*Dim[2];
 
-  for (n = 0; n < size; n++)
+  for (n = 0; n < size; n++) //How many sources are there
     if (Field[0][n] > 0 || Field[1][n] > 0 || Field[2][n] > 0)
       ns++;
 
-  *si = *sj = *sk = NULL;
+  *si = *sj = *sk = NULL; //initialize
   for (f = 0; f < 3; f++)
     S[f] = NULL;
   if (ns == 0)
@@ -115,7 +110,7 @@ static int GatherSources(int *Dim, float *Field[3], int **si, int **sj,
   for (f = 0; f < 3; f++)
     S[f] = new float[ns];
 
-  ns = 0;
+  ns = 0; //store source indices and fluxes
   for (k = 0, n = 0; k < Dim[2]; k++)
     for (j = 0; j < Dim[1]; j++)
       for (i = 0; i < Dim[0]; i++, n++)
@@ -131,31 +126,29 @@ static int GatherSources(int *Dim, float *Field[3], int **si, int **sj,
   return ns;
 }
 
-/* Flux[f] += sum_s S[f][s] * Ktab[|target - source|^2] over a Dim mesh.
-   Targets are the outer loop so each flux cell is written once; the
-   (j,k) part of the separation is hoisted out of each row. */
-
-static void DirectSum1OverR2(int *Dim, int ns, int *si, int *sj, int *sk,
-                             float *S[3], float *Ktab, float *Flux[3])
+static void DirectSumOverR2(int *Dim, int ns, int *si, int *sj, int *sk,
+                             float *S[3], float *r2tab, float *Flux[3])
 {
+  /* Flux[field] += Sum_sources S[f][source] * r2tab[(target-source)^2]*/
+
   int i, j, k, n, s, di;
-  float K, sum0, sum1, sum2;
+  float r2term, sum0, sum1, sum2;
   int *dyz2 = new int[ns];
 
   for (k = 0, n = 0; k < Dim[2]; k++)
-    for (j = 0; j < Dim[1]; j++) {
+    for (j = 0; j < Dim[1]; j++) { //loop over outer 2 grid dimensions
 
-      for (s = 0; s < ns; s++)
+      for (s = 0; s < ns; s++) //loop over sources
         dyz2[s] = (j-sj[s])*(j-sj[s]) + (k-sk[s])*(k-sk[s]);
 
-      for (i = 0; i < Dim[0]; i++, n++) {
+      for (i = 0; i < Dim[0]; i++, n++) { //loop over inner grid dimension
         sum0 = sum1 = sum2 = 0;
         for (s = 0; s < ns; s++) {
           di = i - si[s];
-          K = Ktab[dyz2[s] + di*di];
-          sum0 += S[0][s] * K;
-          sum1 += S[1][s] * K;
-          sum2 += S[2][s] * K;
+          r2term = r2tab[dyz2[s] + di*di];
+          sum0 += S[0][s] * r2term; //H2 photodissociation
+          sum1 += S[1][s] * r2term; //HM photodetachment
+          sum2 += S[2][s] * r2term; //isrf
         }
         Flux[0][n] += sum0;
         Flux[1][n] += sum1;
@@ -175,11 +168,10 @@ static void DeleteSources(int *si, int *sj, int *sk, float *S[3])
     delete [] S[f];
 }
 
-/* Smallest m >= n with no prime factors other than 2, 3 and 5 (sizes
-   every Enzo FFT backend accepts, including ffte). */
-
 static int NextFFTSize(int n)
 {
+  /* Smallest m >= n with no prime factors other than 2, 3 and 5 (sizes
+   every Enzo FFT backend accepts, including ffte). */
   for (int m = max(n, 1); ; m++) {
     int r = m;
     while (r % 2 == 0) r /= 2;
@@ -190,25 +182,23 @@ static int NextFFTSize(int n)
   }
 }
 
-/* |offset| stored at padded index ip (offsets -(D-1)..D-1 wrap to the top
-   of the padded axis), or -1 for padding that no source-target pair hits. */
-
 static int WrapOffset(int ip, int D, int P)
 {
+  /* |offset| stored at padded index ip (offsets -(D-1)..D-1 wrap to the top
+   of the padded axis), or -1 for padding that no source-target pair hits. */
   if (ip < D)     return ip;
   if (ip > P - D) return P - ip;
   return -1;
 }
 
-/* Same sum as DirectSum1OverR2 (to roundoff), by zero-padded FFT
+static int FFTSumOverR2(int Rank, int *Dim, int *P, float *Source[3],
+                         float *r2tab, float *Flux[3])
+{
+  /* Same sum as DirectSumOverR2 (to roundoff), by zero-padded FFT
    convolution on a P mesh (P >= 2 Dim - 1, so nothing wraps around).
    The kernel is even in every offset, so its transform is real and
    leaves real and imaginary parts uncoupled: fields 0 and 1 share one
    complex transform (S0 + i S1) and field 2 uses another. */
-
-static int FFTSum1OverR2(int Rank, int *Dim, int *P, float *Source[3],
-                         float *Ktab, float *Flux[3])
-{
   int i, j, k, n, np, di, dj, dk;
   int M = P[0]*P[1]*P[2];
 
@@ -225,7 +215,7 @@ static int FFTSum1OverR2(int Rank, int *Dim, int *P, float *Source[3],
       for (i = 0; i < P[0]; i++, np++) {
         di = WrapOffset(i, Dim[0], P[0]);
         if (di >= 0 && dj >= 0 && dk >= 0)
-          Kbuf[2*np] = Ktab[di*di + dj*dj + dk*dk];
+          Kbuf[2*np] = r2tab[di*di + dj*dj + dk*dk];
       }
     }
   }
@@ -515,14 +505,14 @@ int grid::SolveForLocallyExtinctRadiation(int level)
                 double(ns)*double(size) >
                 LocallyExtinctRadiationFFTRatio*M*log(M)/log(2.0));
 
-  float *Ktab = BuildKernelTable(Dim, CellVolume, dx);
+  float *r2tab = BuildKernelTable(Dim, CellVolume, dx);
   if (UseFFT) {
-    if (FFTSum1OverR2(GridRank, Dim, Pad, Source, Ktab, Flux) == FAIL) {
-      ENZO_FAIL("Error in FFTSum1OverR2.\n");
+    if (FFTSumOverR2(GridRank, Dim, Pad, Source, r2tab, Flux) == FAIL) {
+      ENZO_FAIL("Error in FFTSumOverR2.\n");
     }
   } else
-    DirectSum1OverR2(Dim, ns, si, sj, sk, S, Ktab, Flux);
-  delete [] Ktab;
+    DirectSumOverR2(Dim, ns, si, sj, sk, S, r2tab, Flux);
+  delete [] r2tab;
   DeleteSources(si, sj, sk, S);
 
   /* ------------------------------------------------------------------ */
@@ -558,9 +548,9 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   /* Convolve with K_{L-1} on the coarse mesh. */
 
   ns = GatherSources(CDim, Coarse, &si, &sj, &sk, S);
-  float *KtabP = BuildKernelTable(CDim, CellVolumeP, dxp);
-  DirectSum1OverR2(CDim, ns, si, sj, sk, S, KtabP, CoarseView);
-  delete [] KtabP;
+  float *r2tabP = BuildKernelTable(CDim, CellVolumeP, dxp);
+  DirectSumOverR2(CDim, ns, si, sj, sk, S, r2tabP, CoarseView);
+  delete [] r2tabP;
   DeleteSources(si, sj, sk, S);
   int nsCoarse = ns;
 
@@ -603,7 +593,7 @@ int grid::SolveForLocallyExtinctRadiation(int level)
 }
 
 
-/* Copy the LEBRON-like flux fields (GravitatingMassField mesh) into
+/* Copy the LER flux fields (GravitatingMassField mesh) into
    BaryonField-shaped arrays for Grackle, converting units.  The flux
    fields hold sum(table [rate*cm^2/Msun] * Msun) / (code length)^2, so
    dividing by LengthUnits^2 gives 1/s (or Habing for the ISRF).  The
@@ -656,7 +646,7 @@ int grid::GetLocallyExtinctRadiationRates(float *kdissH2, float *kdetHM,
 }
 
 
-/* Allocate (if needed) and zero the LEBRON-like RT source arrays.
+/* Allocate (if needed) and zero the Locally-Extinct-Stellar-Radiation source arrays.
    ClearRTSourceParticles mirrors ClearGravitatingMassFieldParticles
    (particle mesh); ClearRTSourceField mirrors ClearGravitatingMassField
    (gravity mesh).  Both require the corresponding mesh to be initialized. */

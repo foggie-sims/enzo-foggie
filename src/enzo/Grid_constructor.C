@@ -53,7 +53,7 @@ grid::grid()
   k_ion_CI_grid_sum = 0.;
   k_ion_OI_grid_sum = 0.;
   isrf_grid_sum = 0.;
-  /* LEBRON-like Values*/
+  /* Locally-Extinct-Stellar-Radiation Values*/
   kdissH2SourceParticles = NULL;
   kdetHMSourceParticles  = NULL;
   isrfSourceParticles    = NULL;

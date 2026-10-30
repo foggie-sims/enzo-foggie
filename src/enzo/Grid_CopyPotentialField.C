@@ -239,7 +239,7 @@ int grid::CopyPotentialField(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
       }
     }
 
-  /* LEBRON-like RT: copy the flux fields over the same region.
+  /* Locally-Extinct-Stellar-Radiation: copy the flux fields over the same region.
      (Off-processor, these arrive packed with POTENTIAL_FIELD in
      CommunicationSendRegion.) */
 

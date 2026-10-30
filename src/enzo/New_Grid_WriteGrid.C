@@ -665,7 +665,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 
     } // if (OutputCoolingTime)
 
-    /* LEBRON-like RT: write the optically-thin rates handed to Grackle,
+    /* Locally-Extinct-Stellar-Radiation: write the rates handed to Grackle,
        in physical units (1/s for kdissH2 and kdetHM, Habing for the
        ISRF).  Output only -- these are not BaryonFields and are not read
        back on restart.  Zero where the grid has no flux fields. */
@@ -677,38 +677,38 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
       GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time);
 
-      float *lebron_kdiss = new float[size]();
-      float *lebron_kdet  = new float[size]();
-      float *lebron_isrf  = new float[size]();
+      float *ler_kdiss = new float[size]();
+      float *ler_kdet  = new float[size]();
+      float *ler_isrf  = new float[size]();
 
-      if (this->GetLocallyExtinctRadiationRates(lebron_kdiss, lebron_kdet,
-						 lebron_isrf) == FAIL) {
+      if (this->GetLocallyExtinctRadiationRates(ler_kdiss, ler_kdet,
+						 ler_isrf) == FAIL) {
 	ENZO_FAIL("Error in grid->GetLocallyExtinctRadiationRates.");
       }
 
       // Rates come back in 1/code-time; convert to 1/s.
       for (i = 0; i < size; i++) {
-	lebron_kdiss[i] /= TimeUnits;
-	lebron_kdet[i]  /= TimeUnits;
+	ler_kdiss[i] /= TimeUnits;
+	ler_kdet[i]  /= TimeUnits;
       }
 
-      const char *LebronLabel[] ={"LEBRON_kdissH2", "LEBRON_kdetHM", "LEBRON_ISRF"};
-      float *LebronField[] = {lebron_kdiss, lebron_kdet, lebron_isrf};
+      const char *LerLabel[] ={"LER_kdissH2", "LER_kdetHM", "LER_ISRF"};
+      float *LerField[] = {ler_kdiss, ler_kdet, ler_isrf};
       for (field = 0; field < 3; field++) {
 	if(CopyOnlyActive == TRUE) {
-	  this->write_dataset(GridRank, OutDims, LebronLabel[field],
-	      group_id, file_type_id, (VOIDP) LebronField[field],
+	  this->write_dataset(GridRank, OutDims, LerLabel[field],
+	      group_id, file_type_id, (VOIDP) LerField[field],
 	      TRUE, temp);
 	} else {
-	  this->write_dataset(GridRank, FullOutDims, LebronLabel[field],
-	      group_id, file_type_id, (VOIDP) LebronField[field],
+	  this->write_dataset(GridRank, FullOutDims, LerLabel[field],
+	      group_id, file_type_id, (VOIDP) LerField[field],
 	      FALSE);
 	}
       }
 
-      delete [] lebron_kdiss;
-      delete [] lebron_kdet;
-      delete [] lebron_isrf;
+      delete [] ler_kdiss;
+      delete [] ler_kdet;
+      delete [] ler_isrf;
 
     } // if (UseLocallyExtinctStellarRadiation)
 
