@@ -14,8 +14,7 @@
 /      subtract prolong(K_{L-1} * coarsen(S)) (the parent's view, put through
 /                                              the same interpolation as the
 /                                              parent flux, so it cancels)
-/    where K_l = dx_l^3 / (4 pi max(r^2, (0.38 dx_l)^2)), matching the
-/    root-grid Green's function.
+/    where K_l = dx_l^3 / (4 pi max(r^2, (0.38 dx_l)^2)).
 /
 /  NOTE: Direct sums: O(N_source * N_cell) per grid on the fine mesh, and
 /    the same on the (R^3 smaller) coarse mesh. Source fields are densities,
@@ -24,8 +23,8 @@
 /    Depending on the number of sources, this will compute this sum in Fourier
 /    space, O(M log M), where M~8*N_cell.
 /
-/    With LocallyExtinctRadiationBoxRadius = rc > 0, the correction is applied
-/    only within rc fine cells of each source, O(N_source * (2 rc + 1)^3).
+/    With LocallyExtinctRadiationBoxRadius = rbox > 0, the correction is applied
+/    only within rbox fine cells of each source, O(N_source * (2 rbox + 1)^3).
 /
 ************************************************************************/
  
@@ -52,23 +51,16 @@ double ReturnWallTime(void);
 int FastFourierTransform(float *buffer, int Rank, int DimensionReal[],
 			 int Dimension[], int direction, int type);
 
-/* Fine-mesh sum method (runtime parameter LocallyExtinctRadiationFFTRatio,
-   default 25).  The FFT is used when
-     ns * N_cell > LocallyExtinctRadiationFFTRatio * M log2(M),
-   M = padded FFT size, i.e. when the direct sum's pair count exceeds the
-   FFT's cost by this factor.
-   0 forces the FFT whenever there are sources, < 0 forces the direct sum. */
-
 static int FloorDiv(int a, int b)
 {
-  return (a >= 0) ? a/b : -((-a + b - 1)/b);
+  /* Floor division that rounds negative indices down */
+  return int(floor(double(a)/double(b)));
 }
-
 
 
 static float *BuildKernelTable(int *Dim, float CellVolume, float dx)
 {
-  /* Tabulate K = CellVolume / (4 pi max(r^2, (0.38 dx)^2)) by the integer
+  /* Tabulate r2tab = CellVolume / (4 pi max(r^2, (0.38 dx)^2)) by the integer
    squared separation r2idx = r^2/dx^2, for every separation on a Dim mesh.
    Only r2idx = 0 is softened*/
   int dim, r2idx, max_idx = 0;
@@ -129,7 +121,10 @@ static int GatherSources(int *Dim, float *Field[3], int **si, int **sj,
 static void DirectSumOverR2(int *Dim, int ns, int *si, int *sj, int *sk,
                              float *S[3], float *r2tab, float *Flux[3])
 {
-  /* Flux[field] += Sum_sources S[f][source] * r2tab[(target-source)^2]*/
+  /* 
+  Directly calculate the 1/r^2 term for all sources and sum
+  Flux[field] += Sum_sources S[f][source] * r2tab[(target-source)^2]
+  */
 
   int i, j, k, n, s, di;
   float r2term, sum0, sum1, sum2;
@@ -161,6 +156,7 @@ static void DirectSumOverR2(int *Dim, int ns, int *si, int *sj, int *sk,
 
 static void DeleteSources(int *si, int *sj, int *sk, float *S[3])
 {
+  /* Delete saved source indices and fluxes */
   delete [] si;
   delete [] sj;
   delete [] sk;
@@ -277,134 +273,164 @@ static int FFTSumOverR2(int Rank, int *Dim, int *P, float *Source[3],
   return SUCCESS;
 }
 
-/* Box-truncated correction (LocallyExtinctRadiationBoxRadius = rc > 0).
 
-   The full correction for one fine source cell of unit density,
-     K_L * S - prolong(K_{L-1} * coarsen(S)),
-   depends only on the separation and on where the source sits inside its
-   parent cell (R^rank cases): coarsen (block sum / R^rank) and prolong
-   (trilinear between parent cell centres, as prolong.F) are linear and
-   aligned with the parent mesh.  BuildBoxCorrection tabulates it for
-   |offset| <= rc in each dimension, for every case; BoxSum1OverR2 adds it
-   around each source and nowhere else.  Inside the box this matches the
-   full correction to roundoff; outside it a source keeps the parent's
-   (coarser) view, as sources beyond a grid's mesh already do.
-
-   Table layout: case (s0 fastest, each 0..R-1), then offset k, j, i
-   (i fastest, each -rc..rc).  Unused dimensions have one case and one
-   offset. */
-
-static float *BuildBoxCorrection(int Rank, int R, int rc, float dx,
-                                 float CellVolume, float CellVolumeP)
+static float *BuildBoxCorrection(int rbox, float dx, float CellVolume,
+                                 float CellVolumeParent)
 {
-  int dim, Rd[MAX_DIMENSION], rcd[MAX_DIMENSION], W[MAX_DIMENSION];
-  for (dim = 0; dim < MAX_DIMENSION; dim++) {
-    Rd[dim]  = (dim < Rank) ? R  : 1;
-    rcd[dim] = (dim < Rank) ? rc : 0;
-    W[dim]   = 2*rcd[dim] + 1;
-  }
-  int ncase = Rd[0]*Rd[1]*Rd[2];
-  int nbox  = W[0]*W[1]*W[2];
-  float *Dtab = new float[ncase*nbox];
+  /* Table for the box correction (LocallyExtinctRadiationBoxRadius = rbox > 0).
+   3D only (checked in ReadParameterFile).
 
-  float dxp = dx*R;
-  float normF = CellVolume  / (4.0*pi*dx*dx);
-  float normC = CellVolumeP / (4.0*pi*dxp*dxp) / POW(float(R), Rank);
-  float soft = 0.38*0.38;
+   Each entry is what one fine source cell of unit density adds to a target
+   offset = (di, dj, dk) fine cells away, for |di|, |dj|, |dk| <= rbox:
 
-  int s[MAX_DIMENSION], d[MAX_DIMENSION], c0[MAX_DIMENSION], corner, m, mc,
-      c, n = 0;
-  float x, w[MAX_DIMENSION], weight, coarse;
+     correction = this level's flux - the parent's flux interpolated to the
+                  target
+                = normFine / |offset|^2
+                  - sum of weight * normParent / |cell|^2 over the 8 parent
+                    cells around the target (trilinear, as in prolong.F)
 
-  for (s[2] = 0; s[2] < Rd[2]; s[2]++)
-  for (s[1] = 0; s[1] < Rd[1]; s[1]++)
-  for (s[0] = 0; s[0] < Rd[0]; s[0]++)
-    for (d[2] = -rcd[2]; d[2] <= rcd[2]; d[2]++)
-    for (d[1] = -rcd[1]; d[1] <= rcd[1]; d[1]++)
-    for (d[0] = -rcd[0]; d[0] <= rcd[0]; d[0]++, n++) {
+   The parent term depends on where the source sits inside its parent cell
+   (subpos = 0..RefineBy-1 per dimension), since that sets how the target
+   lines up with the parent cell centers.  So the table has one block of
+   (2 rbox + 1)^3 entries for each subpos.  Both terms are softened to
+   r = 0.38 cell at zero separation.
+
+   Layout: block for subpos (subpos[0] fastest), then offset (offset[0]
+   fastest, each -rbox..rbox). */
+
+  int BoxWidth = 2*rbox + 1;
+  int BoxSize  = BoxWidth*BoxWidth*BoxWidth;
+  float *BoxTable = new float[RefineBy*RefineBy*RefineBy*BoxSize];
+
+  float dxParent = dx*RefineBy;
+  float normFine = CellVolume / (4.0*pi*dx*dx);
+  /* A unit-density fine cell is a parent density of 1/RefineBy^3. */
+  float normParent = CellVolumeParent / (4.0*pi*dxParent*dxParent) /
+                     float(RefineBy*RefineBy*RefineBy);
+  float soft2 = 0.38*0.38;  // softening length squared, in cells
+
+  int dim, subpos[3], offset[3], below[3];
+  int r2Fine, r2Parent, entry = 0;
+  float FineCenter, ParentCoord, wAbove[3], weight, ParentFlux;
+
+  for (subpos[2] = 0; subpos[2] < RefineBy; subpos[2]++) //The 8 positions the fine resolution cell could be in the parent cell
+  for (subpos[1] = 0; subpos[1] < RefineBy; subpos[1]++)
+  for (subpos[0] = 0; subpos[0] < RefineBy; subpos[0]++)
+    for (offset[2] = -rbox; offset[2] <= rbox; offset[2]++) //All cells in the box
+    for (offset[1] = -rbox; offset[1] <= rbox; offset[1]++)
+    for (offset[0] = -rbox; offset[0] <= rbox; offset[0]++, entry++) {
 
       /* This level's view. */
 
-      m = d[0]*d[0] + d[1]*d[1] + d[2]*d[2];
-      Dtab[n] = normF / max(float(m), soft);
+      r2Fine = offset[0]*offset[0] + offset[1]*offset[1] + offset[2]*offset[2];
+      BoxTable[entry] = normFine / max(float(r2Fine), soft2);
 
-      /* Parent's view: the source's parent cell is coarse index 0; the
-         target's fine index s + d sits at coarse coordinate
-         (s + d + 0.5)/R - 0.5, interpolated from the two bracketing
-         parent cell centres in each dimension. */
+      /* Parent's view.  Locate the target among the parent cell centers,
+         one direction at a time, with the source's parent cell as parent
+         cell 0. */
 
-      for (dim = 0; dim < MAX_DIMENSION; dim++) {
-        x = (float(s[dim] + d[dim]) + 0.5) / Rd[dim] - 0.5;
-        c0[dim] = int(floor(x));
-        w[dim] = x - c0[dim];
+      for (dim = 0; dim < 3; dim++) {
+
+        /* Target's center in fine cells, counted from the left edge of
+           the source's parent cell (fine cells 0..RefineBy-1 lie in it). */
+
+        FineCenter = subpos[dim] + offset[dim] + 0.5;
+
+        /* The same position in parent cells, shifted by half a cell so
+           parent cell p has its center at p. */
+
+        ParentCoord = FineCenter / RefineBy - 0.5;
+
+        /* below: the parent cell centered at or just below the target.
+           wAbove: how far the target is toward the next center up (0-1),
+           which is the interpolation weight on that cell. */
+
+        below[dim]  = int(floor(ParentCoord));
+        wAbove[dim] = ParentCoord - below[dim];
       }
-      coarse = 0;
-      for (corner = 0; corner < 8; corner++) {
-        weight = 1;
-        mc = 0;
-        for (dim = 0; dim < MAX_DIMENSION; dim++) {
-          int up = (corner >> dim) & 1;
-          weight *= up ? w[dim] : 1 - w[dim];
-          c = c0[dim] + up;
-          mc += c*c;
-        }
-        if (weight != 0)
-          coarse += weight * normC / max(float(mc), soft);
+
+      /* Interpolate the parent's flux to the target (trilinear, as
+         prolong.F does). */
+
+      float w[3][2];  // w[dim][0]: lower cell's weight, w[dim][1]: upper cell's
+      for (dim = 0; dim < 3; dim++) {
+        w[dim][0] = 1 - wAbove[dim]; //Lower cell's weight
+        w[dim][1] = wAbove[dim]; //Upper cell's weight
       }
-      Dtab[n] -= coarse;
+
+      ParentFlux = 0;
+      for (int uz = 0; uz <= 1; uz++)      // 0 = lower, 1 = upper parent cell
+      for (int uy = 0; uy <= 1; uy++)
+      for (int ux = 0; ux <= 1; ux++) {
+        int cx = below[0] + ux;
+        int cy = below[1] + uy;
+        int cz = below[2] + uz;
+        weight   = w[0][ux] * w[1][uy] * w[2][uz];
+        r2Parent = cx*cx + cy*cy + cz*cz;
+        ParentFlux += weight * normParent / max(float(r2Parent), soft2);
+      }
+
+      BoxTable[entry] -= ParentFlux;
     }
 
-  return Dtab;
+  return BoxTable;
 }
 
-static void BoxSum1OverR2(int Rank, int *Dim, int *Offset, int R, int rc,
+static void BoxSumOverR2(int *Dim, int *Offset, int rbox,
                           int ns, int *si, int *sj, int *sk, float *S[3],
-                          float *Dtab, float *Flux[3])
+                          float *BoxTable, float *Flux[3])
 {
-  int dim, Rd[MAX_DIMENSION], rcd[MAX_DIMENSION], W[MAX_DIMENSION];
-  for (dim = 0; dim < MAX_DIMENSION; dim++) {
-    Rd[dim]  = (dim < Rank) ? R  : 1;
-    rcd[dim] = (dim < Rank) ? rc : 0;
-    W[dim]   = 2*rcd[dim] + 1;
-  }
-  int nbox = W[0]*W[1]*W[2];
+  /* Add the box correction around each source cell: the table block for
+     the source's sub-position, times the source value, over the cells
+     within rbox of it (clipped to the mesh). */
 
-  int s, i, j, k, n, ilo, ihi, jlo, jhi, klo, khi, g0, g1, g2, ncase;
-  float *D, *Drow, s0, s1, s2;
+  int BoxWidth = 2*rbox + 1;
+  int BoxSize  = BoxWidth*BoxWidth*BoxWidth;
 
-  for (s = 0; s < ns; s++) {
+  int src, dim, i, j, k, n, ilo, ihi, jlo, jhi, klo, khi;
+  int SrcIndex[3], GlobalIndex, ParentIndex, subpos[3], BoxTableStart, entry;
+  float S0, S1, S2;
 
-    /* Which table: the source's position inside its parent cell, from
-       its global fine index. */
+  for (src = 0; src < ns; src++) {
 
-    g0 = si[s] + Offset[0];
-    g1 = sj[s] + Offset[1];
-    g2 = sk[s] + Offset[2];
-    ncase = ((g2 - Rd[2]*FloorDiv(g2, Rd[2]))*Rd[1] +
-             (g1 - Rd[1]*FloorDiv(g1, Rd[1])))*Rd[0] +
-             (g0 - Rd[0]*FloorDiv(g0, Rd[0]));
-    D = Dtab + ncase*nbox;
+    /* Which block of the table this source uses: its position inside its
+       parent cell along each axis (0..RefineBy-1). */
+
+    SrcIndex[0] = si[src];
+    SrcIndex[1] = sj[src];
+    SrcIndex[2] = sk[src];
+    for (dim = 0; dim < 3; dim++) {
+      GlobalIndex = SrcIndex[dim] + Offset[dim];       // fine index from the domain's left edge
+      ParentIndex = FloorDiv(GlobalIndex, RefineBy);   // parent cell it lies in 
+      subpos[dim] = GlobalIndex - RefineBy*ParentIndex; // position inside that parent cell
+    }
+    BoxTableStart = ((subpos[2]*RefineBy + subpos[1])*RefineBy + subpos[0])*BoxSize;
 
     /* The box, clipped to the mesh. */
 
-    ilo = max(si[s] - rcd[0], 0);  ihi = min(si[s] + rcd[0], Dim[0]-1);
-    jlo = max(sj[s] - rcd[1], 0);  jhi = min(sj[s] + rcd[1], Dim[1]-1);
-    klo = max(sk[s] - rcd[2], 0);  khi = min(sk[s] + rcd[2], Dim[2]-1);
+    ilo = max(si[src] - rbox, 0);  ihi = min(si[src] + rbox, Dim[0]-1);
+    jlo = max(sj[src] - rbox, 0);  jhi = min(sj[src] + rbox, Dim[1]-1);
+    klo = max(sk[src] - rbox, 0);  khi = min(sk[src] + rbox, Dim[2]-1);
 
-    s0 = S[0][s];
-    s1 = S[1][s];
-    s2 = S[2][s];
+    S0 = S[0][src];
+    S1 = S[1][src];
+    S2 = S[2][src];
     for (k = klo; k <= khi; k++)
-      for (j = jlo; j <= jhi; j++) {
-        n = (k*Dim[1] + j)*Dim[0] + ilo;
-        Drow = D + ((k - sk[s] + rcd[2])*W[1] + (j - sj[s] + rcd[1]))*W[0] +
-                   (ilo - si[s] + rcd[0]);
-        for (i = ilo; i <= ihi; i++, n++, Drow++) {
-          Flux[0][n] += s0 * (*Drow);
-          Flux[1][n] += s1 * (*Drow);
-          Flux[2][n] += s2 * (*Drow);
+      for (j = jlo; j <= jhi; j++)
+        for (i = ilo; i <= ihi; i++) {
+
+          /* Target cell in the mesh, and the table entry for its offset
+             from the source (each offset -rbox:rbox, shifted to 0:2 rbox). */
+
+          n     = (k*Dim[1] + j)*Dim[0] + i;
+          entry = BoxTableStart +
+                  ((k - sk[src] + rbox)*BoxWidth + (j - sj[src] + rbox))*BoxWidth +
+                  (i - si[src] + rbox);
+
+          Flux[0][n] += S0 * BoxTable[entry];
+          Flux[1][n] += S1 * BoxTable[entry];
+          Flux[2][n] += S2 * BoxTable[entry];
         }
-      }
   }
 }
 
@@ -421,7 +447,7 @@ int grid::SolveForLocallyExtinctRadiation(int level)
 
   for (int f = 0; f < 3; f++)
     if (Source[f] == NULL || Flux[f] == NULL)
-      return SUCCESS;  // nothing deposited / no parent solution yet
+      return SUCCESS;  // nothing deposited / no parent fluxes
 
   LCAPERF_START("grid_SolveForLocallyExtinctRadiation");
  
@@ -433,15 +459,14 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   float dx  = GravitatingMassFieldCellSize;
   float dxp = dx * R;  // parent cell width
   float CellVolume  = POW(dx,  GridRank);
-  float CellVolumeP = POW(dxp, GridRank);
+  float CellVolumeParent = POW(dxp, GridRank);
   int *si, *sj, *sk;
   float *S[3];
 
-  /* Compact list of source cells.  With none, both views below vanish
-     (sources are non-negative), so there is nothing to do. */
+  /* Compact list of source cells. (Luminosities have already been deposited) */
 
   ns = GatherSources(Dim, Source, &si, &sj, &sk, S);
-  if (ns == 0) {
+  if (ns == 0) { //No young stars on this grid
     LCAPERF_STOP("grid_SolveForLocallyExtinctRadiation");
     return SUCCESS;
   }
@@ -450,7 +475,7 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   int nsFine = ns;
 
   /* Alignment with the parent mesh: the parent region this grid's flux was
-     prolonged from, laid out exactly as in PreparePotentialField. */
+     prolonged from, laid out as in PreparePotentialField. */
 
   int Offset[MAX_DIMENSION], CStart[MAX_DIMENSION], CDim[MAX_DIMENSION],
       ProlongStart[MAX_DIMENSION], Refine[MAX_DIMENSION];
@@ -472,19 +497,18 @@ int grid::SolveForLocallyExtinctRadiation(int level)
      BuildBoxCorrection). */
 
   if (LocallyExtinctRadiationBoxRadius > 0) {
-    int rc = LocallyExtinctRadiationBoxRadius;
-    float *Dtab = BuildBoxCorrection(GridRank, R, rc, dx, CellVolume,
-                                     CellVolumeP);
-    BoxSum1OverR2(GridRank, Dim, Offset, R, rc, ns, si, sj, sk, S, Dtab,
-                  Flux);
-    delete [] Dtab;
+    int rbox = LocallyExtinctRadiationBoxRadius;
+    float *BoxTable = BuildBoxCorrection(rbox, dx, CellVolume,
+                                         CellVolumeParent);
+    BoxSumOverR2(Dim, Offset, rbox, ns, si, sj, sk, S, BoxTable, Flux);
+    delete [] BoxTable;
     DeleteSources(si, sj, sk, S);
 
     if (debug1)
       fprintf(stdout, "LER: P%"ISYM" grid %"ISYM" level %"ISYM
-              " Dim %"ISYM" %"ISYM" %"ISYM" ns %"ISYM" box rc %"ISYM
+              " Dim %"ISYM" %"ISYM" %"ISYM" ns %"ISYM" box rbox %"ISYM
               " time %"GSYM" s\n", MyProcessorNumber, ID, level,
-              Dim[0], Dim[1], Dim[2], nsFine, rc,
+              Dim[0], Dim[1], Dim[2], nsFine, rbox,
               float(ReturnWallTime() - WallTime0));
 
     LCAPERF_STOP("grid_SolveForLocallyExtinctRadiation");
@@ -494,8 +518,7 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   /* ------------------------------------------------------------------ */
   /* 1) This level's view: Flux += K_L * S on the fine mesh. */
 
-  /* Direct sum or FFT, whichever is estimated cheaper (see
-     LocallyExtinctRadiationFFTRatio above). */
+  /* Direct sum or FFT, whichever is estimated cheaper */
 
   int Pad[MAX_DIMENSION] = {1, 1, 1};
   for (dim = 0; dim < GridRank; dim++)
@@ -548,7 +571,7 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   /* Convolve with K_{L-1} on the coarse mesh. */
 
   ns = GatherSources(CDim, Coarse, &si, &sj, &sk, S);
-  float *r2tabP = BuildKernelTable(CDim, CellVolumeP, dxp);
+  float *r2tabP = BuildKernelTable(CDim, CellVolumeParent, dxp);
   DirectSumOverR2(CDim, ns, si, sj, sk, S, r2tabP, CoarseView);
   delete [] r2tabP;
   DeleteSources(si, sj, sk, S);
@@ -616,20 +639,16 @@ int grid::GetLocallyExtinctRadiationRates(float *kdissH2, float *kdetHM,
   GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits,
            &VelocityUnits, Time);
 
-  /* TODO: in comoving runs LengthUnits is comoving; check whether a
-     factor of a^2 is needed here. */
-
-  float inv_L2 = 1.0 / (LengthUnits * LengthUnits);
   float *Flux[]   = {kdissH2FluxField, kdetHMFluxField, isrfFluxField};
   float *Out[]    = {kdissH2, kdetHM, isrf};
-  float Factor[]  = {TimeUnits*inv_L2, TimeUnits*inv_L2, inv_L2};
+  float UnitConversion[]  = {TimeUnits/LengthUnits/LengthUnits, TimeUnits/LengthUnits/LengthUnits, 1.0/LengthUnits/LengthUnits};
 
   int dim, i, j, k, f, index, n;
   int Off[3] = {0, 0, 0};
-  for (dim = 0; dim < GridRank; dim++)
+  for (dim = 0; dim < GridRank; dim++) //offset between grid and gravitating mass fields
     Off[dim] = (GravitatingMassFieldDimension[dim] - GridDimension[dim])/2;
 
-  for (f = 0; f < 3; f++) {
+  for (f = 0; f < 3; f++) { //loop over bands
     if (Flux[f] == NULL || Out[f] == NULL)
       continue;
     n = 0;
@@ -638,7 +657,7 @@ int grid::GetLocallyExtinctRadiationRates(float *kdissH2, float *kdetHM,
         index = (((k+Off[2])*GravitatingMassFieldDimension[1]) +
                  (j+Off[1]))*GravitatingMassFieldDimension[0] + Off[0];
         for (i = 0; i < GridDimension[0]; i++, index++, n++)
-          Out[f][n] = max(Flux[f][index], 0.0) * Factor[f];
+          Out[f][n] = max(Flux[f][index], 0.0) * UnitConversion[f];
       }
   }
 
