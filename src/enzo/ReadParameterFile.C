@@ -2267,6 +2267,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       MaximumGravityRefinementLevel < MaximumRefinementLevel)
     ENZO_FAIL("UseLocallyExtinctStellarRadiation requires MaximumGravityRefinementLevel >= MaximumRefinementLevel (no RT flux is computed above it).");
 
+  if (UseLocallyExtinctStellarRadiation && LocallyExtinctRadiationBoxRadius > 0 &&
+      MetaData.TopGridRank != 3)
+    ENZO_FAIL("LocallyExtinctRadiationBoxRadius > 0 is only implemented for TopGridRank = 3.");
+
   if (StarFeedbackPreSNFeedback || UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {
 
     if (!StarMakerStoreInitialMass)
