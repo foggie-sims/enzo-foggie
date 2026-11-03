@@ -4,8 +4,6 @@
 /
 /  written by: Cameron Trapp
 /  date:       Sept, 2026
-/  modified1:  Oct, 2026 - all three RT fields; parent subtraction made
-/              consistent with the prolonged parent flux
 /
 /  PURPOSE: Locally-Extinct-Stellar-Radiation. The flux fields initially
 /    hold the parent-level solution, prolonged in PreparePotentialField.
@@ -280,30 +278,28 @@ static float *BuildBoxCorrection(int rbox, float dx, float CellVolume,
   /* Table for the box correction (LocallyExtinctRadiationBoxRadius = rbox > 0).
    3D only (checked in ReadParameterFile).
 
-   Each entry is what one fine source cell of unit density adds to a target
-   offset = (di, dj, dk) fine cells away, for |di|, |dj|, |dk| <= rbox:
+   Each entry is what one fine source cell of unit flux adds to a cell with
+   offset = (di, dj, dk), for |di|, |dj|, |dk| <= rbox:
 
      correction = this level's flux - the parent's flux interpolated to the
                   target
-                = normFine / |offset|^2
+                = norm / |offset|^2
                   - sum of weight * normParent / |cell|^2 over the 8 parent
                     cells around the target (trilinear, as in prolong.F)
 
    The parent term depends on where the source sits inside its parent cell
-   (subpos = 0..RefineBy-1 per dimension), since that sets how the target
+   (subpos = 0:RefineBy-1 per dimension), since that sets how the target
    lines up with the parent cell centers.  So the table has one block of
    (2 rbox + 1)^3 entries for each subpos.  Both terms are softened to
    r = 0.38 cell at zero separation.
-
-   Layout: block for subpos (subpos[0] fastest), then offset (offset[0]
-   fastest, each -rbox..rbox). */
+   */
 
   int BoxWidth = 2*rbox + 1;
   int BoxSize  = BoxWidth*BoxWidth*BoxWidth;
   float *BoxTable = new float[RefineBy*RefineBy*RefineBy*BoxSize];
 
   float dxParent = dx*RefineBy;
-  float normFine = CellVolume / (4.0*pi*dx*dx);
+  float norm = CellVolume / (4.0*pi*dx*dx);
   /* A unit-density fine cell is a parent density of 1/RefineBy^3. */
   float normParent = CellVolumeParent / (4.0*pi*dxParent*dxParent) /
                      float(RefineBy*RefineBy*RefineBy);
@@ -313,40 +309,33 @@ static float *BuildBoxCorrection(int rbox, float dx, float CellVolume,
   int r2Fine, r2Parent, entry = 0;
   float FineCenter, ParentCoord, wAbove[3], weight, ParentFlux;
 
+  /* Get the normalized flux for a single cell in the kernel around the star for each of the 8 cases */
+
   for (subpos[2] = 0; subpos[2] < RefineBy; subpos[2]++) //The 8 positions the fine resolution cell could be in the parent cell
   for (subpos[1] = 0; subpos[1] < RefineBy; subpos[1]++)
   for (subpos[0] = 0; subpos[0] < RefineBy; subpos[0]++)
     for (offset[2] = -rbox; offset[2] <= rbox; offset[2]++) //All cells in the box
     for (offset[1] = -rbox; offset[1] <= rbox; offset[1]++)
     for (offset[0] = -rbox; offset[0] <= rbox; offset[0]++, entry++) {
-
+      
       /* This level's view. */
-
-      r2Fine = offset[0]*offset[0] + offset[1]*offset[1] + offset[2]*offset[2];
-      BoxTable[entry] = normFine / max(float(r2Fine), soft2);
+      r2Fine = offset[0]*offset[0] + offset[1]*offset[1] + offset[2]*offset[2]; //r^2 term on this level
+      BoxTable[entry] = norm / max(float(r2Fine), soft2);
 
       /* Parent's view.  Locate the target among the parent cell centers,
          one direction at a time, with the source's parent cell as parent
          cell 0. */
 
       for (dim = 0; dim < 3; dim++) {
-
-        /* Target's center in fine cells, counted from the left edge of
-           the source's parent cell (fine cells 0..RefineBy-1 lie in it). */
-
+        /* Target's center in fine cells, counted from the left edge of the source's parent cell */
         FineCenter = subpos[dim] + offset[dim] + 0.5;
 
-        /* The same position in parent cells, shifted by half a cell so
-           parent cell p has its center at p. */
-
+        /* The same position in parent cells, shifted by half a cell so parent cell p has its center at p. */
         ParentCoord = FineCenter / RefineBy - 0.5;
 
-        /* below: the parent cell centered at or just below the target.
-           wAbove: how far the target is toward the next center up (0-1),
-           which is the interpolation weight on that cell. */
 
-        below[dim]  = int(floor(ParentCoord));
-        wAbove[dim] = ParentCoord - below[dim];
+        ParentIndex0[dim]  = int(floor(ParentCoord)); //the parent cell centered at or just below the target.
+        wInterp1[dim] = ParentCoord - ParentIndex0[dim];  //how far the target is toward the next center up (0-1),
       }
 
       /* Interpolate the parent's flux to the target (trilinear, as
@@ -354,23 +343,24 @@ static float *BuildBoxCorrection(int rbox, float dx, float CellVolume,
 
       float w[3][2];  // w[dim][0]: lower cell's weight, w[dim][1]: upper cell's
       for (dim = 0; dim < 3; dim++) {
-        w[dim][0] = 1 - wAbove[dim]; //Lower cell's weight
-        w[dim][1] = wAbove[dim]; //Upper cell's weight
+        w[dim][0] = 1 - wInterp1[dim]; //Lower cell's weight
+        w[dim][1] = wInterp1[dim]; //Upper cell's weight
       }
 
       ParentFlux = 0;
+      //For each of the neighboring parent cells
       for (int uz = 0; uz <= 1; uz++)      // 0 = lower, 1 = upper parent cell
       for (int uy = 0; uy <= 1; uy++)
       for (int ux = 0; ux <= 1; ux++) {
-        int cx = below[0] + ux;
-        int cy = below[1] + uy;
-        int cz = below[2] + uz;
+        int cx = ParentIndex0[0] + ux; //coarse cells away
+        int cy = ParentIndex0[1] + uy;
+        int cz = ParentIndex0[2] + uz;
         weight   = w[0][ux] * w[1][uy] * w[2][uz];
         r2Parent = cx*cx + cy*cy + cz*cz;
         ParentFlux += weight * normParent / max(float(r2Parent), soft2);
       }
 
-      BoxTable[entry] -= ParentFlux;
+      BoxTable[entry] -= ParentFlux; //Remove the parent flux to prevent double counting
     }
 
   return BoxTable;
@@ -380,21 +370,19 @@ static void BoxSumOverR2(int *Dim, int *Offset, int rbox,
                           int ns, int *si, int *sj, int *sk, float *S[3],
                           float *BoxTable, float *Flux[3])
 {
-  /* Add the box correction around each source cell: the table block for
-     the source's sub-position, times the source value, over the cells
-     within rbox of it (clipped to the mesh). */
+  /* Add the box correction around each source cell: Uses BoxTable for
+     the given sources sub-position times the flux of the source */
 
   int BoxWidth = 2*rbox + 1;
   int BoxSize  = BoxWidth*BoxWidth*BoxWidth;
 
-  int src, dim, i, j, k, n, ilo, ihi, jlo, jhi, klo, khi;
+  int src, dim, i, j, k, n, imin, imax, jmin, jmax, kmin, kmax;
   int SrcIndex[3], GlobalIndex, ParentIndex, subpos[3], BoxTableStart, entry;
   float S0, S1, S2;
 
   for (src = 0; src < ns; src++) {
-
     /* Which block of the table this source uses: its position inside its
-       parent cell along each axis (0..RefineBy-1). */
+       parent cell along each axis (0:RefineBy-1). */
 
     SrcIndex[0] = si[src];
     SrcIndex[1] = sj[src];
@@ -404,29 +392,30 @@ static void BoxSumOverR2(int *Dim, int *Offset, int rbox,
       ParentIndex = FloorDiv(GlobalIndex, RefineBy);   // parent cell it lies in 
       subpos[dim] = GlobalIndex - RefineBy*ParentIndex; // position inside that parent cell
     }
-    BoxTableStart = ((subpos[2]*RefineBy + subpos[1])*RefineBy + subpos[0])*BoxSize;
+    BoxTableStart = ( (subpos[2]*RefineBy + subpos[1])*RefineBy + subpos[0] )*BoxSize; //Which table to look at
 
     /* The box, clipped to the mesh. */
-
-    ilo = max(si[src] - rbox, 0);  ihi = min(si[src] + rbox, Dim[0]-1);
-    jlo = max(sj[src] - rbox, 0);  jhi = min(sj[src] + rbox, Dim[1]-1);
-    klo = max(sk[src] - rbox, 0);  khi = min(sk[src] + rbox, Dim[2]-1);
+    imin = max(si[src] - rbox, 0);
+    imax = min(si[src] + rbox, Dim[0]-1);
+    jmin = max(sj[src] - rbox, 0);
+    jmax = min(sj[src] + rbox, Dim[1]-1);
+    kmin = max(sk[src] - rbox, 0);
+    kmax = min(sk[src] + rbox, Dim[2]-1);
 
     S0 = S[0][src];
     S1 = S[1][src];
     S2 = S[2][src];
-    for (k = klo; k <= khi; k++)
-      for (j = jlo; j <= jhi; j++)
-        for (i = ilo; i <= ihi; i++) {
+    //For each cell in the kernel, get the normalized flux for this case 
+    for (k = kmin; k <= kmax; k++)
+      for (j = jmin; j <= jmax; j++)
+        for (i = imin; i <= imax; i++) {
+          n = (k*Dim[1] + j)*Dim[0] + i;
 
-          /* Target cell in the mesh, and the table entry for its offset
-             from the source (each offset -rbox:rbox, shifted to 0:2 rbox). */
-
-          n     = (k*Dim[1] + j)*Dim[0] + i;
           entry = BoxTableStart +
                   ((k - sk[src] + rbox)*BoxWidth + (j - sj[src] + rbox))*BoxWidth +
                   (i - si[src] + rbox);
 
+          //Do for all three radiation bands
           Flux[0][n] += S0 * BoxTable[entry];
           Flux[1][n] += S1 * BoxTable[entry];
           Flux[2][n] += S2 * BoxTable[entry];
@@ -453,11 +442,10 @@ int grid::SolveForLocallyExtinctRadiation(int level)
  
   int dim, f, i0, j0, k0, n0, n1, ns;
   int *Dim = GravitatingMassFieldDimension;
-  int R = RefineBy;
   int size = Dim[0]*Dim[1]*Dim[2];
 
   float dx  = GravitatingMassFieldCellSize;
-  float dxp = dx * R;  // parent cell width
+  float dxp = dx * RefineBy;  // parent cell width
   float CellVolume  = POW(dx,  GridRank);
   float CellVolumeParent = POW(dxp, GridRank);
   int *si, *sj, *sk;
@@ -486,10 +474,10 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   for (dim = 0; dim < GridRank; dim++) {
     Offset[dim] = nint((GravitatingMassFieldLeftEdge[dim] -
                         DomainLeftEdge[dim]) / dx);  // global fine index
-    CStart[dim] = FloorDiv(Offset[dim], R) - 1;
-    CDim[dim]   = FloorDiv(Offset[dim] + Dim[dim] - 1, R) - CStart[dim] + 3;
-    ProlongStart[dim] = Offset[dim] - R*CStart[dim];
-    Refine[dim] = R;
+    CStart[dim] = FloorDiv(Offset[dim], RefineBy) - 1;
+    CDim[dim]   = FloorDiv(Offset[dim] + Dim[dim] - 1, RefineBy) - CStart[dim] + 3;
+    ProlongStart[dim] = Offset[dim] - RefineBy*CStart[dim];
+    Refine[dim] = RefineBy;
   }
 
   /* ------------------------------------------------------------------ */
