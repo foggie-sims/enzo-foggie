@@ -15,7 +15,7 @@
 /    where K_l = dx_l^3 / (4 pi max(r^2, (0.38 dx_l)^2)).
 /
 /  NOTE: Direct sums: O(N_source * N_cell) per grid on the fine mesh, and
-/    the same on the (R^3 smaller) coarse mesh. Source fields are densities,
+/    the same on the (RefineBy^3 smaller) parent mesh. Source fields are densities,
 /    hence the cell volume in K_l. Assumes a uniform refinement factor RefineBy.
 /
 /    Depending on the number of sources, this will compute this sum in Fourier
@@ -352,11 +352,11 @@ static float *BuildBoxCorrection(int rbox, float dx, float CellVolume,
       for (int uz = 0; uz <= 1; uz++)      // 0 = lower, 1 = upper parent cell
       for (int uy = 0; uy <= 1; uy++)
       for (int ux = 0; ux <= 1; ux++) {
-        int cx = ParentIndex0[0] + ux; //coarse cells away
-        int cy = ParentIndex0[1] + uy;
-        int cz = ParentIndex0[2] + uz;
+        int px = ParentIndex0[0] + ux; //parent cells away
+        int py = ParentIndex0[1] + uy;
+        int pz = ParentIndex0[2] + uz;
         weight   = w[0][ux] * w[1][uy] * w[2][uz];
-        r2Parent = cx*cx + cy*cy + cz*cz;
+        r2Parent = px*px + py*py + pz*pz;
         ParentFlux += weight * normParent / max(float(r2Parent), soft2);
       }
 
@@ -445,9 +445,9 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   int size = Dim[0]*Dim[1]*Dim[2];
 
   float dx  = GravitatingMassFieldCellSize;
-  float dxp = dx * RefineBy;  // parent cell width
+  float dxParent = dx * RefineBy;  // parent cell width
   float CellVolume  = POW(dx,  GridRank);
-  float CellVolumeParent = POW(dxp, GridRank);
+  float CellVolumeParent = POW(dxParent, GridRank);
   int *si, *sj, *sk;
   float *S[3];
 
@@ -465,19 +465,18 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   /* Alignment with the parent mesh: the parent region this grid's flux was
      prolonged from, laid out as in PreparePotentialField. */
 
-  int Offset[MAX_DIMENSION], CStart[MAX_DIMENSION], CDim[MAX_DIMENSION],
-      ProlongStart[MAX_DIMENSION], Refine[MAX_DIMENSION];
+  int Offset[MAX_DIMENSION], ParentStart[MAX_DIMENSION], ParentDim[MAX_DIMENSION],
+      ProlongStart[MAX_DIMENSION];
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
-    Offset[dim] = CStart[dim] = ProlongStart[dim] = 0;
-    CDim[dim] = Refine[dim] = 1;
+    Offset[dim] = ParentStart[dim] = ProlongStart[dim] = 0;
+    ParentDim[dim] = 1;
   }
   for (dim = 0; dim < GridRank; dim++) {
     Offset[dim] = nint((GravitatingMassFieldLeftEdge[dim] -
                         DomainLeftEdge[dim]) / dx);  // global fine index
-    CStart[dim] = FloorDiv(Offset[dim], RefineBy) - 1;
-    CDim[dim]   = FloorDiv(Offset[dim] + Dim[dim] - 1, RefineBy) - CStart[dim] + 3;
-    ProlongStart[dim] = Offset[dim] - RefineBy*CStart[dim];
-    Refine[dim] = RefineBy;
+    ParentStart[dim] = FloorDiv(Offset[dim], RefineBy) - 1;
+    ParentDim[dim]   = FloorDiv(Offset[dim] + Dim[dim] - 1, RefineBy) - ParentStart[dim] + 3;
+    ProlongStart[dim] = Offset[dim] - RefineBy*ParentStart[dim];
   }
 
   /* ------------------------------------------------------------------ */
@@ -532,70 +531,70 @@ int grid::SolveForLocallyExtinctRadiation(int level)
      out the parent region it prolongs from, convolve with K_{L-1}, prolong
      back with the same call, and subtract. */
 
-  int csize = CDim[0]*CDim[1]*CDim[2];
-  float *Coarse[3], *CoarseView[3];
+  int ParentSize = ParentDim[0]*ParentDim[1]*ParentDim[2];
+  float *ParentSource[3], *ParentFlux[3];
   for (f = 0; f < 3; f++) {
-    Coarse[f]     = new float[csize]();
-    CoarseView[f] = new float[csize]();
+    ParentSource[f] = new float[ParentSize]();
+    ParentFlux[f]   = new float[ParentSize]();
   }
 
-  /* Coarsen: parent-cell density = sum of fine densities / R^rank. */
+  /* Coarsen: parent-cell density = sum of fine densities / RefineBy^rank. */
 
-  float inv_R_rank = 1.0 / POW(float(R), GridRank);
-  int ic, jc, kc, c0;
+  float inv_RefineBy_rank = 1.0 / POW(float(RefineBy), GridRank);
+  int iParent, jParent, kParent, nParent;
   for (k0 = 0, n0 = 0; k0 < Dim[2]; k0++) {
-    kc = (GridRank > 2) ? FloorDiv(k0 + Offset[2], R) - CStart[2] : 0;
+    kParent = (GridRank > 2) ? FloorDiv(k0 + Offset[2], RefineBy) - ParentStart[2] : 0;
     for (j0 = 0; j0 < Dim[1]; j0++) {
-      jc = (GridRank > 1) ? FloorDiv(j0 + Offset[1], R) - CStart[1] : 0;
+      jParent = (GridRank > 1) ? FloorDiv(j0 + Offset[1], RefineBy) - ParentStart[1] : 0;
       for (i0 = 0; i0 < Dim[0]; i0++, n0++) {
-        ic = FloorDiv(i0 + Offset[0], R) - CStart[0];
-        c0 = (kc*CDim[1] + jc)*CDim[0] + ic;
+        iParent = FloorDiv(i0 + Offset[0], RefineBy) - ParentStart[0];
+        nParent = (kParent*ParentDim[1] + jParent)*ParentDim[0] + iParent;
         for (f = 0; f < 3; f++)
-          Coarse[f][c0] += Source[f][n0] * inv_R_rank;
+          ParentSource[f][nParent] += Source[f][n0] * inv_RefineBy_rank;
       }
     }
   }
 
-  /* Convolve with K_{L-1} on the coarse mesh. */
+  /* Convolve with K_{L-1} on the parent mesh. */
 
-  ns = GatherSources(CDim, Coarse, &si, &sj, &sk, S);
-  float *r2tabP = BuildKernelTable(CDim, CellVolumeParent, dxp);
-  DirectSumOverR2(CDim, ns, si, sj, sk, S, r2tabP, CoarseView);
-  delete [] r2tabP;
+  ns = GatherSources(ParentDim, ParentSource, &si, &sj, &sk, S);
+  float *r2tabParent = BuildKernelTable(ParentDim, CellVolumeParent, dxParent);
+  DirectSumOverR2(ParentDim, ns, si, sj, sk, S, r2tabParent, ParentFlux);
+  delete [] r2tabParent;
   DeleteSources(si, sj, sk, S);
-  int nsCoarse = ns;
+  int nsParent = ns;
 
   /* Prolong to the fine mesh (same routine and relative offsets as the
      parent flux) and subtract. */
 
-  float *ParentView = new float[size];
+  float *ProlongedParentFlux = new float[size];
   for (f = 0; f < 3; f++) {
-    FORTRAN_NAME(prolong)(CoarseView[f], ParentView, &GridRank,
-                          CDim, CDim+1, CDim+2,
+    FORTRAN_NAME(prolong)(ParentFlux[f], ProlongedParentFlux, &GridRank,
+                          ParentDim, ParentDim+1, ParentDim+2,
                           Dim, Dim+1, Dim+2,
                           ProlongStart, ProlongStart+1, ProlongStart+2,
-                          Refine, Refine+1, Refine+2);
+                          &RefineBy, &RefineBy, &RefineBy);
     for (n1 = 0; n1 < size; n1++)
-      Flux[f][n1] -= ParentView[n1];
+      Flux[f][n1] -= ProlongedParentFlux[n1];
   }
 
-  delete [] ParentView;
+  delete [] ProlongedParentFlux;
   for (f = 0; f < 3; f++) {
-    delete [] Coarse[f];
-    delete [] CoarseView[f];
+    delete [] ParentSource[f];
+    delete [] ParentFlux[f];
   }
 
   /* Per-grid cost, to tune LocallyExtinctRadiationFFTRatio: direct-sum time
      should scale
      as ns * N_cell, FFT time as M log2(M) (Pad = padded FFT dims), plus
-     the R^6-cheaper coarse term either way. */
+     the RefineBy^6-cheaper parent term either way. */
 
   if (debug1)
     fprintf(stdout, "LER: P%"ISYM" grid %"ISYM" level %"ISYM
-            " Dim %"ISYM" %"ISYM" %"ISYM" ns %"ISYM" (coarse %"ISYM")"
+            " Dim %"ISYM" %"ISYM" %"ISYM" ns %"ISYM" (parent %"ISYM")"
             " %s Pad %"ISYM" %"ISYM" %"ISYM" time %"GSYM" s\n",
             MyProcessorNumber, ID, level,
-            Dim[0], Dim[1], Dim[2], nsFine, nsCoarse,
+            Dim[0], Dim[1], Dim[2], nsFine, nsParent,
             (UseFFT ? "FFT" : "direct"), Pad[0], Pad[1], Pad[2],
             float(ReturnWallTime() - WallTime0));
 
