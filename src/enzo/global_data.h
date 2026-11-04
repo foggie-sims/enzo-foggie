@@ -1330,4 +1330,5 @@ EXTERN int UseLocalStellarRadiation;
 EXTERN int UseLocallyExtinctStellarRadiation;
 EXTERN float LocallyExtinctRadiationFFTRatio;  // subgrid FFT vs direct sum
 EXTERN int LocallyExtinctRadiationBoxRadius;   // >0: box-truncated subgrid correction
+EXTERN float LocallyExtinctRadiationMaxSobolevLength;  // proper pc; cap on source-side Sobolev length
 #endif

@@ -1137,6 +1137,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   UseLocallyExtinctStellarRadiation = 0;
   LocallyExtinctRadiationFFTRatio = 25.0;  // see Grid_SolveForLocallyExtinctRadiation.C
   LocallyExtinctRadiationBoxRadius = 0;    // 0: full subgrid correction
+  LocallyExtinctRadiationMaxSobolevLength = 1000.0;  // proper pc, see Grid_DepositParticlePositions.C
 
   return SUCCESS;
 }

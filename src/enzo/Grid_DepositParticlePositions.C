@@ -331,7 +331,8 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
          where Sigma = rho * L is the column density of total gas in the
          star's cell.  L is the Sobolev-like length Grackle uses for H2
          self-shielding (H2_self_shielding = 1, Wolcott-Green et al. 2011;
-         Grackle's solve_rate_cool_g.F), capped at a fixed proper length (MaxSobolevLength_pc).
+         Grackle's solve_rate_cool_g.F), capped at a fixed proper length
+         (LocallyExtinctRadiationMaxSobolevLength, in pc).
          Absorber-side shielding is left to Grackle.
 
          Opacities are calculated following Draine 2003,integrated over the
@@ -352,10 +353,10 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
                                                                          pSNFBTable.kappa_isrf;
       const float MaxSourceAge = 5e7;  // yr; older stars emit nothing
       /* Cap on the Sobolev length, as a fixed proper length so it does
-         not change with redshift (~4 level-11 FOGGIE cells at z = 0).
-         Grackle caps at 1 code length instead. */
-      const float MaxSobolevLength_pc = 1000.0;  // proper pc
-      float MaxSobolevLength = MaxSobolevLength_pc * pc_cm / LengthUnits;  // code units
+         not change with redshift (default 1000 pc, ~4 level-11 FOGGIE
+         cells at z = 0).  Grackle caps at 1 code length instead. */
+      float MaxSobolevLength = LocallyExtinctRadiationMaxSobolevLength * pc_cm
+                               / LengthUnits;  // code units
       int NumYoungStars = 0, NumCapped = 0;  // for the debug1 line below
 
       /* Gas fields on this (the star's host) grid. */
@@ -456,7 +457,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
       if (debug1 && NumCapped > 0 && DepositField == KDISSH2_SOURCE_FIELD)
         fprintf(stdout, "LER: P%"ISYM" grid %"ISYM": Sobolev length capped at %"GSYM
                 " pc for %"ISYM" of %"ISYM" young stars\n", MyProcessorNumber, ID,
-                MaxSobolevLength_pc, NumCapped, NumYoungStars);
+                LocallyExtinctRadiationMaxSobolevLength, NumCapped, NumYoungStars);
 
       ParticleMassPointer = ParticleRadiation;
     }

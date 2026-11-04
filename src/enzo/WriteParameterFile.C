@@ -952,6 +952,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
           LocallyExtinctRadiationFFTRatio);
   fprintf(fptr, "LocallyExtinctRadiationBoxRadius      = %"ISYM"\n",
           LocallyExtinctRadiationBoxRadius);
+  fprintf(fptr, "LocallyExtinctRadiationMaxSobolevLength = %"GSYM"\n",
+          LocallyExtinctRadiationMaxSobolevLength);
   fprintf(fptr, "StarEnergyToStellarUV                 = %"GSYM"\n",
           StarEnergyToStellarUV);
   fprintf(fptr, "StarEnergyToQuasarUV                  = %"GSYM"\n",
