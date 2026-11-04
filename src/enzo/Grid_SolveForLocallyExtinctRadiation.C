@@ -524,15 +524,16 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   /* ------------------------------------------------------------------ */
   /* 1) This level's view: Flux += K_L * S on the fine mesh. */
 
-  /* Direct sum or FFT, whichever is estimated cheaper */
+  /* Direct sum or FFT, whichever is estimated cheaper.  FFTCostRatio is
+     the cost of one FFT element-op relative to one direct-sum pair. */
 
+  const double FFTCostRatio = 25.0;
   int PadDim[MAX_DIMENSION] = {1, 1, 1};
   for (dim = 0; dim < GridRank; dim++)
     PadDim[dim] = NextFFTSize(2*Dim[dim] - 1);
   double PadSize = double(PadDim[0])*double(PadDim[1])*double(PadDim[2]);
-  int UseFFT = (LocallyExtinctRadiationFFTRatio >= 0 &&
-                double(ns)*double(size) >
-                LocallyExtinctRadiationFFTRatio*PadSize*log(PadSize)/log(2.0));
+  int UseFFT = (double(ns)*double(size) >
+                FFTCostRatio*PadSize*log(PadSize)/log(2.0));
 
   float *r2tab = BuildKernelTable(Dim, CellVolume, dx);
   if (UseFFT) {

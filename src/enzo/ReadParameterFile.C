@@ -1009,8 +1009,6 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
         &UseLocalStellarRadiation);
     ret += sscanf(line, "UseLocallyExtinctStellarRadiation = %"ISYM, //CWT 09/30/2026
         &UseLocallyExtinctStellarRadiation);
-    ret += sscanf(line, "LocallyExtinctRadiationFFTRatio = %"FSYM,
-        &LocallyExtinctRadiationFFTRatio);
     ret += sscanf(line, "LocallyExtinctRadiationBoxRadius = %"ISYM,
         &LocallyExtinctRadiationBoxRadius);
     ret += sscanf(line, "LocallyExtinctRadiationMaxSobolevLength = %"FSYM,
