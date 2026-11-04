@@ -938,6 +938,14 @@ void my_exit(int status)
         delete [] pSNFBTable.kion_OI;
         delete [] pSNFBTable.isrf;
     }
+    if (UseLocallyExtinctStellarRadiation) {
+        delete [] pSNFBTable.kappa_H2;
+        delete [] pSNFBTable.kappa_HM;
+        delete [] pSNFBTable.kappa_CO;
+        delete [] pSNFBTable.kappa_CI;
+        delete [] pSNFBTable.kappa_OI;
+        delete [] pSNFBTable.kappa_isrf;
+    }
   }
 
   if (status == EXIT_SUCCESS) {

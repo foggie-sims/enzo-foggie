@@ -24,6 +24,7 @@ import argparse
 import h5py
 import numpy as np
 import scipy.integrate
+import scipy.interpolate
 
 # Make sure this lines up with how SB99 was run
 POPULATION_AGE = np.arange(0.00e6, 50e6, 0.1e6)  # yr
@@ -62,7 +63,71 @@ def event_rate(sed_with_nebular, sed_wavelength, mask, sigma):
     return scipy.integrate.simpson(counts * sigma, x=sed_wavelength[mask], axis=-1)
 
 
-def process_model(wind_dir, sed_dir):
+def get_average_draine_kappa(sed_with_nebular, sed_wavelength, mask, kappa,
+                             kappa_wavelength, sigma=None):
+    """Average Draine kappa over the masked band, for each age.
+
+    sigma=None: luminosity weighted, for the Habing field.
+    sigma given (scalar or array over the mask): weighted by sigma * photon
+    counts, i.e. the same integrand as event_rate, for photo-rates.
+    Returns cm^2/g of gas.
+    """
+    f = scipy.interpolate.interp1d(kappa_wavelength, kappa, kind='linear',
+                                   bounds_error=False, fill_value='extrapolate')
+    kappa_interp = f(sed_wavelength[mask])  # kappa at the SED wavelengths
+
+    L_lambda = 10**sed_with_nebular[:, mask]  # erg/s/A
+    if sigma is None:
+        weight = L_lambda
+    else:
+        erg_axis = h_cgs * c_cgs / (sed_wavelength[mask] * angstrom2cgs)
+        weight = L_lambda / erg_axis * sigma  # photons/s/A * cm^2
+
+    num = scipy.integrate.simpson(kappa_interp * weight, x=sed_wavelength[mask], axis=-1)
+    den = scipy.integrate.simpson(weight, x=sed_wavelength[mask], axis=-1)
+    return num / den
+
+
+def read_draine_kappa(path, kind="eff"):
+    """Read a Draine (2003) kext_albedo_*.all dust table.
+
+    Returns wavelength [micron], photon energy [eV] and dust opacity per
+    gram of gas [cm^2/g], sorted by increasing wavelength.
+    kind: "ext" (extinction), "abs" (absorption) or
+          "eff" (absorption + (1 - <cos>) * scattering).
+    """
+    with open(path) as f:
+        lines = f.read().splitlines()
+
+    # Dust and gas mass per H nucleon, from the header.
+    for line in lines:
+        if "M_dust per H nucleon" in line:
+            mdust_per_H = float(line.split()[0])
+        if "M_gas/M_dust" in line:
+            gas_to_dust = float(line.split()[0])
+    mgas_per_H = mdust_per_H * gas_to_dust  # g of gas per H nucleon
+
+    # Data rows start after the dashed line; columns 0-4 are numeric,
+    # some rows carry a trailing comment (filter names) that is ignored.
+    start = next(i for i, l in enumerate(lines) if l.startswith("-----------")) + 1
+    rows = [l.split()[:5] for l in lines[start:] if l.strip()]
+    lam, albedo, mean_cos, cext_per_H, _ = np.array(rows, dtype=float).T
+
+    # Filter rows are inserted out of order: sort and drop repeats.
+    lam, idx = np.unique(lam, return_index=True)
+    albedo, mean_cos, cext_per_H = albedo[idx], mean_cos[idx], cext_per_H[idx]
+
+    kappa_ext = cext_per_H / mgas_per_H                    # cm^2 per g of gas
+    kappa_abs = kappa_ext * (1 - albedo)
+    kappa_sca = kappa_ext * albedo
+    kappa = {"ext": kappa_ext,
+             "abs": kappa_abs,
+             "eff": kappa_abs + (1 - mean_cos) * kappa_sca}[kind]
+
+    return lam*1e4, kappa #wavelength in Angstrom, kappa
+
+
+def process_model(wind_dir, sed_dir, draine_table):
     """Return a dict of smoothed, per-Msun time series for one metallicity."""
     out = {}
 
@@ -82,10 +147,16 @@ def process_model(wind_dir, sed_dir):
     sed_wavelength = np.loadtxt(sed_dir + '/SED_wavelength.txt')
     print("SED wavelength ranges from", np.min(sed_wavelength), np.max(sed_wavelength))
 
+    ### Opacities from Draine 2003 ###
+    kappa_wavelength, kappa = read_draine_kappa(draine_table,'eff')
+
     ### H2 Photodissociation ###
     lw_mask = (sed_wavelength <= 1100.8) & (sed_wavelength >= 910.2)
     lw_sigma = 3.71e-18  # cm^2
     out['lw_events'] = smooth(event_rate(sed_with_nebular, sed_wavelength, lw_mask, lw_sigma)) / CLUSTER_MASS
+    lw_kappa = get_average_draine_kappa(sed_with_nebular, sed_wavelength, lw_mask, kappa, kappa_wavelength,sigma=lw_sigma)
+    print("lw_kappa is:",np.mean(lw_kappa))
+    out['lw_kappa'] = smooth(lw_kappa)
 
     ### H- Photodetachment ###
     nu_th_hm = 0.755 / h_ev  # 0.755 eV threshold
@@ -94,11 +165,15 @@ def process_model(wind_dir, sed_dir):
     sed_nu = 3e8 / (sed_wavelength[hm_mask] * 1e-10)  # Hz
     hm_sigma = 7.928e5 * np.power(sed_nu - nu_th_hm, 1.5) / np.power(sed_nu, 3.)
     out['hm_events'] = smooth(event_rate(sed_with_nebular, sed_wavelength, hm_mask, hm_sigma)) / CLUSTER_MASS
+    hm_kappa = get_average_draine_kappa(sed_with_nebular, sed_wavelength, hm_mask, kappa, kappa_wavelength,sigma=hm_sigma)
+    print("hm_kappa is:",np.mean(hm_kappa))
+    out['hm_kappa'] = smooth(hm_kappa)
 
     ### CO Photodissociation ###
     co_mask = (sed_wavelength <= 1118) & (sed_wavelength >= 885)
     co_sigma = 1.7455e-17  # cm^2
     out['co_events'] = smooth(event_rate(sed_with_nebular, sed_wavelength, co_mask, co_sigma)) / CLUSTER_MASS
+    out['co_kappa'] = smooth(get_average_draine_kappa(sed_with_nebular, sed_wavelength, co_mask, kappa, kappa_wavelength,sigma=co_sigma))
 
     # log10 of photon energy in eV, used for the CI and OI cross section fits
     x = np.log10(h_ev * c_cgs / (sed_wavelength * angstrom2cgs))
@@ -114,6 +189,7 @@ def process_model(wind_dir, sed_dir):
     ci_sigma[m2] = -14.549 - 0.391 * x[m2] - 0.403 * x[m2] * x[m2]
     ci_sigma = np.power(10., ci_sigma)  # cm^2
     out['ci_events'] = smooth(event_rate(sed_with_nebular, sed_wavelength, ci_mask, ci_sigma[ci_mask])) / CLUSTER_MASS
+    out['ci_kappa'] = smooth(get_average_draine_kappa(sed_with_nebular, sed_wavelength, ci_mask, kappa, kappa_wavelength, sigma=ci_sigma[ci_mask]))
 
     ### OI - OII Photoionization ###
     oi_mask = sed_wavelength <= 910  # Ionization potential
@@ -132,6 +208,7 @@ def process_model(wind_dir, sed_dir):
     oi_sigma[m5] = -12.054 - 3.000 * x[m5]
     oi_sigma = np.power(10., oi_sigma)  # cm^2
     out['oi_events'] = smooth(event_rate(sed_with_nebular, sed_wavelength, oi_mask, oi_sigma[oi_mask])) / CLUSTER_MASS
+    out['oi_kappa'] = smooth(get_average_draine_kappa(sed_with_nebular, sed_wavelength, oi_mask, kappa, kappa_wavelength, sigma=oi_sigma[oi_mask]))
 
     ### Habing Field ###
     habing_mask = (sed_wavelength <= 2400.0) & (sed_wavelength >= 910.2)
@@ -139,6 +216,9 @@ def process_model(wind_dir, sed_dir):
     habing_luminosity = scipy.integrate.simpson(10**sed_with_nebular[:, habing_mask],
                                                 x=sed_wavelength[habing_mask], axis=-1)  # erg/s
     out['habing'] = smooth(habing_luminosity / habing0) / CLUSTER_MASS  # G0 cm^2
+    habing_kappa = get_average_draine_kappa(sed_with_nebular, sed_wavelength, habing_mask, kappa, kappa_wavelength)
+    print("habing_kappa=",np.mean(habing_kappa))
+    out['habing_kappa'] = smooth(habing_kappa)
 
     return out
 
@@ -152,6 +232,9 @@ def main():
                         help='Directory holding the per-metallicity pySB SED files')
     parser.add_argument('--output', default='preSN_feedback_SB99_RT.hdf5',
                         help='Output hdf5 table')
+    parser.add_argument('--draine-table', default='/Users/ctrapp/Downloads/Starburst/kext_albedo_WD_MW_3.1_60_D03.all',
+                        help='Directory holding drain dust absoprtions for birth cloud kappas')
+    
     args = parser.parse_args()
 
     print(len(POPULATION_AGE), len(INITIAL_METAL_FRACTION))
@@ -162,7 +245,7 @@ def main():
     for modeldir in MODELDIRS:
         wind_dir = args.wind_dir + modeldir
         sed_dir = args.sed_dir + modeldir
-        models.append(process_model(wind_dir, sed_dir))
+        models.append(process_model(wind_dir, sed_dir, args.draine_table))
 
     def stack_over_metallicity(key):
         """Combine one quantity from every metallicity into a 2D array
@@ -185,11 +268,17 @@ def main():
             ("wind_metal_mass_rate",      'wind_metals', 'Msun/yr'),
             ("wind_and_Lbol_momentum",    'wind_mom',    'Msun/yr*km/s'),
             ("h2_photodissociation_rate", 'lw_events',   'cm**2/s'),
+            ("h2_photodissociation_kappa",'lw_kappa' ,   'cm**2/g'),
             ("hm_photodetatchment_rate",  'hm_events',   'cm**2/s'),
+            ("hm_photodetatchment_kappa", 'hm_kappa' ,   'cm**2/g'),
             ("co_photodissociation_rate", 'co_events',   'cm**2/s'),
+            ("co_photodissociation_kappa",'co_kappa' ,   'cm**2/g'),
             ("ci_photoionization_rate",   'ci_events',   'cm**2/s'),
+            ("ci_photoionization_kappa",  'ci_kappa' ,   'cm**2/g'),
             ("oi_photoionization_rate",   'oi_events',   'cm**2/s'),
+            ("oi_photoionization_kappa",  'oi_kappa' ,   'cm**2/g'),
             ("habing_luminosity",         'habing',      'G0*cm**2'),
+            ("habing_kappa",              'habing_kappa','cm**2/g')
         ]
         for name, key, unit in datasets:
             dset = grp.create_dataset(name, data=stack_over_metallicity(key))

@@ -13,6 +13,45 @@
 #include "typedefs.h"
 #include "global_data.h"
 
+/* Photo-rate tables for local stellar radiation (UseLocalStellarRadiation
+   or UseLocallyExtinctStellarRadiation): each table array and the dataset
+   it is read from. */
+
+#define NUM_RADIATION_BANDS 6
+static double **RadiationArrays[NUM_RADIATION_BANDS] = {
+  &pSNFBTable.kdiss_H2,
+  &pSNFBTable.kdet_HM,
+  &pSNFBTable.kdiss_CO,
+  &pSNFBTable.kion_CI,
+  &pSNFBTable.kion_OI,
+  &pSNFBTable.isrf};
+static const char *RadiationDatasets[NUM_RADIATION_BANDS] = {
+  "/SB99_models/h2_photodissociation_rate",
+  "/SB99_models/hm_photodetatchment_rate",
+  "/SB99_models/co_photodissociation_rate",
+  "/SB99_models/ci_photoionization_rate",
+  "/SB99_models/oi_photoionization_rate",
+  "/SB99_models/habing_luminosity"};
+
+/* Band-averaged dust opacities for Locally-Extinct-Stellar-Radiation, in
+   the same band order: each table array and the dataset it is read from. */
+
+#define NUM_KAPPA_BANDS 6
+static double **KappaArrays[NUM_KAPPA_BANDS] = {
+  &pSNFBTable.kappa_H2,
+  &pSNFBTable.kappa_HM,
+  &pSNFBTable.kappa_CO,
+  &pSNFBTable.kappa_CI,
+  &pSNFBTable.kappa_OI,
+  &pSNFBTable.kappa_isrf};
+static const char *KappaDatasets[NUM_KAPPA_BANDS] = {
+  "/SB99_models/h2_photodissociation_kappa",
+  "/SB99_models/hm_photodetatchment_kappa",
+  "/SB99_models/co_photodissociation_kappa",
+  "/SB99_models/ci_photoionization_kappa",
+  "/SB99_models/oi_photoionization_kappa",
+  "/SB99_models/habing_kappa"};
+
 /**************************** Functions Prototypes ******************************/
 
 int ReadPreSNFeedbackTable(char *name)
@@ -206,121 +245,49 @@ int ReadPreSNFeedbackTable(char *name)
     }
 
     if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {  // CWT 06/07/2026
-        /* Read H2 Photodissociation Fields */
-        pSNFBTable.kdiss_H2 = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-        dset_id = H5Dopen(file_id, "/SB99_models/h2_photodissociation_rate");
-        if (dset_id == h5_error) {
-          fprintf(stderr,"Can't open /SB99_models/h2_photodissociation_rate in %s.\n", name);
-          return FAIL;
+        /* Read the photo-rate tables (one per radiation band). */
+        for (int band = 0; band < NUM_RADIATION_BANDS; band++) {
+          *RadiationArrays[band] = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+          dset_id = H5Dopen(file_id, RadiationDatasets[band]);
+          if (dset_id == h5_error) {
+            fprintf(stderr,"Can't open %s in %s.\n", RadiationDatasets[band], name);
+            return FAIL;
+          }
+          status = H5Dread(dset_id, HDF5_R8, H5S_ALL,
+                            H5S_ALL, H5P_DEFAULT, *RadiationArrays[band]);
+          if (status == h5_error) {
+            fprintf(stderr, "Failed to read %s in %s.\n", RadiationDatasets[band], name);
+            return FAIL;
+          }
+          status = H5Dclose(dset_id);
+          if (status == h5_error) {
+            fprintf(stderr,"Failed to close %s in %s.\n", RadiationDatasets[band], name);
+            return FAIL;
+          }
         }
-        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
-                          H5S_ALL, H5P_DEFAULT, pSNFBTable.kdiss_H2);
-        if (status == h5_error) {
-          fprintf(stderr, "Failed to read /SB99_models/h2_photodissociation_rate in %s.\n",name);
-          return FAIL;
-        }
-        status = H5Dclose(dset_id);
-        if (status == h5_error) {
-          fprintf(stderr,"Failed to close /SB99_models/h2_photodissociation_rate in %s.\n",name);
-          return FAIL;
-        }
+    }
 
-        /* Read HM Photodetatchment Fields */
-        pSNFBTable.kdet_HM = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-        dset_id = H5Dopen(file_id, "/SB99_models/hm_photodetatchment_rate");
-        if (dset_id == h5_error) {
-          fprintf(stderr,"Can't open /SB99_models/hm_photodetatchment_rate in %s.\n", name);
-          return FAIL;
+    if (UseLocallyExtinctStellarRadiation) {
+        /* Read the band-averaged dust opacities (one per rate above). */
+        for (int band = 0; band < NUM_KAPPA_BANDS; band++) {
+          *KappaArrays[band] = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+          dset_id = H5Dopen(file_id, KappaDatasets[band]);
+          if (dset_id == h5_error) {
+            fprintf(stderr,"Can't open %s in %s.\n", KappaDatasets[band], name);
+            return FAIL;
+          }
+          status = H5Dread(dset_id, HDF5_R8, H5S_ALL,
+                            H5S_ALL, H5P_DEFAULT, *KappaArrays[band]);
+          if (status == h5_error) {
+            fprintf(stderr, "Failed to read %s in %s.\n", KappaDatasets[band], name);
+            return FAIL;
+          }
+          status = H5Dclose(dset_id);
+          if (status == h5_error) {
+            fprintf(stderr,"Failed to close %s in %s.\n", KappaDatasets[band], name);
+            return FAIL;
+          }
         }
-        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
-                          H5S_ALL, H5P_DEFAULT, pSNFBTable.kdet_HM);
-        if (status == h5_error) {
-          fprintf(stderr, "Failed to read /SB99_models/hm_photodetatchment_rate in %s.\n",name);
-          return FAIL;
-        }
-        status = H5Dclose(dset_id);
-        if (status == h5_error) {
-          fprintf(stderr,"Failed to close /SB99_models/hm_photodetatchment_rate in %s.\n",name);
-          return FAIL;
-        }
-
-        /* Read CO Photodissocation Fields */
-        pSNFBTable.kdiss_CO = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-        dset_id = H5Dopen(file_id, "/SB99_models/co_photodissociation_rate");
-        if (dset_id == h5_error) {
-          fprintf(stderr,"Can't open /SB99_models/co_photodissociation_rate in %s.\n", name);
-          return FAIL;
-        }
-        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
-                          H5S_ALL, H5P_DEFAULT, pSNFBTable.kdiss_CO);
-        if (status == h5_error) {
-          fprintf(stderr, "Failed to read /SB99_models/co_photodissociation_rate in %s.\n",name);
-          return FAIL;
-        }
-        status = H5Dclose(dset_id);
-        if (status == h5_error) {
-          fprintf(stderr,"Failed to close /SB99_models/co_photodissociation_rate in %s.\n",name);
-          return FAIL;
-        }
-
-        /* Read C I -> C II Photoionization Fields */
-        pSNFBTable.kion_CI = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-        dset_id = H5Dopen(file_id, "/SB99_models/ci_photoionization_rate");
-        if (dset_id == h5_error) {
-          fprintf(stderr,"Can't open /SB99_models/ci_photoionization_rate in %s.\n", name);
-          return FAIL;
-        }
-        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
-                          H5S_ALL, H5P_DEFAULT, pSNFBTable.kion_CI);
-        if (status == h5_error) {
-          fprintf(stderr, "Failed to read /SB99_models/ci_photoionization_rate in %s.\n",name);
-          return FAIL;
-        }
-        status = H5Dclose(dset_id);
-        if (status == h5_error) {
-          fprintf(stderr,"Failed to close /SB99_models/ci_photoionization_rate in %s.\n",name);
-          return FAIL;
-        }
-
-        /* Read O I -> O II Photoionization Fields */
-        pSNFBTable.kion_OI = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-        dset_id = H5Dopen(file_id, "/SB99_models/oi_photoionization_rate");
-        if (dset_id == h5_error) {
-          fprintf(stderr,"Can't open /SB99_models/oi_photoionization_rate in %s.\n", name);
-          return FAIL;
-        }
-        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
-                          H5S_ALL, H5P_DEFAULT, pSNFBTable.kion_OI);
-        if (status == h5_error) {
-          fprintf(stderr, "Failed to read /SB99_models/oi_photoionization_rate in %s.\n",name);
-          return FAIL;
-        }
-        status = H5Dclose(dset_id);
-        if (status == h5_error) {
-          fprintf(stderr,"Failed to close /SB99_models/oi_photoionization_rate in %s.\n",name);
-          return FAIL;
-        }
-
-        /* Read ISRF Fields */
-        pSNFBTable.isrf = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-        dset_id = H5Dopen(file_id, "/SB99_models/habing_luminosity");
-        if (dset_id == h5_error) {
-          fprintf(stderr,"Can't open /SB99_models/habing_luminosity in %s.\n", name);
-          return FAIL;
-        }
-        status = H5Dread(dset_id, HDF5_R8, H5S_ALL, 
-                          H5S_ALL, H5P_DEFAULT, pSNFBTable.isrf);
-        if (status == h5_error) {
-          fprintf(stderr, "Failed to read /SB99_models/habing_luminosity in %s.\n",name);
-          return FAIL;
-        }
-        status = H5Dclose(dset_id);
-        if (status == h5_error) {
-          fprintf(stderr,"Failed to close /SB99_models/habing_luminosity in %s.\n",name);
-          return FAIL;
-        }
-
-
     }
 
     /* Close file */
@@ -338,12 +305,12 @@ int ReadPreSNFeedbackTable(char *name)
     pSNFBTable.mom_rate = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     //Local Radiation Fields - CWT 06/07/2026
     if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {
-        pSNFBTable.kdiss_H2 = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-        pSNFBTable.kdet_HM = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-        pSNFBTable.kdiss_CO = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-        pSNFBTable.kion_CI = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-        pSNFBTable.kion_OI = new double[pSNFBTable.n_met*pSNFBTable.n_age];
-        pSNFBTable.isrf = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+      for (int band = 0; band < NUM_RADIATION_BANDS; band++)
+        *RadiationArrays[band] = new double[pSNFBTable.n_met*pSNFBTable.n_age];
+    }
+    if (UseLocallyExtinctStellarRadiation) {
+      for (int band = 0; band < NUM_KAPPA_BANDS; band++)
+        *KappaArrays[band] = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     }
 
   } // end not root
@@ -356,13 +323,12 @@ int ReadPreSNFeedbackTable(char *name)
   MPI_Bcast(pSNFBTable.metm_yield, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
   MPI_Bcast(pSNFBTable.mom_rate, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
   if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {
-    MPI_Bcast(pSNFBTable.kdiss_H2, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
-    MPI_Bcast(pSNFBTable.kdet_HM, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
-    MPI_Bcast(pSNFBTable.kdiss_CO, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
-    MPI_Bcast(pSNFBTable.kion_CI, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
-    MPI_Bcast(pSNFBTable.kion_OI, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
-    MPI_Bcast(pSNFBTable.isrf, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
-
+    for (int band = 0; band < NUM_RADIATION_BANDS; band++)
+      MPI_Bcast(*RadiationArrays[band], pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
+  }
+  if (UseLocallyExtinctStellarRadiation) {
+    for (int band = 0; band < NUM_KAPPA_BANDS; band++)
+      MPI_Bcast(*KappaArrays[band], pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
   }
 #endif
   
