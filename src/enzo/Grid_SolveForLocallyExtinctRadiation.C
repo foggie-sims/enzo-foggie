@@ -19,7 +19,7 @@
 /    hence the cell volume in K_l. Assumes a uniform refinement factor RefineBy.
 /
 /    Depending on the number of sources, this will compute this sum in Fourier
-/    space, O(M log M), where M~8*N_cell.
+/    space, O(PadSize log PadSize), where PadSize ~ 8 N_cell.
 /
 /    With LocallyExtinctRadiationBoxRadius = rbox > 0, the correction is applied
 /    only within rbox fine cells of each source, O(N_source * (2 rbox + 1)^3).
@@ -176,98 +176,118 @@ static int NextFFTSize(int n)
   }
 }
 
-static int WrapOffset(int ip, int D, int P)
+static int PaddedSeparation(int iPad, int MeshDim, int PadDim)
 {
-  /* |offset| stored at padded index ip (offsets -(D-1)..D-1 wrap to the top
-   of the padded axis), or -1 for padding that no source-target pair hits. */
-  if (ip < D)     return ip;
-  if (ip > P - D) return P - ip;
+  /* The FFT treats the padded axis as periodic, so separations
+   -(MeshDim-1)..-1 are stored at the top of the axis
+   (iPad = PadDim-1 down to PadDim-MeshDim+1).  Returns the |separation|
+   stored at padded index iPad, or -1 for padding between the two ends,
+   which no source-target pair on the mesh can reach. */
+  if (iPad < MeshDim)           return iPad;           // separation >= 0
+  if (iPad > PadDim - MeshDim)  return PadDim - iPad;  // separation < 0
   return -1;
 }
 
-static int FFTSumOverR2(int Rank, int *Dim, int *P, float *Source[3],
+static int FFTSumOverR2(int Rank, int *Dim, int *PadDim, float *Source[3],
                          float *r2tab, float *Flux[3])
 {
-  /* Same sum as DirectSumOverR2 (to roundoff), by zero-padded FFT
-   convolution on a P mesh (P >= 2 Dim - 1, so nothing wraps around).
-   The kernel is even in every offset, so its transform is real and
-   leaves real and imaginary parts uncoupled: fields 0 and 1 share one
-   complex transform (S0 + i S1) and field 2 uses another. */
-  int i, j, k, n, np, di, dj, dk;
-  int M = P[0]*P[1]*P[2];
+  /* Same sum as DirectSumOverR2 (to roundoff), by FFT convolution on a
+   zero-padded mesh of size PadDim >= 2 Dim - 1, so that no source's flux
+   wraps around onto the mesh from the far side.
 
-  float *Kbuf = new float[2*M]();
-  float *A    = new float[2*M]();  // S0 + i S1
-  float *B    = new float[2*M]();  // S2
+   The arrays are complex, stored as (real, imaginary) pairs: padded cell
+   nPad is at [2*nPad] (real) and [2*nPad+1] (imaginary).  The kernel is
+   symmetric (1/r^2 depends only on |separation|), so its transform is
+   real.  Multiplying by a real number keeps real and imaginary parts
+   separate, so two fields can share one transform: fields 0 and 1 go in
+   Field01 (real and imaginary parts) and field 2 in Field2. */
 
-  /* Kernel at every wrapped offset. */
+  int i, j, k, n, nPad, re, im, di, dj, dk;
+  int PadSize = PadDim[0]*PadDim[1]*PadDim[2];
 
-  for (k = 0, np = 0; k < P[2]; k++) {
-    dk = WrapOffset(k, Dim[2], P[2]);
-    for (j = 0; j < P[1]; j++) {
-      dj = WrapOffset(j, Dim[1], P[1]);
-      for (i = 0; i < P[0]; i++, np++) {
-        di = WrapOffset(i, Dim[0], P[0]);
+  float *Kernel  = new float[2*PadSize]();
+  float *Field01 = new float[2*PadSize]();  // field 0 (real) + field 1 (imaginary)
+  float *Field2  = new float[2*PadSize]();  // field 2 (real)
+
+  /* Kernel: 1/r^2 at every separation, stored in the real part. */
+
+  for (k = 0, nPad = 0; k < PadDim[2]; k++) {
+    dk = PaddedSeparation(k, Dim[2], PadDim[2]);
+    for (j = 0; j < PadDim[1]; j++) {
+      dj = PaddedSeparation(j, Dim[1], PadDim[1]);
+      for (i = 0; i < PadDim[0]; i++, nPad++) {
+        di = PaddedSeparation(i, Dim[0], PadDim[0]);
         if (di >= 0 && dj >= 0 && dk >= 0)
-          Kbuf[2*np] = r2tab[di*di + dj*dj + dk*dk];
+          Kernel[2*nPad] = r2tab[di*di + dj*dj + dk*dk];
       }
     }
   }
 
-  /* Sources in the low corner of the padded mesh. */
+  /* Sources: copy the mesh into the low corner of the padded arrays. */
 
   for (k = 0, n = 0; k < Dim[2]; k++)
     for (j = 0; j < Dim[1]; j++) {
-      np = (k*P[1] + j)*P[0];
-      for (i = 0; i < Dim[0]; i++, n++, np++) {
-        A[2*np  ] = Source[0][n];
-        A[2*np+1] = Source[1][n];
-        B[2*np  ] = Source[2][n];
+      nPad = (k*PadDim[1] + j)*PadDim[0];
+      for (i = 0; i < Dim[0]; i++, n++, nPad++) {
+        re = 2*nPad;
+        im = re + 1;
+        Field01[re] = Source[0][n];
+        Field01[im] = Source[1][n];
+        Field2[re]  = Source[2][n];
       }
     }
 
-  if (FastFourierTransform(Kbuf, Rank, P, P, FFT_FORWARD,
+  /* Forward transforms. */
+
+  if (FastFourierTransform(Kernel, Rank, PadDim, PadDim, FFT_FORWARD,
                            COMPLEX_TO_COMPLEX) == FAIL ||
-      FastFourierTransform(A, Rank, P, P, FFT_FORWARD,
+      FastFourierTransform(Field01, Rank, PadDim, PadDim, FFT_FORWARD,
                            COMPLEX_TO_COMPLEX) == FAIL ||
-      FastFourierTransform(B, Rank, P, P, FFT_FORWARD,
+      FastFourierTransform(Field2, Rank, PadDim, PadDim, FFT_FORWARD,
                            COMPLEX_TO_COMPLEX) == FAIL) {
     ENZO_FAIL("Error in FastFourierTransform (LER forward).\n");
   }
 
-  /* Multiply by the (real) kernel transform. */
+  /* Convolution: multiply each field's transform by the kernel's (real)
+     transform. */
 
-  float Khat;
-  for (np = 0; np < M; np++) {
-    Khat = Kbuf[2*np];
-    A[2*np  ] *= Khat;
-    A[2*np+1] *= Khat;
-    B[2*np  ] *= Khat;
-    B[2*np+1] *= Khat;
+  float KernelHat;
+  for (nPad = 0; nPad < PadSize; nPad++) {
+    re = 2*nPad;
+    im = re + 1;
+    KernelHat = Kernel[re];
+    Field01[re] *= KernelHat;
+    Field01[im] *= KernelHat;
+    Field2[re]  *= KernelHat;
+    Field2[im]  *= KernelHat;
   }
-  delete [] Kbuf;
+  delete [] Kernel;
 
-  if (FastFourierTransform(A, Rank, P, P, FFT_INVERSE,
+  /* Inverse transforms. */
+
+  if (FastFourierTransform(Field01, Rank, PadDim, PadDim, FFT_INVERSE,
                            COMPLEX_TO_COMPLEX) == FAIL ||
-      FastFourierTransform(B, Rank, P, P, FFT_INVERSE,
+      FastFourierTransform(Field2, Rank, PadDim, PadDim, FFT_INVERSE,
                            COMPLEX_TO_COMPLEX) == FAIL) {
     ENZO_FAIL("Error in FastFourierTransform (LER inverse).\n");
   }
 
-  /* Add the low corner back into the flux fields. */
+  /* Flux: add the low corner of the padded arrays back onto the mesh. */
 
   for (k = 0, n = 0; k < Dim[2]; k++)
     for (j = 0; j < Dim[1]; j++) {
-      np = (k*P[1] + j)*P[0];
-      for (i = 0; i < Dim[0]; i++, n++, np++) {
-        Flux[0][n] += A[2*np  ];
-        Flux[1][n] += A[2*np+1];
-        Flux[2][n] += B[2*np  ];
+      nPad = (k*PadDim[1] + j)*PadDim[0];
+      for (i = 0; i < Dim[0]; i++, n++, nPad++) {
+        re = 2*nPad;
+        im = re + 1;
+        Flux[0][n] += Field01[re];
+        Flux[1][n] += Field01[im];
+        Flux[2][n] += Field2[re];
       }
     }
 
-  delete [] A;
-  delete [] B;
+  delete [] Field01;
+  delete [] Field2;
   return SUCCESS;
 }
 
@@ -305,9 +325,9 @@ static float *BuildBoxCorrection(int rbox, float dx, float CellVolume,
                      float(RefineBy*RefineBy*RefineBy);
   float soft2 = 0.38*0.38;  // softening length squared, in cells
 
-  int dim, subpos[3], offset[3], below[3];
+  int dim, subpos[3], offset[3], ParentIndex0[3];
   int r2Fine, r2Parent, entry = 0;
-  float FineCenter, ParentCoord, wAbove[3], weight, ParentFlux;
+  float FineCenter, ParentCoord, wInterp1[3], weight, ParentFlux;
 
   /* Get the normalized flux for a single cell in the kernel around the star for each of the 8 cases */
 
@@ -480,8 +500,7 @@ int grid::SolveForLocallyExtinctRadiation(int level)
   }
 
   /* ------------------------------------------------------------------ */
-  /* 0) Box-truncated correction instead of steps 1 and 2 (see
-     BuildBoxCorrection). */
+  /* 0) Box-truncated correction instead of steps 1 and 2 */
 
   if (LocallyExtinctRadiationBoxRadius > 0) {
     int rbox = LocallyExtinctRadiationBoxRadius;
@@ -507,17 +526,17 @@ int grid::SolveForLocallyExtinctRadiation(int level)
 
   /* Direct sum or FFT, whichever is estimated cheaper */
 
-  int Pad[MAX_DIMENSION] = {1, 1, 1};
+  int PadDim[MAX_DIMENSION] = {1, 1, 1};
   for (dim = 0; dim < GridRank; dim++)
-    Pad[dim] = NextFFTSize(2*Dim[dim] - 1);
-  double M = double(Pad[0])*double(Pad[1])*double(Pad[2]);
+    PadDim[dim] = NextFFTSize(2*Dim[dim] - 1);
+  double PadSize = double(PadDim[0])*double(PadDim[1])*double(PadDim[2]);
   int UseFFT = (LocallyExtinctRadiationFFTRatio >= 0 &&
                 double(ns)*double(size) >
-                LocallyExtinctRadiationFFTRatio*M*log(M)/log(2.0));
+                LocallyExtinctRadiationFFTRatio*PadSize*log(PadSize)/log(2.0));
 
   float *r2tab = BuildKernelTable(Dim, CellVolume, dx);
   if (UseFFT) {
-    if (FFTSumOverR2(GridRank, Dim, Pad, Source, r2tab, Flux) == FAIL) {
+    if (FFTSumOverR2(GridRank, Dim, PadDim, Source, r2tab, Flux) == FAIL) {
       ENZO_FAIL("Error in FFTSumOverR2.\n");
     }
   } else
@@ -584,31 +603,18 @@ int grid::SolveForLocallyExtinctRadiation(int level)
     delete [] ParentFlux[f];
   }
 
-  /* Per-grid cost, to tune LocallyExtinctRadiationFFTRatio: direct-sum time
-     should scale
-     as ns * N_cell, FFT time as M log2(M) (Pad = padded FFT dims), plus
-     the RefineBy^6-cheaper parent term either way. */
-
   if (debug1)
     fprintf(stdout, "LER: P%"ISYM" grid %"ISYM" level %"ISYM
             " Dim %"ISYM" %"ISYM" %"ISYM" ns %"ISYM" (parent %"ISYM")"
             " %s Pad %"ISYM" %"ISYM" %"ISYM" time %"GSYM" s\n",
             MyProcessorNumber, ID, level,
             Dim[0], Dim[1], Dim[2], nsFine, nsParent,
-            (UseFFT ? "FFT" : "direct"), Pad[0], Pad[1], Pad[2],
+            (UseFFT ? "FFT" : "direct"), PadDim[0], PadDim[1], PadDim[2],
             float(ReturnWallTime() - WallTime0));
 
   LCAPERF_STOP("grid_SolveForLocallyExtinctRadiation");
   return SUCCESS;
 }
-
-
-/* Copy the LER flux fields (GravitatingMassField mesh) into
-   BaryonField-shaped arrays for Grackle, converting units.  The flux
-   fields hold sum(table [rate*cm^2/Msun] * Msun) / (code length)^2, so
-   dividing by LengthUnits^2 gives 1/s (or Habing for the ISRF).  The
-   offset into the gravity mesh follows CopyPotentialToBaryonField.
-   Output arrays are left untouched where no flux field exists. */
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
@@ -617,6 +623,11 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 int grid::GetLocallyExtinctRadiationRates(float *kdissH2, float *kdetHM,
                                           float *isrf)
 {
+  /* Copy the LER flux fields (GravitatingMassField mesh) into
+   BaryonField-shaped arrays for Grackle, converting units.  The flux
+   fields hold sum(table [rate*cm^2/Msun] * Msun) / (code length)^2, so
+   dividing by LengthUnits^2 gives 1/s (or Habing for the ISRF).  The
+   offset into the gravity mesh follows CopyPotentialToBaryonField. */
 
   if (ProcessorNumber != MyProcessorNumber)
     return SUCCESS;
@@ -652,13 +663,11 @@ int grid::GetLocallyExtinctRadiationRates(float *kdissH2, float *kdetHM,
 }
 
 
-/* Allocate (if needed) and zero the Locally-Extinct-Stellar-Radiation source arrays.
-   ClearRTSourceParticles mirrors ClearGravitatingMassFieldParticles
-   (particle mesh); ClearRTSourceField mirrors ClearGravitatingMassField
-   (gravity mesh).  Both require the corresponding mesh to be initialized. */
-
 int grid::ClearRTSourceParticles()
 {
+/* Allocate (if needed) and zero the Locally-Extinct-Stellar-Radiation source arrays.
+   Mirrors ClearGravitatingMassFieldParticles (particle mesh). Requires mesh to be initialized. */
+
   if (ProcessorNumber != MyProcessorNumber)
     return SUCCESS;
 
@@ -684,6 +693,8 @@ int grid::ClearRTSourceParticles()
 
 int grid::ClearRTSourceField()
 {
+/* Allocate (if needed) and zero the Locally-Extinct-Stellar-Radiation source arrays.
+   Mirrors ClearGravitatingMassField (gravity mesh). Requires mesh to be initialized. */
   if (ProcessorNumber != MyProcessorNumber)
     return SUCCESS;
 
