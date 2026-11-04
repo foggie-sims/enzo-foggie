@@ -93,7 +93,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
   float MassFactor = 1.0, *ParticleMassTemp, *ParticleMassPointer; 
   FLOAT CellSize, CloudSize;
   float *ParticleMassPointerSink;    
-  float *ParticleRadiationTmp = NULL;  // Locally-Extinct-Stellar-Radiation
+  float *ParticleRadiation = NULL;  // Locally-Extinct-Stellar-Radiation
   float TimeDifference = 0;
   FLOAT LeftEdge[MAX_DIMENSION], OriginalLeftEdge[MAX_DIMENSION];
   float *DepositFieldPointer, *OriginalDepositFieldPointer;
@@ -317,104 +317,148 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 	ParticleMassPointer[i] = min(DepositParticleMaximumParticleMass,
 				     ParticleMassPointer[i]);
 
-    /* Locally-Extinct-Stellar-Radiation: deposit the young-star source
-       strength.  ParticleInitialMass*MassFactor is a density on the target
-       grid, so (table value [rate*cm^2 per Msun]) * density * MassUnits /
-       SolarMass is the source per unit code volume; the RT Green's function
-       multiplies back by the cell volume. */
-
     if (DepositField == KDISSH2_SOURCE_FIELD ||
         DepositField == KDETHM_SOURCE_FIELD ||
         DepositField == ISRF_SOURCE_FIELD) {
+
+      /* Locally-Extinct-Stellar-Radiation: deposit the young-star source
+         strength.  ParticleInitialMass*MassFactor is a density on the target
+         grid, so (table value [rate*cm^2 per Msun]) * density * MassUnits /
+         SolarMass is the source per unit code volume.
+
+         Each young star's output is reduced by exp(-tau), with optical depth
+           tau = kappa_solar * (Z/Z_sun) * Sigma,
+         where Sigma = rho * L is the column density of total gas in the
+         star's cell.  L is the Sobolev-like length Grackle uses for H2
+         self-shielding (H2_self_shielding = 1, Wolcott-Green et al. 2011;
+         Grackle's solve_rate_cool_g.F), capped at a fixed proper length (MaxSobolevLength_pc).
+         Absorber-side shielding is left to Grackle.
+
+         Opacities are calculated following Draine 2003,integrated over the
+         luminosity band of interest in SB99, and saved in the PSNF Table for each band. 
+         (https://www.astro.princeton.edu/~draine/dust/extcurvs/kext_albedo_WD_MW_3.1_60_D03.all)
+       */
+      
       float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits,
         VelocityUnits;
       GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits,
                &VelocityUnits, Time);
       float MsunPerCodeMass = DensityUnits * POW(LengthUnits, 3) / SolarMass;
-      double *table = (DepositField == KDISSH2_SOURCE_FIELD) ? pSNFBTable.kdiss_H2 :
-                      (DepositField == KDETHM_SOURCE_FIELD)  ? pSNFBTable.kdet_HM :
-                                                               pSNFBTable.isrf;
+      double *LuminosityTable = (DepositField == KDISSH2_SOURCE_FIELD) ? pSNFBTable.kdiss_H2 :
+                                (DepositField == KDETHM_SOURCE_FIELD)  ? pSNFBTable.kdet_HM :
+                                                                         pSNFBTable.isrf;
+      double *KappaTable      = (DepositField == KDISSH2_SOURCE_FIELD) ? pSNFBTable.kappa_H2 :
+                                (DepositField == KDETHM_SOURCE_FIELD)  ? pSNFBTable.kappa_HM :
+                                                                         pSNFBTable.kappa_isrf;
+      const float MaxSourceAge = 5e7;  // yr; older stars emit nothing
+      /* Cap on the Sobolev length, as a fixed proper length so it does
+         not change with redshift (~4 level-11 FOGGIE cells at z = 0).
+         Grackle caps at 1 code length instead. */
+      const float MaxSobolevLength_pc = 1000.0;  // proper pc
+      float MaxSobolevLength = MaxSobolevLength_pc * pc_cm / LengthUnits;  // code units
+      int NumYoungStars = 0, NumCapped = 0;  // for the debug1 line below
 
-      /* Source-side ("locally extinct") attenuation: each young star's
-         output is reduced by exp(-kappa * Sigma), with Sigma the local
-         Sobolev column of total gas, rho * min(rho/|grad rho|, cap), from
-         central differences around the star's cell.  Absorber-side
-         shielding is left to Grackle.
+      /* Gas fields on this (the star's host) grid. */
 
-         Opacities follow FIRE-2's LEBRON (Hopkins et al. 2018, 2020):
-         photon-weighted dust opacity per gas mass at solar metallicity,
-         scaled linearly with the metallicity of the gas in the star's cell
-         (dust-to-gas assumed proportional to Z):
-           kdissH2 (LW, 11.2-13.6 eV)      -> FUV band,         2000 cm^2/g
-           kdetHM  (H-, mostly ~0.75-3 eV) -> optical/NIR band,  180 cm^2/g
-           ISRF    (Habing, 6-13.6 eV)     -> FUV band,         2000 cm^2/g
-         Gas metals are Metallicity + SNColour, as in GrackleWrapper, and
-         Z_sun is CoolData.SolarMetalFractionByMass, as used by Grackle.
-
-         TODO(CWT, refine): the Sobolev length cap (in cells) is arbitrary;
-           consider the Jeans length instead.
-         TODO(CWT, check): Z_sun normalization vs FIRE's; recompute kappas
-           from the SB99 SEDs (band/cross-section weighted). */
-
-      const float SourceOpacitySolar = (DepositField == KDISSH2_SOURCE_FIELD) ? 2000.0 :
-                                       (DepositField == KDETHM_SOURCE_FIELD)  ?  180.0 :
-                                                                                2000.0;
-      const float MaxSobolevCells = 4.0;
-
-      int DensNum = FindField(Density, FieldType, NumberOfBaryonFields);
-      float *rho = (DensNum >= 0) ? BaryonField[DensNum] : NULL;
-      float SigmaUnits = DensityUnits * LengthUnits;  // code rho*L -> g/cm^2
-
+      int DensNum     = FindField(Density, FieldType, NumberOfBaryonFields);
       int MetalNum    = FindField(Metallicity, FieldType, NumberOfBaryonFields);
       int SNColourNum = FindField(SNColour, FieldType, NumberOfBaryonFields);
+      float *GasDensity    = (DensNum     >= 0) ? BaryonField[DensNum]     : NULL;
       float *MetalField    = (MetalNum    >= 0) ? BaryonField[MetalNum]    : NULL;
       float *SNColourField = (SNColourNum >= 0) ? BaryonField[SNColourNum] : NULL;
+      float ColumnDensityUnits = DensityUnits * LengthUnits;  // code rho*L -> g/cm^2
 
-      ParticleRadiationTmp = new float[NumberOfParticles];
+      int Stride[MAX_DIMENSION];  // index step to the next cell in each direction
+      Stride[0] = 1;
+      Stride[1] = GridDimension[0];
+      Stride[2] = GridDimension[0]*GridDimension[1];
+
+      ParticleRadiation = new float[NumberOfParticles];
+      float SourceOpacitySolar;
       for (i = 0; i < NumberOfParticles; i++) {
-        ParticleRadiationTmp[i] = 0;  // dark matter and old stars emit nothing
+        ParticleRadiation[i] = 0;  // dark matter and old stars emit nothing
         if (ParticleType[i] != PARTICLE_TYPE_STAR)
           continue;
-        float age = (Time - ParticleAttribute[0][i]) * TimeUnits / yr_s;
-        if (age >= 5e7)
+        float StarAge = (Time - ParticleAttribute[0][i]) * TimeUnits / yr_s;  // yr
+        float StarMetallicity = ParticleAttribute[2][i];
+        if (StarAge >= MaxSourceAge)
           continue;
-        /* SB99 tables are per Msun formed, so use the initial mass (a
-           density, like ParticleMass), scaled to the target grid. */
-        ParticleRadiationTmp[i] = InterpolatePreSNFeedbackTable(table, age,
-                                     ParticleAttribute[2][i]) *
+
+        /* Unattenuated output.  SB99 tables are per Msun formed, so use
+           the initial mass (a density, like ParticleMass), scaled to the
+           target grid. */
+
+        ParticleRadiation[i] = InterpolatePreSNFeedbackTable(LuminosityTable,
+                                     StarAge, StarMetallicity) *
                                    ParticleInitialMass[i] * MassFactor *
                                    MsunPerCodeMass;
+        SourceOpacitySolar = InterpolatePreSNFeedbackTable(KappaTable,
+                                     StarAge, StarMetallicity); //cm^2 / g of gas at solar metallicity
 
         /* Source-side attenuation (see above). */
 
-        if (rho != NULL && (MetalField != NULL || SNColourField != NULL)) {
-          int idx[MAX_DIMENSION] = {0, 0, 0}, stride[MAX_DIMENSION];
-          stride[0] = 1;
-          stride[1] = GridDimension[0];
-          stride[2] = GridDimension[0]*GridDimension[1];
-          for (dim = 0; dim < GridRank; dim++) {
-            idx[dim] = int((ParticlePosition[dim][i] - CellLeftEdge[dim][0]) /
-                           CellWidth[dim][0]);
-            idx[dim] = max(1, min(GridDimension[dim]-2, idx[dim]));
-          }
-          int c = idx[0] + idx[1]*stride[1] + idx[2]*stride[2];
-          float grad2 = 0;
-          for (dim = 0; dim < GridRank; dim++) {
-            float g = (rho[c+stride[dim]] - rho[c-stride[dim]]) /
-                      (2.0*CellWidth[dim][0]);
-            grad2 += g*g;
-          }
-          float Lcap = MaxSobolevCells * CellWidth[0][0];
-          float L = (grad2 > 0) ? min(rho[c]/sqrt(grad2), Lcap) : Lcap;
-          float Sigma = rho[c] * L * SigmaUnits;
-          float MetalDensity = ((MetalField    != NULL) ? MetalField[c]    : 0) +
-                               ((SNColourField != NULL) ? SNColourField[c] : 0);
-          float ZoverZsun = MetalDensity / rho[c] /
-                            CoolData.SolarMetalFractionByMass;
-          ParticleRadiationTmp[i] *= exp(-SourceOpacitySolar * ZoverZsun * Sigma);
+        if (GasDensity == NULL || (MetalField == NULL && SNColourField == NULL))
+          continue;
+
+        /* The star's cell, kept one cell in from the grid edge so that
+           all 6 neighbours exist. */
+
+        int CellIndex[MAX_DIMENSION] = {0, 0, 0};
+        for (dim = 0; dim < GridRank; dim++) {
+          CellIndex[dim] = int((ParticlePosition[dim][i] - CellLeftEdge[dim][0]) /
+                               CellWidth[dim][0]);
+          CellIndex[dim] = max(1, min(GridDimension[dim]-2, CellIndex[dim]));
         }
+        int StarIndex = CellIndex[0] + CellIndex[1]*Stride[1] + CellIndex[2]*Stride[2];
+
+        /* Sobolev-like length (see above): sum the density drops toward
+           the neighbours less dense than the star's cell. */
+
+        float DensityDropSum = 0;
+        for (dim = 0; dim < GridRank; dim++) {
+          DensityDropSum += max(GasDensity[StarIndex] - GasDensity[StarIndex + Stride[dim]], 0.0);
+          DensityDropSum += max(GasDensity[StarIndex] - GasDensity[StarIndex - Stride[dim]], 0.0);
+        }
+        float dx   = CellWidth[0][0];
+        float SobolevLength = MaxSobolevLength;
+        if (DensityDropSum > 0)
+          SobolevLength = min(GasDensity[StarIndex] * dx / (2.0*DensityDropSum), //Factor of 2 matching Grackle self-shielding
+                              MaxSobolevLength);
+        NumYoungStars++;
+        if (SobolevLength >= MaxSobolevLength)
+          NumCapped++;
+
+        /* Optical depth: dust opacity scaled by gas metallicity, times
+           the column density. */
+
+        float ColumnDensity = GasDensity[StarIndex] * SobolevLength * ColumnDensityUnits;  // g/cm^2
+
+        float MetalDensity=0;
+        if (MetalField != NULL && SNColourField != NULL){
+          MetalDensity = MetalField[StarIndex] + SNColourField[StarIndex];
+        }
+        else{
+          if (MetalField != NULL)
+            MetalDensity = MetalField[StarIndex];
+          else if (SNColourField != NULL)
+            MetalDensity = SNColourField[StarIndex];
+        }
+
+        float GasMetallicitySolar = MetalDensity / GasDensity[StarIndex] /
+                                    CoolData.SolarMetalFractionByMass;  // Z/Z_sun
+        float OpticalDepth = SourceOpacitySolar * GasMetallicitySolar * ColumnDensity; // cm^2/g * Unitless * g/cm^2
+        ParticleRadiation[i] *= exp(-OpticalDepth);
       }
-      ParticleMassPointer = ParticleRadiationTmp;
+
+      /* Report how often the Sobolev length cap is hit (once per call,
+         on the first band only, so the three bands don't repeat it). */
+
+      if (debug1 && NumCapped > 0 && DepositField == KDISSH2_SOURCE_FIELD)
+        fprintf(stdout, "LER: P%"ISYM" grid %"ISYM": Sobolev length capped at %"GSYM
+                " pc for %"ISYM" of %"ISYM" young stars\n", MyProcessorNumber, ID,
+                MaxSobolevLength_pc, NumCapped, NumYoungStars);
+
+      ParticleMassPointer = ParticleRadiation;
     }
  
     /* Compute difference between current time and DepositTime. */
@@ -639,7 +683,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 
       delete [] ParticleMassTemp;
 
-    delete [] ParticleRadiationTmp;  //Locally-Extinct-Stellar-Radiation
+    delete [] ParticleRadiation;  //Locally-Extinct-Stellar-Radiation
 
     /* Return particles to positions at Time. */
 
