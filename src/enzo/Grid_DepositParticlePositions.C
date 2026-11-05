@@ -425,6 +425,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
         if (DensityDropSum > 0)
           SobolevLength = min(GasDensity[StarIndex] * dx / (2.0*DensityDropSum), //Factor of 2 matching Grackle self-shielding
                               MaxSobolevLength);
+          fprintf(stdout, "LER: SobolevLength Set to %"GSYM" pc\n", SobolevLength*LengthUnits / pc_cm);
         NumYoungStars++;
         if (SobolevLength >= MaxSobolevLength)
           NumCapped++;
@@ -454,7 +455,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
       /* Report how often the Sobolev length cap is hit (once per call,
          on the first band only, so the three bands don't repeat it). */
 
-      if (debug1 && NumCapped > 0 && DepositField == KDISSH2_SOURCE_FIELD)
+      
         fprintf(stdout, "LER: P%"ISYM" grid %"ISYM": Sobolev length capped at %"GSYM
                 " pc for %"ISYM" of %"ISYM" young stars\n", MyProcessorNumber, ID,
                 LocallyExtinctRadiationMaxSobolevLength, NumCapped, NumYoungStars);
