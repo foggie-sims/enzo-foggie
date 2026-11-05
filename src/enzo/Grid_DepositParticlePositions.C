@@ -332,7 +332,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
          star's cell.  L is the Sobolev-like length Grackle uses for H2
          self-shielding (H2_self_shielding = 1, Wolcott-Green et al. 2011;
          Grackle's solve_rate_cool_g.F), capped at a fixed proper length
-         (LocallyExtinctRadiationMaxSobolevLength, in pc).
+         (MaxSobolevLength_pc).
          Absorber-side shielding is left to Grackle.
 
          Opacities are calculated following Draine 2003,integrated over the
@@ -353,11 +353,10 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
                                                                          pSNFBTable.kappa_isrf;
       const float MaxSourceAge = 5e7;  // yr; older stars emit nothing
       /* Cap on the Sobolev length, as a fixed proper length so it does
-         not change with redshift (default 1000 pc, ~4 level-11 FOGGIE
-         cells at z = 0).  Grackle caps at 1 code length instead. */
-      float MaxSobolevLength = LocallyExtinctRadiationMaxSobolevLength * pc_cm
-                               / LengthUnits;  // code units
-      int NumYoungStars = 0, NumCapped = 0;  // for the debug1 line below
+         not change with redshift (~4 level-11 FOGGIE cells at z = 0).
+         Grackle caps at 1 code length instead. */
+      const float MaxSobolevLength_pc = 1000.0;  // proper pc
+      float MaxSobolevLength = MaxSobolevLength_pc * pc_cm / LengthUnits;  // code units
 
       /* Gas fields on this (the star's host) grid. */
 
@@ -425,10 +424,6 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
         if (DensityDropSum > 0)
           SobolevLength = min(GasDensity[StarIndex] * dx / (2.0*DensityDropSum), //Factor of 2 matching Grackle self-shielding
                               MaxSobolevLength);
-          fprintf(stdout, "LER: SobolevLength Set to %"GSYM" pc\n", SobolevLength*LengthUnits / pc_cm);
-        NumYoungStars++;
-        if (SobolevLength >= MaxSobolevLength)
-          NumCapped++;
 
         /* Optical depth: dust opacity scaled by gas metallicity, times
            the column density. */
@@ -451,14 +446,6 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
         float OpticalDepth = SourceOpacitySolar * GasMetallicitySolar * ColumnDensity; // cm^2/g * Unitless * g/cm^2
         ParticleRadiation[i] *= exp(-OpticalDepth);
       }
-
-      /* Report how often the Sobolev length cap is hit (once per call,
-         on the first band only, so the three bands don't repeat it). */
-
-      
-        fprintf(stdout, "LER: P%"ISYM" grid %"ISYM": Sobolev length capped at %"GSYM
-                " pc for %"ISYM" of %"ISYM" young stars\n", MyProcessorNumber, ID,
-                LocallyExtinctRadiationMaxSobolevLength, NumCapped, NumYoungStars);
 
       ParticleMassPointer = ParticleRadiation;
     }
