@@ -109,7 +109,7 @@ int DepositParticleLuminosityFieldChildren(HierarchyEntry *DepositGrid,
   if (Grid->NextGridThisLevel != NULL)
     if (DepositParticleLuminosityFieldChildren(DepositGrid, Grid->NextGridThisLevel,
 					 DepositTime) == FAIL) {
-      ENZO_FAIL("Error in DepositParticleMassFieldChildren(1).\n");
+      ENZO_FAIL("Error in DepositParticleLuminosityFieldChildren(1).\n");
     }
  
   /* Recursively deposit particles in children. */
@@ -117,7 +117,7 @@ int DepositParticleLuminosityFieldChildren(HierarchyEntry *DepositGrid,
   if (Grid->NextGridNextLevel != NULL)
     if (DepositParticleLuminosityFieldChildren(DepositGrid, Grid->NextGridNextLevel,
 					 DepositTime) == FAIL) {
-      ENZO_FAIL("Error in DepositParticleMassFieldChildren(2).\n");
+      ENZO_FAIL("Error in DepositParticleLuminosityFieldChildren(2).\n");
 
     }
  
