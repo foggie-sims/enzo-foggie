@@ -665,12 +665,12 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 
     } // if (OutputCoolingTime)
 
-    /* Locally-Extinct-Stellar-Radiation: write the rates handed to Grackle,
+    /* LER: write the rates handed to Grackle,
        in physical units (1/s for kdissH2 and kdetHM, Habing for the
        ISRF).  Output only -- these are not BaryonFields and are not read
        back on restart.  Zero where the grid has no flux fields. */
 
-    if (UseLocallyExtinctStellarRadiation) {
+    if (UseLocallyExtinctRadiation) {
 
       float TemperatureUnits = 1, DensityUnits = 1, LengthUnits = 1,
 	VelocityUnits = 1, TimeUnits = 1;
@@ -715,7 +715,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
       delete [] ler_kdet;
       delete [] ler_isrf;
 
-    } // if (UseLocallyExtinctStellarRadiation)
+    } // if (UseLocallyExtinctRadiation)
 
     /* Make sure that there is a copy of dark matter field to save
        (and at the right resolution). */

@@ -1134,7 +1134,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   /* Local Radiation Rates  - CWT 06/07/2026 */
   UseLocalStellarRadiation = 0;
-  UseLocallyExtinctStellarRadiation = 0;
+  UseLocallyExtinctRadiation = 0;
   LocallyExtinctRadiationBoxRadius = 0;    // 0: full subgrid correction
 
   return SUCCESS;

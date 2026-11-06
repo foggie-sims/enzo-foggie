@@ -416,8 +416,8 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     }
   } //UseLocalStellarRadiation
 
-  if (UseLocallyExtinctStellarRadiation) {
-    /* Locally-Extinct-Stellar-Radiation: per-cell rates from the flux fields */
+  if (UseLocallyExtinctRadiation) {
+    /* LER: per-cell rates from the flux fields */
     k_diss_H2_grid = new float[size]();
     k_det_HM_grid  = new float[size]();
     k_diss_CO_grid = new float[size]();  // not computed yet
@@ -430,9 +430,9 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
               MyProcessorNumber, ID, CellWidth[0][0], (CoolingTimeOnly ? "ComputeCoolingTime (timestep)" : "ComputeCoolingTime"));
     this->GetLocallyExtinctRadiationRates(k_diss_H2_grid, k_det_HM_grid,
                                           isrf_grid);
-  } //UseLocallyExtinctStellarRadiation
+  } //UseLocallyExtinctRadiation
 
-  if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {
+  if (UseLocalStellarRadiation || UseLocallyExtinctRadiation) {
     //To Do -> Add CO, CI, OI to grackle rates?
     my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;
 #ifdef HM_GRACKLE
@@ -488,7 +488,7 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     delete [] g_grid_start;
     delete [] g_grid_end;
 
-    if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation){
+    if (UseLocalStellarRadiation || UseLocallyExtinctRadiation){
       delete[] k_diss_H2_grid;
       delete[] k_det_HM_grid;
       delete[] k_diss_CO_grid;

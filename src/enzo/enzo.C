@@ -306,7 +306,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   TIMER_REGISTER("SetBoundaryConditions");
   TIMER_REGISTER("SolveHydroEquations");
   TIMER_REGISTER("Total");
-  // Locally-Extinct-Stellar-Radiation Timers
+  // LER Timers
   TIMER_REGISTER("LER_Deposit");
   TIMER_REGISTER("LER_RootFFT");
   TIMER_REGISTER("LER_Subgrid");
@@ -930,7 +930,7 @@ void my_exit(int status)
     delete [] pSNFBTable.mom_rate;
 
     //And Local Radiation Fields - CWT 06/07/26
-    if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation){
+    if (UseLocalStellarRadiation || UseLocallyExtinctRadiation){
         delete [] pSNFBTable.kdiss_H2;
         delete [] pSNFBTable.kdet_HM;
         delete [] pSNFBTable.kdiss_CO;
@@ -938,7 +938,7 @@ void my_exit(int status)
         delete [] pSNFBTable.kion_OI;
         delete [] pSNFBTable.isrf;
     }
-    if (UseLocallyExtinctStellarRadiation) {
+    if (UseLocallyExtinctRadiation) {
         delete [] pSNFBTable.kappa_H2;
         delete [] pSNFBTable.kappa_HM;
         delete [] pSNFBTable.kappa_CO;

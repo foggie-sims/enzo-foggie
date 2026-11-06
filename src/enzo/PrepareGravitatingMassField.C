@@ -57,11 +57,11 @@ int PrepareGravitatingMassField1(HierarchyEntry *Grid)
       ENZO_FAIL("Error in grid->InitializeGravitatingMassField.\n");
     }
     CurrentGrid->ClearGravitatingMassField();
-    if (UseLocallyExtinctStellarRadiation)
-      CurrentGrid->ClearRTSourceField();  // Locally-Extinct-Stellar-Radiation
+    if (UseLocallyExtinctRadiation)
+      CurrentGrid->ClearLERSourceField();  // LER
   }
 
-  /* Note: RT sources are deliberately not copied from the parent into the
+  /* Note: LER sources are deliberately not copied from the parent into the
      boundary (as CopyParentToGravitatingFieldBoundary does for mass), since
      the prolonged parent flux already includes them. */
 

@@ -27,7 +27,7 @@
 #include "phys_constants.h"
 
 int PrepareIsolatedGreensFunction(region *GreensFunction, int proc, 
-				  int DomainDim[], TopGridData *MetaData, bool isRT)
+				  int DomainDim[], TopGridData *MetaData, bool isLER)
 {
 
   /* Declarations. */
@@ -122,7 +122,7 @@ int PrepareIsolatedGreensFunction(region *GreensFunction, int proc,
 	r = max(r, 0.38*RealCellWidth[0]);
 	//	r *= GravitatingMassFieldCellSize;
 	if (GridRank == 3) {
-	  if (isRT)  // Locally-Extinct-Stellar-Radiation: optically-thin 1/(4 pi r^2) kernel
+	  if (isLER)  // LER: optically-thin 1/(4 pi r^2) kernel
 	    GreensFunction->Data[n] = RealCellVolume/(4.0*pi*r*r);
 	  else
 	    GreensFunction->Data[n] = GravConst_factor/r;

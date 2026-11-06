@@ -88,7 +88,7 @@ void grid::DeleteAllFields()
   GravitatingMassField          = NULL;
   GravitatingMassFieldParticles = NULL;
 
-  /* Locally-Extinct-Stellar-Radiation fields */
+  /* LER fields */
   delete [] kdissH2SourceParticles;
   delete [] kdetHMSourceParticles;
   delete [] isrfSourceParticles;

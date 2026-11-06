@@ -93,7 +93,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
   float MassFactor = 1.0, *ParticleMassTemp, *ParticleMassPointer; 
   FLOAT CellSize, CloudSize;
   float *ParticleMassPointerSink;    
-  float *ParticleRadiation = NULL;  // Locally-Extinct-Stellar-Radiation
+  float *ParticleRadiation = NULL;  // LER
   float TimeDifference = 0;
   FLOAT LeftEdge[MAX_DIMENSION], OriginalLeftEdge[MAX_DIMENSION];
   float *DepositFieldPointer, *OriginalDepositFieldPointer;
@@ -138,7 +138,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     }
   }
 
-  /* 4) Young Star Radiation Fields for Locally-Extinct-Stellar-Radiation */
+  /* 4) Young Star Radiation Fields for LER */
   
   else if (DepositField == KDISSH2_SOURCE_FIELD) {
     if (TargetGrid->GravitatingMassFieldParticlesCellSize <= 0)
@@ -321,7 +321,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
         DepositField == KDETHM_SOURCE_FIELD ||
         DepositField == ISRF_SOURCE_FIELD) {
 
-      /* Locally-Extinct-Stellar-Radiation: deposit the young-star source
+      /* LER: deposit the young-star source
          strength.  ParticleInitialMass*MassFactor is a density on the target
          grid, so (table value [rate*cm^2 per Msun]) * density * MassUnits /
          SolarMass is the source per unit code volume.
@@ -671,7 +671,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 
       delete [] ParticleMassTemp;
 
-    delete [] ParticleRadiation;  //Locally-Extinct-Stellar-Radiation
+    delete [] ParticleRadiation;  //LER
 
     /* Return particles to positions at Time. */
 

@@ -8,7 +8,7 @@
 /  date:       Sept, 2026
 /
 /  PURPOSE: Modification of DepositParticleMassField.C for the
-/           Locally-Extinct-Stellar-Radiation transfer module.
+/           locally extinct radiation (LER) module.
 /
 ************************************************************************/
  
@@ -39,19 +39,19 @@ int DepositParticleLuminosityField(HierarchyEntry *Grid, FLOAT TimeMidStep)
     TimeMidStep =     Grid->GridData->ReturnTime() +
                   0.5*Grid->GridData->ReturnTimeStep();
  
-  /* Clear the RT source particle arrays only if in send-receive mode
+  /* Clear the LER source particle arrays only if in send-receive mode
      (i.e. this routine is called only once) or if in the first of the
      three communication modes (post-receive).  DepositParticleMassField
      is always called first, so the particle mesh is already initialized. */
 
   if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
       CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
-    if (Grid->GridData->ClearRTSourceParticles() == FAIL) {
-      ENZO_FAIL("Error in grid->ClearRTSourceParticles.\n");
+    if (Grid->GridData->ClearLERSourceParticles() == FAIL) {
+      ENZO_FAIL("Error in grid->ClearLERSourceParticles.\n");
     }
   }
 
-  /* Deposit young-star sources into this grid's RT source particle arrays. */
+  /* Deposit young-star sources into this grid's LER source particle arrays. */
 
   if (Grid->GridData->DepositParticlePositions(Grid->GridData, TimeMidStep,
 				 KDISSH2_SOURCE_FIELD) == FAIL) {

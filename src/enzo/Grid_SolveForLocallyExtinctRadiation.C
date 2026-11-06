@@ -5,7 +5,7 @@
 /  written by: Cameron Trapp
 /  date:       Sept, 2026
 /
-/  PURPOSE: Locally-Extinct-Stellar-Radiation. The flux fields initially
+/  PURPOSE: Locally extinct radiation (LER). The flux fields initially
 /    hold the parent-level solution, prolonged in PreparePotentialField.
 /    For the sources S on this grid's mesh we then:
 /      add      K_L * S                      (this level's view)
@@ -664,9 +664,9 @@ int grid::GetLocallyExtinctRadiationRates(float *kdissH2, float *kdetHM,
 }
 
 
-int grid::ClearRTSourceParticles()
+int grid::ClearLERSourceParticles()
 {
-/* Allocate (if needed) and zero the Locally-Extinct-Stellar-Radiation source arrays.
+/* Allocate (if needed) and zero the LER source arrays.
    Mirrors ClearGravitatingMassFieldParticles (particle mesh). Requires mesh to be initialized. */
 
   if (ProcessorNumber != MyProcessorNumber)
@@ -692,9 +692,9 @@ int grid::ClearRTSourceParticles()
   return SUCCESS;
 }
 
-int grid::ClearRTSourceField()
+int grid::ClearLERSourceField()
 {
-/* Allocate (if needed) and zero the Locally-Extinct-Stellar-Radiation source arrays.
+/* Allocate (if needed) and zero the LER source arrays.
    Mirrors ClearGravitatingMassField (gravity mesh). Requires mesh to be initialized. */
   if (ProcessorNumber != MyProcessorNumber)
     return SUCCESS;

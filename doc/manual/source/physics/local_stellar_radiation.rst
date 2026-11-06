@@ -22,8 +22,8 @@ OI photoionization for when these are added to grackle. Calculations
 are done in ``Grid_ComputeLocalStellarRadiation.C``, which is called
 in both ``Grid_GraclkeWrapper.C`` and ``Grid_ComputeCoolingTime.C``.
 
-Locally Extinct Stellar Radiation
-===================================
+Locally Extinct Radiation
+=========================
 
 This is a slightly more extensive, but more robust alternative to
 Local Stellar Radiation. This method calculates the H2 photodissociation,
@@ -49,5 +49,5 @@ Currently requires the `foggie-sf <https://github.com/foggie-sims/grackle>`_
 branch of grackle, which includes a field for HM-photodetachment. To compile,
 add the ``HM_GRACKLE`` flag to indicate you are on this branch of grackle
 (e.g., add ``-DHM_GRACKLE`` to the ``MACH_DEFINES`` line of your machine file).
-To run, set ``UseLocalStellarRadiation=1`` or ``UseLocallyExtinctStellarRadiation=1``.
+To run, set ``UseLocalStellarRadiation=1`` or ``UseLocallyExtinctRadiation=1``.
 Requires setting ``StarFeedbackPreSNFilename`` in the parameter file.

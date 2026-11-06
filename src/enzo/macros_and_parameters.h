@@ -418,7 +418,7 @@ typedef long long int   HDF5_hid_t;
 //If MAX_EXTRA_OUTPUTS neesd to be changed, change statements in ReadParameterFile and WriteParameterFile.
 #define MAX_EXTRA_OUTPUTS                10 
 
-//Locally-Extinct-Stellar-Radiation fields
+//LER fields
 #define KDISSH2_SOURCE_FIELD             -19
 #define KDETHM_SOURCE_FIELD              -18
 #define ISRF_SOURCE_FIELD                -17

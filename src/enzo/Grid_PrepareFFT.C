@@ -95,7 +95,7 @@ int grid::PrepareFFT(region *InitialRegion, int Field, int DomainDim[])
       FieldPointer = GravitatingMassField;
     if (Field == POTENTIAL_FIELD)
       FieldPointer = PotentialField;
-    if (Field == KDISSH2_SOURCE_FIELD) //Locally-Extinct-Stellar-Radiation
+    if (Field == KDISSH2_SOURCE_FIELD) //LER
       FieldPointer = kdissH2SourceField;
     if (Field == KDETHM_SOURCE_FIELD)
       FieldPointer = kdetHMSourceField;

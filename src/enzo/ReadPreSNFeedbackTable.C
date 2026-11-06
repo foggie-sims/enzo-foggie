@@ -14,7 +14,7 @@
 #include "global_data.h"
 
 /* Photo-rate tables for local stellar radiation (UseLocalStellarRadiation
-   or UseLocallyExtinctStellarRadiation): each table array and the dataset
+   or UseLocallyExtinctRadiation): each table array and the dataset
    it is read from. */
 
 #define NUM_RADIATION_BANDS 6
@@ -33,7 +33,7 @@ static const char *RadiationDatasets[NUM_RADIATION_BANDS] = {
   "/SB99_models/oi_photoionization_rate",
   "/SB99_models/habing_luminosity"};
 
-/* Band-averaged dust opacities for Locally-Extinct-Stellar-Radiation, in
+/* Band-averaged dust opacities for LER, in
    the same band order: each table array and the dataset it is read from. */
 
 #define NUM_KAPPA_BANDS 6
@@ -244,7 +244,7 @@ int ReadPreSNFeedbackTable(char *name)
       return FAIL;
     }
 
-    if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {  // CWT 06/07/2026
+    if (UseLocalStellarRadiation || UseLocallyExtinctRadiation) {  // CWT 06/07/2026
         /* Read the photo-rate tables (one per radiation band). */
         for (int band = 0; band < NUM_RADIATION_BANDS; band++) {
           *RadiationArrays[band] = new double[pSNFBTable.n_met*pSNFBTable.n_age];
@@ -267,7 +267,7 @@ int ReadPreSNFeedbackTable(char *name)
         }
     }
 
-    if (UseLocallyExtinctStellarRadiation) {
+    if (UseLocallyExtinctRadiation) {
         /* Read the band-averaged dust opacities (one per rate above). */
         for (int band = 0; band < NUM_KAPPA_BANDS; band++) {
           *KappaArrays[band] = new double[pSNFBTable.n_met*pSNFBTable.n_age];
@@ -304,11 +304,11 @@ int ReadPreSNFeedbackTable(char *name)
     pSNFBTable.metm_yield = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     pSNFBTable.mom_rate = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     //Local Radiation Fields - CWT 06/07/2026
-    if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {
+    if (UseLocalStellarRadiation || UseLocallyExtinctRadiation) {
       for (int band = 0; band < NUM_RADIATION_BANDS; band++)
         *RadiationArrays[band] = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     }
-    if (UseLocallyExtinctStellarRadiation) {
+    if (UseLocallyExtinctRadiation) {
       for (int band = 0; band < NUM_KAPPA_BANDS; band++)
         *KappaArrays[band] = new double[pSNFBTable.n_met*pSNFBTable.n_age];
     }
@@ -322,11 +322,11 @@ int ReadPreSNFeedbackTable(char *name)
   MPI_Bcast(pSNFBTable.mass_yield, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
   MPI_Bcast(pSNFBTable.metm_yield, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
   MPI_Bcast(pSNFBTable.mom_rate, pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
-  if (UseLocalStellarRadiation || UseLocallyExtinctStellarRadiation) {
+  if (UseLocalStellarRadiation || UseLocallyExtinctRadiation) {
     for (int band = 0; band < NUM_RADIATION_BANDS; band++)
       MPI_Bcast(*RadiationArrays[band], pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
   }
-  if (UseLocallyExtinctStellarRadiation) {
+  if (UseLocallyExtinctRadiation) {
     for (int band = 0; band < NUM_KAPPA_BANDS; band++)
       MPI_Bcast(*KappaArrays[band], pSNFBTable.n_met*pSNFBTable.n_age, MPI_DOUBLE, ROOT_PROCESSOR, MPI_COMM_WORLD);
   }

@@ -31,7 +31,7 @@ double *kion_OI;
 double *isrf;
 
 /*
-    Dust opacities for Locally-Extinct-Stellar-Radiation
+    Dust opacities for LER
     (cm^2 per g of gas at solar metallicity)
 */
 double *kappa_H2;

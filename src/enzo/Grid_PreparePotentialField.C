@@ -80,7 +80,7 @@ int grid::PreparePotentialField(grid *ParentGrid)
     if (PotentialField != NULL)
       delete [] PotentialField;
     PotentialField = new float[size];
-    if (UseLocallyExtinctStellarRadiation) {  // Locally-Extinct-Stellar-Radiation
+    if (UseLocallyExtinctRadiation) {  // LER
       delete [] kdissH2FluxField;
       delete [] kdetHMFluxField;
       delete [] isrfFluxField;
@@ -195,22 +195,22 @@ int grid::PreparePotentialField(grid *ParentGrid)
 
 #endif /* SPLINE */
 
-  /* Locally-Extinct-Stellar-Radiation: interpolate the parent's flux fields the same way
+  /* LER: interpolate the parent's flux fields the same way
      (always prolong; SolveForLocallyExtinctRadiation subtracts the parent's
      view of local sources with this same interpolation). */
 
-  if (UseLocallyExtinctStellarRadiation) {
-    float *ParentRT[3] = {ParentGrid->kdissH2FluxField,
+  if (UseLocallyExtinctRadiation) {
+    float *ParentLER[3] = {ParentGrid->kdissH2FluxField,
                           ParentGrid->kdetHMFluxField,
                           ParentGrid->isrfFluxField};
-    float *ThisRT[3]   = {kdissH2FluxField, kdetHMFluxField, isrfFluxField};
+    float *ThisLER[3]   = {kdissH2FluxField, kdetHMFluxField, isrfFluxField};
     for (int f = 0; f < 3; f++) {
-      if (ParentRT[f] == NULL) {  // parent has no flux yet: start from zero
+      if (ParentLER[f] == NULL) {  // parent has no flux yet: start from zero
         for (int n = 0; n < size; n++)
-          ThisRT[f][n] = 0.0;
+          ThisLER[f][n] = 0.0;
         continue;
       }
-      FORTRAN_NAME(prolong)(ParentRT[f], ThisRT[f], &GridRank,
+      FORTRAN_NAME(prolong)(ParentLER[f], ThisLER[f], &GridRank,
                             ParentDim, ParentDim+1, ParentDim+2,
                             GravitatingMassFieldDimension,
                             GravitatingMassFieldDimension+1,
@@ -241,7 +241,7 @@ int grid::PreparePotentialField(grid *ParentGrid)
 
     delete [] ParentGrid->PotentialField;
     ParentGrid->PotentialField = NULL;
-    delete [] ParentGrid->kdissH2FluxField;  // Locally-Extinct-Stellar-RadiationT (received copies)
+    delete [] ParentGrid->kdissH2FluxField;  // LER (received copies)
     delete [] ParentGrid->kdetHMFluxField;
     delete [] ParentGrid->isrfFluxField;
     ParentGrid->kdissH2FluxField = NULL;

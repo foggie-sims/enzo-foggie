@@ -79,7 +79,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 
 int PrepareIsolatedGreensFunction(region *GreensFunction, int proc,
 				  int DomainDim[], TopGridData *MetaData,
-				  bool isRT = false);
+				  bool isLER = false);
 
 #ifdef FAST_SIB
 int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
@@ -127,10 +127,10 @@ int ComputePotentialFieldLevelZero(TopGridData *MetaData,
 
 
 /******************************************************************/
-/*  ComputeLocallyExtinctRadiationLevelZero convolves the young-  */
-/*  star source fields with a 1/(4 pi r^2) kernel on the root     */
-/*  grid (Locally-Extinct-Radiation). It always uses zero-padded  */
-/*  (isolated) FFTs.                                              */
+/*  ComputeLocallyExtinctRadiationLevelZero convolves the         */
+/*  young-star source fields with a 1/(4 pi r^2) kernel on the    */
+/*  root grid (locally extinct radiation, LER). It always uses    */
+/*  zero-padded (isolated) FFTs.                                  */
 /******************************************************************/
 
 int ComputeLocallyExtinctRadiationLevelZero(TopGridData *MetaData,
@@ -138,7 +138,7 @@ int ComputeLocallyExtinctRadiationLevelZero(TopGridData *MetaData,
                                             int NumberOfGrids)
 {
 
-  const int NumberOfRTFields = 3;
+  const int NumberOfLERFields = 3;
   const int SourceFields[] = {KDISSH2_SOURCE_FIELD, KDETHM_SOURCE_FIELD,
                               ISRF_SOURCE_FIELD};
   const int FluxFields[]   = {KDISSH2_FLUX_FIELD, KDETHM_FLUX_FIELD,
@@ -167,14 +167,14 @@ int ComputeLocallyExtinctRadiationLevelZero(TopGridData *MetaData,
     for (proc = 0; proc < NumberOfProcessors; proc++)
       if (PrepareIsolatedGreensFunction(&TempRegion[proc], proc, DomainDim,
                                         MetaData, true) == FAIL) {
-        ENZO_FAIL("Error in PrepareIsolatedGreensFunction (RT).");
+        ENZO_FAIL("Error in PrepareIsolatedGreensFunction (LER).");
       }
 
     if (CommunicationParallelFFT(TempRegion, NumberOfProcessors,
                                  &GreensRegion, &NumberOfGreensRegions,
                                  DomainDim, MetaData->TopGridRank,
                                  FFT_FORWARD, TransposeOnCompletion) == FAIL) {
-      ENZO_FAIL("Error in CommunicationParallelFFT (RT Greens).");
+      ENZO_FAIL("Error in CommunicationParallelFFT (LER Greens).");
     }
 
     if (GreensRegion != TempRegion)
@@ -184,7 +184,7 @@ int ComputeLocallyExtinctRadiationLevelZero(TopGridData *MetaData,
 
   } // end: if (FirstCall)
 
-  for (f = 0; f < NumberOfRTFields; f++) {
+  for (f = 0; f < NumberOfLERFields; f++) {
 
     region *InitialRegion = new region[NumberOfGrids];
     region *OutRegion = NULL;
@@ -193,7 +193,7 @@ int ComputeLocallyExtinctRadiationLevelZero(TopGridData *MetaData,
       if (Grids[grid1]->GridData->PrepareFFT(&InitialRegion[grid1],
                                              SourceFields[f], DomainDim)
           == FAIL) {
-        ENZO_FAIL("Error in grid->PrepareFFT (RT).");
+        ENZO_FAIL("Error in grid->PrepareFFT (LER).");
       }
 
     /* Double the domain for zero padding. */
@@ -206,11 +206,11 @@ int ComputeLocallyExtinctRadiationLevelZero(TopGridData *MetaData,
                                  &OutRegion, &NumberOfOutRegions,
                                  DomainDim, MetaData->TopGridRank,
                                  FFT_FORWARD, TransposeOnCompletion) == FAIL) {
-      ENZO_FAIL("Error in CommunicationParallelFFT (RT forward).");
+      ENZO_FAIL("Error in CommunicationParallelFFT (LER forward).");
     }
 
     if (NumberOfOutRegions != NumberOfGreensRegions) {
-      ENZO_VFAIL("RT OutRegion(%"ISYM") != GreensRegion(%"ISYM")\n",
+      ENZO_VFAIL("LER OutRegion(%"ISYM") != GreensRegion(%"ISYM")\n",
                  NumberOfOutRegions, NumberOfGreensRegions)
     }
 
@@ -235,21 +235,21 @@ int ComputeLocallyExtinctRadiationLevelZero(TopGridData *MetaData,
                                  &OutRegion, &NumberOfOutRegions,
                                  DomainDim, MetaData->TopGridRank,
                                  FFT_INVERSE, TransposeOnCompletion) == FAIL) {
-      ENZO_FAIL("Error in CommunicationParallelFFT (RT inverse).");
+      ENZO_FAIL("Error in CommunicationParallelFFT (LER inverse).");
     }
 
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
       if (Grids[grid1]->GridData->FinishFFT(&InitialRegion[grid1],
                                             FluxFields[f], DomainDim)
           == FAIL) {
-        ENZO_FAIL("Error in grid->FinishFFT (RT).");
+        ENZO_FAIL("Error in grid->FinishFFT (LER).");
       }
 
     delete [] InitialRegion;
     if (OutRegion != InitialRegion)
       delete [] OutRegion;
 
-  } // end: loop over RT fields
+  } // end: loop over LER fields
 
   return SUCCESS;
 }
@@ -462,10 +462,10 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
             ENZO_FAIL("Error in grid->FinishFFT.");
     }
 
-  /* Locally-Extinct-Stellar-Radiation: root-grid optically-thin flux fields.
+  /* LER: root-grid optically-thin flux fields.
     Done here so the sibling copy (CopyPotentialField) also fills ghost zones. */
 
-  if (UseLocallyExtinctStellarRadiation) {
+  if (UseLocallyExtinctRadiation) {
     TIMER_START("LER_RootFFT");
     if (ComputeLocallyExtinctRadiationLevelZero(MetaData, Grids,
                                                 NumberOfGrids) == FAIL) {

@@ -239,17 +239,17 @@ int grid::CopyPotentialField(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
       }
     }
 
-  /* Locally-Extinct-Stellar-Radiation: copy the flux fields over the same region.
+  /* LER: copy the flux fields over the same region.
      (Off-processor, these arrive packed with POTENTIAL_FIELD in
      CommunicationSendRegion.) */
 
-  if (UseLocallyExtinctStellarRadiation) {
-    float *ThisRT[3]  = {kdissH2FluxField, kdetHMFluxField, isrfFluxField};
-    float *OtherRT[3] = {OtherGrid->kdissH2FluxField,
+  if (UseLocallyExtinctRadiation) {
+    float *ThisLER[3]  = {kdissH2FluxField, kdetHMFluxField, isrfFluxField};
+    float *OtherLER[3] = {OtherGrid->kdissH2FluxField,
                          OtherGrid->kdetHMFluxField,
                          OtherGrid->isrfFluxField};
     for (int f = 0; f < 3; f++) {
-      if (ThisRT[f] == NULL || OtherRT[f] == NULL)
+      if (ThisLER[f] == NULL || OtherLER[f] == NULL)
         continue;
       for (k = 0; k < Dim[2]; k++)
         for (j = 0; j < Dim[1]; j++) {
@@ -272,9 +272,9 @@ int grid::CopyPotentialField(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
                 !(i == 0 && Start[0] == 0) &&
                 !(i == Dim[0]-1 && Start[0]+Dim[0] == GravitatingMassFieldDimension[0]))
               continue;  // only the endpoints, as for the potential
-            ThisRT[f][thisindex] = (CopyPotentialFieldAverage == 2) ?
-              0.5*(ThisRT[f][thisindex] + OtherRT[f][otherindex]) :
-              OtherRT[f][otherindex];
+            ThisLER[f][thisindex] = (CopyPotentialFieldAverage == 2) ?
+              0.5*(ThisLER[f][thisindex] + OtherLER[f][otherindex]) :
+              OtherLER[f][otherindex];
           }
         }
     }

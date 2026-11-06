@@ -3520,8 +3520,8 @@ The parameters below are used to turn on inexpensive radiation approximations fr
     Calculates H2 photodissociation rates, H- photodetachment rates, and ISRF
     to feed into grackle. Requires ``StarFeedbackPreSNFilename``.
 
-``UseLocallyExtinctStellarRadiation`` (external)
-    This parameter is used to turn on or off locally extinct stellar radiation.
+``UseLocallyExtinctRadiation`` (external)
+    This parameter is used to turn on or off locally extinct radiation (LER).
     Calculates H2 photodissociation rates, H- photodetachment rates, and ISRF
     to feed into grackle. Calculates radiation fields across the whole simulation
     volume assuming local extinction from birth cloud and Sobolev column density.

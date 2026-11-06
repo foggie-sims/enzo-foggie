@@ -47,7 +47,7 @@
 /* function prototypes */
  
 int DepositParticleMassField(HierarchyEntry *Grid, FLOAT Time = -1.0);
-int DepositParticleLuminosityField(HierarchyEntry *Grid, FLOAT Time = -1.0); //Locally-Extinct-Stellar-Radiation
+int DepositParticleLuminosityField(HierarchyEntry *Grid, FLOAT Time = -1.0); //LER
 
 int CommunicationBufferPurge(void);
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
@@ -151,9 +151,9 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
       DepositParticleMassField(Grids[grid1], EvaluateTime);
-      if (UseLocallyExtinctStellarRadiation) {
+      if (UseLocallyExtinctRadiation) {
         TIMER_START("LER_Deposit");
-        DepositParticleLuminosityField(Grids[grid1], EvaluateTime); //Locally-Extinct-Stellar-Radiation
+        DepositParticleLuminosityField(Grids[grid1], EvaluateTime); //LER
         TIMER_STOP("LER_Deposit");
       }
     }
@@ -171,9 +171,9 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     CommunicationDirection = COMMUNICATION_SEND;
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
       DepositParticleMassField(Grids[grid1], EvaluateTime);
-      if (UseLocallyExtinctStellarRadiation) {
+      if (UseLocallyExtinctRadiation) {
         TIMER_START("LER_Deposit");
-        DepositParticleLuminosityField(Grids[grid1], EvaluateTime); //Locally-Extinct-Stellar-Radiation
+        DepositParticleLuminosityField(Grids[grid1], EvaluateTime); //LER
         TIMER_STOP("LER_Deposit");
       }
     }
