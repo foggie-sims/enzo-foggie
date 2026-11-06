@@ -2274,7 +2274,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   if (StarFeedbackPreSNFeedback || UseLocalStellarRadiation || UseLocallyExtinctRadiation) {
 
     if (!StarMakerStoreInitialMass)
-      ENZO_FAIL("StarFeedbackPreSNFeedback requires StarMakerStoreInitialMass to be enabled.");
+      ENZO_FAIL("StarFeedbackPreSNFeedback/UseLocalStellarRadiation/UseLocallyExtinctRadiation require StarMakerStoreInitialMass to be enabled.");
 
     if (ReadPreSNFeedbackTable(StarFeedbackPreSNFilename) == FAIL) {
       ENZO_FAIL("Error in ReadPreSNFeedbackTable.");
