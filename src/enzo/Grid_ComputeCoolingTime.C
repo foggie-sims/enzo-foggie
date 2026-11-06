@@ -424,12 +424,15 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     k_ion_CI_grid  = new float[size]();
     k_ion_OI_grid  = new float[size]();
     isrf_grid      = new float[size]();
-    // TEMPORARY LER-NULLCHECK: is the flux missing on this grid (e.g. after a rebuild)?
-    if (kdissH2FluxField == NULL)
-      fprintf(stdout, "LER-NULLCHECK: P%"ISYM" grid %"ISYM" dx %"GSYM": flux NULL in %s\n",
-              MyProcessorNumber, ID, CellWidth[0][0], (CoolingTimeOnly ? "ComputeCoolingTime (timestep)" : "ComputeCoolingTime"));
     this->GetLocallyExtinctRadiationRates(k_diss_H2_grid, k_det_HM_grid,
                                           isrf_grid);
+    // TEMPORARY LER-CHECK: largest ISRF handed to Grackle on this grid
+    float MaxISRF = 0.0;
+    for (int i = 0; i < size; i++)
+      MaxISRF = max(MaxISRF, isrf_grid[i]);
+    fprintf(stdout, "LER-CHECK: P%"ISYM" grid %"ISYM" dx %"GSYM": max ISRF %"GSYM" Habing in %s\n",
+            MyProcessorNumber, ID, CellWidth[0][0], MaxISRF,
+            (CoolingTimeOnly ? "ComputeCoolingTime (timestep)" : "ComputeCoolingTime"));
   } //UseLocallyExtinctRadiation
 
   if (UseLocalStellarRadiation || UseLocallyExtinctRadiation) {
