@@ -625,10 +625,10 @@ int grid::GetLocallyExtinctRadiationRates(float *kdissH2, float *kdetHM,
                                           float *isrf)
 {
   /* Copy the LER flux fields (GravitatingMassField mesh) into
-   BaryonField-shaped arrays for Grackle, converting units.  The flux
+   BaryonField-shaped arrays for Grackle, converting units. The flux
    fields hold sum(table [rate*cm^2/Msun] * Msun) / (code length)^2, so
-   dividing by LengthUnits^2 gives 1/s (or Habing for the ISRF).  The
-   offset into the gravity mesh follows CopyPotentialToBaryonField. */
+   multiplying by TimeUnits/LengthUnits^2 gives 1/code_time (or Habing
+   for the ISRF). The offset into the gravity mesh follows CopyPotentialToBaryonField. */
 
   if (ProcessorNumber != MyProcessorNumber)
     return SUCCESS;
