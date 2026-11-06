@@ -631,6 +631,9 @@ int grid::GetLocallyExtinctRadiationRates(float *kdissH2, float *kdetHM,
   for (dim = 0; dim < GridRank; dim++) //offset between grid and gravitating mass fields
     Off[dim] = (GravitatingMassFieldDimension[dim] - GridDimension[dim])/2;
 
+  /* Negative flux is clipped to zero, which can occur do to slight offsets
+     arising from when the parent was deposited versus the child.*/
+
   for (f = 0; f < 3; f++) { //loop over bands
     if (Flux[f] == NULL || Out[f] == NULL)
       continue;
