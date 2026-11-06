@@ -439,6 +439,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
           else if (SNColourField != NULL)
             MetalDensity = SNColourField[StarIndex];
         }
+        MetalDensity = min(MetalDensity, 0.9*GasDensity[StarIndex]);  // Grackle's ceiling on metal density
 
         float GasMetallicitySolar = MetalDensity / GasDensity[StarIndex] /
                                     CoolData.SolarMetalFractionByMass;  // Z/Z_sun
