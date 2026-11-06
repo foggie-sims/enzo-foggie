@@ -176,7 +176,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     }
   }
 
-  /* 4) ParticleMassFlaggingField */
+  /* 5) ParticleMassFlaggingField */
  
 //  else if (DepositField == PARTICLE_MASS_FLAGGING_FIELD) {
 //    DepositFieldPointer = TargetGrid->ParticleMassFlaggingField;
@@ -187,7 +187,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 //    }
 //  }
  
-  /* 5) error */
+  /* 6) error */
  
   else {
     ENZO_VFAIL("DepositField = %"ISYM" not recognized.\n", DepositField)
@@ -335,7 +335,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
          Grackle does.
          Absorber-side shielding is left to Grackle.
 
-         Opacities are calculated following Draine 2003,integrated over the
+         Opacities are calculated following Draine 2003, integrated over the
          luminosity band of interest in SB99, and saved in the PSNF Table for each band. 
          (https://www.astro.princeton.edu/~draine/dust/extcurvs/kext_albedo_WD_MW_3.1_60_D03.all)
        */
