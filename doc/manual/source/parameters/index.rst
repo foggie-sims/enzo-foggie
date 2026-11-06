@@ -3516,7 +3516,16 @@ Local Stellar Radiation
 The parameters below are used to turn on inexpensive radiation approximations from young stellar sources:
 
 ``UseLocalStellarRadiation`` (external)
-    This parameter is used to turn on or off local (grid only) stellar radiation. Calculates H2 photodissociation rates, H- photodetachment rates, and ISRF to feed into grackle. Requires ``StarFeedbackPreSNFilename``.
+    This parameter is used to turn on or off local (grid only) stellar radiation.
+    Calculates H2 photodissociation rates, H- photodetachment rates, and ISRF
+    to feed into grackle. Requires ``StarFeedbackPreSNFilename``.
+
+``UseLocallyExtinctRadiation`` (external)
+    This parameter is used to turn on or off locally extinct radiation (LER).
+    Calculates H2 photodissociation rates, H- photodetachment rates, and ISRF
+    to feed into grackle. Calculates radiation fields across the whole simulation
+    volume assuming local extinction from birth cloud and Sobolev column density.
+    Requires ``StarFeedbackPreSNFilename``.
 
 
 .. _cosmology_parameters:

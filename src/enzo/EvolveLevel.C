@@ -523,8 +523,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
                 /* Compute the potential. */
 
-                if (level > 0)
+                if (level > 0) {
                     Grids[grid1]->GridData->SolveForPotential(level);
+                    if (UseLocallyExtinctRadiation) { //LER: uses the gravity machinery
+                        TIMER_START("LER_Subgrid");
+                        Grids[grid1]->GridData->SolveForLocallyExtinctRadiation(level);
+                        TIMER_STOP("LER_Subgrid");
+                    }
+                }
+
                 Grids[grid1]->GridData->ComputeAccelerations(level);
                 Grids[grid1]->GridData->CopyPotentialToBaryonField();
             }
@@ -629,8 +636,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
                 if (RK2SecondStepBaryonDeposit && SelfGravity) {
                     int Dummy;
                     if (level <= MaximumGravityRefinementLevel) {
-                        if (level > 0) 
+                        if (level > 0) {
                             Grids[grid1]->GridData->SolveForPotential(level) ;
+                            if (UseLocallyExtinctRadiation) { //LER: uses the gravity machinery
+                                TIMER_START("LER_Subgrid");
+                                Grids[grid1]->GridData->SolveForLocallyExtinctRadiation(level) ;
+                                TIMER_STOP("LER_Subgrid");
+                            }
+                        }
+
                         Grids[grid1]->GridData->ComputeAccelerations(level) ;
                     }
                 } // end: if (SelfGravity)

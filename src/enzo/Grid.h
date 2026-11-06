@@ -176,7 +176,21 @@ class grid
   int    GravitatingMassFieldParticlesDimension[MAX_DIMENSION];
   gravity_boundary_type GravityBoundaryType;
   float  PotentialSum;
-
+  //LER Fields
+  //  *SourceParticles: young-star sources deposited from this grid's (and its
+  //                    children's) particles, GravitatingMassFieldParticles mesh
+  //  *SourceField:     sources summed over overlapping siblings, GravitatingMassField mesh
+  //  *FluxField:       optically-thin flux, GravitatingMassField mesh
+  float *kdissH2SourceParticles;
+  float *kdetHMSourceParticles;
+  float *isrfSourceParticles;
+  float *kdissH2SourceField;
+  float *kdetHMSourceField;
+  float *isrfSourceField;
+  float *kdissH2FluxField;
+  float *kdetHMFluxField;
+  float *isrfFluxField;
+  //
 
   //
   //  WS: total energy injection by stochastic forcing
@@ -1222,6 +1236,14 @@ gradient force to gravitational force for one-zone collapse test. */
 
    int SolveForPotential(int level, FLOAT PotentialTime = -1);
 
+/* LER */
+   int SolveForLocallyExtinctRadiation(int level);
+   int GetLocallyExtinctRadiationRates(float *kdissH2, float *kdetHM,
+                                       float *isrf);
+   int ClearLERSourceParticles();
+   int ClearLERSourceField();
+
+
 /* Gravity: Prepare the Greens Function. */
 
    int PrepareGreensFunction();
@@ -1527,6 +1549,9 @@ gradient force to gravitational force for one-zone collapse test. */
      delete [] GravitatingMassFieldParticles; 
      GravitatingMassFieldParticles = NULL;
      GravitatingMassFieldParticlesCellSize = FLOAT_UNDEFINED;
+     delete [] kdissH2SourceParticles;  kdissH2SourceParticles = NULL; // LER
+     delete [] kdetHMSourceParticles;   kdetHMSourceParticles  = NULL;
+     delete [] isrfSourceParticles;     isrfSourceParticles    = NULL;
    };
 
 /* Particles: return number of particles. */

@@ -488,8 +488,33 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
           group_id, HDF5_REAL, (VOIDP) ParticleMass, FALSE);
 
     if (StarMakerStoreInitialMass) {
-      this->read_dataset(1, TempIntArray, "particle_initial_mass",
-          group_id, HDF5_REAL, (VOIDP) ParticleInitialMass, FALSE);
+
+      /* Read ParticleInitialMass if present.  Datasets written without
+         StarMakerStoreInitialMass lack it: fall back to the current mass,
+         which underestimates the initial mass of particles that have
+         already lost mass (e.g. young-star luminosities, by the mass-loss
+         fraction), and warn once per processor. */
+
+      H5E_BEGIN_TRY{
+        dset_id = H5Dopen(group_id, "particle_initial_mass");
+      }H5E_END_TRY
+
+      if (dset_id != h5_error) {
+        H5Dclose(dset_id);
+        this->read_dataset(1, TempIntArray, "particle_initial_mass",
+            group_id, HDF5_REAL, (VOIDP) ParticleInitialMass, FALSE);
+      } else {
+        static int WarnedNoInitialMass = FALSE;
+        if (!WarnedNoInitialMass) {
+          fprintf(stderr, "P%"ISYM": WARNING: particle_initial_mass not in "
+                  "group %s (and possibly others); using particle_mass as "
+                  "the initial mass.\n",
+                  MyProcessorNumber, name);
+          WarnedNoInitialMass = TRUE;
+        }
+        for (i = 0; i < NumberOfParticles; i++)
+          ParticleInitialMass[i] = ParticleMass[i];
+      }
     }
 
     /* Read ParticleNumber into temporary buffer and Copy to ParticleNumber. */

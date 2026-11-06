@@ -383,7 +383,22 @@ int grid::GrackleWrapper()
       k_ion_OI_grid[i] = k_ion_OI_grid_sum;
       isrf_grid[i] = isrf_grid_sum;
     }
+  } // UseLocalStellarRadiation
 
+  if (UseLocallyExtinctRadiation) {
+    /* LER: per-cell rates from the flux fields */
+    k_diss_H2_grid = new float[size]();
+    k_det_HM_grid  = new float[size]();
+    k_diss_CO_grid = new float[size]();  // not computed yet
+    k_ion_CI_grid  = new float[size]();
+    k_ion_OI_grid  = new float[size]();
+    isrf_grid      = new float[size]();
+    this->GetLocallyExtinctRadiationRates(k_diss_H2_grid, k_det_HM_grid,
+                                          isrf_grid);
+  } //UseLocallyExtinctRadiation
+
+  if (UseLocalStellarRadiation || UseLocallyExtinctRadiation) {
+    //To Do -> Add CO, CI, OI to grackle rates?
     my_fields.RT_H2_dissociation_rate =  k_diss_H2_grid;
 #ifdef HM_GRACKLE
     my_fields.RT_HM_detachment_rate   =  k_det_HM_grid; //Feeds in Britton's Grackle Branch (foggie-sf) only
@@ -394,8 +409,6 @@ int grid::GrackleWrapper()
 #endif
     if (grackle_data->use_isrf_field){
       my_fields.isrf_habing = isrf_grid;
-      //fprintf(stdout, " setting isrf_habing  = %"ESYM" (Habing Units)\n", isrf_grid[0]);
-
     }
 
     // Need to set the other fields to the same 0 array for now
@@ -462,7 +475,7 @@ int grid::GrackleWrapper()
   delete [] g_grid_start;
   delete [] g_grid_end;
 
-    if (UseLocalStellarRadiation){
+    if (UseLocalStellarRadiation || UseLocallyExtinctRadiation){
       delete[] k_diss_H2_grid;
       delete[] k_det_HM_grid;
       delete[] k_diss_CO_grid;

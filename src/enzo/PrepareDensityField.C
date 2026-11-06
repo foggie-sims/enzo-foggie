@@ -47,6 +47,7 @@
 /* function prototypes */
  
 int DepositParticleMassField(HierarchyEntry *Grid, FLOAT Time = -1.0);
+int DepositParticleLuminosityField(HierarchyEntry *Grid, FLOAT Time = -1.0); //LER
 
 int CommunicationBufferPurge(void);
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
@@ -90,7 +91,7 @@ extern int CopyPotentialFieldAverage;
  
 #define GRIDS_PER_LOOP 100000
 
- 
+
 
 #ifdef FAST_SIB
 int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
@@ -148,8 +149,14 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     CommunicationReceiveIndex = 0;
     CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
-    for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
+    for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
       DepositParticleMassField(Grids[grid1], EvaluateTime);
+      if (UseLocallyExtinctRadiation) {
+        TIMER_START("LER_Deposit");
+        DepositParticleLuminosityField(Grids[grid1], EvaluateTime); //LER
+        TIMER_STOP("LER_Deposit");
+      }
+    }
 
 #ifdef FORCE_MSG_PROGRESS 
     CommunicationBarrier();
@@ -162,8 +169,14 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     /* Next, send data and process grids on the same processor. */
 
     CommunicationDirection = COMMUNICATION_SEND;
-    for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
+    for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
       DepositParticleMassField(Grids[grid1], EvaluateTime);
+      if (UseLocallyExtinctRadiation) {
+        TIMER_START("LER_Deposit");
+        DepositParticleLuminosityField(Grids[grid1], EvaluateTime); //LER
+        TIMER_STOP("LER_Deposit");
+      }
+    }
 
     /* Finally, receive the data and process it. */
     

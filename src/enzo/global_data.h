@@ -1327,5 +1327,6 @@ EXTERN int UseTracerFluidWithStellarFeedback;
 
 /* Local Radiation Rates - CWT 06/07/26 */
 EXTERN int UseLocalStellarRadiation;
-
+EXTERN int UseLocallyExtinctRadiation;  // locally extinct radiation (LER)
+EXTERN int LocallyExtinctRadiationBoxRadius;   // >0: box-truncated subgrid correction
 #endif
