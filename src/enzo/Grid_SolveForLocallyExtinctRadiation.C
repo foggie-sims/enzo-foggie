@@ -510,13 +510,6 @@ int grid::SolveForLocallyExtinctRadiation(int level)
     delete [] BoxTable;
     DeleteSources(si, sj, sk, S);
 
-    if (debug1)
-      fprintf(stdout, "LER: P%"ISYM" grid %"ISYM" level %"ISYM
-              " Dim %"ISYM" %"ISYM" %"ISYM" ns %"ISYM" box rbox %"ISYM
-              " time %"GSYM" s\n", MyProcessorNumber, ID, level,
-              Dim[0], Dim[1], Dim[2], nsFine, rbox,
-              float(ReturnWallTime() - WallTime0));
-
     LCAPERF_STOP("grid_SolveForLocallyExtinctRadiation");
     return SUCCESS;
   }
@@ -603,15 +596,6 @@ int grid::SolveForLocallyExtinctRadiation(int level)
     delete [] ParentSource[f];
     delete [] ParentFlux[f];
   }
-
-  if (debug1)
-    fprintf(stdout, "LER: P%"ISYM" grid %"ISYM" level %"ISYM
-            " Dim %"ISYM" %"ISYM" %"ISYM" ns %"ISYM" (parent %"ISYM")"
-            " %s Pad %"ISYM" %"ISYM" %"ISYM" time %"GSYM" s\n",
-            MyProcessorNumber, ID, level,
-            Dim[0], Dim[1], Dim[2], nsFine, nsParent,
-            (UseFFT ? "FFT" : "direct"), PadDim[0], PadDim[1], PadDim[2],
-            float(ReturnWallTime() - WallTime0));
 
   LCAPERF_STOP("grid_SolveForLocallyExtinctRadiation");
   return SUCCESS;

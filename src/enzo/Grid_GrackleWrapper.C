@@ -32,7 +32,6 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
 int FindField(int field, int farray[], int numfields);
-float InterpolatePreSNFeedbackTable(double *table, float age, float metallicity);
            
 int grid::GrackleWrapper()
 {
