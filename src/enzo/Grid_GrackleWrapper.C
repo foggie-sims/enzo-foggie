@@ -393,10 +393,6 @@ int grid::GrackleWrapper()
     k_ion_CI_grid  = new float[size]();
     k_ion_OI_grid  = new float[size]();
     isrf_grid      = new float[size]();
-    // TEMPORARY LER-NULLCHECK: is the flux missing on this grid (e.g. after a rebuild)?
-    if (kdissH2FluxField == NULL)
-      fprintf(stdout, "LER-NULLCHECK: P%"ISYM" grid %"ISYM" dx %"GSYM": flux NULL in %s\n",
-              MyProcessorNumber, ID, CellWidth[0][0], "GrackleWrapper");
     this->GetLocallyExtinctRadiationRates(k_diss_H2_grid, k_det_HM_grid,
                                           isrf_grid);
   } //UseLocallyExtinctRadiation

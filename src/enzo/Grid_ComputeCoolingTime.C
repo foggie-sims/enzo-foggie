@@ -426,13 +426,6 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     isrf_grid      = new float[size]();
     this->GetLocallyExtinctRadiationRates(k_diss_H2_grid, k_det_HM_grid,
                                           isrf_grid);
-    // TEMPORARY LER-CHECK: largest ISRF handed to Grackle on this grid
-    float MaxISRF = 0.0;
-    for (int i = 0; i < size; i++)
-      MaxISRF = max(MaxISRF, isrf_grid[i]);
-    fprintf(stdout, "LER-CHECK: P%"ISYM" grid %"ISYM" dx %"GSYM": max ISRF %"GSYM" Habing in %s\n",
-            MyProcessorNumber, ID, CellWidth[0][0], MaxISRF,
-            (CoolingTimeOnly ? "ComputeCoolingTime (timestep)" : "ComputeCoolingTime"));
   } //UseLocallyExtinctRadiation
 
   if (UseLocalStellarRadiation || UseLocallyExtinctRadiation) {

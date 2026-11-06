@@ -681,11 +681,6 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
       float *ler_kdet  = new float[size]();
       float *ler_isrf  = new float[size]();
 
-      // TEMPORARY LER-NULLCHECK: is the flux missing on this grid (e.g. after a rebuild)?
-      if (kdissH2FluxField == NULL)
-	fprintf(stdout, "LER-NULLCHECK: P%"ISYM" grid %"ISYM" dx %"GSYM": flux NULL in WriteGrid\n",
-		MyProcessorNumber, ID, CellWidth[0][0]);
-
       if (this->GetLocallyExtinctRadiationRates(ler_kdiss, ler_kdet,
 						 ler_isrf) == FAIL) {
 	ENZO_FAIL("Error in grid->GetLocallyExtinctRadiationRates.");
