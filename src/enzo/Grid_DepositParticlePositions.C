@@ -331,8 +331,8 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
          where Sigma = rho * L is the column density of total gas in the
          star's cell.  L is the Sobolev-like length Grackle uses for H2
          self-shielding (H2_self_shielding = 1, Wolcott-Green et al. 2011;
-         Grackle's solve_rate_cool_g.F), capped at a fixed proper length
-         (MaxSobolevLength_pc).
+         Grackle's solve_rate_cool_g.F), capped at 1 code length as
+         Grackle does.
          Absorber-side shielding is left to Grackle.
 
          Opacities are calculated following Draine 2003,integrated over the
@@ -352,11 +352,10 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
                                 (DepositField == KDETHM_SOURCE_FIELD)  ? pSNFBTable.kappa_HM :
                                                                          pSNFBTable.kappa_isrf;
       const float MaxSourceAge = 5e7;  // yr; older stars emit nothing
-      /* Cap on the Sobolev length, as a fixed proper length so it does
-         not change with redshift (~4 level-11 FOGGIE cells at z = 0).
-         Grackle caps at 1 code length instead. */
-      const float MaxSobolevLength_pc = 1000.0;  // proper pc
-      float MaxSobolevLength = MaxSobolevLength_pc * pc_cm / LengthUnits;  // code units
+      /* Cap on the Sobolev length: 1 code length, as in Grackle (xbase1).
+         In cosmology runs this is the box size, so it only binds where
+         the star's cell has no less-dense neighbour. */
+      const float MaxSobolevLength = 1.0;  // code units
 
       /* Gas fields on this (the star's host) grid. */
 
