@@ -65,6 +65,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *VelocityUnits, FLOAT Time);
 float InterpolatePreSNFeedbackTable(double *table, float age, float metallicity);
 int FindField(int field, int farray[], int numfields);
+int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
 /* This controls the maximum particle mass which will be deposited in
    the MASS_FLAGGING_FIELD.  Only set in Grid_SetFlaggingField. */
@@ -90,10 +91,18 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
   int Dimension[] = {1,1,1};
   int OriginalDimension[] = {1,1,1};
   long_int Offset[] = {0,0,0};
-  float MassFactor = 1.0, *ParticleMassTemp, *ParticleMassPointer; 
+  float MassFactor = 1.0, *ParticleMassTemp = NULL, *ParticleMassPointer; 
   FLOAT CellSize, CloudSize;
   float *ParticleMassPointerSink;    
-  float *ParticleRadiation = NULL;  // LER
+  
+  /* LER variables*/
+  int IsLER = (DepositField == KDISSH2_SOURCE_FIELD ||
+               DepositField == KDETHM_SOURCE_FIELD  ||
+               DepositField == ISRF_SOURCE_FIELD);
+  int nYoung = 0;
+  FLOAT *LERPos[MAX_DIMENSION] = {NULL, NULL, NULL};
+  float *ParticleRadiation = NULL;
+
   float TimeDifference = 0;
   FLOAT LeftEdge[MAX_DIMENSION], OriginalLeftEdge[MAX_DIMENSION];
   float *DepositFieldPointer, *OriginalDepositFieldPointer;
@@ -297,9 +306,9 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
  
     /* If required, Change the mass of particles in this grid. */
  
-    if (MassFactor != 1.0 || 
+    if (!IsLER && (MassFactor != 1.0 || 
 	((StarParticleCreation == (1 << SINK_PARTICLE)) && 
-	 SmoothField == TRUE)) {
+	 SmoothField == TRUE))) {
       ParticleMassTemp = new float[NumberOfParticles];
       for (i = 0; i < NumberOfParticles; i++)
 	ParticleMassTemp[i] = ParticleMass[i]*MassFactor;
@@ -317,9 +326,11 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 	ParticleMassPointer[i] = min(DepositParticleMaximumParticleMass,
 				     ParticleMassPointer[i]);
 
-    if (DepositField == KDISSH2_SOURCE_FIELD ||
-        DepositField == KDETHM_SOURCE_FIELD ||
-        DepositField == ISRF_SOURCE_FIELD) {
+    /* Compute difference between current time and DepositTime. */
+ 
+    TimeDifference = DepositTime - Time;
+
+    if (IsLER) {
 
       /* LER: deposit the young-star source
          strength.  ParticleInitialMass*MassFactor is a density on the target
@@ -372,10 +383,36 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
       Stride[1] = GridDimension[0];
       Stride[2] = GridDimension[0]*GridDimension[1];
 
-      ParticleRadiation = new float[NumberOfParticles];
-      float SourceOpacitySolar;
+      /* Drift for the young stars only: the same coefficient as
+         grid::UpdateParticlePosition(TimeDifference). */
+
+      FLOAT a = 1.0, dadt;
+      if (ComovingCoordinates)
+        if (CosmologyComputeExpansionFactor(Time + 0.5*fabs(TimeDifference),
+                                            &a, &dadt) == FAIL) {
+          ENZO_FAIL("Error in CosmologyComputeExpansionFactor.");
+        }
+      float DriftCoefficient = TimeDifference/a;
+
+      /* Count the young stars and allocate a source array. */
+
       for (i = 0; i < NumberOfParticles; i++) {
-        ParticleRadiation[i] = 0;  // dark matter and old stars emit nothing
+        if (ParticleType[i] != PARTICLE_TYPE_STAR)
+          continue;
+        float StarAge = (Time - ParticleAttribute[0][i]) * TimeUnits / yr_s;  // yr
+        if (StarAge < MaxSourceAge)
+          nYoung++;
+      }
+
+      if (nYoung > 0) {
+        ParticleRadiation = new float[nYoung];
+        for (dim = 0; dim < GridRank; dim++)
+          LERPos[dim] = new FLOAT[nYoung];
+      }
+
+      int nSource = 0;
+      float SourceOpacitySolar;
+      for (i = 0; i < NumberOfParticles && nSource < nYoung; i++) {
         if (ParticleType[i] != PARTICLE_TYPE_STAR)
           continue;
         float StarAge = (Time - ParticleAttribute[0][i]) * TimeUnits / yr_s;  // yr
@@ -383,11 +420,20 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
         if (StarAge >= MaxSourceAge)
           continue;
 
+        int m = nSource++;  // this star's index in the source array
+
+        /* Position at DepositTime (the attenuation below uses the
+           undrifted position, ParticlePosition). */
+
+        for (dim = 0; dim < GridRank; dim++)
+          LERPos[dim][m] = ParticlePosition[dim][i] +
+                           DriftCoefficient*ParticleVelocity[dim][i];
+
         /* Unattenuated output.  SB99 tables are per Msun formed, so use
            the initial mass (a density, like ParticleMass), scaled to the
            target grid. */
 
-        ParticleRadiation[i] = InterpolatePreSNFeedbackTable(LuminosityTable,
+        ParticleRadiation[m] = InterpolatePreSNFeedbackTable(LuminosityTable,
                                      StarAge, StarMetallicity) *
                                    ParticleInitialMass[i] * MassFactor *
                                    MsunPerCodeMass;
@@ -444,21 +490,18 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
         float GasMetallicitySolar = MetalDensity / GasDensity[StarIndex] /
                                     CoolData.SolarMetalFractionByMass;  // Z/Z_sun
         float OpticalDepth = SourceOpacitySolar * GasMetallicitySolar * ColumnDensity; // cm^2/g * Unitless * g/cm^2
-        ParticleRadiation[i] *= exp(-OpticalDepth);
+        ParticleRadiation[m] *= exp(-OpticalDepth);
       }
 
-      ParticleMassPointer = ParticleRadiation;
-    }
+    } // end: if (IsLER)
  
-    /* Compute difference between current time and DepositTime. */
- 
-    TimeDifference = DepositTime - Time;
- 
-    /* Move particles to positions at Time + TimeDifference. */
+    /* Move particles to positions at Time + TimeDifference.  (LER
+       sources were not actually moved) */
  
     //The second argument forces the update even if 
     //MyProcessor == Target->ProcessorNumber != this->ProcessorNumber
-    this->UpdateParticlePosition(TimeDifference, TRUE);
+    if (!IsLER)
+      this->UpdateParticlePosition(TimeDifference, TRUE);
 
     /*
 
@@ -468,6 +511,32 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     */
     float FCellSize = (float)CellSize;
     float FCloudSize = (float)CloudSize;
+    if (IsLER) {
+
+      /* LER: deposit only the young-star sources, with the kernel the
+         particle deposit below would choose for this grid pair. */
+
+      if (nYoung > 0) {
+        if (SmoothField == TRUE)
+          PFORTRAN_NAME(smooth_deposit)
+            (LERPos[0], LERPos[1], LERPos[2], &GridRank,
+             &nYoung, ParticleRadiation, DepositFieldPointer, LeftEdge,
+             Dimension, Dimension+1, Dimension+2, &FCellSize,
+             &DepositPositionsParticleSmoothRadius);
+        else if (ParticleSubgridDepositMode == NGP_DEPOSIT && CellSize > 1.5*CloudSize)
+          PFORTRAN_NAME(ngp_deposit)
+            (LERPos[0], LERPos[1], LERPos[2], &GridRank,
+             &nYoung, ParticleRadiation, DepositFieldPointer, LeftEdge,
+             Dimension, Dimension+1, Dimension+2, &FCellSize);
+        else
+          PFORTRAN_NAME(cic_deposit)
+            (LERPos[0], LERPos[1], LERPos[2], &GridRank,
+             &nYoung, ParticleRadiation, DepositFieldPointer, LeftEdge,
+             Dimension, Dimension+1, Dimension+2, &FCellSize, &FCloudSize);
+      }
+
+    } else { // not LER: deposit the full particle list
+
     /* If using sink particles, then create a second field of unsmoothed sink particles
        (since we don't want sink particles smoothed -- they are stellar sized). */
 
@@ -591,6 +660,8 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
       delete [] ActiveParticleMassPointer;
     }
 
+    } // end: if (IsLER) else
+
   } // ENDIF this processor
  
   /* If on different processors, copy deposited field back to the
@@ -668,15 +739,16 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 
     /* If necessary, delete the particle mass temporary. */
 
-    if (MassFactor != 1.0)
-
-      delete [] ParticleMassTemp;
+    delete [] ParticleMassTemp;  // NULL unless allocated above
 
     delete [] ParticleRadiation;  //LER
+    for (dim = 0; dim < MAX_DIMENSION; dim++)
+      delete [] LERPos[dim];
 
     /* Return particles to positions at Time. */
 
-    this->UpdateParticlePosition(-TimeDifference);
+    if (!IsLER)
+      this->UpdateParticlePosition(-TimeDifference);
 
   }
  
