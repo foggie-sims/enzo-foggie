@@ -577,6 +577,25 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
     }
   }
 
+  /* LER: add the rate BaryonFields if restarting from a dump written
+     without them (zeroed; filled by the first LER solve). */
+
+  if (UseLocallyExtinctRadiation) {
+    int LERTypes[] = {LERkdissH2, LERkdetHM, LERISRF};
+    static char *LERNames[] = {"LER_kdissH2", "LER_kdetHM", "LER_ISRF"};
+    for (int f = 0; f < 3; f++) {
+      if (FindField(LERTypes[f], FieldType, NumberOfBaryonFields) >= 0)
+        continue;
+      int LERNum = NumberOfBaryonFields;
+      this->AddFields(&LERTypes[f], 1);
+      if (DataLabel[LERNum] == NULL) {
+        if (debug)
+          fprintf(stdout, "Adding %s field.\n", LERNames[f]);
+        DataLabel[LERNum] = LERNames[f];
+      }
+    }
+  }
+
     delete [] temp;
  
   }  // end:   if (NumberOfBaryonFields > 0 && ReadData &&

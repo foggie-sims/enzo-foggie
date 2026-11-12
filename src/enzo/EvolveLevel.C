@@ -534,6 +534,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
                 Grids[grid1]->GridData->ComputeAccelerations(level);
                 Grids[grid1]->GridData->CopyPotentialToBaryonField();
+                if (UseLocallyExtinctRadiation) // LER: flux -> BaryonFields
+                    Grids[grid1]->GridData->CopyLERToBaryonFields();
             }
             /* otherwise, interpolate potential from coarser grid, which is
                now done in PrepareDensity. */
@@ -646,6 +648,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
                         }
 
                         Grids[grid1]->GridData->ComputeAccelerations(level) ;
+                        if (UseLocallyExtinctRadiation) // LER: flux -> BaryonFields
+                            Grids[grid1]->GridData->CopyLERToBaryonFields();
                     }
                 } // end: if (SelfGravity)
 

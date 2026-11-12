@@ -223,7 +223,15 @@ const field_type
      use_sne_field = 1 (Li+ 2019 dust destruction). NOT a density. */
   SNeRate                 = 123,
 
-  FieldUndefined  = 124;
+  /* Locally extinct radiation (LER): rates handed to Grackle, filled from
+     the gravity-mesh flux by grid::CopyLERToBaryonFields after each LER
+     solve. kdissH2/kdetHM in 1/code-time, ISRF in Habing units. NOT
+     densities: interpolated directly, not advected or flux-corrected. */
+  LERkdissH2              = 124,
+  LERkdetHM               = 125,
+  LERISRF                 = 126,
+
+  FieldUndefined  = 127;
 
 /*
 enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
@@ -236,8 +244,9 @@ enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
                  FieldUndefined};
 */
 
-#define FieldTypeIsDensity(A) ((((A) >= TotalEnergy && (A) <= Velocity3) || ((A) >= kphHI && (A) <= kdissH2I) || ((A) == kdissH2II) || ((A) == kphHM) || ((A) >= RadiationFreq0 && (A) <= RaySegments) || ((A) >= Bfield1 && (A) <= AccelerationField3) || ((A) == SNeRate)) ? FALSE : TRUE)
-#define FieldTypeIsRadiation(A) ((((A) >= kphHI && (A) <= kdissH2I) || ((A) == kdissH2II) || ((A) == kphHM) || ((A) >= RadiationFreq0 && (A) <= RadiationFreq9)) ? TRUE : FALSE)
+#define FieldTypeIsLER(A) (((A) >= LERkdissH2 && (A) <= LERISRF) ? TRUE : FALSE)
+#define FieldTypeIsDensity(A) ((((A) >= TotalEnergy && (A) <= Velocity3) || ((A) >= kphHI && (A) <= kdissH2I) || ((A) == kdissH2II) || ((A) == kphHM) || ((A) >= RadiationFreq0 && (A) <= RaySegments) || ((A) >= Bfield1 && (A) <= AccelerationField3) || ((A) == SNeRate) || FieldTypeIsLER(A)) ? FALSE : TRUE)
+#define FieldTypeIsRadiation(A) ((((A) >= kphHI && (A) <= kdissH2I) || ((A) == kdissH2II) || ((A) == kphHM) || ((A) >= RadiationFreq0 && (A) <= RadiationFreq9) || FieldTypeIsLER(A)) ? TRUE : FALSE)
 #define FieldTypeNoInterpolate(A) (((((A) >= Mach) && ((A) <= PreShockDensity)) || ((A) == GravPotential) || ((A) == RaySegments)) ? TRUE : FALSE)
 
 /* Different stochastic forcing types */

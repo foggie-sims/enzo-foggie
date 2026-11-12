@@ -66,9 +66,15 @@ Both Local Stellar Radiation and Locally Extinct Radiation primarily work by fee
 values to grackle. Local Stellar Radiation does not have any additional fields, but
 grid averaged values for radiation can be read in the debug outputs.
 
-Locally Extinct Radiation writes out additional fields for each band:
-``LER_kdissH2`` and ``LER_kdetHM`` are in units of 1/s. ``LER_ISRF`` is in Habing units.
-These are the rates given to grackle prior to any self-shielding.
+Locally Extinct Radiation stores the rates for each band as BaryonFields,
+``LER_kdissH2``, ``LER_kdetHM`` and ``LER_ISRF``. These are the rates given to
+grackle prior to any self-shielding, and they are written to every output and read
+back on restart. ``LER_kdissH2`` and ``LER_kdetHM`` are in code units of
+1/time (divide by ``TimeUnits`` for 1/s). ``LER_ISRF`` is in Habing units.
+They are refreshed from the flux after each LER solve, and are interpolated
+from the parent when the hierarchy is rebuilt. Restarting with
+``UseLocallyExtinctRadiation = 1`` from a dump without these fields adds them,
+initialised to zero until the first LER solve.
 
 Cost and Debugging
 -------------------
@@ -145,7 +151,8 @@ Locally Extinct Radiation (``UseLocallyExtinctRadiation``):
   ``src/enzo/PrepareIsolatedGreensFunction.C``: root-grid 1/r^2
   convolution by FFT.
 * ``src/enzo/Grid_SolveForLocallyExtinctRadiation.C``: subgrid correction
-  on each finer level, and conversion of the flux to rates for Grackle.
+  on each finer level, and ``grid::CopyLERToBaryonFields``, which converts
+  the flux to the rate BaryonFields read by Grackle.
 * ``src/enzo/EvolveLevel.C`` and ``src/enzo/PrepareDensityField.C``: call
   the deposit and the subgrid solve alongside gravity.
 * Gravity-solver plumbing that carries the source and flux fields between
@@ -153,5 +160,7 @@ Locally Extinct Radiation (``UseLocallyExtinctRadiation``):
   ``Grid_AddOverlappingParticleMassField.C``, ``Grid_PreparePotentialField.C``,
   ``Grid_CopyPotentialField.C``, ``Grid_CommunicationSendRegion.C``,
   ``Grid_PrepareFFT.C`` and ``Grid_FinishFFT.C``.
-* ``src/enzo/New_Grid_WriteGrid.C``: writes the ``LER_kdissH2``,
-  ``LER_kdetHM`` and ``LER_ISRF`` output fields.
+* ``src/enzo/typedefs.h`` (field types ``LERkdissH2``, ``LERkdetHM``,
+  ``LERISRF``), the cosmology initializers, and ``New_Grid_ReadGrid.C`` /
+  ``Group_ReadAllData.C`` (adding the fields on restart): the
+  ``LER_kdissH2``, ``LER_kdetHM`` and ``LER_ISRF`` BaryonFields.

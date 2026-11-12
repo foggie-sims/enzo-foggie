@@ -471,6 +471,15 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
     }
   }
 
+  /* Same for the LER rate fields */
+
+  if (UseLocallyExtinctRadiation) {
+    int LERTypes[] = {LERkdissH2, LERkdetHM, LERISRF};
+    for (int f = 0; f < 3; f++)
+      if (Exterior->ReturnFieldNum(LERTypes[f]) < 0)
+        Exterior->AddField(LERTypes[f]);
+  }
+
   /* Read StarParticle data. */
  
   if (ReadStarParticleData(fptr, Hfile_id, log_fptr) == FAIL) {

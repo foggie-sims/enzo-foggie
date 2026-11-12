@@ -605,28 +605,47 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
 
-int grid::GetLocallyExtinctRadiationRates(float *kdissH2, float *kdetHM,
-                                          float *isrf)
+int FindField(int field, int farray[], int numfields);
+
+int grid::CopyLERToBaryonFields()
 {
-  /* Copy the LER flux fields (GravitatingMassField mesh) into
-   BaryonField-shaped arrays for Grackle, converting units. The flux
-   fields hold sum(table [rate*cm^2/Msun] * Msun) / (code length)^2, so
-   multiplying by TimeUnits/LengthUnits^2 gives 1/code_time (or Habing
-   for the ISRF). The offset into the gravity mesh follows CopyPotentialToBaryonField. */
+  /* Copy the LER flux fields (GravitatingMassField mesh) into the LER
+   BaryonFields that Grackle reads and that are written to outputs,
+   converting units. The flux fields hold
+   sum(table [rate*cm^2/Msun] * Msun) / (code length)^2, so multiplying by
+   TimeUnits/LengthUnits^2 gives 1/code_time (or Habing for the ISRF).
+   The offset into the gravity mesh follows CopyPotentialToBaryonField.
+
+   Called after each LER solve. Where a grid has no flux (e.g. a grid
+   created by RebuildHierarchy since the last solve) the BaryonFields are
+   left as they are: interpolated from the parent on rebuild, or read
+   from the restart dump. */
 
   if (ProcessorNumber != MyProcessorNumber)
     return SUCCESS;
+
+  float *Flux[] = {kdissH2FluxField, kdetHMFluxField, isrfFluxField};
+  if (Flux[0] == NULL && Flux[1] == NULL && Flux[2] == NULL)
+    return SUCCESS;
+
+  const field_type LERType[] = {LERkdissH2, LERkdetHM, LERISRF};
+  float *Out[3];
+  int f;
+  for (f = 0; f < 3; f++) {
+    int field = FindField(LERType[f], FieldType, NumberOfBaryonFields);
+    if (field < 0 || BaryonField[field] == NULL)
+      ENZO_VFAIL("LER BaryonField (type %"ISYM") missing.\n", LERType[f])
+    Out[f] = BaryonField[field];
+  }
 
   float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits,
     VelocityUnits;
   GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits,
            &VelocityUnits, Time);
 
-  float *Flux[]   = {kdissH2FluxField, kdetHMFluxField, isrfFluxField};
-  float *Out[]    = {kdissH2, kdetHM, isrf};
   float UnitConversion[]  = {TimeUnits/LengthUnits/LengthUnits, TimeUnits/LengthUnits/LengthUnits, 1.0/LengthUnits/LengthUnits};
 
-  int dim, i, j, k, f, index, n;
+  int dim, i, j, k, index, n;
   int Off[3] = {0, 0, 0};
   for (dim = 0; dim < GridRank; dim++) //offset between grid and gravitating mass fields
     Off[dim] = (GravitatingMassFieldDimension[dim] - GridDimension[dim])/2;
@@ -635,7 +654,7 @@ int grid::GetLocallyExtinctRadiationRates(float *kdissH2, float *kdetHM,
      arising from when the parent was deposited versus the child.*/
 
   for (f = 0; f < 3; f++) { //loop over bands
-    if (Flux[f] == NULL || Out[f] == NULL)
+    if (Flux[f] == NULL)
       continue;
     n = 0;
     for (k = 0; k < GridDimension[2]; k++)

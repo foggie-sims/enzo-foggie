@@ -121,6 +121,9 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *DIIName   = "DII_Density";
   char *HDIName   = "HDI_Density";
   char *GPotName  = "Grav_Potential";
+  char *LERkdissH2Name = "LER_kdissH2";
+  char *LERkdetHMName  = "LER_kdetHM";
+  char *LERISRFName    = "LER_ISRF";
   char *MetalName = "Metal_Density";
   char *MetalIIName = "MetalSNII_Density";
   char *MetalIaName = "MetalSNIa_Density";
@@ -790,6 +793,12 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 
   if (WritePotential)
     DataLabel[i++] = GPotName;
+ 
+  if (UseLocallyExtinctRadiation) {
+    DataLabel[i++] = LERkdissH2Name;
+    DataLabel[i++] = LERkdetHMName;
+    DataLabel[i++] = LERISRFName;
+  }
  
   if (ShockMethod) {
     DataLabel[i++] = MachName;

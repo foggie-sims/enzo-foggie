@@ -417,15 +417,18 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
   } //UseLocalStellarRadiation
 
   if (UseLocallyExtinctRadiation) {
-    /* LER: per-cell rates from the flux fields */
-    k_diss_H2_grid = new float[size]();
-    k_det_HM_grid  = new float[size]();
-    k_diss_CO_grid = new float[size]();  // not computed yet
-    k_ion_CI_grid  = new float[size]();
-    k_ion_OI_grid  = new float[size]();
-    isrf_grid      = new float[size]();
-    this->GetLocallyExtinctRadiationRates(k_diss_H2_grid, k_det_HM_grid,
-                                          isrf_grid);
+
+    int LERkdissNum = FindField(LERkdissH2, FieldType, NumberOfBaryonFields);
+    int LERkdetNum  = FindField(LERkdetHM,  FieldType, NumberOfBaryonFields);
+    int LERisrfNum  = FindField(LERISRF,    FieldType, NumberOfBaryonFields);
+    if (LERkdissNum < 0 || LERkdetNum < 0 || LERisrfNum < 0)
+      ENZO_FAIL("UseLocallyExtinctRadiation: LER BaryonFields missing.\n");
+    k_diss_H2_grid = BaryonField[LERkdissNum];
+    k_det_HM_grid  = BaryonField[LERkdetNum];
+    isrf_grid      = BaryonField[LERisrfNum];
+    //k_diss_CO_grid = new float[size]();  // not computed yet
+    //k_ion_CI_grid  = new float[size]();
+    //k_ion_OI_grid  = new float[size]();
   } //UseLocallyExtinctRadiation
 
   if (UseLocalStellarRadiation || UseLocallyExtinctRadiation) {
@@ -485,12 +488,14 @@ int grid::ComputeCoolingTime(float *cooling_time, int CoolingTimeOnly)
     delete [] g_grid_end;
 
     if (UseLocalStellarRadiation || UseLocallyExtinctRadiation){
-      delete[] k_diss_H2_grid;
-      delete[] k_det_HM_grid;
+      if (UseLocalStellarRadiation) { // LER rates are BaryonFields, not owned here
+        delete[] k_diss_H2_grid;
+        delete[] k_det_HM_grid;
+        delete[] isrf_grid;
+      }
       delete[] k_diss_CO_grid;
       delete[] k_ion_CI_grid;
       delete[] k_ion_OI_grid;
-      delete[] isrf_grid;
       delete[] EmptyRtArray;
 
     }

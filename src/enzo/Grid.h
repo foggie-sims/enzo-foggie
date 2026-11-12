@@ -1238,8 +1238,7 @@ gradient force to gravitational force for one-zone collapse test. */
 
 /* LER */
    int SolveForLocallyExtinctRadiation(int level);
-   int GetLocallyExtinctRadiationRates(float *kdissH2, float *kdetHM,
-                                       float *isrf);
+   int CopyLERToBaryonFields();
    int ClearLERSourceParticles();
    int ClearLERSourceField();
 

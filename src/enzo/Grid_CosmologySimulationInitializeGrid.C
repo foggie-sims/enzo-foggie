@@ -332,6 +332,11 @@ int grid::CosmologySimulationInitializeGrid(
     if (StarMakerEmissivityField > 0)
       FieldType[EtaNum = NumberOfBaryonFields++] = Emissivity0;
 #endif
+    if (UseLocallyExtinctRadiation) { // LER rates for Grackle (zeroed by AllocateGrids)
+      FieldType[NumberOfBaryonFields++] = LERkdissH2;
+      FieldType[NumberOfBaryonFields++] = LERkdetHM;
+      FieldType[NumberOfBaryonFields++] = LERISRF;
+    }
     if(ShockMethod){
       FieldType[MachNum   = NumberOfBaryonFields++] = Mach;
       if(StorePreShockFields){
