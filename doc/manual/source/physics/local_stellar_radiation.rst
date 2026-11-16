@@ -120,7 +120,8 @@ checked when the parameter file is read):
 
 To have Grackle use the ISRF (e.g. for dust heating), set
 ``use_isrf_field=1`` in the parameter file (read by
-``GrackleReadParameters.C``).
+``GrackleReadParameters.C``). If this is not set, the ISRF
+is still calculated and written out, but not used anywhere.
 
 Source Files
 -------------

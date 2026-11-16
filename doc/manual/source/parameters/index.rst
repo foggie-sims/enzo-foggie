@@ -3525,7 +3525,14 @@ The parameters below are used to turn on inexpensive radiation approximations fr
     Calculates H2 photodissociation rates, H- photodetachment rates, and ISRF
     to feed into grackle. Calculates radiation fields across the whole simulation
     volume assuming local extinction from birth cloud and Sobolev column density.
-    Requires ``StarFeedbackPreSNFilename``.
+    Requires ``StarFeedbackPreSNFilename``. If ``use_isrf_field=0``, the ISRF
+    field will still be calculated and written out, but will not be passed to grackle.
+
+``LocallyExtinctRadiationBoxRadius`` (external)
+    This parameter is used to set the the number of cells away from each star
+    particle that the locally extinct radiation is calculated on each level
+    above the root level. If set to 0, this will update the radiation fields
+    for all cells on the grid. Default: 0. Recommended: 0 or 6.
 
 
 .. _cosmology_parameters:
