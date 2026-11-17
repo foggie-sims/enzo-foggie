@@ -429,13 +429,7 @@ c
                if (stochastic .eq. 1_IKIND) then
                   nsn_ii_sto = nsn_ii
                   nsn_ia_sto = nsn_ia
-c     Don't do stochastic SNe if the expected number of SNe is too big
-                  if (nsn_ii_sto+nsn_ia_sto .lt. 4_IKIND) then
-                     call draw_stochastic(nsn_ii_sto, nsn_ia_sto, dt)
-                  else
-                     nsn_ii_sto = NINT(nsn_ii)
-                     nsn_ia_sto = NINT(nsn_ia)
-                  endif
+                  call draw_stochastic(nsn_ii_sto, nsn_ia_sto, dt)
                   nsn_sto = nsn_ia_sto + nsn_ii_sto
 #ifdef FORTRAN_DEBUG
                   write(7,*) 'nsn_sto, nsn_ii_sto, nsn_ia_sto:',
@@ -2161,32 +2155,16 @@ c
 c
 c     Locals
 c
-      R_PREC    k, P, L_ii, L_ia, random
+      R_PREC    k, random
 c
-      L_ii = EXP(-nsn_ii)
-      L_ia = EXP(-nsn_ia)
-      k = 0._RKIND
-      P = 1._RKIND
-c
-      do
-         call RANDOM_NUMBER(random)
-         P = P * random
-         if (P .lt. L_ii) goto 20
-         k = k + 1._RKIND
-      enddo
- 20   continue
+      k = aint(nsn_ii)
+      call RANDOM_NUMBER(random)
+      if (random .lt. nsn_ii - k) k = k + 1._RKIND
       nsn_ii = k
 c
-      P = 1._RKIND
-      k = 0._RKIND
-c
-      do
-         call RANDOM_NUMBER(random)
-         P = P * random
-         if (P .lt. L_ia) goto 30
-         k = k + 1._RKIND
-      enddo
- 30   continue
+      k = aint(nsn_ia)
+      call RANDOM_NUMBER(random)
+      if (random .lt. nsn_ia - k) k = k + 1._RKIND
       nsn_ia = k
 c
       return
