@@ -20,7 +20,7 @@ defaults:
 jobs:
   test-compile-options:
     name: Test Compile Options
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -120,7 +120,7 @@ jobs:
 
   test-suite:
     name: Test Suite
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 1200
     steps:
       - name: Checkout code
@@ -251,7 +251,7 @@ jobs:
 
   docs-build:
     name: Build Documentation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
