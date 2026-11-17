@@ -1066,6 +1066,17 @@ c
 c     If no supernovae in this cell, skip
                if (nsn_grid(ic,jc,kc) .eq. 0._RKIND) goto 100
 c
+c     Before doing any feedback, move gas in host cell into the rest
+c     of the injection region. This displacement is necessary for the
+c     calculation of swept-up mass to be right when determining how
+c     much momentum to inject.
+               call entrain_host_gas(d, u, v, w, te, ge, metal,
+     &                              metalSNII, metalSNIa, metalAGB,
+     &                              nx, ny, nz, ic, jc, kc, 1._RKIND,
+     &                              idual, imetal, itracksrc, useAGB,
+     &                              distrad, diststep, distcells,
+     &                              0_IKIND, 0._RKIND)
+c
 c     Compute average density and metallicity around this cell
 c     
                Z_avg = 0._RKIND
@@ -1500,6 +1511,140 @@ c
       close(7)
       close(8)
 #endif
+      return
+      end
+c
+c
+c ==========================================================
+c
+c     Entrain f_ent*(1-beta) of the host cell's gas into the other
+c     cells of the injection region (Kimm & Cen 2014, eq. A6), with
+c     beta = 1/distcells, so each receiving cell gets f_ent*d_c/
+c     distcells. Conserves mass, momentum, total energy, metals and
+c     every passive field. Works on lab-frame velocities, so it must
+c     be called before momentum_convert(+1). The host cell keeps its
+c     specific quantities (velocity, te, ge, fractions); only its
+c     density (and any density-form passive fields) drop.
+c
+      subroutine entrain_host_gas(d, u, v, w, te, ge, metal,
+     &     metalSNII, metalSNIa, metalAGB,
+     &     nx, ny, nz, ic, jc, kc, f_ent, idual, imetal, itracksrc,
+     &     useAGB, distrad, diststep, distcells, distmode, sphererad2)
+c
+      implicit none
+#include "fortran_types.def"
+c
+      INTG_PREC nx, ny, nz, ic, jc, kc, idual, imetal, itracksrc,
+     &          useAGB, distrad, diststep, distcells, distmode
+      R_PREC    d(nx,ny,nz), u(nx,ny,nz), v(nx,ny,nz), w(nx,ny,nz),
+     &          te(nx,ny,nz), ge(nx,ny,nz), metal(nx,ny,nz),
+     &          metalSNII(nx,ny,nz), metalSNIa(nx,ny,nz),
+     &          metalAGB(nx,ny,nz)
+      R_PREC    f_ent, sphererad2
+c
+      INTG_PREC i, j, k, n, ii, jj, kk
+      LOGIC_PREC inregion
+      R_PREC    dc, uc, vc, wc, tec, gec, Zc, ZIIc, ZIac, ZAGBc,
+     &          dmove, xmove, xkeep, dold, dnew, ke_old, ke_new
+c
+      if (f_ent .le. 0._RKIND .or. distcells .le. 1_IKIND) return
+c
+      dc  = d(ic,jc,kc)
+      uc  = u(ic,jc,kc)
+      vc  = v(ic,jc,kc)
+      wc  = w(ic,jc,kc)
+      tec = te(ic,jc,kc)
+      gec = ge(ic,jc,kc)
+      Zc  = 0._RKIND
+      ZIIc = 0._RKIND
+      ZIac = 0._RKIND
+      ZAGBc = 0._RKIND
+      if (imetal .eq. 1_IKIND) Zc = metal(ic,jc,kc)
+      if (imetal .eq. 1_IKIND .and. itracksrc .eq. 1_IKIND) then
+         ZIIc = metalSNII(ic,jc,kc)
+         ZIac = metalSNIa(ic,jc,kc)
+         if (useAGB .eq. 1_IKIND) ZAGBc = metalAGB(ic,jc,kc)
+      endif
+c
+c     Density moved into each receiving cell, and the fraction of the
+c     host's gas that this is
+      dmove = f_ent*dc/real(distcells, RKIND)
+      xmove = dmove/dc
+      xkeep = 1._RKIND - real(distcells-1, RKIND)*xmove
+c
+      do k = -distrad, distrad
+         do j = -distrad, distrad
+            do i = -distrad, distrad
+               if (distmode .eq. 1_IKIND) then
+                  inregion = real(i*i+j*j+k*k, RKIND) .le. sphererad2
+               else
+                  inregion = abs(i)+abs(j)+abs(k) .le. diststep
+               endif
+c     If in injection region AND not the center cell:
+               if (inregion .and.
+     &           (i .ne. 0 .or. j .ne. 0 .or. k .ne. 0)) then
+                  dold = d(ic+i,jc+j,kc+k)
+                  dnew = dold + dmove
+c     This cell's KE is its original KE + KE of gas displaced into this
+c     cell, which carries the velocity of the host cell it came from
+                  ke_old = 0.5_RKIND*dold*(u(ic+i,jc+j,kc+k)**2
+     &                     + v(ic+i,jc+j,kc+k)**2
+     &                     + w(ic+i,jc+j,kc+k)**2)
+     &                     + 0.5_RKIND*dmove*(uc**2 + vc**2 + wc**2)
+c     Update the velocity by assuming conservation of momentum from
+c     moving material from one cell to another. Note this is not a
+c     momentum kick, just purely displacement of mass that had a velocity.
+                  u(ic+i,jc+j,kc+k) = (dold*u(ic+i,jc+j,kc+k)
+     &                                + dmove*uc)/dnew
+                  v(ic+i,jc+j,kc+k) = (dold*v(ic+i,jc+j,kc+k)
+     &                                + dmove*vc)/dnew
+                  w(ic+i,jc+j,kc+k) = (dold*w(ic+i,jc+j,kc+k)
+     &                                + dmove*wc)/dnew
+c     This cell's new KE is calculated from its new density and velocity,
+c     not guaranteed to be equal to the sum of the KEs of the original
+c     cell and the moving material
+                  ke_new = 0.5_RKIND*dnew*(u(ic+i,jc+j,kc+k)**2
+     &                     + v(ic+i,jc+j,kc+k)**2
+     &                     + w(ic+i,jc+j,kc+k)**2)
+c     Update total energy by the amount of total energy that has been
+c     moved into this cell
+                  te(ic+i,jc+j,kc+k) = (dold*te(ic+i,jc+j,kc+k)
+     &                                 + dmove*tec)/dnew
+                  if (idual .eq. 1_IKIND)
+c     If the new KE is different by more than just the fraction of KE
+c     that has been moved into this cell, add the difference as heat
+     &               ge(ic+i,jc+j,kc+k) = (dold*ge(ic+i,jc+j,kc+k)
+     &                                    + dmove*gec
+     &                                    + (ke_old - ke_new))/dnew
+c     Update all metal fractions as a mass-weighted mix
+                  if (imetal .eq. 1_IKIND) then
+                     metal(ic+i,jc+j,kc+k) = (dold*metal(ic+i,jc+j,kc+k)
+     &                                       + dmove*Zc)/dnew
+                     if (itracksrc .eq. 1_IKIND) then
+                        metalSNII(ic+i,jc+j,kc+k) =
+     &                            (dold*metalSNII(ic+i,jc+j,kc+k)
+     &                            + dmove*ZIIc)/dnew
+                        metalSNIa(ic+i,jc+j,kc+k) =
+     &                            (dold*metalSNIa(ic+i,jc+j,kc+k)
+     &                            + dmove*ZIac)/dnew
+                        if (useAGB .eq. 1_IKIND)
+     &                     metalAGB(ic+i,jc+j,kc+k) =
+     &                              (dold*metalAGB(ic+i,jc+j,kc+k)
+     &                              + dmove*ZAGBc)/dnew
+                     endif
+                  endif
+c     Finally update the density in this cell itself
+                  d(ic+i,jc+j,kc+k) = dnew
+               endif ! end in-region
+            enddo
+         enddo
+      enddo
+c
+c     Update host cell with the kept fraction of density.
+c     Energies and metallicities don't need updating because they're
+c     specific energies and metal fractions so already scale with density
+      d(ic,jc,kc) = xkeep*dc
+c
       return
       end
 c
