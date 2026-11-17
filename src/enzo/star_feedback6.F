@@ -917,6 +917,7 @@ c
      &                        distrad+1_IKIND, distrad+1_IKIND,
      &                        distrad+1_IKIND,
      &                        imetal, imulti_metals, idual,
+     &                        metal1, metal1, useAGB, metal1,
      &                        kick_cap, preSNmom,
      &                        mass_per_cell_w, mom_per_cell_w,
      &                        metal_per_cell_w, dx, x1, dunits, vunits,
@@ -946,6 +947,7 @@ c
                call add_preSN_feedback(u, v, w, d, ge, te, metal,
      &                         nx, ny, nz, ic, jc, kc,
      &                        imetal, imulti_metals, idual,
+     &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        kick_cap, preSNmom,
      &                        mass_per_cell_w, mom_per_cell_w,
      &                        metal_per_cell_w,
@@ -1037,6 +1039,7 @@ c
                call add_preSN_feedback(u, v, w, d, ge, te, metal,
      &                         nx, ny, nz, ic, jc, kc,
      &                        imetal, imulti_metals, idual,
+     &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        kick_cap, preSNmom,
      &                        mass_per_cell_w, 0._RKIND,
      &                        metal_per_cell_w,
@@ -1300,7 +1303,7 @@ c
      &                        0_IKIND, imulti_metals, idual,
      &                        itracksrc, kick_cap,
      &                        0._RKIND, 0._RKIND, 0._RKIND,
-     &                        metalSNII, metalSNIa,
+     &                        metal1, metal1, useAGB, metal1,
      &                        mass_per_cell, mom_per_cell,
      &                        dx, x1, dunits, vunits,
      &                        distrad, diststep)
@@ -1336,7 +1339,7 @@ c
      &                        metal_per_cell,
      &                        metal_ia_per_cell,
      &                        metal_ii_per_cell,
-     &                        metalSNII, metalSNIa,
+     &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        mass_per_cell, mom_per_cell,
      &                        dx, x1, dunits, vunits,
      &                        distrad, diststep)
@@ -1491,6 +1494,14 @@ c
      &                    (metalAGB(ic,jc,kc)*d(ic,jc,kc) +
      &                    agbmetal_grid(ic,jc,kc))
      &                    / (d(ic,jc,kc) + agbmass_grid(ic,jc,kc))
+c              Dilute other metal fields by the amount of mass added
+c              by AGB winds so they don't gain from AGB
+                        metalSNII(ic,jc,kc) =
+     &                        (metalSNII(ic,jc,kc)*d(ic,jc,kc))
+     &                        / (d(ic,jc,kc) + agbmass_grid(ic,jc,kc))
+                        metalSNIa(ic,jc,kc) =
+     &                        (metalSNIa(ic,jc,kc)*d(ic,jc,kc))
+     &                        / (d(ic,jc,kc) + agbmass_grid(ic,jc,kc))
                         if (metalAGB(ic,jc,kc) .gt. 0.95_RKIND)
      &                    metalAGB(ic,jc,kc) = 0.95_RKIND
                      endif
@@ -1943,7 +1954,7 @@ c
      &                        imetal, imulti_metals, idual,
      &                        itracksrc, kick_cap,
      &                        mzeject, mzeject_ia, mzeject_ii,
-     &                        metalSNII, metalSNIa,
+     &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        mass_per_cell, mom_per_cell,
      &                        dx, x1, dunits, vunits,
      &                        distrad, diststep)
@@ -1954,13 +1965,14 @@ c
 c     Arguments
 c
       INTG_PREC nx, ny, nz, ic, jc, kc, idual, dist, distrad, diststep
-      INTG_PREC imetal, imulti_metals, kick_cap
+      INTG_PREC imetal, imulti_metals, kick_cap, useAGB
       R_PREC    d(nx, ny, nz), metal(nx,ny,nz), ge(nx,ny,nz)
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz), te(nx,ny,nz)
       R_PREC    mass_per_cell
       R_PREC    mom_per_cell(2*distrad+1,2*distrad+1,2*distrad+1)
       R_PREC    mzeject, mzeject_ia, mzeject_ii
       R_PREC    metalSNII(nx,ny,nz), metalSNIa(nx,ny,nz)
+      R_PREC    metalAGB(nx,ny,nz)
       R_PREC    dunits, x1, vunits, dx
       R_PREC    p_start, p_end
       INTG_PREC    itracksrc
@@ -2101,6 +2113,10 @@ c                 Put same cap on other metal fields
      &                 mzeject_ia)/(d(ic+i,jc+j,kc+k) + delta_mass)
                      if (metalSNIa(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
      &                 metalSNIa(ic+i,jc+j,kc+k) = 0.95_RKIND
+c                 Dilute AGB metal field by the amount of non-AGB mass
+                     if (useAGB) metalAGB(ic+i,jc+j,kc+k) = 
+     &                 (metalAGB(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k))
+     &                 / (d(ic+i,jc+j,kc+k) + delta_mass)
                   endif
                endif
 c
@@ -2126,6 +2142,7 @@ c
       subroutine add_preSN_feedback(pu, pv, pw, d, ge, te, metal,
      &                        nx, ny, nz, ic, jc, kc,
      &                        imetal, imulti_metals, idual,
+     &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        kick_cap, preSNmom,
      &                        mass_per_cell, mom_per_cell,
      &                        metal_per_cell,
@@ -2138,9 +2155,11 @@ c
 c     Arguments
 c
       INTG_PREC nx, ny, nz, ic, jc, kc, idual, dist, distrad, diststep
-      INTG_PREC imetal, imulti_metals, kick_cap, preSNmom
+      INTG_PREC imetal, imulti_metals, kick_cap, preSNmom, useAGB
       R_PREC    d(nx, ny, nz), metal(nx,ny,nz), ge(nx,ny,nz)
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz), te(nx,ny,nz)
+      R_PREC    metalSNII(nx,ny,nz), metalSNIa(nx,ny,nz)
+      R_PREC    metalAGB(nx,ny,nz)
       R_PREC    mass_per_cell, mom_per_cell
       R_PREC    metal_per_cell
       R_PREC    dunits, x1, vunits, dx
@@ -2269,6 +2288,18 @@ c
 c                 Ensure the metallicity doesn't get too high
                   if (metal(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
      &              metal(ic+i,jc+j,kc+k) = 0.95_RKIND
+c                 Dilute other metal fields by the mass added
+                  if (itracksrc .eq. 1) then
+                     metalSNII(ic+i,jc+j,kc+k) = 
+     &                 (metalSNII(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k))
+     &                 / (d(ic+i,jc+j,kc+k) + delta_mass)
+                     metalSNIa(ic+i,jc+j,kc+k) = 
+     &                 (metalSNIa(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k))
+     &                 / (d(ic+i,jc+j,kc+k) + delta_mass)
+                     if (useAGB) metalAGB(ic+i,jc+j,kc+k) = 
+     &                 (metalAGB(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k))
+     &                 / (d(ic+i,jc+j,kc+k) + delta_mass)
+                  endif
                endif
 c
 c     Add mass
