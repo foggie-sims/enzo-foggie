@@ -83,7 +83,7 @@ c    nsn_timestep - lower limit of how many SNe per timestep below which
 c                   to skip doing feedback (to save time for very low fractions
 c                   of SNe per timestep per particle)
 c
-c    use_tab_fdbk - flag to use tabular feedback
+c    use_tabfdbk - flag to use tabular feedback
 c    minit     - initial particle mass
 c    ergSNII   - energy in ergs per SNII event
 c    ergSNIa   - energy in ergs per SNIa event
@@ -190,7 +190,8 @@ c
       R_PREC te1(2*distrad+1,2*distrad+1,2*distrad+1)
       R_PREC ge1(2*distrad+1,2*distrad+1,2*distrad+1)
       R_PREC metal1(2*distrad+1,2*distrad+1,2*distrad+1)
-      R_PREC nsn_grid(nx,ny,nz), meject_grid(nx,ny,nz),
+      R_PREC nsn_grid(nx,ny,nz), nsn_ii_grid(nx,ny,nz), 
+     &     nsn_ia_grid(nx,ny,nz), meject_grid(nx,ny,nz),
      &     mzeject_grid(nx,ny,nz), mzeject_ii_grid(nx,ny,nz),
      &     mzeject_ia_grid(nx,ny,nz), up_grid(nx,ny,nz),
      &     vp_grid(nx,ny,nz), wp_grid(nx,ny,nz)
@@ -515,14 +516,6 @@ c     Keep the same ratio of Type II to Type Ia masses and metals
                   endif
                endif ! end mass and metal ejection determination
 c
-               energy = nsn * 10._RKIND**51._RKIND / (dunits*
-     &                  x1**3._RKIND*vunits**2._RKIND*dx**3._RKIND)
-#ifdef FORTRAN_DEBUG
-               write(7,*) 'nsn,m_eject,energy:',nsn,m_eject*
-     &              dunits*x1**3._RKIND/SolarMass*dx**3_IKIND,
-     &              energy*(dunits*x1**3._RKIND*vunits**2._RKIND*
-     &               dx**3._RKIND)
-#endif
 c
 c     Skip feedback if fewer than StarFeedbackPerSNeTimestepLimit SNe in this timestep
 c
@@ -633,8 +626,6 @@ c
                      nsn = 0._RKIND
                   endif
                endif
-               energy = nsn * 10._RKIND**51._RKIND / (dunits*
-     &                  x1**3._RKIND*vunits**2._RKIND*dx**3._RKIND)
 c
 c     Subtract ejected mass from particle
 c
@@ -655,10 +646,8 @@ c
                write(7,*) 'mform,yield,metalf(n),m_eject',
      &             mform*dunits*(x1*dx)**3_IKIND/SolarMass,yield,
      &             metalf(n),m_eject*dunits*(x1*dx)**3_IKIND/SolarMass
-               write(7,*) 'nsn,m_eject,energy:',nsn,m_eject*
-     &              dunits*x1**3._RKIND/SolarMass*dx**3_IKIND,
-     &              energy*(dunits*x1**3._RKIND*vunits**2._RKIND*
-     &               dx**3._RKIND)
+               write(7,*) 'nsn,m_eject:',nsn,m_eject*
+     &              dunits*x1**3._RKIND/SolarMass*dx**3_IKIND
 #endif
             endif ! end Cen & Ostriker method
 c
@@ -730,6 +719,10 @@ c     Put nsn, meject, mzeject, and weighted particle velocity values on grid at
 c     Weight average velocity for SNe by number of SNe going off in each particle
 c
             nsn_grid(ic,jc,kc) = nsn_grid(ic,jc,kc) + nsn
+            if (use_tabfbk .eq. 1_IKIND) then
+               nsn_ii_grid(ic,jc,kc) = nsn_ii_grid(ic,jc,kc) + nsn_ii
+               nsn_ia_grid(ic,jc,kc) = nsn_ia_grid(ic,jc,kc) + nsn_ia
+            endif
             meject_grid(ic,jc,kc) = meject_grid(ic,jc,kc) + m_eject
             up_grid(ic,jc,kc) = up_grid(ic,jc,kc) + up(n)*nsn
             vp_grid(ic,jc,kc) = vp_grid(ic,jc,kc) + vp(n)*nsn
@@ -1080,88 +1073,21 @@ c     much momentum to inject.
      &                              distrad, diststep, distcells,
      &                              0_IKIND, 0._RKIND)
 c
-c     Compute average density and metallicity around this cell
-c     
-               Z_avg = 0._RKIND
-               n_avg = 0._RKIND
-               do k = -distrad, distrad
-                  stepk = abs(k)
-                  do j = -distrad, distrad
-                     stepj = stepk + abs(j)
-                     do i = -distrad, distrad
-                        cellstep = stepj + abs(i)
-                        if (cellstep .le. diststep) then
-                        Z_cell = metal(ic+i,jc+j,kc+k)
-                        mu_cell = mu(ic+i,jc+j,kc+k)
-c
-c     The following adjustments to Z_cell and mu_cell are band-aids to
-c     handle situations when the chemistry gets weird and the metallicity
-c     is unphysically high or mu as calculated from the baryon fields in
-c     Grid_StarParticleHandler.C is somehow negative, NaN, or outside of the
-c     expected range from ~0.5 to ~16. The below calculation
-c     of mu assumes primordial relative abundance between H and He (He is
-c     1/3 of H), that the gas is completely neutral, and that all metals
-c     are oxygen atoms, for simplicity. Note that what is called "mu" here
-c     and in the mu_field passed to this function are actually the inverse
-c     mean molecular weight!!!
-c
-c     Z_cell comes from metal/d with no guard on either operand, so it can
-c     be NaN (0/0 in an evacuated cell) or negative, so catch these cases.
-c     
-                        if (Z_cell .ne. Z_cell) Z_cell = 0._RKIND
-                        if (Z_cell .lt. 0._RKIND) Z_cell = 0._RKIND
-                        if (Z_cell .gt. 0.95_RKIND)
-     &                    Z_cell = 0.95_RKIND
-                        if ((mu_cell .lt. 0.0625_RKIND) .or. 
-     &                    (mu_cell .gt. 2._RKIND) .or.
-     &                    (mu_cell .ne. mu_cell))
-     &                    mu_cell = 0.8125_RKIND*(1._RKIND-Z_cell) + 
-     &                     Z_cell/16._RKIND
-c        Z_avg is average metallicity, so convert metal fraction to metallicity
-c        by assuming 0.02 is Zsun
-                        Z_avg = Z_avg + Z_cell/0.02_RKIND
-                        n_avg = n_avg +
-     &                     d(ic+i,jc+j,kc+k)*dunits*
-     &                     mu_cell/mass_h
-#ifdef FORTRAN_DEBUG
-                        write(7,*) 'mu, Z, d, n',
-     &                       mu_cell, Z_cell, d(ic+i,jc+j,kc+k)*dunits,
-     &                       d(ic+i,jc+j,kc+k)*dunits*mu_cell/mass_h
-#endif
-                        endif
-                     enddo
-                  enddo
-               enddo
-c               
-c     The Kimm & Cen (2014) scheme (eq A5) requires a floor on Z_avg
-c
-               Z_floor = max(Z_avg/distcells, 0.01_RKIND)
-               n_avg = n_avg/distcells
-#ifdef FORTRAN_DEBUG
-               write(7,*) 'Z_avg, n_avg', Z_floor, n_avg
-#endif
-c
-c        If n_avg is NaN or negative, floor it at the density of one hydrogen
-c        atom per cc, far below any cell that hosts a supernova.
-c
-               if (n_avg .ne. n_avg .or. 
-     &                     n_avg .lt. 1.0e-6_RKIND) then
-                  write(6,*) 'star_feedback6: bad n_avg', n_avg,
-     &            ' at ic,jc,kc =', ic, jc, kc, ' nsn =', nsn,
-     &            ' Z_floor =', Z_floor
-                  n_avg = 1.0e-6_RKIND
-               endif
-c
 c     Compute the mass and momentum that this cell is responsible for
 c     injecting
 c
+               if (use_tabfbk .eq. 1_IKIND) then
+                  energy = nsn_ii_grid(ic,jc,kc)*ergSNII
+     &                  + nsn_ia_grid(ic,jc,kc)*ergSNIa
+               else
+                  energy = nsn*1.e51_RKIND
+               endif
                mass_per_cell = meject_grid(ic,jc,kc)/distcells
                mom_per_cell = 0._RKIND
                energy_per_cell = 0._RKIND
-               call get_mom_per_cell(d, mass_per_cell,
+               call get_mom_per_cell(d, metal, imetal, mass_per_cell,
      &                  distcells, mom_per_cell, energy_per_cell,
-     &                  nsn_grid(ic,jc,kc), d(ic,jc,kc), dx, x1,
-     &                  n_avg, Z_floor, dunits, vunits, t1,
+     &                  nsn_grid(ic,jc,kc), energy, dunits, vunits,
      &                  nx, ny, nz, ic, jc, kc,
      &                  mom_mult, distrad, diststep)
 c           mom_per_cell has units of mass*velocity/volume
@@ -1664,10 +1590,9 @@ c
 c     Calculate the amount of momentum to add to each neighboring cell
 c     Formulae taken from Kimm & Cen (2014), Appendix A
 c
-      subroutine get_mom_per_cell(d, mass_per_cell,
+      subroutine get_mom_per_cell(d, metal, imetal, mass_per_cell,
      &               distcells, mom_per_cell, energy_per_cell,
-     &               nsn, d_fbck_cell, dx, x1,
-     &               n_avg, Z_floor, dunits, vunits, t1,
+     &               nsn, E_tot, dx, x1, dunits, vunits,
      &               nx, ny, nz, ic, jc, kc,
      &               mom_mult, distrad, diststep)
 c
@@ -1677,110 +1602,106 @@ c
 c     Arguments
 c
       INTG_PREC nx, ny, nz, ic, jc, kc, distrad, diststep, distcells
-      R_PREC    d(nx,ny,nz), dx
-      R_PREC    t1, Z_floor, n_avg
+      INTG_PREC imetal
+      R_PREC    d(nx,ny,nz), metal(nx,ny,nz), dx
       R_PREC    mom_per_cell(2*distrad+1, 2*distrad+1, 2*distrad+1)
       R_PREC    energy_per_cell(2*distrad+1, 2*distrad+1, 2*distrad+1)
-      R_PREC    mass_per_cell
-      R_PREC    nsn, x1, dunits, d_fbck_cell, vunits
+      R_PREC    mass_per_cell, nsn, E_tot, x1, dunits, vunits
       R_PREC    mom_mult
 c
 c     Locals
 c
       INTG_PREC i, j, k, dist, cellstep, stepk, stepj
-      R_PREC    dMswept, chi, chi_th, fe, pSN, ergs_51_sqr, ke_from_p
-      R_PREC    den_cell, Mej, dMej, Nnbors, betaSN, SN_energy
+      LOGIC_PREC inregion
+      R_PREC    Nnbors, cell_vol, ecode, Mej, dMej, E_nb, frac_sn,
+     &          E_ev51, den_cell, Z_cell, Zp, n_H, pSN_term, chi_th,
+     &          dMswept, chi, fe, pSN, ke_from_p
+      R_PREC    Xh
+
+      Xh = 0.76_RKIND
 c
-        ergs_51_sqr = 10._RKIND**(51._RKIND/2._RKIND)
-        Nnbors = real(distcells, RKIND) - 1._RKIND ! 26
-        betaSN = 1._RKIND/real(distcells, RKIND)   ! 1/27
-        Mej = mass_per_cell*real(distcells, RKIND) * 
-     &     dunits*(x1*dx)**3._RKIND
-        SN_energy = nsn*10**51._RKIND/Nnbors
+      Nnbors = real(distcells, RKIND) - 1._RKIND ! 26
+      cell_vol = (dx*x1)**3
+      ecode = dunits*cell_vol*vunits**2 ! cell energy density units
+      Mej = mass_per_cell*real(distcells, RKIND) * dunits*cell_vol
+      dMej = Mej/real(distcells, RKIND)
 c
-        chi_th = 69.58_RKIND*(nsn)**(-2._RKIND/17._RKIND) *
-     &               (n_avg)**(-4._RKIND/17._RKIND) *
-     &               (Z_floor)**(-0.28_RKIND)
-#ifdef FORTRAN_DEBUG
-        write(7,*) 'chi_th:',chi_th
-#endif
-        do k = -distrad, +distrad
-           stepk = abs(k)
-            do j = -distrad, +distrad
-               stepj = stepk + abs(j)
-               do i = -distrad, +distrad
-                  cellstep = stepj + abs(i)
-                  if (cellstep .le. diststep) then
+      E_nb = E_tot/Nnbors
+c     N >= 1 is one event of N SNe; N < 1 is a fraction of one
+      frac_sn = min(nsn, 1._RKIND)
+      E_ev51 = E_tot/frac_sn/1.e51_RKIND
+c
+      do k = -distrad, +distrad
+         stepk = abs(k)
+         do j = -distrad, +distrad
+            stepj = stepk + abs(j)
+            do i = -distrad, +distrad
+               cellstep = stepj + abs(i)
+               dist = i**2_IKIND + j**2_IKIND + k**2_IKIND
+               if (cellstep .le. diststep .and. dist .gt. 0._IKIND) then
 c
 c       Compute the mass fraction of swept-up to ejected mass.
 c
                   den_cell = d(ic+i,jc+j,kc+k)*dunits
-                  dMej = (1._RKIND-betaSN)*Mej/Nnbors
-                  dMswept = den_cell * 
-     &                     (dx*x1/2._RKIND)**(3._RKIND) + 
-     &                     ((1._RKIND-betaSN)*
-     &                     (d_fbck_cell*dunits)*(dx*x1)**3._RKIND) /
-     &                     Nnbors + dMej
+                  Z_cell = 0._RKIND
+                  if (imetal .eq. 1_IKIND)
+     &                        Z_cell = metal(ic+i,jc+j,kc+k)
+                  if (Z_cell .ne. Z_cell) Z_cell = 0._RKIND
+                  Z_cell = max(0._RKIND, min(Z_cell, 0.95_RKIND))
+c        Scheme requires a floor on metallicity
+                  Zp  = max(Z_cell/0.02_RKIND, 0.01_RKIND)
+c        Derive H density from metallicity, assuming Solar relative abundances
+                  n_H = max(Xh*(1._RKIND - Z_cell)*den_cell/mass_h,
+     &                   1.e-6_RKIND)
+c        Define terminal momentum per cell and threshold for transition
+c        between energy-conserving and momentum-conserving phases
+c        Kimm & Cen (2014) eq. A4
+                  pSN_term = frac_sn*3.e10_RKIND*SolarMass*
+     &                     E_ev51**(16._RKIND/17._RKIND)*
+     &                     n_H**(-2._RKIND/17._RKIND)*Zp**(-0.14_RKIND)
+                  chi_th = 0.75_RKIND*pSN_term**2/(Mej*E_tot)
+c        chi_th can get very small if a small fraction of SNe are going
+c        off (in continuous case) so floor it just above 1
+                  chi_th = max(chi_th, 1._RKIND + 1.e-6_RKIND)
 c
-                  chi = dMswept/dMej
-#ifdef FORTRAN_DEBUG
-                  write(7,*) 'dMej,dMswept,chi:',dMej,dMswept,chi
-#endif
+c        Swept-up mass is the sum of the mass this cell already had,
+c        which includes already entrained mass displaced from the
+c        supernova host cell, and its share of the ejecta from the SN
 c
-c       Compare chi to threshold and set momentum injection.
+               dMswept = den_cell*cell_vol + dMej
+               chi = dMswept/dMej
 c
-                  if (chi .lt. chi_th) then
+c        Compare chi to threshold and set momentum injection.
+c
+                  if (chi .lt. chi_th) then ! energy-conserving, resolved
+c        Momentum comes from eq. A1
                      fe = 1._RKIND - ((chi - 1._RKIND)/
      &                        (3._RKIND*(chi_th - 1._RKIND)))
-                     pSN = mom_mult * (2._RKIND*chi * Mej * fe *
-     &                        nsn)**(0.5_RKIND) * ergs_51_sqr
+                     pSN = mom_mult * sqrt(2._RKIND*chi*Mej*fe*E_tot)
 c
 c        This is the resolved case, so need to inject thermal energy
-c        to get up to 10^51 per SNe. Use pSN to calculate kinetic energy
+c        to get up to E_tot per SNe. Use pSN to calculate kinetic energy
 c        and inject thermal into this cell equal to total - kinetic
-                     ke_from_p = 0.5_RKIND*(pSN/Nnbors)**2. / 
-     &                      (den_cell*(dx*x1)**3._RKIND + dMej)
-                     if (ke_from_p .lt. SN_energy) then
-                           energy_per_cell(i+distrad+1,
-     &                     j+distrad+1,k+distrad+1) =
-     &                     (SN_energy - ke_from_p)
-     &                     /(dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
-                     else
-                        energy_per_cell(i+distrad+1,
-     &                  j+distrad+1,k+distrad+1) = 0._RKIND
-                     endif
-#ifdef FORTRAN_DEBUG
-                     write(7,*) 'lt chi_th'
-                     write(7,*) 'pSN,ke_from_p,SN_energy,therm:',
-     &                    pSN/SolarMass/1e5_RKIND, 
-     &                    ke_from_p,
-     &                    SN_energy,
-     &              energy_per_cell(i+distrad+1,j+distrad+1,k+distrad+1)
-     &                    *(dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
-#endif
+                     ke_from_p = 0.5_RKIND*(pSN/Nnbors)**2./dMswept
+                     energy_per_cell(i+distrad+1,
+     &                               j+distrad+1,
+     &                               k+distrad+1) =
+     &                  max(E_nb - ke_from_p, 0._RKIND)/ecode
                   else
 c        Unresolved, only momentum
-                     pSN = mom_mult * 3.e10_RKIND*SolarMass * 
-     &                        (nsn)**(16._RKIND/17._RKIND) * 
-     &                        (n_avg)**(-2._RKIND/17._RKIND) * 
-     &                        (Z_floor)**(-0.14_RKIND)
+                     pSN = mom_mult * pSN_term
 c        ... unless mom_mult = 0, to mimic thermal-only for testing
                      if (mom_mult .eq. 0._RKIND) then
                         energy_per_cell(i+distrad+1,
-     &                    j+distrad+1,k+distrad+1) = SN_energy 
-     &                    /(dunits*(dx*x1)**3._RKIND*vunits**2._RKIND)
+     &                    j+distrad+1,k+distrad+1) = E_nb/ecode
                      else
                         energy_per_cell(i+distrad+1,
      &                    j+distrad+1,k+distrad+1) = 0._RKIND
                      endif
-#ifdef FORTRAN_DEBUG
-                     write(7,*) 'gt chi_th, pSN:',
-     &                        pSN/SolarMass/1e5_RKIND
-#endif
                   endif
 c              pSN has units of cgs-mass*cgs-velocity, want it to have units of code-mass*code-velocity/code-volume
 c              conversion of mass from code units is (dunits*(dx*x1)**3._RKIND) (density times volume)
-                     pSN = pSN/(dunits*(dx*x1)**3._RKIND)/vunits/Nnbors
+                  pSN = pSN/(dunits*cell_vol)/vunits/Nnbors
 c              dunits = cgs-density/code-density = cgs-mass*code-volume/(cgs-volume*code-mass)
 c              x1^3 = cgs-volume/code-volume
 c              vunits = cgs-velocity/code-velocity
@@ -1792,20 +1713,12 @@ c              pSN = code-mass*code-velocity/code-volume
 c              pSN now has units code-mass*code-velocity/code-volume
 c              So pSN is actually in the right units after all!
 c
-c        If cell is in center of cube, no momentum or energy.
-c
-                     dist = i**2_IKIND + j**2_IKIND + k**2_IKIND
-                     if (dist .eq. 0_IKIND) then
-                        pSN = 0._RKIND
-                        energy_per_cell(i+distrad+1,
-     &                  j+distrad+1,k+distrad+1) = 0._RKIND
-                     endif
                   mom_per_cell(i+distrad+1,j+distrad+1,k+distrad+1)=pSN
 c
-                  endif
-               enddo
+               endif
             enddo
-        enddo
+         enddo
+      enddo
 c
       return
       end
