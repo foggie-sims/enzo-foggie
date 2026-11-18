@@ -61,7 +61,7 @@ jobs:
         if: steps.restore-deps-comp.outputs.cache-hit != 'true'
         run: |
           conda install -y -c conda-forge \
-            cython numpy fastcache flake8 nose girder-client matplotlib pytest gitpython pip
+            cython numpy fastcache flake8 nose girder-client matplotlib pytest gitpython pip unyt==3.1.0
             pip install h5py yt-astro-analysis
 
       - name: Test compilation configurations
@@ -165,7 +165,7 @@ jobs:
         if: steps.restore-deps-test.outputs.cache-hit != 'true'
         run: |
           conda install -y -c conda-forge \
-            cython numpy fastcache flake8 nose girder-client matplotlib pytest gitpython pip 
+            cython numpy fastcache flake8 nose girder-client matplotlib pytest gitpython pip unyt==3.1.0
           cd ${HOME}/yt
           pip install .
           pip install h5py yt-astro-analysis
