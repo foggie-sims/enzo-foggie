@@ -917,7 +917,7 @@ c           wind momentum per cell will be normalized by mass in that cell
      &                        2_IKIND*distrad+1_IKIND,
      &                        distrad+1_IKIND, distrad+1_IKIND,
      &                        distrad+1_IKIND,
-     &                        0_IKIND, imulti_metals, idual,
+     &                        0_IKIND, imulti_metals, idual, itracksrc,
      &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        kick_cap, preSNmom,
      &                        mass_per_cell_w, mom_per_cell_w,
@@ -947,7 +947,7 @@ c     Now deposit the momentum, mass, and metals onto the actual grid.
 c
                call add_preSN_feedback(u, v, w, d, ge, te, metal,
      &                         nx, ny, nz, ic, jc, kc,
-     &                        imetal, imulti_metals, idual,
+     &                        imetal, imulti_metals, idual, itracksrc,
      &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        kick_cap, preSNmom,
      &                        mass_per_cell_w, mom_per_cell_w,
@@ -1053,7 +1053,7 @@ c
                metal_per_cell_w = pSNmetal_grid(ic,jc,kc)/distcells
                call add_preSN_feedback(u, v, w, d, ge, te, metal,
      &                         nx, ny, nz, ic, jc, kc,
-     &                        imetal, imulti_metals, idual,
+     &                        imetal, imulti_metals, idual, itracksrc,
      &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        kick_cap, preSNmom,
      &                        mass_per_cell_w, 0._RKIND,
@@ -1650,7 +1650,7 @@ c
       LOGIC_PREC inregion
       R_PREC    Nnbors, cell_vol, ecode, Mej, dMej, E_nb, frac_sn,
      &          E_ev51, den_cell, Z_cell, Zp, n_H, pSN_term, chi_th,
-     &          dMswept, chi, fe, pSN, ke_from_p, s_cap
+     &          dMswept, chi, fe, pSN, ke_from_p, s_cap, E_cell
       R_PREC    Xh
 
       Xh = 0.76_RKIND
@@ -2132,7 +2132,7 @@ c       Note that pu, pv, pw are momenta
 c
       subroutine add_preSN_feedback(pu, pv, pw, d, ge, te, metal,
      &                        nx, ny, nz, ic, jc, kc,
-     &                        imetal, imulti_metals, idual,
+     &                        imetal, imulti_metals, idual, itracksrc,
      &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        kick_cap, preSNmom,
      &                        mass_per_cell, mom_per_cell,
@@ -2146,7 +2146,8 @@ c
 c     Arguments
 c
       INTG_PREC nx, ny, nz, ic, jc, kc, idual, dist, distrad, diststep
-      INTG_PREC imetal, imulti_metals, kick_cap, preSNmom, useAGB
+      INTG_PREC imetal, imulti_metals, kick_cap, preSNmom, useAGB,
+      INTG_PREC itracksrc
       R_PREC    d(nx, ny, nz), metal(nx,ny,nz), ge(nx,ny,nz)
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz), te(nx,ny,nz)
       R_PREC    metalSNII(nx,ny,nz), metalSNIa(nx,ny,nz)
@@ -2163,18 +2164,23 @@ c
      &          delta_p, vel_kick, dratio, r
       R_PREC    pu_start, pu_deposit, pv_start, pv_deposit, pw_start,
      &          pw_deposit
-      R_PREC    p_res(3), m_res, f_res, pk
+      R_PREC    p_res(3), m_res, f_res, pk, m_nb, f_nb
 c
 c     First calculate total mass in region
       m_res = 0._RKIND
+      m_nb = 0._RKIND
       do k = -distrad, +distrad
          stepk = abs(k)
          do j = -distrad, +distrad
             stepj = stepk + abs(j)
             do i = -distrad, +distrad
                cellstep = stepj + abs(i)
-               if (cellstep .le. diststep)
-     &            m_res = m_res + d(ic+i,jc+j,kc+k) + mass_per_cell
+               if (cellstep .le. diststep) then
+                  dist = i**2_IKIND + j**2_IKIND + k**2_IKIND
+                  m_res = m_res + d(ic+i,jc+j,kc+k) + mass_per_cell
+                  if (dist .gt. 0_IKIND)
+     &               m_nb = m_nb + d(ic+i,jc+j,kc+k) + mass_per_cell
+               endif
             enddo
          enddo
       enddo
@@ -2200,7 +2206,7 @@ c
                   if (dist .gt. 0_IKIND) then
 c              normalize each cell's momentum by its mass relative to total
                      pk = mom_per_cell*(d(ic+i,jc+j,kc+k)
-     &                    + mass_per_cell)/m_res/sqrt(real(dist, RKIND))
+     &                    + mass_per_cell)/m_nb/sqrt(real(dist, RKIND))
                      p_res(1) = p_res(1) + real(i, RKIND)*pk
                      p_res(2) = p_res(2) + real(j, RKIND)*pk
                      p_res(3) = p_res(3) + real(k, RKIND)*pk
@@ -2238,11 +2244,12 @@ c                 r=1 avoids division by zero in that case.
                   endif
 c              Remove this cell's mass-weighted share of the bulk momentum
                   f_res = (d(ic+i,jc+j,kc+k) + delta_mass)/m_res
-                  delta_pu = real(i, RKIND)/r * mom_per_cell * f_res
+                  f_nb = (d(ic+i,jc+j,kc+k) + delta_mass)/m_nb
+                  delta_pu = real(i, RKIND)/r * mom_per_cell * f_nb
      &                       - f_res*p_res(1)
-                  delta_pv = real(j, RKIND)/r * mom_per_cell * f_res
+                  delta_pv = real(j, RKIND)/r * mom_per_cell * f_nb
      &                       - f_res*p_res(2)
-                  delta_pw = real(k, RKIND)/r * mom_per_cell * f_res
+                  delta_pw = real(k, RKIND)/r * mom_per_cell * f_nb
      &                       - f_res*p_res(3)
                   delta_p = (delta_pu**2._RKIND + delta_pv**2._RKIND + 
      &               delta_pw**2._RKIND)**(0.5_RKIND)
