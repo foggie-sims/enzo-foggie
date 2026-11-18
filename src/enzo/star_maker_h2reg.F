@@ -412,15 +412,13 @@ c     a star particle.
      $              dt / timeconstant )
                
                
-c     Calculate star mass (this is actually a density, since Enzo treats
-c     particle masses as densities)
+c     Calc star mass as a density; Enzo treats particles as densities)
                starmass =  gasfrac * d(i,j,k) 
                
-c     Calculate star mass in solar masses, which means multiplying
-c     'starmass' by the cell volume to get an actual mass, and then
-c     dividing by Msun. Only make a star particle if (a) this is greater
-c     than StarFormationMinimumMass or (b) StochasticStarFormation is
-c     ste and a random number is less than
+c     Calculate star mass in Msun by multiplying 'starmass' by the 
+c     cell volume and dividing by Msun. Only make a star particle if 
+c     (a) this is greater than StarFormationMinimumMass or 
+c     (b) StochasticStarFormation = 1 and a random number is less than
 c     starmass_in_Msun/StarFormationMinimumMass.
                
                starmass_in_Msun = starmass * m1
@@ -429,6 +427,17 @@ c     starmass_in_Msun/StarFormationMinimumMass.
      $              StarFormationMinimumMass) then
 
                   if (StochasticStarFormation .eq. 1) then
+
+c     A winning draw creates a particle of StarFormationMinimumMass,
+c     Tested before the draw so that a cell which cannot does not 
+c     consume a random variate.  The 0.9 ceiling is the one already 
+c     applied to gasfrac above; re-applying it here
+c     keeps the recomputed gasfrac below that ceiling by construction.
+                     if (StarFormationMinimumMass .gt.
+     $                    0.9_RKIND*d(i,j,k)*m1) then
+                        goto 10
+                     endif
+
                      call random_number(random)
                      critval = starmass_in_Msun / 
      $                    StarFormationMinimumMass
@@ -438,6 +447,10 @@ c     starmass_in_Msun/StarFormationMinimumMass.
                         
                      starmass_in_Msun = StarFormationMinimumMass
                      starmass = starmass_in_Msun / m1
+
+c     Enforce Mass conservation by updating gasfrac from the above. 
+                     gasfrac = starmass / d(i,j,k)
+
                      if (WriteStarLogFiles .eq. 1) then 
                          write(4,300) 'Star particle does not meet ',
      $                        'minimum mass threshold: M =', 
@@ -448,9 +461,8 @@ c     starmass_in_Msun/StarFormationMinimumMass.
  300                     format(a,a,1pe10.3,a,2(1pe10.3))
                      endif
                   else
-c                 impose the floor if SF if non-stochastic. 
-c                 promote particles StarFormationMinimumMass when 
-c                 they survive the random draw 
+c     Non-stochastic: StarFormationMinimumMass is a hard floor and a
+c     sub-minimum cell forms nothing.  
                      goto 10
                   endif
                endif
