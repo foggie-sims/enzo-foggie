@@ -207,8 +207,17 @@ int grid::CommunicationTransferParticles(grid* Grids[], int NumberOfGrids,
     int NumberOfNewParticles = EndIndex - StartIndex;
 
     TotalNumberOfParticles = NumberOfParticles + NumberOfNewParticles;
+    /* This test MUST be the exact logical complement of the keep-test the
+       copy loops below use, which is (ParticleMass[i] >= 0).  It used to be
+       (ParticleMass[i] == FLOAT_UNDEFINED), which is narrower: a particle
+       whose mass was negative but not exactly -99999 was not decremented
+       here -- so a slot was allocated for it -- yet was skipped by every
+       copy loop, leaving that slot holding raw heap bytes.  These arrays
+       come from plain new[], so nothing initialises them.  The grid was then
+       given NumberOfParticles = TotalNumberOfParticles and claimed particles
+       it had never written, causing crashes. */
     for (i = 0; i < NumberOfParticles; i++)
-      if (ParticleMass[i] == FLOAT_UNDEFINED)
+      if (!(ParticleMass[i] >= 0))
 	TotalNumberOfParticles--;
  
     /* Allocate space for the particles. */
