@@ -907,21 +907,22 @@ c
 c     Now add mass and momentum terms to local dummy fields
 c
                mass_per_cell_w = pSNmass_grid(ic,jc,kc)/distcells
+c           wind momentum per cell will be normalized by mass in that cell
                mom_per_cell_w = pSNmom_grid(ic,jc,kc)
-     &                              /(distcells-1_IKIND)
                metal_per_cell_w = pSNmetal_grid(ic,jc,kc)/distcells
+               e_res = 0._RKIND
                call add_preSN_feedback(u1, v1, w1, d1, ge1, te1, metal1,
      &                        2_IKIND*distrad+1_IKIND,
      &                        2_IKIND*distrad+1_IKIND,
      &                        2_IKIND*distrad+1_IKIND,
      &                        distrad+1_IKIND, distrad+1_IKIND,
      &                        distrad+1_IKIND,
-     &                        imetal, imulti_metals, idual,
-     &                        metal1, metal1, useAGB, metal1,
+     &                        0_IKIND, imulti_metals, idual,
+     &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        kick_cap, preSNmom,
      &                        mass_per_cell_w, mom_per_cell_w,
      &                        metal_per_cell_w, dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+     &                        distrad, diststep, e_res)
 c
 c     Calculate mass and energy in dummy fields
 c
@@ -952,7 +953,7 @@ c
      &                        mass_per_cell_w, mom_per_cell_w,
      &                        metal_per_cell_w,
      &                        dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+     &                        distrad, diststep, e_res)
 c
 c     Calculate the mass and energy in the affected region again.
 c
@@ -976,18 +977,32 @@ c
                add_therm_w = 0._RKIND
                kin_energy_inj_w = kin_energy_end_w - kin_energy_b_wind
                if (kin_energy_inj_w .lt. kin_energy_dummy_w) then
-                  add_therm_w = (kin_energy_dummy_w-kin_energy_inj_w)
-                  te(ic,jc,kc) = te(ic,jc,kc) + 
-     &                           add_therm_w/d(ic,jc,kc)
-                  if (idual .eq. 1_IKIND) ge(ic,jc,kc) = ge(ic,jc,kc) + 
-     &                           add_therm_w/d(ic,jc,kc)
+c        If Delta KE on the grid goes down because of the wind,
+c        that means that *all* kinetic energy that was injected has been
+c        cancelled, so all of it should go into heat
+                  if (kin_energy_inj_w .le. 0._RKIND) then
+                     add_therm_w = kin_energy_dummy_w
+c        Otherwise, if Delta KE goes up but just not by enough, inject
+c        the missing component as heat
+                  else
+                     add_therm_w = (kin_energy_dummy_w-kin_energy_inj_w)
+                  endif
 #ifdef FORTRAN_DEBUG
                   write(7,*) "canceled wind mom injected as thermal:",
      &                  add_therm_w*dunits*
      &                  vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
 #endif
                endif
-
+c
+c           Removing the residual momentum to avoid center of mass
+c           drift removes kinetic energy, so add that back in as heat
+               add_therm_w = add_therm_w + e_res
+c           Update energy fields to deposit cancellation + residual heat
+c           into only the host cell
+               te(ic,jc,kc) = te(ic,jc,kc) + 
+     &                           add_therm_w/d(ic,jc,kc)
+               if (idual .eq. 1_IKIND) ge(ic,jc,kc) = ge(ic,jc,kc) + 
+     &                           add_therm_w/d(ic,jc,kc)
 c
 c           Convert momenta back to velocities and transform back to lab frame
 c
@@ -1044,7 +1059,7 @@ c
      &                        mass_per_cell_w, 0._RKIND,
      &                        metal_per_cell_w,
      &                        dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+     &                        distrad, diststep, e_res)
 #ifdef FORTRAN_DEBUG
 c     Sum mass, energy, and momentum after. Note mom and KE calculations
 c     will be wrong here because velocities haven't been converted to
@@ -1237,7 +1252,7 @@ c
      &                        0_IKIND, imulti_metals, idual,
      &                        itracksrc,
      &                        0._RKIND, 0._RKIND, 0._RKIND,
-     &                        metal1, metal1, useAGB, metal1,
+     &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        mass_per_cell, mom_per_cell,
      &                        dx, x1, dunits, vunits,
      &                        distrad, diststep, e_res)
@@ -2090,7 +2105,7 @@ c                 Put same cap on other metal fields
                      if (metalSNIa(ic+i,jc+j,kc+k) .gt. 0.95_RKIND)
      &                 metalSNIa(ic+i,jc+j,kc+k) = 0.95_RKIND
 c                 Dilute AGB metal field by the amount of non-AGB mass
-                     if (useAGB) metalAGB(ic+i,jc+j,kc+k) = 
+                     if (useAGB .eq. 1_IKIND) metalAGB(ic+i,jc+j,kc+k) = 
      &                 (metalAGB(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k))
      &                 / (d(ic+i,jc+j,kc+k) + delta_mass)
                   endif
@@ -2123,7 +2138,7 @@ c
      &                        mass_per_cell, mom_per_cell,
      &                        metal_per_cell,
      &                        dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+     &                        distrad, diststep, e_res)
 c
       implicit none
 #include "fortran_types.def"
@@ -2136,7 +2151,7 @@ c
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz), te(nx,ny,nz)
       R_PREC    metalSNII(nx,ny,nz), metalSNIa(nx,ny,nz)
       R_PREC    metalAGB(nx,ny,nz)
-      R_PREC    mass_per_cell, mom_per_cell
+      R_PREC    mass_per_cell, mom_per_cell, e_res
       R_PREC    metal_per_cell
       R_PREC    dunits, x1, vunits, dx
       R_PREC    p_start, p_end
@@ -2148,6 +2163,56 @@ c
      &          delta_p, vel_kick, dratio, r
       R_PREC    pu_start, pu_deposit, pv_start, pv_deposit, pw_start,
      &          pw_deposit
+      R_PREC    p_res(3), m_res, f_res, pk
+c
+c     First calculate total mass in region
+      m_res = 0._RKIND
+      do k = -distrad, +distrad
+         stepk = abs(k)
+         do j = -distrad, +distrad
+            stepj = stepk + abs(j)
+            do i = -distrad, +distrad
+               cellstep = stepj + abs(i)
+               if (cellstep .le. diststep)
+     &            m_res = m_res + d(ic+i,jc+j,kc+k) + mass_per_cell
+            enddo
+         enddo
+      enddo
+c
+c     Calculate the net momentum all the radial kicks will deposit.
+c     This will need to be subtracted off of every cell in the feedback
+c     zone to ensure the net momentum of the region stays zero (we
+c     don't want the whole region to drift).
+c     The host cell gets no radial kick but its mass is part of the system
+c     whose center of mass must stay at rest in the star frame.
+c
+      p_res(1) = 0._RKIND
+      p_res(2) = 0._RKIND
+      p_res(3) = 0._RKIND
+      do k = -distrad, +distrad
+         stepk = abs(k)
+         do j = -distrad, +distrad
+            stepj = stepk + abs(j)
+            do i = -distrad, +distrad
+               cellstep = stepj + abs(i)
+               if (cellstep .le. diststep) then
+                  dist = i**2_IKIND + j**2_IKIND + k**2_IKIND
+                  if (dist .gt. 0_IKIND) then
+c              normalize each cell's momentum by its mass relative to total
+                     pk = mom_per_cell*(d(ic+i,jc+j,kc+k)
+     &                    + mass_per_cell)/m_res/sqrt(real(dist, RKIND))
+                     p_res(1) = p_res(1) + real(i, RKIND)*pk
+                     p_res(2) = p_res(2) + real(j, RKIND)*pk
+                     p_res(3) = p_res(3) + real(k, RKIND)*pk
+                  endif
+               endif
+            enddo
+         enddo
+      enddo
+c     Removing a bulk momentum drift would remove some kinetic energy
+c     that should be deposited, so sum up how much and deposit it
+c     as thermal energy later
+      e_res = 0.5_RKIND*(p_res(1)**2 + p_res(2)**2 + p_res(3)**2)/m_res
 c
 c     Loop cells in particle-frame
 c
@@ -2171,33 +2236,16 @@ c                 r=1 avoids division by zero in that case.
                   else
                      r = sqrt(real(dist, RKIND))
                   endif
-c                 delta_mass has units of mass/volume
-                  delta_pu = real(i, RKIND) / r * mom_per_cell
-                  delta_pv = real(j, RKIND) / r * mom_per_cell
-                  delta_pw = real(k, RKIND) / r * mom_per_cell
+c              Remove this cell's mass-weighted share of the bulk momentum
+                  f_res = (d(ic+i,jc+j,kc+k) + delta_mass)/m_res
+                  delta_pu = real(i, RKIND)/r * mom_per_cell * f_res
+     &                       - f_res*p_res(1)
+                  delta_pv = real(j, RKIND)/r * mom_per_cell * f_res
+     &                       - f_res*p_res(2)
+                  delta_pw = real(k, RKIND)/r * mom_per_cell * f_res
+     &                       - f_res*p_res(3)
                   delta_p = (delta_pu**2._RKIND + delta_pv**2._RKIND + 
      &               delta_pw**2._RKIND)**(0.5_RKIND)
-c                 If delta_p leads to a velocity kick of more than
-c                 1000 km/s, limit to 1000
-                  vel_kick = delta_p/(d(ic+i,jc+j,kc+k) + delta_mass)*
-     &                    vunits/1e5_RKIND
-                  if (kick_cap .eq. 1_IKIND) then
-                     if (vel_kick .gt. 1000._RKIND) then
-                        delta_p = 1000._RKIND/(vunits/1e5_RKIND)*
-     &                   (d(ic+i,jc+j,kc+k) + delta_mass)
-                        delta_pu = real(i, RKIND) / r * delta_p
-                        delta_pv = real(j, RKIND) / r * delta_p
-                        delta_pw = real(k, RKIND) / r * delta_p
-                     endif
-                  endif
-#ifdef FORTRAN_DEBUG
-                  write(7,*) 'vel_kick, delta_p, delta_v:',
-     &              vel_kick,
-     &              delta_p*dx**3._RKIND*
-     &              (dunits*x1**3._RKIND)*vunits/SolarMass/1e5_RKIND,
-     &              delta_p/(d(ic+i,jc+j,kc+k) + delta_mass)*
-     &                    vunits/1e5_RKIND
-#endif
 c
 c              delta_p's have units of mass*velocity/volume
 c              delta_therm has units of mass*velocity^2/volume
@@ -2272,7 +2320,7 @@ c                 Dilute other metal fields by the mass added
                      metalSNIa(ic+i,jc+j,kc+k) = 
      &                 (metalSNIa(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k))
      &                 / (d(ic+i,jc+j,kc+k) + delta_mass)
-                     if (useAGB) metalAGB(ic+i,jc+j,kc+k) = 
+                     if (useAGB .eq. 1_IKIND) metalAGB(ic+i,jc+j,kc+k) = 
      &                 (metalAGB(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k))
      &                 / (d(ic+i,jc+j,kc+k) + delta_mass)
                   endif
