@@ -169,7 +169,7 @@ c
      &     delta_ke, ke_injected, ke_after, kin_energy_inj,
      &     nsn, nsn_ii, nsn_ia, nsn_sto, nsn_ii_sto, nsn_ia_sto,
      &     mass_end, kin_energy_end, mom_start, mom_end, 
-     &     kin_energy_dummy, e_cap, E_clip
+     &     kin_energy_dummy, e_cap, E_clip, e_res
       R_PREC xfcshift, yfcshift, zfcshift, xfc, yfc, zfc,
      &     xpos, ypos, zpos
       R_PREC ke_before(2*distrad+1,2*distrad+1,2*distrad+1)
@@ -1240,7 +1240,7 @@ c
      &                        metal1, metal1, useAGB, metal1,
      &                        mass_per_cell, mom_per_cell,
      &                        dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+     &                        distrad, diststep, e_res)
 c
 c     Calculate mass and energy in dummy fields
 c
@@ -1276,7 +1276,7 @@ c
      &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        mass_per_cell, mom_per_cell,
      &                        dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+     &                        distrad, diststep, e_res)
 c
 c     Calculate the mass and energy in the affected region again.
 c
@@ -1299,7 +1299,16 @@ c     how much energy to inject as thermal.
 c
                kin_energy_inj = kin_energy_end - kin_energy_before
                if (kin_energy_inj .lt. kin_energy_dummy) then
-                  add_therm = (kin_energy_dummy-kin_energy_inj)
+c        If Delta KE on the grid goes down because of the explosion,
+c        that means that *all* kinetic energy that was injected has been
+c        cancelled, so all of it should go into heat
+                  if (kin_energy_inj .le. 0._RKIND) then
+                     add_therm = kin_energy_dummy
+c        Otherwise, if Delta KE goes up but just not by enough, inject
+c        the missing component as heat
+                  else
+                     add_therm = kin_energy_dummy - kin_energy_inj
+                  endif
 #ifdef FORTRAN_DEBUG
                   write(7,*) "leftover energy injected as thermal:",
      &                  add_therm*dunits*
@@ -1309,6 +1318,10 @@ c
                else
                   add_therm = 0._RKIND
                endif ! end lost kinetic -> thermal energy injection
+c
+c           Removing the residual momentum to avoid center of mass
+c           drift removes kinetic energy, so add that back in as heat
+               add_therm = add_therm + e_res
 c
 c           Convert momenta back to velocities and transform back to lab frame
 c
@@ -1326,7 +1339,7 @@ c
                ke_sum = 0._RKIND
                mom_sum = 0._RKIND
                mass_sum = 0._RKIND
-               delta_ge = add_therm/distcells
+               delta_ge = add_therm/mass_end
                do k = -distrad, +distrad
                   stepk = abs(k)
                   do j = -distrad, +distrad
@@ -1336,12 +1349,11 @@ c
                         if (cellstep .le. diststep) then
                         add_ge = delta_ge +
      &                     energy_per_cell(i+distrad+1,
-     &                     j+distrad+1,k+distrad+1)
-                        te(ic+i,jc+j,kc+k) = te(ic+i,jc+j,kc+k) +
-     &                    add_ge/d(ic+i,jc+j,kc+k)
+     &                     j+distrad+1,k+distrad+1)/d(ic+i,jc+j,kc+k)
+                        te(ic+i,jc+j,kc+k) = te(ic+i,jc+j,kc+k) + add_ge
                         if (idual .eq. 1_IKIND) then
                            ge(ic+i,jc+j,kc+k) = ge(ic+i,jc+j,kc+k) +
-     &                       add_ge/d(ic+i,jc+j,kc+k)
+     &                       add_ge
                            ge_sum = ge_sum +
      &                       ge(ic+i,jc+j,kc+k)*d(ic+i,jc+j,kc+k)
                         endif
@@ -1429,7 +1441,7 @@ c
      &                    agbmetal_grid(ic,jc,kc))
      &                    / (d(ic,jc,kc) + agbmass_grid(ic,jc,kc))
 c              Dilute other metal fields by the amount of mass added
-c              by AGB winds so they don't gain from AGB
+c              by AGB winds so they don't gain metals from AGB
                         metalSNII(ic,jc,kc) =
      &                        (metalSNII(ic,jc,kc)*d(ic,jc,kc))
      &                        / (d(ic,jc,kc) + agbmass_grid(ic,jc,kc))
@@ -1902,7 +1914,7 @@ c
      &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        mass_per_cell, mom_per_cell,
      &                        dx, x1, dunits, vunits,
-     &                        distrad, diststep)
+     &                        distrad, diststep, e_res)
 c
       implicit none
 #include "fortran_types.def"
@@ -1913,7 +1925,7 @@ c
       INTG_PREC imetal, imulti_metals, useAGB
       R_PREC    d(nx, ny, nz), metal(nx,ny,nz), ge(nx,ny,nz)
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz), te(nx,ny,nz)
-      R_PREC    mass_per_cell
+      R_PREC    mass_per_cell, e_res
       R_PREC    mom_per_cell(2*distrad+1,2*distrad+1,2*distrad+1)
       R_PREC    mzeject, mzeject_ia, mzeject_ii
       R_PREC    metalSNII(nx,ny,nz), metalSNIa(nx,ny,nz)
@@ -1929,6 +1941,44 @@ c
      &          delta_p, vel_kick, dratio, r
       R_PREC    pu_start, pu_deposit, pv_start, pv_deposit, pw_start,
      &          pw_deposit
+      R_PREC    p_res(3), m_res, f_res, pk
+c
+c     Calculate the net momentum all the radial kicks will deposit.
+c     This will need to be subtracted off of every cell in the feedback
+c     zone to ensure the net momentum of the region stays zero (we
+c     don't want the whole region to drift).
+c     The host cell gets no radial kick but its mass is part of the system
+c     whose center of mass must stay at rest in the star frame.
+c
+      p_res(1) = 0._RKIND
+      p_res(2) = 0._RKIND
+      p_res(3) = 0._RKIND
+      m_res = 0._RKIND
+      do k = -distrad, +distrad
+         stepk = abs(k)
+         do j = -distrad, +distrad
+            stepj = stepk + abs(j)
+            do i = -distrad, +distrad
+               cellstep = stepj + abs(i)
+               if (cellstep .le. diststep) then
+                  m_res = m_res + d(ic+i,jc+j,kc+k) + mass_per_cell
+                  dist = i**2_IKIND + j**2_IKIND + k**2_IKIND
+                  if (dist .gt. 0_IKIND) then
+                     pk = mom_per_cell(i+distrad+1,j+distrad+1,
+     &                                 k+distrad+1)/
+     &                    sqrt(real(dist, RKIND))
+                     p_res(1) = p_res(1) + real(i, RKIND)*pk
+                     p_res(2) = p_res(2) + real(j, RKIND)*pk
+                     p_res(3) = p_res(3) + real(k, RKIND)*pk
+                  endif
+               endif
+            enddo
+         enddo
+      enddo
+c     Removing a bulk momentum drift would remove some kinetic energy
+c     that should be deposited, so sum up how much and deposit it
+c     as thermal energy later
+      e_res = 0.5_RKIND*(p_res(1)**2 + p_res(2)**2 + p_res(3)**2)/m_res
 c
 c     Loop cells in particle-frame
 c
@@ -1952,12 +2002,17 @@ c              r=1 avoids division by zero in that case.
                endif
                delta_mass = mass_per_cell
 c              delta_mass has units of mass/volume
+c              Remove this cell's mass-weighted share of the bulk momentum
+               f_res = (d(ic+i,jc+j,kc+k) + delta_mass)/m_res
                delta_pu = real(i, RKIND)/r *
      &            mom_per_cell(i+distrad+1,j+distrad+1,k+distrad+1)
+     &            - f_res*p_res(1)
                delta_pv = real(j, RKIND)/r *
      &            mom_per_cell(i+distrad+1,j+distrad+1,k+distrad+1)
+     &            - f_res*p_res(2)
                delta_pw = real(k, RKIND)/r *
      &            mom_per_cell(i+distrad+1,j+distrad+1,k+distrad+1)
+     &            - f_res*p_res(3)
                delta_p = (delta_pu**2._RKIND + delta_pv**2._RKIND + 
      &            delta_pw**2._RKIND)**(0.5_RKIND)
 #ifdef FORTRAN_DEBUG
