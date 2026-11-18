@@ -178,7 +178,7 @@ c
       R_PREC energy_per_cell1(2*distrad+1,2*distrad+1,2*distrad+1)
       R_PREC Z_avg, n_avg, Z_floor,
      &	  realmass, mu_cell, add_therm
-      R_PREC n_cell, Z_cell
+      R_PREC n_cell, Z_cell, f_ent
       R_PREC te_sum, ke_sum, ge_sum, mom_sum, mass_sum,
      &     mass_term, vel_mag, delta_ge, add_ge
       R_PREC mz_eject, mzeject_ii, mzeject_ia
@@ -972,20 +972,17 @@ c
 c
 c     If KE injected onto grid is less than what it was in the dummy
 c     (because of momentum cancellation due to non-static gas), add
-c     the remaining energy as thermal into the host cell.
+c     the remaining energy as thermal into the host cell. add_therm_w can be greater
+c     than kin_energy_dummy_w in the case where the wind slows inflowing
+c     gas, because both the wind's energy and the energy of the inflow
+c     are converted into heat.
 c 
                add_therm_w = 0._RKIND
                kin_energy_inj_w = kin_energy_end_w - kin_energy_b_wind
                if (kin_energy_inj_w .lt. kin_energy_dummy_w) then
-c        If Delta KE on the grid goes down because of the wind,
-c        that means that *all* kinetic energy that was injected has been
-c        cancelled, so all of it should go into heat
-                  if (kin_energy_inj_w .le. 0._RKIND) then
-                     add_therm_w = kin_energy_dummy_w
-c        Otherwise, if Delta KE goes up but just not by enough, inject
-c        the missing component as heat
+                  add_therm_w = kin_energy_dummy_w - kin_energy_inj_w
                   else
-                     add_therm_w = (kin_energy_dummy_w-kin_energy_inj_w)
+                     add_therm_w = 0._RKIND
                   endif
 #ifdef FORTRAN_DEBUG
                   write(7,*) "canceled wind mom injected as thermal:",
@@ -1087,10 +1084,18 @@ c
 c     Before doing any feedback, move gas in host cell into the rest
 c     of the injection region. This displacement is necessary for the
 c     calculation of swept-up mass to be right when determining how
-c     much momentum to inject.
+c     much momentum to inject. Entrain only for discrete SN events,
+c     since continuous injection will slowly redistribute gas through
+c     the hydro solver and doesn't require an explicit distribution.
+               f_ent = 0._RKIND
+               if (use_tabfbk .eq. 1_IKIND) then
+                  if (stochastic .eq. 1_IKIND) f_ent = 1._RKIND
+               else
+                  if (exptime_in .ge. 0._RKIND) f_ent = 1._RKIND
+               endif
                call entrain_host_gas(d, u, v, w, te, ge, metal,
      &                              metalSNII, metalSNIa, metalAGB,
-     &                              nx, ny, nz, ic, jc, kc, 1._RKIND,
+     &                              nx, ny, nz, ic, jc, kc, f_ent,
      &                              idual, imetal, itracksrc, useAGB,
      &                              distrad, diststep, distcells,
      &                              0_IKIND, 0._RKIND)
@@ -1310,20 +1315,14 @@ c
 c
 c     If KE injected onto grid is less than what it was in the dummy
 c     (because of momentum cancellation due to non-static gas), calculate
-c     how much energy to inject as thermal.
+c     how much energy to inject as thermal. add_therm can be greater
+c     than kin_energy_dummy in the case where an explosion slows inflowing
+c     gas, because both the explosion's energy and the energy of the inflow
+c     are converted into heat.
 c
                kin_energy_inj = kin_energy_end - kin_energy_before
                if (kin_energy_inj .lt. kin_energy_dummy) then
-c        If Delta KE on the grid goes down because of the explosion,
-c        that means that *all* kinetic energy that was injected has been
-c        cancelled, so all of it should go into heat
-                  if (kin_energy_inj .le. 0._RKIND) then
-                     add_therm = kin_energy_dummy
-c        Otherwise, if Delta KE goes up but just not by enough, inject
-c        the missing component as heat
-                  else
-                     add_therm = kin_energy_dummy - kin_energy_inj
-                  endif
+                  add_therm = kin_energy_dummy - kin_energy_inj
 #ifdef FORTRAN_DEBUG
                   write(7,*) "leftover energy injected as thermal:",
      &                  add_therm*dunits*
