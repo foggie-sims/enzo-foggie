@@ -1087,8 +1087,8 @@ c
                energy_per_cell = 0._RKIND
                call get_mom_per_cell(d, metal, imetal, mass_per_cell,
      &                  distcells, mom_per_cell, energy_per_cell,
-     &                  nsn_grid(ic,jc,kc), energy, dunits, vunits,
-     &                  nx, ny, nz, ic, jc, kc,
+     &                  nsn_grid(ic,jc,kc), energy, dx, x1, dunits,
+     &                  vunits, nx, ny, nz, ic, jc, kc,
      &                  mom_mult, distrad, diststep)
 c           mom_per_cell has units of mass*velocity/volume
 #ifdef FORTRAN_DEBUG
@@ -1659,6 +1659,10 @@ c        Kimm & Cen (2014) eq. A4
                   pSN_term = frac_sn*3.e10_RKIND*SolarMass*
      &                     E_ev51**(16._RKIND/17._RKIND)*
      &                     n_H**(-2._RKIND/17._RKIND)*Zp**(-0.14_RKIND)
+c        The energy-conserving and momentum-conserving branches meet
+c        at chi_th, calculated by setting pSN_term = pSN defined below.
+c        When chi = chi_th, fe = 2/3, and the additional factor of 2
+c        in pSN below means solving for chi_th gives a factor of 0.75
                   chi_th = 0.75_RKIND*pSN_term**2/(Mej*E_tot)
 c        chi_th can get very small if a small fraction of SNe are going
 c        off (in continuous case) so floor it just above 1
