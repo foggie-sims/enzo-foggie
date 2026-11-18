@@ -169,7 +169,7 @@ c
      &     delta_ke, ke_injected, ke_after, kin_energy_inj,
      &     nsn, nsn_ii, nsn_ia, nsn_sto, nsn_ii_sto, nsn_ia_sto,
      &     mass_end, kin_energy_end, mom_start, mom_end, 
-     &     kin_energy_dummy
+     &     kin_energy_dummy, e_cap, E_clip
       R_PREC xfcshift, yfcshift, zfcshift, xfc, yfc, zfc,
      &     xpos, ypos, zpos
       R_PREC ke_before(2*distrad+1,2*distrad+1,2*distrad+1)
@@ -278,6 +278,13 @@ c
             enddo
          enddo
       enddo
+c
+c     Define energy cap if kick_cap is turned on
+c
+c     Specific-energy cap: (2000 km/s)^2/2 = 2e16 erg/g. If all
+c     thermal, this is T ~ 1e8 K, so c_s stays below ~2000 km/s too
+      e_cap = 0._RKIND
+      if (kick_cap .eq. 1_IKIND) e_cap = 0.5_RKIND*(2.e8_RKIND)**2
 c
 c-----------------------------------------------------------------------
 c
@@ -1085,11 +1092,12 @@ c
                mass_per_cell = meject_grid(ic,jc,kc)/distcells
                mom_per_cell = 0._RKIND
                energy_per_cell = 0._RKIND
+               E_clip = 0._RKIND
                call get_mom_per_cell(d, metal, imetal, mass_per_cell,
      &                  distcells, mom_per_cell, energy_per_cell,
      &                  nsn_grid(ic,jc,kc), energy, dx, x1, dunits,
      &                  vunits, nx, ny, nz, ic, jc, kc,
-     &                  mom_mult, distrad, diststep)
+     &                  mom_mult, distrad, diststep, e_cap, E_clip)
 c           mom_per_cell has units of mass*velocity/volume
 #ifdef FORTRAN_DEBUG
                write(7,*) 'energy_per_cell', energy_per_cell
@@ -1227,7 +1235,7 @@ c
      &                        distrad+1_IKIND, distrad+1_IKIND,
      &                        distrad+1_IKIND,
      &                        0_IKIND, imulti_metals, idual,
-     &                        itracksrc, kick_cap,
+     &                        itracksrc,
      &                        0._RKIND, 0._RKIND, 0._RKIND,
      &                        metal1, metal1, useAGB, metal1,
      &                        mass_per_cell, mom_per_cell,
@@ -1261,7 +1269,7 @@ c
                call add_feedback_mech(u, v, w, d, ge, te, metal,
      &                         nx, ny, nz, ic, jc, kc,
      &                        imetal, imulti_metals, idual,
-     &                        itracksrc, kick_cap,
+     &                        itracksrc,
      &                        metal_per_cell,
      &                        metal_ia_per_cell,
      &                        metal_ii_per_cell,
@@ -1594,7 +1602,7 @@ c
      &               distcells, mom_per_cell, energy_per_cell,
      &               nsn, E_tot, dx, x1, dunits, vunits,
      &               nx, ny, nz, ic, jc, kc,
-     &               mom_mult, distrad, diststep)
+     &               mom_mult, distrad, diststep, e_cap, E_clip)
 c
       implicit none
 #include "fortran_types.def"
@@ -1607,7 +1615,7 @@ c
       R_PREC    mom_per_cell(2*distrad+1, 2*distrad+1, 2*distrad+1)
       R_PREC    energy_per_cell(2*distrad+1, 2*distrad+1, 2*distrad+1)
       R_PREC    mass_per_cell, nsn, E_tot, x1, dunits, vunits
-      R_PREC    mom_mult
+      R_PREC    mom_mult, e_cap, E_clip
 c
 c     Locals
 c
@@ -1615,7 +1623,7 @@ c
       LOGIC_PREC inregion
       R_PREC    Nnbors, cell_vol, ecode, Mej, dMej, E_nb, frac_sn,
      &          E_ev51, den_cell, Z_cell, Zp, n_H, pSN_term, chi_th,
-     &          dMswept, chi, fe, pSN, ke_from_p
+     &          dMswept, chi, fe, pSN, ke_from_p, s_cap
       R_PREC    Xh
 
       Xh = 0.76_RKIND
@@ -1639,6 +1647,13 @@ c
                cellstep = stepj + abs(i)
                dist = i**2_IKIND + j**2_IKIND + k**2_IKIND
                if (cellstep .le. diststep .and. dist .gt. 0._IKIND) then
+c
+c        If not using momentum at all through mom_mult = 0, set energy
+c        per cell as simply split between all cells in injection zone
+                  if (mom_mult .eq. 0._RKIND) then
+                     energy_per_cell(i+distrad+1,
+     &                    j+distrad+1,k+distrad+1) = E_nb/ecode
+                  else
 c
 c       Compute the mass fraction of swept-up to ejected mass.
 c
@@ -1672,8 +1687,8 @@ c        Swept-up mass is the sum of the mass this cell already had,
 c        which includes already entrained mass displaced from the
 c        supernova host cell, and its share of the ejecta from the SN
 c
-               dMswept = den_cell*cell_vol + dMej
-               chi = dMswept/dMej
+                  dMswept = den_cell*cell_vol + dMej
+                  chi = dMswept/dMej
 c
 c        Compare chi to threshold and set momentum injection.
 c
@@ -1694,31 +1709,44 @@ c        and inject thermal into this cell equal to total - kinetic
                   else
 c        Unresolved, only momentum
                      pSN = mom_mult * pSN_term
-c        ... unless mom_mult = 0, to mimic thermal-only for testing
-                     if (mom_mult .eq. 0._RKIND) then
-                        energy_per_cell(i+distrad+1,
-     &                    j+distrad+1,k+distrad+1) = E_nb/ecode
-                     else
-                        energy_per_cell(i+distrad+1,
-     &                    j+distrad+1,k+distrad+1) = 0._RKIND
+                  endif                     
+c                 
+c        Cap the specific energy deposited in this neighbor (kinetic +
+c        thermal) at e_cap [erg/g], which bounds both the kick speed and
+c        the post-SN sound speed. Momentum scales by sqrt(s) and heat by
+c        s, so the kinetic/thermal split of this cell is unchanged.
+c        Clipped energy is discarded and tallied in E_clip [erg].
+                  if (e_cap .gt. 0._RKIND) then
+                     E_cell = 0.5_RKIND*(pSN/Nnbors)**2/dMswept +
+     &                  energy_per_cell(i+distrad+1,j+distrad+1,
+     &                                  k+distrad+1)*ecode
+                     if (E_cell .gt. e_cap*dMswept) then
+                        s_cap = e_cap*dMswept/E_cell
+                        pSN = pSN*sqrt(s_cap)
+                        energy_per_cell(i+distrad+1,j+distrad+1,
+     &                     k+distrad+1) = s_cap*
+     &                     energy_per_cell(i+distrad+1,j+distrad+1,
+     &                                     k+distrad+1)
+                        E_clip = E_clip + (1._RKIND - s_cap)*E_cell
                      endif
                   endif
-c              pSN has units of cgs-mass*cgs-velocity, want it to have units of code-mass*code-velocity/code-volume
-c              conversion of mass from code units is (dunits*(dx*x1)**3._RKIND) (density times volume)
+c        pSN has units of cgs-mass*cgs-velocity, want it to have units of code-mass*code-velocity/code-volume
+c        conversion of mass from code units is (dunits*(dx*x1)**3._RKIND) (density times volume)
                   pSN = pSN/(dunits*cell_vol)/vunits/Nnbors
-c              dunits = cgs-density/code-density = cgs-mass*code-volume/(cgs-volume*code-mass)
-c              x1^3 = cgs-volume/code-volume
-c              vunits = cgs-velocity/code-velocity
-c              dx^3 = code-volume
-c              dunits*(dx*x1)**3._RKIND = cgs-mass*code-volume/(cgs-volume*code-mass)*code-volume*cgs-volume/code-volume
-c              dunits*(dx*x1)**3._RKIND = cgs-mass*code-volume/code-mass
-c              pSN = cgs-mass*cgs-velocity/(cgs-mass*code-volume/code-mass)/(cgs-velocity/code-velocity)
-c              pSN = code-mass*code-velocity/code-volume
-c              pSN now has units code-mass*code-velocity/code-volume
-c              So pSN is actually in the right units after all!
+c        dunits = cgs-density/code-density = cgs-mass*code-volume/(cgs-volume*code-mass)
+c        x1^3 = cgs-volume/code-volume
+c        vunits = cgs-velocity/code-velocity
+c        dx^3 = code-volume
+c        dunits*(dx*x1)**3._RKIND = cgs-mass*code-volume/(cgs-volume*code-mass)*code-volume*cgs-volume/code-volume
+c        dunits*(dx*x1)**3._RKIND = cgs-mass*code-volume/code-mass
+c        pSN = cgs-mass*cgs-velocity/(cgs-mass*code-volume/code-mass)/(cgs-velocity/code-velocity)
+c        pSN = code-mass*code-velocity/code-volume
+c        pSN now has units code-mass*code-velocity/code-volume
+c        So pSN is actually in the right units after all!
 c
                   mom_per_cell(i+distrad+1,j+distrad+1,k+distrad+1)=pSN
 c
+                  endif
                endif
             enddo
          enddo
@@ -1869,7 +1897,7 @@ c
       subroutine add_feedback_mech(pu, pv, pw, d, ge, te, metal,
      &                        nx, ny, nz, ic, jc, kc,
      &                        imetal, imulti_metals, idual,
-     &                        itracksrc, kick_cap,
+     &                        itracksrc,
      &                        mzeject, mzeject_ia, mzeject_ii,
      &                        metalSNII, metalSNIa, useAGB, metalAGB,
      &                        mass_per_cell, mom_per_cell,
@@ -1882,7 +1910,7 @@ c
 c     Arguments
 c
       INTG_PREC nx, ny, nz, ic, jc, kc, idual, dist, distrad, diststep
-      INTG_PREC imetal, imulti_metals, kick_cap, useAGB
+      INTG_PREC imetal, imulti_metals, useAGB
       R_PREC    d(nx, ny, nz), metal(nx,ny,nz), ge(nx,ny,nz)
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz), te(nx,ny,nz)
       R_PREC    mass_per_cell
@@ -1932,30 +1960,6 @@ c              delta_mass has units of mass/volume
      &            mom_per_cell(i+distrad+1,j+distrad+1,k+distrad+1)
                delta_p = (delta_pu**2._RKIND + delta_pv**2._RKIND + 
      &            delta_pw**2._RKIND)**(0.5_RKIND)
-c              If delta_p leads to a velocity kick of more than
-c              1000 km/s, limit to 1000
-               vel_kick = delta_p/(d(ic+i,jc+j,kc+k) + delta_mass)*
-     &                    vunits/1e5_RKIND
-               if (kick_cap .eq. 1_IKIND) then
-                  if (vel_kick .gt. 1000._RKIND) then
-                     delta_p = 1000._RKIND/(vunits/1e5_RKIND)*
-     &                   (d(ic+i,jc+j,kc+k) + delta_mass)
-                     delta_pu = real(i, RKIND) / r * delta_p
-                     delta_pv = real(j, RKIND) / r * delta_p
-                     delta_pw = real(k, RKIND) / r * delta_p
-                  endif
-               endif
-#ifdef FORTRAN_DEBUG
-                  write(7,*) 'vel_kick, delta_p, delta_v:',
-     &              vel_kick,
-     &              delta_p*dx**3._RKIND*
-     &              (dunits*x1**3._RKIND)*vunits/SolarMass/1e5_RKIND,
-     &              delta_p/(d(ic+i,jc+j,kc+k) + delta_mass)*
-     &                    vunits/1e5_RKIND
-#endif
-c
-c              delta_p's have units of mass*velocity/volume
-c              delta_therm has units of mass*velocity^2/volume
 #ifdef FORTRAN_DEBUG
                write(7,*) 'i,j,k, dist', i, j, k, dist
                write(7,*) 'cellstep, diststep', cellstep, diststep
