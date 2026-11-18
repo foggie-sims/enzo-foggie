@@ -419,7 +419,7 @@ int SendAllBaryonFields = FALSE;
 	  if (OldBaryonField[field] == NULL) {
 	    OldBaryonField[field] = new float[GridSize];
 	    for (i = 0; i < GridSize; i++)
-	      BaryonField[field][i] = 0;
+	      OldBaryonField[field][i] = 0;
           }
 	  FORTRAN_NAME(copy3d)(&buffer[index], OldBaryonField[field],
 			       RegionDim, RegionDim+1, RegionDim+2,

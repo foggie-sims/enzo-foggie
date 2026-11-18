@@ -16,6 +16,7 @@
  
 #include <stdio.h>
 #include <stdlib.h>
+#include <unordered_set>
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -39,6 +40,13 @@ int grid::FastSiblingLocatorFindSiblings(ChainingMeshStructure *Mesh,
   FLOAT Left, Right;
   ChainingMeshLink *current_link;
   static grid *TempList[MAX_NUMBER_OF_SUBGRIDS];
+
+  /* Hash of the grids already accepted into TempList, giving an O(1)
+     duplicate check in place of the former linear rescan of the whole
+     accumulated list per candidate (O(S^2) per grid, and O(N^3) per
+     level when the chaining mesh degenerates for zoom-in geometries). */
+
+  std::unordered_set<grid*> AcceptedSiblings;
 
  
   /* Initialize gravitating mass field parameters. */
@@ -115,29 +123,29 @@ int grid::FastSiblingLocatorFindSiblings(ChainingMeshStructure *Mesh,
 	  i1 = i % Mesh->Dimension[0];
 	  current_link = Mesh->HeadOfChain[index+i1];
 	  while (current_link != NULL) {
- 
-	    AlreadyPresent = FALSE;
-            if ( list->NumberOfSiblings > MAX_NUMBER_OF_SUBGRIDS ) {
+
+	    AlreadyPresent =
+	      (AcceptedSiblings.count(current_link->GridData) > 0) ?
+	      TRUE : FALSE;
+            if ( list->NumberOfSiblings >= MAX_NUMBER_OF_SUBGRIDS ) {
               ENZO_VFAIL("DC no of sibs > MAX_NUMBER_OF_SUBGRIDS %"ISYM"\n", list->NumberOfSiblings)
             }
-	    for (n = 0; n < list->NumberOfSiblings; n++)
-	      if (current_link->GridData == TempList[n])
-		AlreadyPresent = TRUE;
- 
+
 	    /* If either grid is on this processor and there is some
 	       possible overlap then add it to the temporary list. */
- 
+
 	    if (!AlreadyPresent &&
 		(this->ProcessorNumber == MyProcessorNumber ||
 		 current_link->GridData->ProcessorNumber == MyProcessorNumber)) {
 	      if (this->CheckForPossibleOverlap(current_link->GridData,
 					 LeftBoundaryCondition,
 					 RightBoundaryCondition) == TRUE) {
-                if ( list->NumberOfSiblings > MAX_NUMBER_OF_SUBGRIDS ) {
+                if ( list->NumberOfSiblings >= MAX_NUMBER_OF_SUBGRIDS ) {
                   ENZO_VFAIL("DC2 no of sibs > MAX_NUMBER_OF_SUBGRIDS %"ISYM"\n", list->NumberOfSiblings)
                 }
+		AcceptedSiblings.insert(current_link->GridData);
 		TempList[list->NumberOfSiblings++] = current_link->GridData;
-	      } 
+	      }
 	    }
  
 	    /* Next Link in list. */
@@ -167,7 +175,7 @@ int grid::FastSiblingLocatorFindSiblings(ChainingMeshStructure *Mesh,
 	if (this->CheckForPossibleOverlap(current_link->GridData,
 					  LeftBoundaryCondition,
 					  RightBoundaryCondition) == TRUE) {
-          if ( list->NumberOfSiblings > MAX_NUMBER_OF_SUBGRIDS ) {
+          if ( list->NumberOfSiblings >= MAX_NUMBER_OF_SUBGRIDS ) {
             ENZO_VFAIL("DC3 no of sibs > MAX_NUMBER_OF_SUBGRIDS %"ISYM"\n", list->NumberOfSiblings)
           }
 
