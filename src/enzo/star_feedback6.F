@@ -208,6 +208,8 @@ c
      &       mass_dummy_w, kin_energy_dummy_w, mom_dummy_w, mass_end_w,
      &       kin_energy_end_w, mom_end_w, kin_energy_inj_w, add_therm_w,
      &       ke_after_w, delta_ke_w
+      R_PREC m_b, p_b(3), pr_b, e_b, z_b, m_a, p_a(3), pr_a, e_a, z_a,
+     &       cmass, cener
 
       character*32 feedbacklog_particles
       character*32 feedbacklog_grid
@@ -1128,6 +1130,17 @@ c
 c     If no supernovae in this cell, skip
                if (nsn_grid(ic,jc,kc) .eq. 0._RKIND) goto 100
 c
+c     Calculate conserved quantities within the injection region to
+c     confirm they are actually conserved in the logs
+c
+               if (feedback_log .eq. 1_IKIND)
+     &            call sum_conserved(d, u, v, w, te, metal, imetal,
+     &              nx, ny, nz, ic, jc, kc,
+     &              up_grid(ic,jc,kc)/nsn_grid(ic,jc,kc),
+     &              vp_grid(ic,jc,kc)/nsn_grid(ic,jc,kc),
+     &              wp_grid(ic,jc,kc)/nsn_grid(ic,jc,kc),
+     &              distrad, diststep, m_b, p_b, pr_b, e_b, z_b)
+c
 c     Before doing any feedback, move gas in host cell into the rest
 c     of the injection region. This displacement is necessary for the
 c     calculation of swept-up mass to be right when determining how
@@ -1140,6 +1153,7 @@ c     the hydro solver and doesn't require an explicit distribution.
                else
                   if (exptime_in .ge. 0._RKIND) f_ent = 1._RKIND
                endif
+c
                call entrain_host_gas(d, u, v, w, te, ge, metal,
      &                              metalSNII, metalSNIa, metalAGB,
      &                              nx, ny, nz, ic, jc, kc, f_ent,
@@ -1167,15 +1181,13 @@ c
      &                  mom_mult, distrad, diststep, e_cap, E_clip)
 c           mom_per_cell has units of mass*velocity/volume
 #ifdef FORTRAN_DEBUG
-               write(7,*) 'energy,mass_per_cell', energy
-     &                  *dunits*(dx*x1)**3._RKIND*vunits**2._RKIND,
+               write(7,*) 'energy,mass_per_cell', energy,
      &                  mass_per_cell*dunits*(dx*x1)**3._RKIND/SolarMass
                write(7,*) 'mom_per_cell', mom_per_cell*dunits*vunits
      &                  *(dx*x1)**3._RKIND/SolarMass/1e5_RKIND
                write(7,*) 'energy_per_cell', energy_per_cell
      &                  *dunits*(dx*x1)**3._RKIND*vunits**2._RKIND
                write(7,*) 'E_clip', E_clip
-     &                  *dunits*(dx*x1)**3._RKIND*vunits**2._RKIND
 #endif
 c
 c     Sum injected momentum and energy for the log file
@@ -1447,6 +1459,15 @@ c                       te is *specific* energy (energy/mass)
 #endif
 c
                if (feedback_log .eq. 1_IKIND) then
+c
+c           Compute conserved quantities again for comparison with
+c           values before feedback was deposited
+                  call sum_conserved(d, u, v, w, te, metal, imetal,
+     &              nx, ny, nz, ic, jc, kc, up_avg, vp_avg, wp_avg,
+     &              distrad, diststep, m_a, p_a, pr_a, e_a, z_a)
+                  cmass = dunits*(dx*x1)**3._RKIND/SolarMass
+                  cener = dunits*(dx*x1)**3._RKIND*vunits**2._RKIND
+c
                   write(5,*) t*t1/yr_s/1e6_RKIND, ic, jc, kc,
      &             nsn_grid(ic,jc,kc), nsn_ii_grid(ic,jc,kc),
      &             nsn_ia_grid(ic,jc,kc), meject_grid(ic,jc,kc)*
@@ -1466,7 +1487,19 @@ c
      &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
      &             kin_energy_inj*dunits*
      &             vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND,
-     &             E_clip*dunits*(dx*x1)**3._RKIND*vunits**2._RKIND
+     &             E_clip,
+     &             e_res*dunits*(dx*x1)**3._RKIND*vunits**2._RKIND,
+     &             (m_a - m_b)*dunits*(dx*x1)**3._RKIND/SolarMass,
+     &             (p_a(1) - p_b(1))*dunits*(dx*x1)**3._RKIND/
+     &             SolarMass*vunits/1e5_RKIND,
+     &             (p_a(2) - p_b(2))*dunits*(dx*x1)**3._RKIND/
+     &             SolarMass*vunits/1e5_RKIND,
+     &             (p_a(3) - p_b(3))*dunits*(dx*x1)**3._RKIND/
+     &             SolarMass*vunits/1e5_RKIND,
+     &             (pr_a-pr_b)*dunits*(dx*x1)**3._RKIND/
+     &             SolarMass*vunits/1e5_RKIND,
+     &             (e_a-e_b)*dunits*(dx*x1)**3._RKIND*vunits**2._RKIND,
+     &             (z_a - z_b)*dunits*(dx*x1)**3._RKIND/SolarMass
                endif
 c
  100           continue
@@ -1813,6 +1846,7 @@ c        Clipped energy is discarded and tallied in E_clip [erg].
                      E_cell = 0.5_RKIND*(pSN/Nnbors)**2/dMswept +
      &                  energy_per_cell(i+distrad+1,j+distrad+1,
      &                                  k+distrad+1)*ecode
+                     s_cap = 1._RKIND
                      if (E_cell .gt. e_cap*dMswept) then
                         s_cap = e_cap*dMswept/E_cell
                         pSN = pSN*sqrt(s_cap)
@@ -2479,5 +2513,62 @@ c
       if (random .lt. nsn_ia - k) k = k + 1._RKIND
       nsn_ia = k
 c
+      return
+      end
+c
+c ==========================================================
+c
+c     Sum conserved quantities over the injection region (lab frame).
+c     u,v,w must be velocities and metal a mass fraction. pr_sum is
+c     the radial momentum about the host cell in the frame moving
+c     with (up,vp,wp).
+c
+      subroutine sum_conserved(d, u, v, w, te, metal, imetal,
+     &                  nx, ny, nz, ic, jc, kc, up, vp, wp,
+     &                  distrad, diststep,
+     &                  m_sum, p_sum, pr_sum, e_sum, z_sum)
+c
+      implicit none
+#include "fortran_types.def"
+c
+      INTG_PREC nx, ny, nz, ic, jc, kc, imetal, distrad, diststep
+      R_PREC    d(nx,ny,nz), u(nx,ny,nz), v(nx,ny,nz), w(nx,ny,nz),
+     &          te(nx,ny,nz), metal(nx,ny,nz)
+      R_PREC    up, vp, wp, m_sum, p_sum(3), pr_sum, e_sum, z_sum
+c
+      INTG_PREC i, j, k, dist
+      R_PREC    dc, rinv
+c
+      m_sum = 0._RKIND
+      p_sum(1) = 0._RKIND
+      p_sum(2) = 0._RKIND
+      p_sum(3) = 0._RKIND
+      pr_sum = 0._RKIND
+      e_sum = 0._RKIND
+      z_sum = 0._RKIND
+      do k = -distrad, distrad
+         do j = -distrad, distrad
+            do i = -distrad, distrad
+               if (abs(i)+abs(j)+abs(k) .le. diststep) then
+                  dc = d(ic+i,jc+j,kc+k)
+                  m_sum = m_sum + dc
+                  p_sum(1) = p_sum(1) + dc*u(ic+i,jc+j,kc+k)
+                  p_sum(2) = p_sum(2) + dc*v(ic+i,jc+j,kc+k)
+                  p_sum(3) = p_sum(3) + dc*w(ic+i,jc+j,kc+k)
+                  e_sum = e_sum + dc*te(ic+i,jc+j,kc+k)
+                  if (imetal .eq. 1_IKIND)
+     &               z_sum = z_sum + dc*metal(ic+i,jc+j,kc+k)
+                  dist = i**2 + j**2 + k**2
+                  if (dist .gt. 0_IKIND) then
+                     rinv = 1._RKIND/sqrt(real(dist, RKIND))
+                     pr_sum = pr_sum + dc*rinv*(
+     &                    real(i,RKIND)*(u(ic+i,jc+j,kc+k) - up) +
+     &                    real(j,RKIND)*(v(ic+i,jc+j,kc+k) - vp) +
+     &                    real(k,RKIND)*(w(ic+i,jc+j,kc+k) - wp))
+                  endif
+               endif
+            enddo
+         enddo
+      enddo
       return
       end
