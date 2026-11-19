@@ -78,7 +78,7 @@ c    particleID - particle ID number given by ParticleNumber
 c    exptime  - delay time for discrete explosions (if set to -1,
 c               continuous energy injection used)
 c    mom_mult - multiplicative factor to boost or reduce momentum
-c    kick_cap - 0 or 1 flag to limit velocity kick to 1000 km/s
+c    kick_cap - 0 or 1 flag to limit specific energy added to 2000 km/s equivalent
 c    nsn_timestep - lower limit of how many SNe per timestep below which
 c                   to skip doing feedback (to save time for very low fractions
 c                   of SNe per timestep per particle)
@@ -256,6 +256,8 @@ c
          do j=1_IKIND, ny
             do i=1_IKIND, nx
                nsn_grid(i,j,k) = 0._RKIND
+               nsn_ii_grid(i,j,k) = 0._RKIND
+               nsn_ia_grid(i,j,k) = 0._RKIND
                meject_grid(i,j,k) = 0._RKIND
                mzeject_grid(i,j,k) = 0._RKIND
                mzeject_ii_grid(i,j,k) = 0._RKIND
@@ -306,13 +308,7 @@ c
 c     Make sure particle is in grid, skip if not
             if (xp(n) .lt. xstart .or. xp(n) .gt. xstart+dx*nx .or.
      &          yp(n) .lt. ystart .or. yp(n) .gt. ystart+dx*ny .or.
-     &          zp(n) .lt. zstart .or. zp(n) .gt. zstart+dx*nz) then
-#ifdef FORTRAN_DEBUG
-               write(7,*) 'warning: star particle out of grid',
-     &              xp(n),yp(n),zp(n), xstart, ystart, zstart
-#endif
-               goto 10
-            endif
+     &          zp(n) .lt. zstart .or. zp(n) .gt. zstart+dx*nz) cycle
 c
 c           Calculate age of particle
             age = (t-tcp(n)) * t1/yr_s
@@ -390,16 +386,16 @@ c
 c     Metal feedback. Similar to total ejected mass,
 c     table has metal mass yield per initial population mass.
 c
-                  if (imetal .eq. 1_IKIND) then
-                     call sne_II_metal(mzeject_ii,
+               if (imetal .eq. 1_IKIND) then
+                  call sne_II_metal(mzeject_ii,
      &                 minit(n), metalf(n), age,
      &                 dt, t1,
      &                 tabMetal, tabZ, tabAge, ntabZ, ntabAge)
-                     call sne_Ia_metal(mzeject_ia,
+                  call sne_Ia_metal(mzeject_ia,
      &                 minit(n), metalf(n), age,
      &                 dt, t1,
      &                 tabMetal, tabZ, tabAge, ntabZ, ntabAge)
-                     mz_eject = mzeject_ii + mzeject_ia
+                  mz_eject = mzeject_ii + mzeject_ia
 #ifdef FORTRAN_DEBUG
                write(7,*) 'mzeject_ii,mzeject_ia,mz_eject:',
      &              mzeject_ii*
@@ -409,7 +405,9 @@ c
      &              mz_eject*
      &              dunits*x1**3._RKIND/SolarMass*dx**3_IKIND
 #endif
-                  endif
+               else
+                  mz_eject = 0._RKIND
+               endif
 c
 c     If including AGB wind feedback, get the AGB ejected mass and
 c     metals from the tabulated yields
@@ -524,13 +522,24 @@ c     Keep the same ratio of Type II to Type Ia masses and metals
                endif ! end mass and metal ejection determination
 c
 c
-c     Skip feedback if fewer than StarFeedbackPerSNeTimestepLimit SNe in this timestep
+c     Skip feedback if every channel does nothing in this timestep
 c
                if (nsn .lt. nsn_timestep) then
-                  if (wind_mass .lt. 1e-15_RKIND) then
-                     goto 10
+                  if (wind_mass .lt. 1e-15_RKIND .and.
+     &                agb_mass_y .le. 0._RKIND) then
+                     cycle
                   else
+c                    No SN this step: drop all SN quantities so nothing
+c                    is removed from the particle without being deposited
                      nsn = 0._RKIND
+                     nsn_ii = 0._RKIND
+                     nsn_ia = 0._RKIND
+                     m_eject = 0._RKIND
+                     meject_ii = 0._RKIND
+                     meject_ia = 0._RKIND
+                     mz_eject = 0._RKIND
+                     mzeject_ii = 0._RKIND
+                     mzeject_ia = 0._RKIND
                   endif
                endif
 c
@@ -575,12 +584,15 @@ c
 c              convert explosion time to code units
                   exptime = exptime_in * Myr_s / t1
 c              if dynamical time is zero or delay time hasn't elapsed yet,
-c              no feedback
+c              no SN feedback
                   if (tdp(n) .eq. 0._RKIND
-     &                .or. abs(t-tcp(n)) .lt. exptime) goto 10
-                  tdp(n) = 0._RKIND
+     &                .or. abs(t-tcp(n)) .lt. exptime) then
+                     mform = 0._RKIND
+                  else
+                     tdp(n) = 0._RKIND
+                     mform = mp(n)
+                  endif
                   minitial = mp(n)
-                  mform = mp(n)
                else ! end instantaneous method
 c
 c     Do slow injection
@@ -595,49 +607,55 @@ c
                   write(7,*) 't, tcp(n), tdp(n), xv1:',
      &              t*t1/yr_s,tcp(n)*t1/yr_s,tdp(n)*t1/yr_s,xv1
 #endif
-c     If age of particle is too small or too large, feedback is zero
-                  if ((xv1 .lt. 0._RKIND) .or. (xv1 .gt. 12._RKIND)) 
-     &               goto 10
+c     If age of particle is too small or too large, SN feedback is zero
+                  if ((xv1 .lt. 0._RKIND) 
+     &               .or. (xv1 .gt. 12._RKIND)) then
+                     mform = 0._RKIND
+                     minitial = mp(n)
+                  else
 c
-                  xv2 = (t + dt - tcp(n))/tdp(n)
+                     xv2 = (t + dt - tcp(n))/tdp(n)
 c
 c     First calculate the initial mass of the star particle 
 c     in question.
-                  minitial = mp(n) / 
-     &               (1._RKIND - m_eject_frac*
-     &               (1._RKIND - (1._RKIND + xv1)*exp(-xv1)))
+                     minitial = mp(n) / 
+     &                  (1._RKIND - m_eject_frac*
+     &                  (1._RKIND - (1._RKIND + xv1)*exp(-xv1)))
 c     
 c     Then, calculate the amount of mass that would have formed in
 c     this timestep.
 c     
-                  mform = minitial * ((1._RKIND + xv1)*exp(-xv1) - 
-     &               (1._RKIND + xv2)*exp(-xv2))
-                  mform = max(min(mform, mp(n)), 0._RKIND)
+                     mform = minitial * ((1._RKIND + xv1)*exp(-xv1) - 
+     &                  (1._RKIND + xv2)*exp(-xv2))
+                     mform = max(min(mform, mp(n)), 0._RKIND)
+                  endif
                endif ! end slow method
-c
-c     Skip if very little mass is formed.
-c
-               if (mform/distcells/d(ip,jp,kp) .lt. 1e-10_RKIND .and.
-     &            wind_mass .lt. 1e-15_RKIND) goto 10
 c     
 c     Calculate the number of SNe in this timestep from the stars formed
-c     in this timestep as 1 SN per 100 Msun formed. If a small fraction, skip.
+c     in this timestep as 1 SN per 100 Msun formed.
 c           
                realmass = mform * dunits * x1**3._RKIND*dx**3_IKIND
                realmass = realmass /SolarMass
                nsn = realmass / 100._RKIND
+c     Below the SN threshold there are no SNe this step. Skip the particle
+c     if there are no winds either; otherwise zero the SN quantities so
+c     that nothing is removed from the particle without being deposited.
                if (nsn .lt. nsn_timestep) then
-                  if (wind_mass .lt. 1e-15_RKIND) then
-                     goto 10
-                  else
-                     nsn = 0._RKIND
-                  endif
+                  if (wind_mass .lt. 1e-15_RKIND) cycle
+                  nsn = 0._RKIND
+                  mform = 0._RKIND
                endif
 c
 c     Subtract ejected mass from particle
 c
                mp(n) = mp(n) - mform * m_eject_frac
-               if (preSN .eq. 1_IKIND) mp(n) = mp(n) - wind_mass
+               if (preSN .eq. 1_IKIND) then
+                  if (wind_mass .gt. mp(n)) then
+                     wind_mass = m_eject_frac*mp(n)
+                     wind_metal = yield*mp(n)
+                  endif
+                  mp(n) = mp(n) - wind_mass
+               endif
 c
 c     Convert ejected mass fraction to an actual mass
 c
@@ -646,9 +664,10 @@ c
 c     Calculate the metals to eject as the sum of new metals formed
 c     in the star and the ejected amount of old metals
 c
-               if (imetal .eq. 1) mz_eject = mform * 
-     &                   (yield * (1._RKIND-metalf(n))) + 
-     &                   m_eject * metalf(n)
+               if (imetal .eq. 1) then
+                  mz_eject = mform * 
+     &              (yield * (1._RKIND-metalf(n))) + 
+     &              m_eject * metalf(n)
 #ifdef FORTRAN_DEBUG
                write(7,*) 'mform,yield,metalf(n),m_eject',
      &             mform*dunits*(x1*dx)**3_IKIND/SolarMass,yield,
@@ -656,7 +675,11 @@ c
                write(7,*) 'nsn,m_eject:',nsn,m_eject*
      &              dunits*x1**3._RKIND/SolarMass*dx**3_IKIND
 #endif
+               else
+                  mz_eject = 0._RKIND
+               endif
             endif ! end Cen & Ostriker method
+c
 c
 c	   Set center of feedback zone
 c
@@ -789,7 +812,6 @@ c
      &             SolarMass*(vunits/1e5_RKIND)
                endif
 c
- 10         continue
          endif
       enddo ! end loop over star particles
 c
@@ -820,9 +842,9 @@ c
 c     If injecting momentum from pre-SN feedback:
 c
                add_therm_w = 0._RKIND
+               mom_per_cell_w = 0._RKIND
                if (preSN .eq. 1_IKIND .and. 
      &               pSNmass_grid(ic,jc,kc) .gt. 1e-15_RKIND) then
-                  if (preSNmom .eq. 1_IKIND) then
 c
 c     Compute the kinetic energy in the affected region
 c     before momentum is added.  This
@@ -908,7 +930,8 @@ c     Now add mass and momentum terms to local dummy fields
 c
                mass_per_cell_w = pSNmass_grid(ic,jc,kc)/distcells
 c           wind momentum per cell will be normalized by mass in that cell
-               mom_per_cell_w = pSNmom_grid(ic,jc,kc)
+               if (preSNmom .eq. 1_IKIND)
+     &                  mom_per_cell_w = pSNmom_grid(ic,jc,kc)
                metal_per_cell_w = pSNmetal_grid(ic,jc,kc)/distcells
                e_res = 0._RKIND
                call add_preSN_feedback(u1, v1, w1, d1, ge1, te1, metal1,
@@ -983,13 +1006,12 @@ c
                   add_therm_w = kin_energy_dummy_w - kin_energy_inj_w
                   else
                      add_therm_w = 0._RKIND
-                  endif
+               endif
 #ifdef FORTRAN_DEBUG
                   write(7,*) "canceled wind mom injected as thermal:",
      &                  add_therm_w*dunits*
      &                  vunits**2._RKIND*dx**3._RKIND*x1**3._RKIND
 #endif
-               endif
 c
 c           Removing the residual momentum to avoid center of mass
 c           drift removes kinetic energy, so add that back in as heat
@@ -1029,49 +1051,7 @@ c
                      enddo
                   enddo
                enddo
-                  else ! end pre-SN momentum injection
 c
-c     If only injecting mass and metals (and not momentum) from pre-SN 
-c     feedback, add them to grid
-c
-#ifdef FORTRAN_DEBUG
-c     Sum mass, energy, and momentum before. Note mom and KE calculations
-c     will be wrong here because velocities haven't been converted to
-c     momentum, but we only care about mass for this debugging check
-               call sum_energy_mom(u, v, w, d, nx, ny, nz,
-     &            ic, jc, kc,
-     &            mass_b_wind, kin_energy_b_wind, mom_b_wind,
-     &            distrad, diststep)
-               write(7,*) "m before wind:", mass_b_wind*
-     &               (dunits*(x1*dx)**3._RKIND)/SolarMass
-c
-#endif
-               mass_per_cell_w = pSNmass_grid(ic,jc,kc)/distcells
-               metal_per_cell_w = pSNmetal_grid(ic,jc,kc)/distcells
-               call add_preSN_feedback(u, v, w, d, ge, te, metal,
-     &                         nx, ny, nz, ic, jc, kc,
-     &                        imetal, imulti_metals, idual, itracksrc,
-     &                        metalSNII, metalSNIa, useAGB, metalAGB,
-     &                        kick_cap, preSNmom,
-     &                        mass_per_cell_w, 0._RKIND,
-     &                        metal_per_cell_w,
-     &                        dx, x1, dunits, vunits,
-     &                        distrad, diststep, e_res)
-#ifdef FORTRAN_DEBUG
-c     Sum mass, energy, and momentum after. Note mom and KE calculations
-c     will be wrong here because velocities haven't been converted to
-c     momentum, but we only care about mass for this debugging check
-               call sum_energy_mom(u, v, w, d, nx, ny, nz,
-     &            ic, jc, kc,
-     &            mass_end_w, kin_energy_end_w, mom_end_w,
-     &            distrad, diststep)
-               write(7,*) "mass_per_cell_w:", mass_per_cell_w*
-     &               (dunits*(x1*dx)**3._RKIND)/SolarMass
-               write(7,*) "m after wind:", mass_end_w*
-     &               (dunits*(x1*dx)**3._RKIND)/SolarMass
-c
-#endif
-                  endif
                endif ! end pre-SN feedback
 c
 c ====================================================================
@@ -1107,7 +1087,7 @@ c
                   energy = nsn_ii_grid(ic,jc,kc)*ergSNII
      &                  + nsn_ia_grid(ic,jc,kc)*ergSNIa
                else
-                  energy = nsn*1.e51_RKIND
+                  energy = nsn_grid(ic,jc,kc)*ergSNII
                endif
                mass_per_cell = meject_grid(ic,jc,kc)/distcells
                mom_per_cell = 0._RKIND
@@ -1124,7 +1104,7 @@ c           mom_per_cell has units of mass*velocity/volume
      &                  *dunits*(dx*x1)**3._RKIND*vunits**2._RKIND
 #endif
 c
-c     If not injecting any momentum or energy, skip
+c     Sum injected momentum and energy for the log file
 c
                mom_inj = 0._RKIND
                energy_inj = 0._RKIND
@@ -1141,14 +1121,6 @@ c
                write(7,*) 'energy_inj', energy_inj
      &                  *dunits*(dx*x1)**3._RKIND*vunits**2._RKIND
 #endif
-               if (mom_inj .eq. 0._RKIND) then
-                  if (energy_inj .eq. 0._RKIND) then
-#ifdef FORTRAN_DEBUG
-                     write(7,*) 'no injection for cell', ic,jc,kc
-#endif
-                     goto 100
-                  endif
-               endif
 c
 c     Compute the kinetic energy in the affected region
 c     before momentum is added.  This
@@ -2145,7 +2117,7 @@ c
 c     Arguments
 c
       INTG_PREC nx, ny, nz, ic, jc, kc, idual, dist, distrad, diststep
-      INTG_PREC imetal, imulti_metals, kick_cap, preSNmom, useAGB,
+      INTG_PREC imetal, imulti_metals, kick_cap, preSNmom, useAGB
       INTG_PREC itracksrc
       R_PREC    d(nx, ny, nz), metal(nx,ny,nz), ge(nx,ny,nz)
       R_PREC    pu(nx,ny,nz), pv(nx,ny,nz), pw(nx,ny,nz), te(nx,ny,nz)
