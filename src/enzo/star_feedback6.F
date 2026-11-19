@@ -1644,14 +1644,16 @@ c
             do i = -distrad, +distrad
                cellstep = stepj + abs(i)
                dist = i**2_IKIND + j**2_IKIND + k**2_IKIND
-               if (cellstep .le. diststep .and. dist .gt. 0._IKIND) then
+               if (cellstep .le. diststep) then
 c
 c        If not using momentum at all through mom_mult = 0, set energy
 c        per cell as simply split between all cells in injection zone
                   if (mom_mult .eq. 0._RKIND) then
                      energy_per_cell(i+distrad+1,
-     &                    j+distrad+1,k+distrad+1) = E_nb/ecode
+     &                    j+distrad+1,k+distrad+1) =
+     &                        E_tot/(Nnbors + 1._RKIND)/ecode
                   else
+                     if (dist .gt. 0_IKIND) then
 c
 c       Compute the mass fraction of swept-up to ejected mass.
 c
@@ -1744,6 +1746,7 @@ c        So pSN is actually in the right units after all!
 c
                   mom_per_cell(i+distrad+1,j+distrad+1,k+distrad+1)=pSN
 c
+                  endif
                   endif
                endif
             enddo
