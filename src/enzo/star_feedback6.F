@@ -1802,7 +1802,7 @@ c
                write(7,*) 'i,j,k, dist', i, j, k, dist
                write(7,*) 'den_cell, Z_cell, n_H',
      &            den_cell, Z_cell, n_H
-               write(7,*) 'pSN_term', pSN_term
+               write(7,*) 'pSN_term', pSN_term/SolarMass/(1.e5_RKIND)
                write(7,*) 'dMej, dMswept', dMej/SolarMass,
      &            dMswept/SolarMass
                write(7,*) 'chi_th, chi', chi_th, chi
@@ -1834,7 +1834,7 @@ c        Unresolved, only momentum
                      pSN = mom_mult * pSN_term
                   endif
 #ifdef FORTRAN_DEBUG
-               write(7,*) 'pSN', pSN
+               write(7,*) 'pSN', pSN/SolarMass/(1.e5_RKIND)
 #endif
 c                 
 c        Cap the specific energy deposited in this neighbor (kinetic +
