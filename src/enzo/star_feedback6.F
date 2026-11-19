@@ -1727,10 +1727,9 @@ c     Locals
 c
       INTG_PREC i, j, k, dist, cellstep, stepk, stepj
       LOGIC_PREC inregion
-      R_PREC    Nnbors, cell_vol, ecode, Mej, dMej, E_nb, frac_sn,
-     &          E_ev51, den_cell, Z_cell, Zp, n_H, pSN_term, chi_th,
-     &          dMswept, chi, fe, pSN, ke_from_p, s_cap, E_cell
-      R_PREC    Xh
+      R_PREC    Nnbors, cell_vol, ecode, Mej, dMej, Mej_nb, E_nb, Xh,
+     &          frac_sn, E_ev51, den_cell, Z_cell, Zp, n_H, pSN_term, 
+     &          dMswept, chi, chi_th, fe, pSN, ke_from_p, s_cap, E_cell
 
       Xh = 0.76_RKIND
 c
@@ -1739,6 +1738,9 @@ c
       ecode = dunits*cell_vol*vunits**2 ! cell energy density units
       Mej = mass_per_cell*real(distcells, RKIND) * dunits*cell_vol
       dMej = Mej/real(distcells, RKIND)
+c     Ejecta mass that actually receives momentum (the host cell keeps dMej but
+c     gets no kick), so that KE per neighbor is exactly fe*E_nb
+      Mej_nb = Nnbors*dMej
 c
       E_nb = E_tot/Nnbors
 c     N >= 1 is one event of N SNe; N < 1 is a fraction of one
@@ -1779,14 +1781,14 @@ c        Derive H density from metallicity, assuming Solar relative abundances
 c        Define terminal momentum per cell and threshold for transition
 c        between energy-conserving and momentum-conserving phases
 c        Kimm & Cen (2014) eq. A4
-                  pSN_term = frac_sn*3.e10_RKIND*SolarMass*
+                  pSN_term = mom_mult * frac_sn*3.e10_RKIND*SolarMass*
      &                     E_ev51**(16._RKIND/17._RKIND)*
      &                     n_H**(-2._RKIND/17._RKIND)*Zp**(-0.14_RKIND)
 c        The energy-conserving and momentum-conserving branches meet
 c        at chi_th, calculated by setting pSN_term = pSN defined below.
 c        When chi = chi_th, fe = 2/3, and the additional factor of 2
 c        in pSN below means solving for chi_th gives a factor of 0.75
-                  chi_th = 0.75_RKIND*pSN_term**2/(Mej*E_tot)
+                  chi_th = 0.75_RKIND*pSN_term**2/(Mej_nb*E_tot)
 c        chi_th can get very small if a small fraction of SNe are going
 c        off (in continuous case) so floor it just above 1
                   chi_th = max(chi_th, 1._RKIND + 1.e-6_RKIND)
@@ -1814,7 +1816,7 @@ c
 c        Momentum comes from eq. A1
                      fe = 1._RKIND - ((chi - 1._RKIND)/
      &                        (3._RKIND*(chi_th - 1._RKIND)))
-                     pSN = mom_mult * sqrt(2._RKIND*chi*Mej*fe*E_tot)
+                     pSN = mom_mult * sqrt(2._RKIND*chi*Mej_nb*fe*E_tot)
 c
 c        This is the resolved case, so need to inject thermal energy
 c        to get up to E_tot per SNe. Use pSN to calculate kinetic energy
@@ -1827,11 +1829,11 @@ c        and inject thermal into this cell equal to total - kinetic
 #ifdef FORTRAN_DEBUG
                write(7,*) 'E_nb, ke_from_p', E_nb, ke_from_p
                write(7,*) 'energy inj as thermal in res case',
-     &            E_nb - ke_from_p
+     &            max(E_nb - ke_from_p, 0._RKIND)
 #endif
                   else
 c        Unresolved, only momentum
-                     pSN = mom_mult * pSN_term
+                     pSN = pSN_term
                   endif
 #ifdef FORTRAN_DEBUG
                write(7,*) 'pSN', pSN/SolarMass/(1.e5_RKIND)
