@@ -2248,7 +2248,10 @@ General Star Formation
              / Simpson et al. (2015)
 
 ``StarMakerStoreInitialMass`` (external)
-    Optionally track a particle's initial mass. 
+    Optionally track a particle's initial mass. If turned on during a restart for a run that did 
+    not previously have it, the initial mass for previously existing particles will be set to their
+    current mass and a warning will be raised. This will underestimate mass for existing particles,
+    however new stars will be unaffected.
     Implemented for all creation methods but 4.
     Default: 0 (OFF)
 

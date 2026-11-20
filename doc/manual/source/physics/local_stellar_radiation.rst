@@ -111,7 +111,8 @@ checked when the parameter file is read):
 * ``MaximumGravityRefinementLevel`` >= ``MaximumRefinementLevel``, since no
   radiation is computed on levels above the gravity solve.
 * ``StarMakerStoreInitialMass=1``, luminosities are scaled by each
-  star particle's initial mass.
+  star particle's initial mass. If restarted from a run that did not have this
+  toggled, the initial mass is set to the current mass, which will underestimate it.
 * ``TopGridRank=3``.
 * No active particles (``AppendActiveParticleType``).
 * A ``StarFeedbackPreSNFilename`` table that includes the dust opacity
