@@ -80,6 +80,14 @@ int grid::PreparePotentialField(grid *ParentGrid)
     if (PotentialField != NULL)
       delete [] PotentialField;
     PotentialField = new float[size];
+    if (UseLocallyExtinctRadiation) {  // LER
+      delete [] kdissH2FluxField;
+      delete [] kdetHMFluxField;
+      delete [] isrfFluxField;
+      kdissH2FluxField = new float[size];
+      kdetHMFluxField  = new float[size];
+      isrfFluxField    = new float[size];
+    }
   }
  
   /* Declarations. */
@@ -184,8 +192,33 @@ int grid::PreparePotentialField(grid *ParentGrid)
 			    GravitatingMassFieldDimension+2,
 			    ParentOffset, ParentOffset+1, ParentOffset+2,
 			    Refinement, Refinement+1, Refinement+2);
- 
+
 #endif /* SPLINE */
+
+  /* LER: interpolate the parent's flux fields the same way
+     (always prolong; SolveForLocallyExtinctRadiation subtracts the parent's
+     view of local sources with this same interpolation). */
+
+  if (UseLocallyExtinctRadiation) {
+    float *ParentLER[3] = {ParentGrid->kdissH2FluxField,
+                          ParentGrid->kdetHMFluxField,
+                          ParentGrid->isrfFluxField};
+    float *ThisLER[3]   = {kdissH2FluxField, kdetHMFluxField, isrfFluxField};
+    for (int f = 0; f < 3; f++) {
+      if (ParentLER[f] == NULL) {  // parent has no flux yet: start from zero
+        for (int n = 0; n < size; n++)
+          ThisLER[f][n] = 0.0;
+        continue;
+      }
+      FORTRAN_NAME(prolong)(ParentLER[f], ThisLER[f], &GridRank,
+                            ParentDim, ParentDim+1, ParentDim+2,
+                            GravitatingMassFieldDimension,
+                            GravitatingMassFieldDimension+1,
+                            GravitatingMassFieldDimension+2,
+                            ParentOffset, ParentOffset+1, ParentOffset+2,
+                            Refinement, Refinement+1, Refinement+2);
+    }
+  }
  
 #ifdef POTENTIALDEBUGOUTPUT
   for (int i=0;i<GridDimension[0]+6; i++) {
@@ -208,6 +241,12 @@ int grid::PreparePotentialField(grid *ParentGrid)
 
     delete [] ParentGrid->PotentialField;
     ParentGrid->PotentialField = NULL;
+    delete [] ParentGrid->kdissH2FluxField;  // LER (received copies)
+    delete [] ParentGrid->kdetHMFluxField;
+    delete [] ParentGrid->isrfFluxField;
+    ParentGrid->kdissH2FluxField = NULL;
+    ParentGrid->kdetHMFluxField  = NULL;
+    ParentGrid->isrfFluxField    = NULL;
   }
  
   return SUCCESS;

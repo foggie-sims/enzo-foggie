@@ -30,4 +30,15 @@ double *kion_CI;
 double *kion_OI;
 double *isrf;
 
+/*
+    Dust opacities for LER
+    (cm^2 per g of gas at solar metallicity)
+*/
+double *kappa_H2;
+double *kappa_HM;
+double *kappa_CO;
+double *kappa_CI;
+double *kappa_OI;
+double *kappa_isrf;
+
 };

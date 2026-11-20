@@ -53,6 +53,17 @@ grid::grid()
   k_ion_CI_grid_sum = 0.;
   k_ion_OI_grid_sum = 0.;
   isrf_grid_sum = 0.;
+  /* LER Values*/
+  kdissH2SourceParticles = NULL;
+  kdetHMSourceParticles  = NULL;
+  isrfSourceParticles    = NULL;
+  kdissH2SourceField = NULL;
+  kdetHMSourceField  = NULL;
+  isrfSourceField    = NULL;
+  kdissH2FluxField   = NULL;
+  kdetHMFluxField    = NULL;
+  isrfFluxField      = NULL;
+  /*      */
 
   /* clear MAX_DIMENSION vectors */
  

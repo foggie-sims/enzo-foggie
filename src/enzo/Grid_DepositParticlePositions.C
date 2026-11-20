@@ -34,6 +34,7 @@
 #include "Grid.h"
 #include "ActiveParticle.h"
 #include "communication.h"
+#include "phys_constants.h"
  
 /* function prototypes */
  
@@ -59,6 +60,12 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type,
 			      int BufferSize);
 #endif /* USE_MPI */
 double ReturnWallTime(void);
+int GetUnits(float *DensityUnits, float *LengthUnits,
+	     float *TemperatureUnits, float *TimeUnits,
+	     float *VelocityUnits, FLOAT Time);
+float InterpolatePreSNFeedbackTable(double *table, float age, float metallicity);
+int FindField(int field, int farray[], int numfields);
+int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
 /* This controls the maximum particle mass which will be deposited in
    the MASS_FLAGGING_FIELD.  Only set in Grid_SetFlaggingField. */
@@ -84,9 +91,18 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
   int Dimension[] = {1,1,1};
   int OriginalDimension[] = {1,1,1};
   long_int Offset[] = {0,0,0};
-  float MassFactor = 1.0, *ParticleMassTemp, *ParticleMassPointer; 
+  float MassFactor = 1.0, *ParticleMassTemp = NULL, *ParticleMassPointer; 
   FLOAT CellSize, CloudSize;
   float *ParticleMassPointerSink;    
+  
+  /* LER variables*/
+  int IsLER = (DepositField == KDISSH2_SOURCE_FIELD ||
+               DepositField == KDETHM_SOURCE_FIELD  ||
+               DepositField == ISRF_SOURCE_FIELD);
+  int nYoung = 0;
+  FLOAT *LERPos[MAX_DIMENSION] = {NULL, NULL, NULL};
+  float *ParticleRadiation = NULL;
+
   float TimeDifference = 0;
   FLOAT LeftEdge[MAX_DIMENSION], OriginalLeftEdge[MAX_DIMENSION];
   float *DepositFieldPointer, *OriginalDepositFieldPointer;
@@ -131,7 +147,45 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     }
   }
 
-  /* 4) ParticleMassFlaggingField */
+  /* 4) Young Star Radiation Fields for LER */
+  
+  else if (DepositField == KDISSH2_SOURCE_FIELD) {
+    if (TargetGrid->GravitatingMassFieldParticlesCellSize <= 0)
+      TargetGrid->InitializeGravitatingMassFieldParticles(RefineBy);
+    DepositFieldPointer = TargetGrid->kdissH2SourceParticles;
+    CellSize            = TargetGrid->CellWidth[0][0];
+    CloudSize            = CellWidth[0][0];
+    for (dim = 0; dim < GridRank; dim++) {
+      LeftEdge[dim]  = TargetGrid->GravitatingMassFieldParticlesLeftEdge[dim];
+      Dimension[dim] = TargetGrid->GravitatingMassFieldParticlesDimension[dim];
+    }
+  }
+
+  else if (DepositField == KDETHM_SOURCE_FIELD) {
+    if (TargetGrid->GravitatingMassFieldParticlesCellSize <= 0)
+      TargetGrid->InitializeGravitatingMassFieldParticles(RefineBy);
+    DepositFieldPointer = TargetGrid->kdetHMSourceParticles;
+    CellSize            = TargetGrid->CellWidth[0][0];
+    CloudSize            = CellWidth[0][0];
+    for (dim = 0; dim < GridRank; dim++) {
+      LeftEdge[dim]  = TargetGrid->GravitatingMassFieldParticlesLeftEdge[dim];
+      Dimension[dim] = TargetGrid->GravitatingMassFieldParticlesDimension[dim];
+    }
+  }
+
+  else if (DepositField == ISRF_SOURCE_FIELD) {
+    if (TargetGrid->GravitatingMassFieldParticlesCellSize <= 0)
+      TargetGrid->InitializeGravitatingMassFieldParticles(RefineBy);
+    DepositFieldPointer = TargetGrid->isrfSourceParticles;
+    CellSize            = TargetGrid->CellWidth[0][0];
+    CloudSize            = CellWidth[0][0];
+    for (dim = 0; dim < GridRank; dim++) {
+      LeftEdge[dim]  = TargetGrid->GravitatingMassFieldParticlesLeftEdge[dim];
+      Dimension[dim] = TargetGrid->GravitatingMassFieldParticlesDimension[dim];
+    }
+  }
+
+  /* 5) ParticleMassFlaggingField */
  
 //  else if (DepositField == PARTICLE_MASS_FLAGGING_FIELD) {
 //    DepositFieldPointer = TargetGrid->ParticleMassFlaggingField;
@@ -142,7 +196,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 //    }
 //  }
  
-  /* 5) error */
+  /* 6) error */
  
   else {
     ENZO_VFAIL("DepositField = %"ISYM" not recognized.\n", DepositField)
@@ -252,9 +306,9 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
  
     /* If required, Change the mass of particles in this grid. */
  
-    if (MassFactor != 1.0 || 
+    if (!IsLER && (MassFactor != 1.0 || 
 	((StarParticleCreation == (1 << SINK_PARTICLE)) && 
-	 SmoothField == TRUE)) {
+	 SmoothField == TRUE))) {
       ParticleMassTemp = new float[NumberOfParticles];
       for (i = 0; i < NumberOfParticles; i++)
 	ParticleMassTemp[i] = ParticleMass[i]*MassFactor;
@@ -271,16 +325,183 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
       for (i = 0; i < NumberOfParticles; i++)
 	ParticleMassPointer[i] = min(DepositParticleMaximumParticleMass,
 				     ParticleMassPointer[i]);
- 
+
     /* Compute difference between current time and DepositTime. */
  
     TimeDifference = DepositTime - Time;
+
+    if (IsLER) {
+
+      /* LER: deposit the young-star source
+         strength.  ParticleInitialMass*MassFactor is a density on the target
+         grid, so (table value [rate*cm^2 per Msun]) * density * MassUnits /
+         SolarMass is the source per unit code volume.
+
+         Each young star's output is reduced by exp(-tau), with optical depth
+           tau = kappa_solar * (Z/Z_sun) * Sigma,
+         where Sigma = rho * L is the column density of total gas in the
+         star's cell.  L is the Sobolev-like length Grackle uses for H2
+         self-shielding (H2_self_shielding = 1, Wolcott-Green et al. 2011;
+         Grackle's solve_rate_cool_g.F), capped at 1 code length as
+         Grackle does.
+         Absorber-side shielding is left to Grackle.
+
+         Opacities are calculated following Draine 2003, integrated over the
+         luminosity band of interest in SB99, and saved in the PSNF Table for each band. 
+         (https://www.astro.princeton.edu/~draine/dust/extcurvs/kext_albedo_WD_MW_3.1_60_D03.all)
+       */
+      
+      float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits,
+        VelocityUnits;
+      GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits,
+               &VelocityUnits, Time);
+      float MsunPerCodeMass = DensityUnits * POW(LengthUnits, 3) / SolarMass;
+      double *LuminosityTable = (DepositField == KDISSH2_SOURCE_FIELD) ? pSNFBTable.kdiss_H2 :
+                                (DepositField == KDETHM_SOURCE_FIELD)  ? pSNFBTable.kdet_HM :
+                                                                         pSNFBTable.isrf;
+      double *KappaTable      = (DepositField == KDISSH2_SOURCE_FIELD) ? pSNFBTable.kappa_H2 :
+                                (DepositField == KDETHM_SOURCE_FIELD)  ? pSNFBTable.kappa_HM :
+                                                                         pSNFBTable.kappa_isrf;
+      const float MaxSourceAge = 5e7;  // yr; older stars emit nothing
+      /* Cap on the Sobolev length: 1 code length, as in Grackle (xbase1).
+         In cosmology runs this is the box size, so it only binds where
+         the star's cell has no less-dense neighbour. */
+      const float MaxSobolevLength = 1.0;  // code units
+
+      /* Gas fields on this (the star's host) grid. */
+
+      int DensNum     = FindField(Density, FieldType, NumberOfBaryonFields);
+      int MetalNum    = FindField(Metallicity, FieldType, NumberOfBaryonFields);
+      int SNColourNum = FindField(SNColour, FieldType, NumberOfBaryonFields);
+      float *GasDensity    = (DensNum     >= 0) ? BaryonField[DensNum]     : NULL;
+      float *MetalField    = (MetalNum    >= 0) ? BaryonField[MetalNum]    : NULL;
+      float *SNColourField = (SNColourNum >= 0) ? BaryonField[SNColourNum] : NULL;
+      float ColumnDensityUnits = DensityUnits * LengthUnits;  // code rho*L -> g/cm^2
+
+      int Stride[MAX_DIMENSION];  // index step to the next cell in each direction
+      Stride[0] = 1;
+      Stride[1] = GridDimension[0];
+      Stride[2] = GridDimension[0]*GridDimension[1];
+
+      /* Drift for the young stars only: the same coefficient as
+         grid::UpdateParticlePosition(TimeDifference). */
+
+      FLOAT a = 1.0, dadt;
+      if (ComovingCoordinates)
+        if (CosmologyComputeExpansionFactor(Time + 0.5*fabs(TimeDifference),
+                                            &a, &dadt) == FAIL) {
+          ENZO_FAIL("Error in CosmologyComputeExpansionFactor.");
+        }
+      float DriftCoefficient = TimeDifference/a;
+
+      /* Count the young stars and allocate a source array. */
+
+      for (i = 0; i < NumberOfParticles; i++) {
+        if (ParticleType[i] != PARTICLE_TYPE_STAR)
+          continue;
+        float StarAge = (Time - ParticleAttribute[0][i]) * TimeUnits / yr_s;  // yr
+        if (StarAge < MaxSourceAge)
+          nYoung++;
+      }
+
+      if (nYoung > 0) {
+        ParticleRadiation = new float[nYoung];
+        for (dim = 0; dim < GridRank; dim++)
+          LERPos[dim] = new FLOAT[nYoung];
+      }
+
+      int nSource = 0;
+      float SourceOpacitySolar;
+      for (i = 0; i < NumberOfParticles && nSource < nYoung; i++) {
+        if (ParticleType[i] != PARTICLE_TYPE_STAR)
+          continue;
+        float StarAge = (Time - ParticleAttribute[0][i]) * TimeUnits / yr_s;  // yr
+        float StarMetallicity = ParticleAttribute[2][i];
+        if (StarAge >= MaxSourceAge)
+          continue;
+
+        int m = nSource++;  // this star's index in the source array
+
+        /* Position at DepositTime (the attenuation below uses the
+           undrifted position, ParticlePosition). */
+
+        for (dim = 0; dim < GridRank; dim++)
+          LERPos[dim][m] = ParticlePosition[dim][i] +
+                           DriftCoefficient*ParticleVelocity[dim][i];
+
+        /* Unattenuated output.  SB99 tables are per Msun formed, so use
+           the initial mass (a density, like ParticleMass), scaled to the
+           target grid. */
+
+        ParticleRadiation[m] = InterpolatePreSNFeedbackTable(LuminosityTable,
+                                     StarAge, StarMetallicity) *
+                                   ParticleInitialMass[i] * MassFactor *
+                                   MsunPerCodeMass;
+        SourceOpacitySolar = InterpolatePreSNFeedbackTable(KappaTable,
+                                     StarAge, StarMetallicity); //cm^2 / g of gas at solar metallicity
+
+        /* Source-side attenuation (see above). */
+
+        if (GasDensity == NULL || (MetalField == NULL && SNColourField == NULL))
+          continue;
+
+        /* The star's cell, kept one cell in from the grid edge so that
+           all 6 neighbours exist. */
+
+        int CellIndex[MAX_DIMENSION] = {0, 0, 0};
+        for (dim = 0; dim < GridRank; dim++) {
+          CellIndex[dim] = int((ParticlePosition[dim][i] - CellLeftEdge[dim][0]) /
+                               CellWidth[dim][0]);
+          CellIndex[dim] = max(1, min(GridDimension[dim]-2, CellIndex[dim]));
+        }
+        int StarIndex = CellIndex[0] + CellIndex[1]*Stride[1] + CellIndex[2]*Stride[2];
+
+        /* Sobolev-like length (see above): sum the density drops toward
+           the neighbours less dense than the star's cell. */
+
+        float DensityDropSum = 0;
+        for (dim = 0; dim < GridRank; dim++) {
+          DensityDropSum += max(GasDensity[StarIndex] - GasDensity[StarIndex + Stride[dim]], 0.0);
+          DensityDropSum += max(GasDensity[StarIndex] - GasDensity[StarIndex - Stride[dim]], 0.0);
+        }
+        float dx   = CellWidth[0][0];
+        float SobolevLength = MaxSobolevLength;
+        if (DensityDropSum > 0)
+          SobolevLength = min(GasDensity[StarIndex] * dx / (2.0*DensityDropSum), //Factor of 2 matching Grackle self-shielding
+                              MaxSobolevLength);
+
+        /* Optical depth: dust opacity scaled by gas metallicity, times
+           the column density. */
+
+        float ColumnDensity = GasDensity[StarIndex] * SobolevLength * ColumnDensityUnits;  // g/cm^2
+
+        float MetalDensity=0;
+        if (MetalField != NULL && SNColourField != NULL){
+          MetalDensity = MetalField[StarIndex] + SNColourField[StarIndex];
+        }
+        else{
+          if (MetalField != NULL)
+            MetalDensity = MetalField[StarIndex];
+          else if (SNColourField != NULL)
+            MetalDensity = SNColourField[StarIndex];
+        }
+        MetalDensity = min(MetalDensity, 0.9*GasDensity[StarIndex]);  // Grackle's ceiling on metal density
+
+        float GasMetallicitySolar = MetalDensity / GasDensity[StarIndex] /
+                                    CoolData.SolarMetalFractionByMass;  // Z/Z_sun
+        float OpticalDepth = SourceOpacitySolar * GasMetallicitySolar * ColumnDensity; // cm^2/g * Unitless * g/cm^2
+        ParticleRadiation[m] *= exp(-OpticalDepth);
+      }
+
+    } // end: if (IsLER)
  
-    /* Move particles to positions at Time + TimeDifference. */
+    /* Move particles to positions at Time + TimeDifference.  (LER
+       sources were not actually moved) */
  
     //The second argument forces the update even if 
     //MyProcessor == Target->ProcessorNumber != this->ProcessorNumber
-    this->UpdateParticlePosition(TimeDifference, TRUE);
+    if (!IsLER)
+      this->UpdateParticlePosition(TimeDifference, TRUE);
 
     /*
 
@@ -290,6 +511,32 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     */
     float FCellSize = (float)CellSize;
     float FCloudSize = (float)CloudSize;
+    if (IsLER) {
+
+      /* LER: deposit only the young-star sources, with the kernel the
+         particle deposit below would choose for this grid pair. */
+
+      if (nYoung > 0) {
+        if (SmoothField == TRUE)
+          PFORTRAN_NAME(smooth_deposit)
+            (LERPos[0], LERPos[1], LERPos[2], &GridRank,
+             &nYoung, ParticleRadiation, DepositFieldPointer, LeftEdge,
+             Dimension, Dimension+1, Dimension+2, &FCellSize,
+             &DepositPositionsParticleSmoothRadius);
+        else if (ParticleSubgridDepositMode == NGP_DEPOSIT && CellSize > 1.5*CloudSize)
+          PFORTRAN_NAME(ngp_deposit)
+            (LERPos[0], LERPos[1], LERPos[2], &GridRank,
+             &nYoung, ParticleRadiation, DepositFieldPointer, LeftEdge,
+             Dimension, Dimension+1, Dimension+2, &FCellSize);
+        else
+          PFORTRAN_NAME(cic_deposit)
+            (LERPos[0], LERPos[1], LERPos[2], &GridRank,
+             &nYoung, ParticleRadiation, DepositFieldPointer, LeftEdge,
+             Dimension, Dimension+1, Dimension+2, &FCellSize, &FCloudSize);
+      }
+
+    } else { // not LER: deposit the full particle list
+
     /* If using sink particles, then create a second field of unsmoothed sink particles
        (since we don't want sink particles smoothed -- they are stellar sized). */
 
@@ -413,6 +660,8 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
       delete [] ActiveParticleMassPointer;
     }
 
+    } // end: if (IsLER) else
+
   } // ENDIF this processor
  
   /* If on different processors, copy deposited field back to the
@@ -490,13 +739,16 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 
     /* If necessary, delete the particle mass temporary. */
 
-    if (MassFactor != 1.0)
+    delete [] ParticleMassTemp;  // NULL unless allocated above
 
-      delete [] ParticleMassTemp;
+    delete [] ParticleRadiation;  //LER
+    for (dim = 0; dim < MAX_DIMENSION; dim++)
+      delete [] LERPos[dim];
 
     /* Return particles to positions at Time. */
 
-    this->UpdateParticlePosition(-TimeDifference);
+    if (!IsLER)
+      this->UpdateParticlePosition(-TimeDifference);
 
   }
  

@@ -432,6 +432,11 @@ int grid::NestedCosmologySimulationInitializeGrid(
       fprintf(stderr, "Initializing Forbidden Refinement color field\n");
       FieldType[ForbidNum = NumberOfBaryonFields++] = ForbiddenRefinement;
     }
+    if (UseLocallyExtinctRadiation) { // LER rates for Grackle (zeroed by AllocateGrids)
+      FieldType[NumberOfBaryonFields++] = LERkdissH2;
+      FieldType[NumberOfBaryonFields++] = LERkdetHM;
+      FieldType[NumberOfBaryonFields++] = LERISRF;
+    }
     if(ShockMethod){
       FieldType[MachNum   = NumberOfBaryonFields++] = Mach;
       if(StorePreShockFields){

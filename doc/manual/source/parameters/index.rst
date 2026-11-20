@@ -2248,7 +2248,10 @@ General Star Formation
              / Simpson et al. (2015)
 
 ``StarMakerStoreInitialMass`` (external)
-    Optionally track a particle's initial mass. 
+    Optionally track a particle's initial mass. If turned on during a restart for a run that did 
+    not previously have it, the initial mass for previously existing particles will be set to their
+    current mass and a warning will be raised. This will underestimate mass for existing particles,
+    however new stars will be unaffected.
     Implemented for all creation methods but 4.
     Default: 0 (OFF)
 
@@ -3516,7 +3519,23 @@ Local Stellar Radiation
 The parameters below are used to turn on inexpensive radiation approximations from young stellar sources:
 
 ``UseLocalStellarRadiation`` (external)
-    This parameter is used to turn on or off local (grid only) stellar radiation. Calculates H2 photodissociation rates, H- photodetachment rates, and ISRF to feed into grackle. Requires ``StarFeedbackPreSNFilename``.
+    This parameter is used to turn on or off local (grid only) stellar radiation.
+    Calculates H2 photodissociation rates, H- photodetachment rates, and ISRF
+    to feed into grackle. Requires ``StarFeedbackPreSNFilename``.
+
+``UseLocallyExtinctRadiation`` (external)
+    This parameter is used to turn on or off locally extinct radiation (LER).
+    Calculates H2 photodissociation rates, H- photodetachment rates, and ISRF
+    to feed into grackle. Calculates radiation fields across the whole simulation
+    volume assuming local extinction from birth cloud and Sobolev column density.
+    Requires ``StarFeedbackPreSNFilename``. If ``use_isrf_field=0``, the ISRF
+    field will still be calculated and written out, but will not be passed to grackle.
+
+``LocallyExtinctRadiationBoxRadius`` (external)
+    This parameter is used to set the the number of cells away from each star
+    particle that the locally extinct radiation is calculated on each level
+    above the root level. If set to 0, this will update the radiation fields
+    for all cells on the grid. Default: 0. Recommended: 0 or 6.
 
 
 .. _cosmology_parameters:

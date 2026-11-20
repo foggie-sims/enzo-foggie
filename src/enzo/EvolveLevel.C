@@ -523,10 +523,19 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
                 /* Compute the potential. */
 
-                if (level > 0)
+                if (level > 0) {
                     Grids[grid1]->GridData->SolveForPotential(level);
+                    if (UseLocallyExtinctRadiation) { //LER: uses the gravity machinery
+                        TIMER_START("LER_Subgrid");
+                        Grids[grid1]->GridData->SolveForLocallyExtinctRadiation(level);
+                        TIMER_STOP("LER_Subgrid");
+                    }
+                }
+
                 Grids[grid1]->GridData->ComputeAccelerations(level);
                 Grids[grid1]->GridData->CopyPotentialToBaryonField();
+                if (UseLocallyExtinctRadiation) // LER: flux -> BaryonFields
+                    Grids[grid1]->GridData->CopyLERToBaryonFields();
             }
             /* otherwise, interpolate potential from coarser grid, which is
                now done in PrepareDensity. */
@@ -629,9 +638,18 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
                 if (RK2SecondStepBaryonDeposit && SelfGravity) {
                     int Dummy;
                     if (level <= MaximumGravityRefinementLevel) {
-                        if (level > 0) 
+                        if (level > 0) {
                             Grids[grid1]->GridData->SolveForPotential(level) ;
+                            if (UseLocallyExtinctRadiation) { //LER: uses the gravity machinery
+                                TIMER_START("LER_Subgrid");
+                                Grids[grid1]->GridData->SolveForLocallyExtinctRadiation(level) ;
+                                TIMER_STOP("LER_Subgrid");
+                            }
+                        }
+
                         Grids[grid1]->GridData->ComputeAccelerations(level) ;
+                        if (UseLocallyExtinctRadiation) // LER: flux -> BaryonFields
+                            Grids[grid1]->GridData->CopyLERToBaryonFields();
                     }
                 } // end: if (SelfGravity)
 
