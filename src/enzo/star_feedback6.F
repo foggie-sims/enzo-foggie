@@ -1153,6 +1153,10 @@ c     the hydro solver and doesn't require an explicit distribution.
                else
                   if (exptime_in .ge. 0._RKIND) f_ent = 1._RKIND
                endif
+c     Entrainment is only needed for momentum feedback. If mimicking
+c     thermal feedback, do not do any entrainment. This makes
+c     mom_mult = 0 match star_feedback2 (original thermal feedback) exactly.
+               if (mom_mult .eq. 0._RKIND) f_ent = 0._RKIND
 c
                call entrain_host_gas(d, u, v, w, te, ge, metal,
      &                              metalSNII, metalSNIa, metalAGB,
