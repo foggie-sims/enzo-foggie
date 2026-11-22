@@ -67,12 +67,12 @@ int grid::ApplyBoundsToBaryonFields()
 
   /* more declarations. TODO: THESE SHOULD BE REPLACED BY INPUT PARAMETERS.
      Density cap: 1e-8 g/cm^3 (10^16 particles per cc)
-     Density floor: tiny_number
+     Density floor: 1e-34 g/cm^3 (10^-10 particles per cc)
      Velocity magnitude cap: 3000 km/s
      GE cap corresponds to a temperature of 10^9 K, assuming mean molecular weight is 0.6 (fully ionized)
      GE floor corresponds to a temperature of 1 K, assuming mean molecular weight is 1.2 (fully neutral)
     */
-  float rho_floor = tiny_number, rho_ceiling = 1.0e-8/DensityUnits,
+  float rho_floor = 1.0e-34/DensityUnits, rho_ceiling = 1.0e-8/DensityUnits,
     vel_max = 3.0e+8/(VelocityUnits),
     ge_floor = 1.032e8/POW(VelocityUnits,2.0), ge_ceiling = 2.476e17/POW(VelocityUnits,2.0);
 
@@ -114,12 +114,38 @@ for (i = 0; i < size; i++) {
       ENZO_FAIL("Error in grid->ApplyBoundsToBaryonFields. Internal energy is NaN or inf.\n");
     }
 
-  // Check for density floor
+    // Check for density floor
   if(RestrictDensity && BaryonField[DensNum][i] < rho_floor){
     if(debug){
       printf("Grid::ApplyBoundsToBaryonFields: Density %"ESYM" g/cm^3 replaced with lower bound %"ESYM" g/cm^3\n", BaryonField[DensNum][i]*DensityUnits, rho_floor*DensityUnits);
     }
+
+    /* Add the floor mass at rest so the cell's momentum is unchanged:
+       velocity scales by rho_old/rho_new. Keep the specific internal
+       energy (temperature) fixed and rebuild the specific total energy
+       from it and the new velocity. GE is specific, so it is unchanged.
+       A non-positive rho_old (a failed hydro cell) gets zero velocity. */
+    float rho_old = BaryonField[DensNum][i];
+    float v2_old = POW(BaryonField[Vel1Num][i],2.0) +
+                   POW(BaryonField[Vel2Num][i],2.0) +
+                   POW(BaryonField[Vel3Num][i],2.0);
+    float eint_old;
+    if(DualEnergyFormalism){
+      eint_old = BaryonField[GENum][i];
+    }
+    else{
+      eint_old = BaryonField[TENum][i] - 0.5*v2_old;
+    }
+    float mom_ratio = 0.0;
+    if(rho_old > 0.0){
+      mom_ratio = rho_old/rho_floor;
+    }
+
     BaryonField[DensNum][i] = rho_floor;
+    BaryonField[Vel1Num][i] *= mom_ratio;
+    BaryonField[Vel2Num][i] *= mom_ratio;
+    BaryonField[Vel3Num][i] *= mom_ratio;
+    BaryonField[TENum][i] = eint_old + 0.5*v2_old*mom_ratio*mom_ratio;
 
     /* Rescale multispecies fields for the floored density!
        If we are at the density floor we are assuming that the gas is totally ionized.
