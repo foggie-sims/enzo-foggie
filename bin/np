@@ -189,6 +189,7 @@ sub parseOutput {
 	  $hierarchy{"Levels"}[$level]{"iterations"} = $iterations;
 	  $processLevel = $level;
 	  $processStatus = '.';
+	  $hierarchy{maxLevel} = $hierarchy{rh_last_level};
 	  $update = 1;
       }
       elsif ($line =~ /^WriteAllData/) {
@@ -206,6 +207,7 @@ sub parseOutput {
       elsif (($line =~ /^RebuildHierarchy\: level = (\d+)/) ||
 	     ($line =~ /^RebuildHierarchy\[(\d+)\]\:/)) {
 	  my $level = $1;
+	  $hierarchy{rh_last_level} = $level;
 	  $processLevel = $level;
 	  $processStatus = 'R';
 	  if ($line =~ /Flagged\s+\d+\/(\d+)/) {
