@@ -91,6 +91,9 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
   int TestProblemUseMetallicityField = 1;
   float TestProblemInitialMetallicityFraction = 2e-3; // 0.1 Zsun
   float TestStarParticleStarMetallicityFraction = 0.0;
+  int   TestStarParticleSplitPlane = -1;   // -1 = off; 0,1,2 = split normal to x,y,z
+  float TestStarParticleSplitDensity[2] = {1.0, 1.0}; // below, above 0.5
+  int   TestStarParticleSplitPressureEquilibrium = 1;
 
   TestProblemData.MultiSpecies = MultiSpecies;
   TestProblemData.UseMetallicityField = TestProblemUseMetallicityField;
@@ -123,6 +126,13 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
 		  &TestStarParticleStarPosition[0],
 		  &TestStarParticleStarPosition[1],
 		  &TestStarParticleStarPosition[2]);
+    ret += sscanf(line, "TestStarParticleSplitPlane = %"ISYM,
+		  &TestStarParticleSplitPlane);
+    ret += sscanf(line, "TestStarParticleSplitDensity = %"FSYM" %"FSYM,
+		  &TestStarParticleSplitDensity[0],
+		  &TestStarParticleSplitDensity[1]);
+    ret += sscanf(line, "TestStarParticleSplitPressureEquilibrium = %"ISYM,
+		  &TestStarParticleSplitPressureEquilibrium);
     
 
     ret += sscanf(line, "TestProblemUseMetallicityField  = %"ISYM, &TestProblemData.UseMetallicityField);
@@ -178,6 +188,15 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
 					      TestStarParticleVelocity,
 					      TestStarParticleBField) == FAIL)
     ENZO_FAIL("Error in InitializeUniformGrid.");
+
+  /* optionally split the medium into two halves of different density */
+
+  if (TopGrid.GridData->
+      TestStarParticleSplitMedium(TestStarParticleSplitPlane,
+                                  TestStarParticleSplitDensity,
+                                  TestStarParticleSplitPressureEquilibrium)
+      == FAIL)
+    ENZO_FAIL("Error in TestStarParticleSplitMedium.");
 
   if (TopGrid.GridData->
       TestStarParticleInitializeGrid(TestStarParticleStarMass,
@@ -252,6 +271,12 @@ int TestStarParticleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
 	    TestStarParticleEnergy);
     fprintf(Outfptr, "MetallicityField_Fraction = %"FSYM"\n",
             TestProblemData.MetallicityField_Fraction);
+    fprintf(Outfptr, "TestStarParticleSplitPlane = %"ISYM"\n",
+            TestStarParticleSplitPlane);
+    fprintf(Outfptr, "TestStarParticleSplitDensity = %"FSYM" %"FSYM"\n",
+            TestStarParticleSplitDensity[0], TestStarParticleSplitDensity[1]);
+    fprintf(Outfptr, "TestStarParticleSplitPressureEquilibrium = %"ISYM"\n",
+            TestStarParticleSplitPressureEquilibrium);
   }
 
   fprintf(stderr, "TestStarParticleDensity = %"FSYM"\n",
