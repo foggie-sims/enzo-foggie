@@ -1784,8 +1784,10 @@ c        Derive H density from metallicity, assuming Solar relative abundances
      &                   1.e-6_RKIND)
 c        Define terminal momentum per cell and threshold for transition
 c        between energy-conserving and momentum-conserving phases
-c        Kimm & Cen (2014) eq. A4
-                  pSN_term = mom_mult * frac_sn*3.e10_RKIND*SolarMass*
+c        from Kimm & Cen (2015) eq. A4, but use the normalization
+c        from Kim & Ostriker (2015) instead because this matches the
+c        resolution tests I ran better
+                  pSN_term = mom_mult * frac_sn*2.17e10_RKIND*SolarMass*
      &                     E_ev51**(16._RKIND/17._RKIND)*
      &                     n_H**(-2._RKIND/17._RKIND)*Zp**(-0.14_RKIND)
 c        The energy-conserving and momentum-conserving branches meet
@@ -1820,7 +1822,7 @@ c
 c        Momentum comes from eq. A1
                      fe = 1._RKIND - ((chi - 1._RKIND)/
      &                        (3._RKIND*(chi_th - 1._RKIND)))
-                     pSN = mom_mult * sqrt(2._RKIND*chi*Mej_nb*fe*E_tot)
+                     pSN = sqrt(2._RKIND*chi*Mej_nb*fe*E_tot)
 c
 c        This is the resolved case, so need to inject thermal energy
 c        to get up to E_tot per SNe. Use pSN to calculate kinetic energy
