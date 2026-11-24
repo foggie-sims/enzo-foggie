@@ -139,6 +139,9 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *DustDensityFeSilicateName  = "Dust_Density_FeSilicate";
   char *DustDensityCarbonaceousName= "Dust_Density_Carbonaceous";
   char *GPotName  = "Grav_Potential";
+  char *LERkdissH2Name = "LER_kdissH2";
+  char *LERkdetHMName  = "LER_kdetHM";
+  char *LERISRFName    = "LER_ISRF";
   char *ForbidName  = "ForbiddenRefinement";
   char *MachName   = "Mach";
   char *PSTempName = "PreShock_Temperature";
@@ -850,6 +853,12 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   if (StarMakerEmissivityField > 0)
     DataLabel[i++] = EtaName;
 #endif
+ 
+  if (UseLocallyExtinctRadiation) {
+    DataLabel[i++] = LERkdissH2Name;
+    DataLabel[i++] = LERkdetHMName;
+    DataLabel[i++] = LERISRFName;
+  }
  
   if (ShockMethod) {
     DataLabel[i++] = MachName;

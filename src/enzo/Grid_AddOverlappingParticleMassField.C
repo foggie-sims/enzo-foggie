@@ -155,6 +155,32 @@ int grid::AddOverlappingParticleMassField(grid *OtherGrid,
 	GravitatingMassField[thisindex] +=
 	  OtherGrid->GravitatingMassFieldParticles[otherindex];
     }
+
+  /* LER: sum the overlapping young-star sources the same way.
+     (Off-processor, these arrive packed with the particle mass field.) */
+
+  if (UseLocallyExtinctRadiation) {
+    float *ThisLER[3]  = {kdissH2SourceField, kdetHMSourceField,
+                         isrfSourceField};
+    float *OtherLER[3] = {OtherGrid->kdissH2SourceParticles,
+                         OtherGrid->kdetHMSourceParticles,
+                         OtherGrid->isrfSourceParticles};
+    for (int f = 0; f < 3; f++) {
+      if (ThisLER[f] == NULL || OtherLER[f] == NULL)
+        continue;
+      for (k = 0; k < Dim[2]; k++)
+        for (j = 0; j < Dim[1]; j++) {
+          thisindex = ((k + Start[2])*ThisDim[1] +
+                       (j + Start[1])              )*ThisDim[0] +
+                       (0 + Start[0]);
+          otherindex = ((k + StartOther[2])*OtherDim[1] +
+                        (j + StartOther[1])        )*OtherDim[0] +
+                        (0 + StartOther[0]);
+          for (i = 0; i < Dim[0]; i++, thisindex++, otherindex++)
+            ThisLER[f][thisindex] += OtherLER[f][otherindex];
+        }
+    }
+  }
  
   /* Clean up if we have transfered data. */
  

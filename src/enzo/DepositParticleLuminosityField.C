@@ -1,0 +1,126 @@
+/***********************************************************************
+/
+/  DEPOSIT PARTICLES INTO LUMINOSITY FIELDS IN THIS GRID AND ALL SUBGRIDS
+/
+/  written by: Greg Bryan
+/  date:       May, 1995
+/  modified1:Cameron Trapp
+/  date:       Sept, 2026
+/
+/  PURPOSE: Modification of DepositParticleMassField.C for the
+/           locally extinct radiation (LER) module.
+/
+************************************************************************/
+ 
+#include <stdio.h>
+#include "ErrorExceptions.h"
+#include "macros_and_parameters.h"
+#include "typedefs.h"
+#include "global_data.h"
+#include "Fluxes.h"
+#include "GridList.h"
+#include "ExternalBoundary.h"
+#include "Grid.h"
+#include "Hierarchy.h"
+#include "TopGridData.h"
+#include "LevelHierarchy.h"
+ 
+/* function prototypes */
+ 
+int DepositParticleLuminosityFieldChildren(HierarchyEntry *DepositGrid,
+				     HierarchyEntry *Grid, FLOAT Time);
+ 
+int DepositParticleLuminosityField(HierarchyEntry *Grid, FLOAT TimeMidStep)
+{
+ 
+  /* Get the time and dt for this grid.  Compute time+1/2 dt. */
+ 
+  if (TimeMidStep < 0)
+    TimeMidStep =     Grid->GridData->ReturnTime() +
+                  0.5*Grid->GridData->ReturnTimeStep();
+ 
+  /* Clear the LER source particle arrays only if in send-receive mode
+     (i.e. this routine is called only once) or if in the first of the
+     three communication modes (post-receive).  DepositParticleMassField
+     is always called first, so the particle mesh is already initialized. */
+
+  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
+      CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
+    if (Grid->GridData->ClearLERSourceParticles() == FAIL) {
+      ENZO_FAIL("Error in grid->ClearLERSourceParticles.\n");
+    }
+  }
+
+  /* Deposit young-star sources into this grid's LER source particle arrays. */
+
+  if (Grid->GridData->DepositParticlePositions(Grid->GridData, TimeMidStep,
+				 KDISSH2_SOURCE_FIELD) == FAIL) {
+    ENZO_FAIL("Error in grid->DepositParticlePositions.\n");
+  }
+
+  if (Grid->GridData->DepositParticlePositions(Grid->GridData, TimeMidStep,
+				 KDETHM_SOURCE_FIELD) == FAIL) {
+    ENZO_FAIL("Error in grid->DepositParticlePositions.\n");
+  }
+ 
+  if (Grid->GridData->DepositParticlePositions(Grid->GridData, TimeMidStep,
+				 ISRF_SOURCE_FIELD) == FAIL) {
+    ENZO_FAIL("Error in grid->DepositParticlePositions.\n");
+  }
+
+  /* Recursively deposit particles in children (at TimeMidStep). */
+ 
+  if (Grid->NextGridNextLevel != NULL)
+    if (DepositParticleLuminosityFieldChildren(Grid, Grid->NextGridNextLevel,
+					 TimeMidStep)
+	== FAIL) {
+      ENZO_FAIL("Error in DepositParticleLuminosityFieldChildren.\n");
+    }
+ 
+  return SUCCESS;
+}
+ 
+ 
+ 
+ 
+int DepositParticleLuminosityFieldChildren(HierarchyEntry *DepositGrid,
+				     HierarchyEntry *Grid, FLOAT DepositTime)
+{
+ 
+  /* Deposit particles in Grid into DepositGrid at the given time. */
+ 
+  if (Grid->GridData->DepositParticlePositions(DepositGrid->GridData,
+		     DepositTime, KDISSH2_SOURCE_FIELD) == FAIL) {
+    ENZO_FAIL("Error in grid->DepositParticlePositions.\n");
+  }
+ 
+  if (Grid->GridData->DepositParticlePositions(DepositGrid->GridData,
+		     DepositTime, KDETHM_SOURCE_FIELD) == FAIL) {
+    ENZO_FAIL("Error in grid->DepositParticlePositions.\n");
+  }
+
+  if (Grid->GridData->DepositParticlePositions(DepositGrid->GridData,
+		     DepositTime, ISRF_SOURCE_FIELD) == FAIL) {
+    ENZO_FAIL("Error in grid->DepositParticlePositions.\n");
+  }
+
+  /* Next grid on this level. */
+ 
+  if (Grid->NextGridThisLevel != NULL)
+    if (DepositParticleLuminosityFieldChildren(DepositGrid, Grid->NextGridThisLevel,
+					 DepositTime) == FAIL) {
+      ENZO_FAIL("Error in DepositParticleLuminosityFieldChildren(1).\n");
+    }
+ 
+  /* Recursively deposit particles in children. */
+ 
+  if (Grid->NextGridNextLevel != NULL)
+    if (DepositParticleLuminosityFieldChildren(DepositGrid, Grid->NextGridNextLevel,
+					 DepositTime) == FAIL) {
+      ENZO_FAIL("Error in DepositParticleLuminosityFieldChildren(2).\n");
+
+    }
+ 
+ 
+  return SUCCESS;
+}

@@ -1007,6 +1007,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &WriteFeedbackLogFiles);
     ret += sscanf(line, "UseLocalStellarRadiation = %"ISYM, //CWT 06/07/2026
         &UseLocalStellarRadiation);
+    ret += sscanf(line, "UseLocallyExtinctRadiation = %"ISYM, //CWT 09/30/2026
+        &UseLocallyExtinctRadiation);
+    ret += sscanf(line, "LocallyExtinctRadiationBoxRadius = %"ISYM,
+        &LocallyExtinctRadiationBoxRadius);
     ret += sscanf(line, "StarEnergyToStellarUV = %"FSYM, &StarEnergyToStellarUV);
     ret += sscanf(line, "StarEnergyToQuasarUV = %"FSYM, &StarEnergyToQuasarUV);
     ret += sscanf(line, "StarFeedbackKineticFraction = %"FSYM,
@@ -2251,10 +2255,26 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ENZO_FAIL("StarFeedbackAGB requires StarFeedbackUseTabularYields to be enabled.");
 
 
-  if (StarFeedbackPreSNFeedback || UseLocalStellarRadiation) {
+  if (UseLocalStellarRadiation && UseLocallyExtinctRadiation)
+    ENZO_FAIL("UseLocalStellarRadiation and UseLocallyExtinctRadiation are mutually exclusive.");
+
+  if (UseLocallyExtinctRadiation && !SelfGravity)
+    ENZO_FAIL("UseLocallyExtinctRadiation requires SelfGravity (it uses the gravity solver's meshes and FFTs).");
+
+  if (UseLocallyExtinctRadiation &&
+      MaximumGravityRefinementLevel < MaximumRefinementLevel)
+    ENZO_FAIL("UseLocallyExtinctRadiation requires MaximumGravityRefinementLevel >= MaximumRefinementLevel (no LER flux is computed above it).");
+
+  if (UseLocallyExtinctRadiation && MetaData.TopGridRank != 3)
+    ENZO_FAIL("UseLocallyExtinctRadiation is only implemented for TopGridRank = 3 (1/r^2 kernel).");
+
+  if (UseLocallyExtinctRadiation && EnabledActiveParticlesCount > 0)
+    ENZO_FAIL("UseLocallyExtinctRadiation does not support active particles (they would be deposited as sources by mass).");
+
+  if (StarFeedbackPreSNFeedback || UseLocalStellarRadiation || UseLocallyExtinctRadiation) {
 
     if (!StarMakerStoreInitialMass)
-      ENZO_FAIL("StarFeedbackPreSNFeedback requires StarMakerStoreInitialMass to be enabled.");
+      ENZO_FAIL("StarFeedbackPreSNFeedback/UseLocalStellarRadiation/UseLocallyExtinctRadiation require StarMakerStoreInitialMass to be enabled.");
 
     if (ReadPreSNFeedbackTable(StarFeedbackPreSNFilename) == FAIL) {
       ENZO_FAIL("Error in ReadPreSNFeedbackTable.");
