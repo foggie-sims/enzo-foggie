@@ -371,6 +371,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
                FieldType[field] <= ExtraType1) ||
               FieldType[field] == MetalSNIaDensity ||
               FieldType[field] == MetalSNIIDensity ||
+              FieldType[field] == MetalAGBDensity ||
               (FieldType[field] >= TracerFluidField01Density &&
                FieldType[field] <= TracerFluidField08Density)) {
             fieldNumberList.push_back(field);
@@ -412,6 +413,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
             )
             || FieldType[field] == MetalSNIaDensity
             || FieldType[field] == MetalSNIIDensity
+			|| FieldType[field] == MetalAGBDensity
 			|| (FieldType[field] >= TracerFluidField01Density &&
 		        FieldType[field] <= TracerFluidField08Density)
         	)
@@ -873,7 +875,8 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	    if ( ((FieldType[field] >= ElectronDensity &&
 		   FieldType[field] <= ExtraType1) ||
 		  FieldType[field] == MetalSNIaDensity ||
-		  FieldType[field] == MetalSNIIDensity
+		  FieldType[field] == MetalSNIIDensity ||
+		  FieldType[field] == MetalAGBDensity
 			|| (FieldType[field] >= TracerFluidField01Density &&
 		        FieldType[field] <= TracerFluidField08Density)
 		) &&
