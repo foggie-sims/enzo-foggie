@@ -190,6 +190,7 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
 
     if (MetalIaNum       != -1) colnum[NumberOfColours++] = MetalIaNum;
     if (MetalIINum       != -1) colnum[NumberOfColours++] = MetalIINum;
+    if (MetalAGBNum      != -1) colnum[NumberOfColours++] = MetalAGBNum;
     if (SNColourNum      != -1) colnum[NumberOfColours++] = SNColourNum;
     if (MBHColourNum     != -1) colnum[NumberOfColours++] = MBHColourNum;
     if (Galaxy1ColourNum != -1) colnum[NumberOfColours++] = Galaxy1ColourNum;
@@ -217,7 +218,6 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
       if (DustFeNum_  != -1) colnum[NumberOfColours++] = DustFeNum_;
       if (DustCNum_   != -1) colnum[NumberOfColours++] = DustCNum_;
     }
-    //if (MetalAGBNum      != -1) colnum[NumberOfColours++] = MetalAGBNum;
     //if (MetalNSMNum      != -1) colnum[NumberOfColours++] = MetalNSMNum;
 
 
